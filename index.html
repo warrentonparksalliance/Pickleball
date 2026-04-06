@@ -704,29 +704,32 @@ body {
   flex-wrap: wrap;
 }
 [data-theme="dark"] .session-bar { background: #0f2340; }
+.session-bar-label { color: #94a3b8; font-size: 0.8rem; white-space: nowrap; }
+.btn-loc {
+  padding: 5px 14px;
+  border: 1px solid #4a7fb5;
+  border-radius: 20px;
+  background: #152d4a;
+  color: #93c5fd;
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s, color 0.15s;
+  white-space: nowrap;
+}
+.btn-loc:hover { background: #1e40af; border-color: #60a5fa; color: white; }
 .session-bar input {
   padding: 4px 8px;
   border-radius: 4px;
   border: 1px solid #4a7fb5;
   background: #152d4a;
   color: #e2e8f0;
-  font-size: 0.85rem;
-  width: 90px;
+  font-size: 0.82rem;
+  width: 100px;
   text-transform: uppercase;
-  letter-spacing: 0.1em;
+  letter-spacing: 0.08em;
 }
 .session-bar input::placeholder { color: #64748b; text-transform: none; letter-spacing: normal; }
-.btn-session {
-  padding: 4px 12px;
-  border: 1px solid #4a7fb5;
-  border-radius: 4px;
-  background: #2563eb;
-  color: white;
-  font-size: 0.8rem;
-  font-weight: 600;
-  cursor: pointer;
-}
-.btn-session:hover { background: #1d4ed8; }
 .btn-session-outline {
   padding: 4px 12px;
   border: 1px solid #4a7fb5;
@@ -735,17 +738,12 @@ body {
   color: #93c5fd;
   font-size: 0.8rem;
   cursor: pointer;
+  white-space: nowrap;
 }
-.btn-session-outline:hover { background: #1e3a5f; }
-.session-code-display {
-  font-family: monospace;
-  font-size: 1.1rem;
+.btn-session-outline:hover { background: rgba(255,255,255,0.08); }
+.session-active-name {
   font-weight: 700;
-  letter-spacing: 0.15em;
-  background: #152d4a;
-  border: 1px solid #4a7fb5;
-  border-radius: 4px;
-  padding: 2px 10px;
+  font-size: 0.95rem;
   color: #60a5fa;
 }
 .session-status-dot {
@@ -777,17 +775,19 @@ body {
 <!-- Session Bar -->
 <div class="session-bar" id="sessionBar">
   <div id="sessionSetup" style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
-    <button class="btn-session" onclick="Session.create()">Start Shared Session</button>
+    <span class="session-bar-label">Location:</span>
+    <button class="btn-loc" onclick="Session.joinLocation('flpark')">Fred Lindstrom Park</button>
+    <button class="btn-loc" onclick="Session.joinLocation('lhresort')">Lighthouse Resort</button>
     <span class="session-divider">|</span>
-    <span style="color:#94a3b8;">Join:</span>
-    <input type="text" id="joinCode" placeholder="ABC123" maxlength="6" onkeydown="if(event.key==='Enter')Session.joinFromInput()">
-    <button class="btn-session-outline" onclick="Session.joinFromInput()">Join</button>
+    <span class="session-bar-label">Other:</span>
+    <input type="text" id="otherCode" placeholder="Custom code" maxlength="16"
+           onkeydown="if(event.key==='Enter')Session.joinOther()">
+    <button class="btn-session-outline" onclick="Session.joinOther()">Join</button>
   </div>
   <div id="sessionActive" style="display:none;align-items:center;gap:8px;flex-wrap:wrap;">
-    <span><span class="session-status-dot"></span>Session:</span>
-    <span class="session-code-display" id="sessionCode"></span>
-    <button class="btn-session-outline" onclick="Session.copyLink()" id="copyLinkBtn">Copy Link</button>
-    <button class="btn-session-outline" onclick="Session.leave()">Leave</button>
+    <span class="session-status-dot"></span>
+    <span class="session-active-name" id="sessionLocationName"></span>
+    <button class="btn-session-outline" onclick="Session.leave()">Leave Session</button>
   </div>
 </div>
 
@@ -1841,56 +1841,41 @@ App.init();
 // ─── Firebase Session Sync ──────────────────────────────────────────────────
 const Session = {
   DB: 'https://pickleball-50914-default-rtdb.firebaseio.com',
+
+  // Known locations — key is the Firebase session ID, label is the display name
+  LOCATIONS: [
+    { key: 'flpark',   label: 'Fred Lindstrom Park' },
+    { key: 'lhresort', label: 'Lighthouse Resort'   },
+  ],
+
   id: null,
+  label: null,
   _receiving: false,
   _sse: null,
   _pushTimer: null,
 
-  // Generate a short human-readable session code
-  _genId() {
-    const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
-    let id = '';
-    for (let i = 0; i < 6; i++) id += chars[Math.floor(Math.random() * chars.length)];
-    return id;
-  },
-
   // ─── Public API ──────────────────────────────
-  async create() {
-    const id = this._genId();
-    this.id = id;
-    this._setURL(id);
-    await this._put(App.state);
-    this._listen();
-    this._updateUI();
+
+  // Called when a named location button is clicked
+  joinLocation(key) {
+    const loc = this.LOCATIONS.find(l => l.key === key);
+    if (!loc) return;
+    this._connect(loc.key, loc.label);
   },
 
-  async joinFromInput() {
-    const raw = document.getElementById('joinCode').value.trim().toUpperCase();
-    if (!raw || raw.length < 4) { alert('Enter a valid session code.'); return; }
-    await this.join(raw);
-  },
-
-  async join(id) {
-    this.id = id.toUpperCase();
-    this._setURL(this.id);
-    const data = await this._get();
-    if (data === null) {
-      alert(`Session "${this.id}" not found. It may have expired.`);
-      this.id = null;
-      this._setURL(null);
-      return;
-    }
-    this._receiving = true;
-    App.state = { ...App.state, ...data };
-    App.render();
-    this._receiving = false;
-    this._listen();
-    this._updateUI();
+  // Called when the "Other / Join" button is clicked
+  joinOther() {
+    const raw = document.getElementById('otherCode').value.trim();
+    if (!raw || raw.length < 2) { alert('Enter a session code.'); return; }
+    // Normalise to URL-safe lowercase
+    const key = raw.toLowerCase().replace(/\s+/g, '-');
+    this._connect(key, raw);
   },
 
   leave() {
     if (this._sse) { this._sse.close(); this._sse = null; }
     this.id = null;
+    this.label = null;
     this._setURL(null);
     this._updateUI();
   },
@@ -1902,23 +1887,33 @@ const Session = {
     this._pushTimer = setTimeout(() => this._put(App.state), 300);
   },
 
-  copyLink() {
-    const url = new URL(window.location.href);
-    url.searchParams.set('s', this.id);
-    navigator.clipboard.writeText(url.toString()).then(() => {
-      const btn = document.getElementById('copyLinkBtn');
-      btn.textContent = 'Copied!';
-      setTimeout(() => { btn.textContent = 'Copy Link'; }, 1500);
-    });
+  // ─── Internal ────────────────────────────────
+
+  async _connect(id, label) {
+    this.id = id;
+    this.label = label;
+    this._setURL(id);
+    const data = await this._get();
+    if (data) {
+      // Load existing session — merge into local state
+      this._receiving = true;
+      App.state = { ...App.state, ...data };
+      App.render();
+      this._receiving = false;
+    } else {
+      // No session yet — push current local state to start one
+      await this._put(App.state);
+    }
+    this._listen();
+    this._updateUI();
   },
 
-  // ─── Internal ────────────────────────────────
   _url() { return `${this.DB}/sessions/${this.id}.json`; },
 
   async _get() {
     try {
       const res = await fetch(this._url());
-      return await res.json();
+      return await res.json(); // null if node doesn't exist
     } catch(e) { return null; }
   },
 
@@ -1947,37 +1942,39 @@ const Session = {
         this._receiving = false;
       } catch(err) { /* ignore */ }
     });
-    src.onerror = () => {
-      // SSE errors are often transient; EventSource auto-reconnects
-    };
+    // SSE errors are transient; EventSource auto-reconnects
   },
 
   _setURL(id) {
     const url = new URL(window.location.href);
-    if (id) { url.searchParams.set('s', id); }
-    else { url.searchParams.delete('s'); }
+    if (id) url.searchParams.set('s', id);
+    else url.searchParams.delete('s');
     history.replaceState({}, '', url);
   },
 
   _updateUI() {
     const setup = document.getElementById('sessionSetup');
     const active = document.getElementById('sessionActive');
-    const code = document.getElementById('sessionCode');
+    const nameEl = document.getElementById('sessionLocationName');
     if (this.id) {
       setup.style.display = 'none';
       active.style.display = 'flex';
-      code.textContent = this.id;
+      nameEl.textContent = this.label || this.id;
     } else {
       setup.style.display = 'flex';
       active.style.display = 'none';
     }
   },
 
-  // Auto-join from URL on page load
+  // Auto-join from URL on page load (?s=locationKey)
   initFromURL() {
     const params = new URLSearchParams(window.location.search);
     const s = params.get('s');
-    if (s) this.join(s);
+    if (!s) return;
+    // Check if it matches a known location
+    const loc = this.LOCATIONS.find(l => l.key === s.toLowerCase());
+    if (loc) this.joinLocation(loc.key);
+    else this._connect(s, s); // custom code
   },
 };
 
