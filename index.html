@@ -152,35 +152,57 @@ body {
 /* Forms */
 .add-form {
   display: flex;
-  gap: 6px;
-  margin-bottom: 10px;
-  flex-wrap: wrap;
-  align-items: center;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 12px;
+  background: var(--primary-light);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 10px;
 }
-.add-form input, .add-form select {
-  padding: 6px 10px;
+.add-form input {
+  padding: 8px 10px;
   border: 1px solid var(--border);
   border-radius: 6px;
-  font-size: 0.875rem;
-  background: white;
+  font-size: 0.9rem;
+  background: var(--card);
+  color: var(--text);
+  width: 100%;
 }
-.add-form input:focus, .add-form select:focus {
+.add-form input:focus {
   outline: none;
   border-color: var(--primary);
   box-shadow: 0 0 0 2px var(--primary-light);
 }
-.input-name { flex: 1; min-width: 80px; }
-.input-score { width: 55px; }
+.add-form-row2 {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+.input-score { flex: 1; }
 .add-form .singles-label {
-  font-size: 0.75rem;
+  font-size: 0.8rem;
   color: var(--text-light);
   display: flex;
   align-items: center;
-  gap: 3px;
+  gap: 4px;
   cursor: pointer;
   white-space: nowrap;
 }
 .add-form .singles-label input { accent-color: var(--primary); }
+.btn-add-player {
+  width: 100%;
+  padding: 9px;
+  background: var(--primary);
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-size: 0.9rem;
+  font-weight: 700;
+  cursor: pointer;
+  letter-spacing: 0.01em;
+}
+.btn-add-player:hover { background: var(--primary-hover); }
 
 /* Player list */
 .player-list { list-style: none; display: flex; flex-direction: column; gap: 4px; }
@@ -661,7 +683,8 @@ body {
 [data-theme="dark"] .pending-side { background: var(--card); }
 [data-theme="dark"] .pending-slot { border-color: var(--border); color: var(--text-light); }
 [data-theme="dark"] .score-side input[type="number"] { background: var(--bg); color: var(--text); border-color: var(--border); }
-[data-theme="dark"] .add-form input, [data-theme="dark"] .add-form select { background: var(--bg); color: var(--text); border-color: var(--border); }
+[data-theme="dark"] .add-form { background: rgba(59,130,246,0.1); border-color: var(--border); }
+[data-theme="dark"] .add-form input { background: var(--card); color: var(--text); border-color: var(--border); }
 [data-theme="dark"] .team-form select { background: var(--bg); color: var(--text); border-color: var(--border); }
 [data-theme="dark"] .player-item input[type="checkbox"] { accent-color: var(--primary); }
 
@@ -797,10 +820,12 @@ body {
     <div class="sidebar-section">
       <h2>Players</h2>
       <div class="add-form">
-        <input class="input-name" type="text" id="playerName" placeholder="Name" onkeydown="if(event.key==='Enter')App.addPlayer()">
-        <input class="input-score" type="number" id="playerScore" placeholder="Skill" min="1" max="10" step="0.5" onkeydown="if(event.key==='Enter')App.addPlayer()">
-        <label class="singles-label"><input type="checkbox" id="playerSingles"> 1v1</label>
-        <button class="btn btn-outline btn-sm" onclick="App.addPlayer()">Add</button>
+        <input class="input-name" type="text" id="playerName" placeholder="Player name" onkeydown="if(event.key==='Enter')App.addPlayer()">
+        <div class="add-form-row2">
+          <input class="input-score" type="number" id="playerScore" placeholder="Skill (1–10)" min="1" max="10" step="0.5" onkeydown="if(event.key==='Enter')App.addPlayer()">
+          <label class="singles-label"><input type="checkbox" id="playerSingles"> Prefers 1v1</label>
+        </div>
+        <button class="btn-add-player" onclick="App.addPlayer()">+ Add Player</button>
       </div>
       <ul class="player-list" id="playerList"></ul>
     </div>
