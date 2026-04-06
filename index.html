@@ -802,95 +802,74 @@ body {
 }
 .session-divider { color: #4a7fb5; }
 
-/* ── Onboarding Overlay ─────────────────────────── */
-.onboard-overlay {
-  position: fixed;
-  inset: 0;
-  background: rgba(15,23,42,0.88);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 1000;
-  padding: 16px;
-  backdrop-filter: blur(4px);
-}
-.onboard-overlay.hidden { display: none; }
-.onboard-card {
-  background: var(--card);
-  border-radius: 16px;
-  padding: 32px 28px 28px;
-  width: 100%;
-  max-width: 400px;
-  box-shadow: 0 24px 64px rgba(0,0,0,0.5);
-}
-.onboard-logo {
-  font-size: 2rem;
-  margin-bottom: 6px;
-}
-.onboard-card h2 {
-  font-size: 1.35rem;
+/* ── Session Setup (sidebar) ────────────────────── */
+.setup-section { border-bottom: 1px solid var(--border); padding-bottom: 16px; }
+.setup-section h2 {
+  font-size: 1rem !important;
+  text-transform: none !important;
+  letter-spacing: normal !important;
+  color: var(--text) !important;
   font-weight: 700;
-  color: var(--text);
-  margin-bottom: 4px;
+  margin-bottom: 12px;
 }
-.onboard-sub {
-  color: var(--text-light);
-  font-size: 0.875rem;
-  margin-bottom: 22px;
-}
-.onboard-field {
-  margin-bottom: 18px;
-}
-.onboard-field > label {
-  display: block;
-  font-size: 0.75rem;
-  font-weight: 600;
-  color: var(--text-light);
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
-  margin-bottom: 6px;
-}
-.onboard-field > label span { font-weight: 400; text-transform: none; letter-spacing: normal; }
-.onboard-input {
+.setup-input {
   width: 100%;
-  padding: 10px 12px;
+  padding: 9px 11px;
   border: 1.5px solid var(--border);
   border-radius: 8px;
-  font-size: 1rem;
+  font-size: 0.9rem;
   background: var(--bg);
   color: var(--text);
+  margin-bottom: 8px;
   transition: border-color 0.15s;
 }
-.onboard-input:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 3px var(--primary-light); }
-.onboard-input.error { border-color: var(--danger); }
-.dupr-hint { font-size: 0.78rem; color: var(--text-light); margin-top: 5px; }
-.onboard-btn {
-  width: 100%;
-  padding: 11px;
-  background: var(--primary);
-  color: white;
-  border: none;
+.setup-input:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 3px var(--primary-light); }
+.setup-error { font-size: 0.8rem; color: var(--danger); margin-bottom: 8px; display: none; }
+.setup-locations { display: flex; flex-direction: column; gap: 8px; margin-bottom: 12px; }
+.btn-loc-setup {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 14px;
+  border: 1.5px solid var(--border);
   border-radius: 8px;
-  font-size: 0.925rem;
-  font-weight: 700;
+  background: var(--bg);
+  color: var(--text);
+  font-size: 0.9rem;
+  font-weight: 600;
   cursor: pointer;
-  transition: background 0.15s;
-}
-.onboard-btn:hover { background: var(--primary-hover); }
-.onboard-btn-secondary {
+  text-align: left;
   width: 100%;
-  padding: 11px;
-  background: transparent;
-  color: var(--primary);
+  transition: border-color 0.15s, background 0.15s, color 0.15s;
+}
+.btn-loc-setup:hover { border-color: var(--primary); background: var(--primary-light); color: var(--primary); }
+.setup-code-row { border-top: 1px solid var(--border); padding-top: 12px; margin-top: 4px; }
+.btn-setup-outline {
+  padding: 8px 12px;
   border: 1.5px solid var(--primary);
   border-radius: 8px;
-  font-size: 0.925rem;
-  font-weight: 700;
+  background: transparent;
+  color: var(--primary);
+  font-size: 0.875rem;
+  font-weight: 600;
   cursor: pointer;
   transition: background 0.15s;
 }
-.onboard-btn-secondary:hover { background: var(--primary-light); }
-.onboard-locations { display: flex; flex-direction: column; gap: 10px; margin-bottom: 18px; }
+.btn-setup-outline:hover { background: var(--primary-light); }
+.btn-setup-solid {
+  padding: 8px 12px;
+  border: none;
+  border-radius: 8px;
+  background: var(--primary);
+  color: white;
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+.btn-setup-solid:hover { background: var(--primary-hover); }
+
+/* ── (legacy overlay stubs — kept for reference) ── */
 .btn-loc-lg {
   display: flex;
   align-items: center;
@@ -948,46 +927,6 @@ body {
 </head>
 <body>
 
-<!-- Onboarding Overlay -->
-<div class="onboard-overlay" id="onboardOverlay">
-  <div class="onboard-card">
-    <div class="onboard-logo">🥒</div>
-    <h2>Pickle Jar</h2>
-    <p class="onboard-sub">Everyone's in the jar. Shake it up.</p>
-
-    <div class="onboard-field">
-      <label>Your name</label>
-      <input class="onboard-input" id="onboardName" type="text" placeholder="Enter your name"
-             autocomplete="given-name">
-      <p id="onboardNameError" style="color:var(--danger);font-size:0.82rem;margin-top:4px;display:none;">Please enter your name</p>
-    </div>
-    <div class="onboard-field">
-      <label>Skill Level <span>(optional)</span></label>
-      <input class="onboard-input" id="onboardSkill" type="number" placeholder="2.5"
-             min="2" max="8" step="0.01" onblur="App.fmtDUPR(this)">
-    </div>
-
-    <p style="font-size:0.8rem;font-weight:600;color:var(--text-light);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:10px;">Where are you playing?</p>
-    <div class="onboard-locations">
-      <button type="button" class="btn-loc-lg" id="btn-flpark">
-        <span class="loc-icon">📍</span> Fred Lindstrom Park <span class="loc-arrow">→</span>
-      </button>
-      <button type="button" class="btn-loc-lg" id="btn-lhresort">
-        <span class="loc-icon">📍</span> Lighthouse Resort <span class="loc-arrow">→</span>
-      </button>
-    </div>
-    <div class="onboard-or">or use a code</div>
-    <div class="onboard-code-group">
-      <input class="onboard-input" id="onboardCode" type="text" placeholder="Session code" maxlength="24">
-      <div class="onboard-code-btns">
-        <button type="button" class="onboard-btn-secondary" id="btn-joinCode">Join Session</button>
-        <button type="button" class="onboard-btn" id="btn-createCode">Start New Session</button>
-      </div>
-    </div>
-    <div id="onboardLoading" style="display:none;text-align:center;color:var(--text-light);font-size:0.875rem;padding:8px 0;">Connecting…</div>
-  </div>
-</div>
-
 <header class="header">
   <div><h1>Pickle Jar</h1><span style="font-size:0.8rem;opacity:0.85;">Everyone's in the jar. Shake it up.</span></div>
   <div class="header-actions">
@@ -1024,6 +963,25 @@ body {
 
 <div class="app-layout">
   <aside class="sidebar">
+    <!-- Session Setup -->
+    <div class="sidebar-section setup-section" id="sessionSetupSection">
+      <h2>Join a Session</h2>
+      <input type="text" class="setup-input" id="onboardName" placeholder="Your name" autocomplete="given-name">
+      <input type="number" class="setup-input" id="onboardSkill" placeholder="Skill level (optional)" min="2" max="8" step="0.01" onblur="App.fmtDUPR(this)">
+      <p id="onboardNameError" class="setup-error">Enter your name first</p>
+      <div class="setup-locations">
+        <button type="button" class="btn-loc-setup" id="btn-flpark">📍 Fred Lindstrom Park</button>
+        <button type="button" class="btn-loc-setup" id="btn-lhresort">📍 Lighthouse Resort</button>
+      </div>
+      <div class="setup-code-row">
+        <input type="text" class="setup-input" id="onboardCode" placeholder="Or enter a session code">
+        <div style="display:flex;gap:6px;margin-top:6px;">
+          <button type="button" class="btn-setup-outline" id="btn-joinCode" style="flex:1;">Join</button>
+          <button type="button" class="btn-setup-solid" id="btn-createCode" style="flex:1;">Create New</button>
+        </div>
+      </div>
+    </div>
+
     <!-- Players -->
     <div class="sidebar-section">
       <h2>Players</h2>
@@ -2124,7 +2082,7 @@ const Session = {
     this.label = null;
     this._setURL(null);
     this._updateUI();
-    Onboard.showStep(2);
+    Onboard.showStep();
   },
 
   // Debounced push — called from App.saveState()
@@ -2226,25 +2184,31 @@ const Session = {
   _updateUI() {
     const bar = document.getElementById('sessionBar');
     const nameEl = document.getElementById('sessionLocationName');
+    const setup = document.getElementById('sessionSetupSection');
     if (this.id) {
       bar.style.display = 'flex';
       bar.style.alignItems = 'center';
       nameEl.textContent = this.label || this.id;
+      if (setup) setup.style.display = 'none';
       Onboard._refreshProfileDisplay();
     } else {
       bar.style.display = 'none';
+      if (setup) setup.style.display = '';
     }
   },
 };
 
 // ─── Onboarding ─────────────────────────────────────────────────────────────
 const Onboard = {
+  selfId: null,
+
   init() {
     const user = this._savedUser();
     const s = new URLSearchParams(window.location.search).get('s');
 
     if (user && s) {
-      // Has identity + URL session — skip overlay entirely
+      // Has identity + URL session — auto-join, hide setup section
+      this._hide();
       const loc = Session.LOCATIONS.find(l => l.key === s.toLowerCase());
       Session._connect(s, loc ? loc.label : s, false, user);
       return;
@@ -2252,24 +2216,26 @@ const Onboard = {
 
     // Pre-fill saved identity if returning
     if (user) {
-      document.getElementById('onboardName').value = user.name || '';
-      if (user.skill) document.getElementById('onboardSkill').value = user.skill;
+      const nameEl = document.getElementById('onboardName');
+      const skillEl = document.getElementById('onboardSkill');
+      if (nameEl) nameEl.value = user.name || '';
+      if (skillEl && user.skill) skillEl.value = user.skill;
     }
-
-    document.getElementById('onboardOverlay').classList.remove('hidden');
+    // Setup section is visible by default in HTML; no action needed
   },
 
-  // Validate name & save identity, return user object or null
+  // Validate name & save identity; returns user object or null
   _saveIdentity() {
-    const name = document.getElementById('onboardName').value.trim();
+    const nameEl = document.getElementById('onboardName');
     const errEl = document.getElementById('onboardNameError');
+    const name = nameEl ? nameEl.value.trim() : '';
     if (!name) {
-      errEl.style.display = 'block';
-      document.getElementById('onboardName').focus();
+      if (errEl) errEl.style.display = 'block';
+      if (nameEl) nameEl.focus();
       return null;
     }
-    errEl.style.display = 'none';
-    const skillRaw = document.getElementById('onboardSkill').value;
+    if (errEl) errEl.style.display = 'none';
+    const skillRaw = document.getElementById('onboardSkill')?.value || '';
     const skill = skillRaw ? parseFloat(parseFloat(skillRaw).toFixed(2)) : null;
     const user = { name, skill };
     try { localStorage.setItem('pickleJarUser', JSON.stringify(user)); } catch(e) {}
@@ -2286,8 +2252,8 @@ const Onboard = {
   },
 
   joinCode() {
-    const raw = document.getElementById('onboardCode').value.trim();
-    if (!raw || raw.length < 2) { document.getElementById('onboardCode').focus(); return; }
+    const raw = document.getElementById('onboardCode')?.value.trim() || '';
+    if (raw.length < 2) { document.getElementById('onboardCode')?.focus(); return; }
     const user = this._saveIdentity();
     if (!user) return;
     this._hide();
@@ -2295,10 +2261,10 @@ const Onboard = {
   },
 
   createCode() {
-    const raw = document.getElementById('onboardCode').value.trim();
-    if (!raw || raw.length < 2) {
-      document.getElementById('onboardCode').placeholder = 'Enter a code first';
-      document.getElementById('onboardCode').focus();
+    const codeEl = document.getElementById('onboardCode');
+    const raw = codeEl?.value.trim() || '';
+    if (raw.length < 2) {
+      if (codeEl) { codeEl.placeholder = 'Enter a code first'; codeEl.focus(); }
       return;
     }
     const user = this._saveIdentity();
@@ -2307,13 +2273,13 @@ const Onboard = {
     Session._connect(raw.toLowerCase().replace(/\s+/g, '-'), raw, true, user);
   },
 
-  showStep(n) {
-    // Legacy shim — no longer used, kept for Session.leave() call
-    document.getElementById('onboardOverlay').classList.remove('hidden');
+  showStep() {
+    // Show the sidebar setup section (called by Session.leave())
+    const setup = document.getElementById('sessionSetupSection');
+    if (setup) setup.style.display = '';
   },
 
   // ─── Profile editing ─────────────────────────
-  selfId: null,
 
   startEditProfile() {
     const user = this._savedUser();
@@ -2334,7 +2300,7 @@ const Onboard = {
     const skillRaw = document.getElementById('profileEditScore').value;
     const skill = skillRaw ? parseFloat(parseFloat(skillRaw).toFixed(2)) : null;
 
-    localStorage.setItem('pickleJarUser', JSON.stringify({ name, skill }));
+    try { localStorage.setItem('pickleJarUser', JSON.stringify({ name, skill })); } catch(e) {}
 
     if (this.selfId != null) {
       const p = App.state.players.find(p => p.id === this.selfId);
@@ -2358,18 +2324,15 @@ const Onboard = {
   _refreshProfileDisplay() {
     const user = this._savedUser();
     if (!user) return;
-    document.getElementById('profileName').textContent = user.name;
+    const nameEl = document.getElementById('profileName');
     const scoreEl = document.getElementById('profileScore');
-    scoreEl.textContent = user.skill ? `· ${user.skill}` : '';
+    if (nameEl) nameEl.textContent = user.name;
+    if (scoreEl) scoreEl.textContent = user.skill ? `· ${user.skill}` : '';
   },
 
   _hide() {
-    document.getElementById('onboardOverlay').classList.add('hidden');
-  },
-
-  _setLoading(on) {
-    document.getElementById('onboardLoading').style.display = on ? '' : 'none';
-    document.querySelectorAll('#onboardStep2 button').forEach(b => b.disabled = on);
+    const setup = document.getElementById('sessionSetupSection');
+    if (setup) setup.style.display = 'none';
   },
 
   _savedUser() {
