@@ -951,51 +951,40 @@ body {
 <!-- Onboarding Overlay -->
 <div class="onboard-overlay" id="onboardOverlay">
   <div class="onboard-card">
+    <div class="onboard-logo">🥒</div>
+    <h2>Pickle Jar</h2>
+    <p class="onboard-sub">Everyone's in the jar. Shake it up.</p>
 
-    <!-- Step 1: Identity -->
-    <div id="onboardStep1">
-      <div class="onboard-logo">🥒</div>
-      <h2>Pickle Jar</h2>
-      <p class="onboard-sub">Everyone's in the jar. Shake it up.</p>
-      <div class="onboard-field">
-        <label>Your name</label>
-        <input class="onboard-input" type="text" id="onboardName" placeholder="Enter your name"
-               autocomplete="given-name" onkeydown="if(event.key==='Enter')Onboard.step1Next()">
-      </div>
-      <div class="onboard-field">
-        <label>Skill Level <span>(optional)</span></label>
-        <input class="onboard-input" type="number" id="onboardSkill" placeholder="2.5"
-               min="2" max="8" step="0.01" onkeydown="if(event.key==='Enter')Onboard.step1Next()"
-               onblur="App.fmtDUPR(this)">
-      </div>
-      <button type="button" class="onboard-btn" id="continueBtn">Continue →</button>
+    <div class="onboard-field">
+      <label>Your name</label>
+      <input class="onboard-input" id="onboardName" type="text" placeholder="Enter your name"
+             autocomplete="given-name">
+      <p id="onboardNameError" style="color:var(--danger);font-size:0.82rem;margin-top:4px;display:none;">Please enter your name</p>
+    </div>
+    <div class="onboard-field">
+      <label>Skill Level <span>(optional)</span></label>
+      <input class="onboard-input" id="onboardSkill" type="number" placeholder="2.5"
+             min="2" max="8" step="0.01" onblur="App.fmtDUPR(this)">
     </div>
 
-    <!-- Step 2: Session -->
-    <div id="onboardStep2" style="display:none;">
-      <h2>Where are you playing?</h2>
-      <p class="onboard-sub">Select a location or enter a session code</p>
-      <div class="onboard-locations">
-        <button class="btn-loc-lg" onclick="Onboard.joinLocation('flpark')">
-          <span class="loc-icon">📍</span> Fred Lindstrom Park <span class="loc-arrow">→</span>
-        </button>
-        <button class="btn-loc-lg" onclick="Onboard.joinLocation('lhresort')">
-          <span class="loc-icon">📍</span> Lighthouse Resort <span class="loc-arrow">→</span>
-        </button>
-      </div>
-      <div class="onboard-or">or use a code</div>
-      <div class="onboard-code-group">
-        <input class="onboard-input" type="text" id="onboardCode" placeholder="Session code"
-               maxlength="24" onkeydown="if(event.key==='Enter')Onboard.joinCode()">
-        <div class="onboard-code-btns">
-          <button class="onboard-btn-secondary" onclick="Onboard.joinCode()">Join Session</button>
-          <button class="onboard-btn" onclick="Onboard.createCode()">Start New Session</button>
-        </div>
-      </div>
-      <button class="onboard-back" onclick="Onboard.showStep(1)">← Back</button>
-      <div class="onboard-loading" id="onboardLoading" style="display:none;">Connecting…</div>
+    <p style="font-size:0.8rem;font-weight:600;color:var(--text-light);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:10px;">Where are you playing?</p>
+    <div class="onboard-locations">
+      <button type="button" class="btn-loc-lg" id="btn-flpark">
+        <span class="loc-icon">📍</span> Fred Lindstrom Park <span class="loc-arrow">→</span>
+      </button>
+      <button type="button" class="btn-loc-lg" id="btn-lhresort">
+        <span class="loc-icon">📍</span> Lighthouse Resort <span class="loc-arrow">→</span>
+      </button>
     </div>
-
+    <div class="onboard-or">or use a code</div>
+    <div class="onboard-code-group">
+      <input class="onboard-input" id="onboardCode" type="text" placeholder="Session code" maxlength="24">
+      <div class="onboard-code-btns">
+        <button type="button" class="onboard-btn-secondary" id="btn-joinCode">Join Session</button>
+        <button type="button" class="onboard-btn" id="btn-createCode">Start New Session</button>
+      </div>
+    </div>
+    <div id="onboardLoading" style="display:none;text-align:center;color:var(--text-light);font-size:0.875rem;padding:8px 0;">Connecting…</div>
   </div>
 </div>
 
@@ -2251,90 +2240,76 @@ const Onboard = {
     const s = new URLSearchParams(window.location.search).get('s');
 
     if (user && s) {
-      // Returning user with a session link — skip overlay, auto-connect
+      // Has identity + URL session — skip overlay entirely
       const loc = Session.LOCATIONS.find(l => l.key === s.toLowerCase());
       Session._connect(s, loc ? loc.label : s, false, user);
       return;
     }
 
-    // Show overlay; if returning user skip to step 2
+    // Pre-fill saved identity if returning
     if (user) {
-      document.getElementById('onboardName').value = user.name;
+      document.getElementById('onboardName').value = user.name || '';
       if (user.skill) document.getElementById('onboardSkill').value = user.skill;
-      this.showStep(2);
-    } else {
-      this.showStep(1);
     }
+
     document.getElementById('onboardOverlay').classList.remove('hidden');
   },
 
-  step1Next() {
-    try {
-      const nameEl = document.getElementById('onboardName');
-      const name = nameEl.value.trim();
-      if (!name) {
-        nameEl.classList.add('error');
-        nameEl.focus();
-        nameEl.addEventListener('input', () => nameEl.classList.remove('error'), { once: true });
-        this._setStep1Error('Please enter your name.');
-        return;
-      }
-      const skillRaw = document.getElementById('onboardSkill').value;
-      const skill = skillRaw ? parseFloat(parseFloat(skillRaw).toFixed(2)) : null;
-      try { localStorage.setItem('pickleJarUser', JSON.stringify({ name, skill })); } catch(e) {}
-      this._setStep1Error('');
-      this.showStep(2);
-    } catch(e) {
-      this._setStep1Error('Something went wrong: ' + e.message);
+  // Validate name & save identity, return user object or null
+  _saveIdentity() {
+    const name = document.getElementById('onboardName').value.trim();
+    const errEl = document.getElementById('onboardNameError');
+    if (!name) {
+      errEl.style.display = 'block';
+      document.getElementById('onboardName').focus();
+      return null;
     }
-  },
-
-  _setStep1Error(msg) {
-    let el = document.getElementById('step1Error');
-    if (!el) {
-      el = document.createElement('p');
-      el.id = 'step1Error';
-      el.style.cssText = 'color:var(--danger);font-size:0.85rem;margin-top:8px;';
-      document.getElementById('continueBtn').insertAdjacentElement('afterend', el);
-    }
-    el.textContent = msg;
+    errEl.style.display = 'none';
+    const skillRaw = document.getElementById('onboardSkill').value;
+    const skill = skillRaw ? parseFloat(parseFloat(skillRaw).toFixed(2)) : null;
+    const user = { name, skill };
+    try { localStorage.setItem('pickleJarUser', JSON.stringify(user)); } catch(e) {}
+    return user;
   },
 
   async joinLocation(key) {
     const loc = Session.LOCATIONS.find(l => l.key === key);
     if (!loc) return;
+    const user = this._saveIdentity();
+    if (!user) return;
     this._setLoading(true);
-    await Session._connect(loc.key, loc.label, false, this._savedUser());
+    await Session._connect(loc.key, loc.label, false, user);
     this._hide();
   },
 
   async joinCode() {
     const raw = document.getElementById('onboardCode').value.trim();
     if (!raw || raw.length < 2) { document.getElementById('onboardCode').focus(); return; }
+    const user = this._saveIdentity();
+    if (!user) return;
     this._setLoading(true);
     const key = raw.toLowerCase().replace(/\s+/g, '-');
-    await Session._connect(key, raw, false, this._savedUser());
+    await Session._connect(key, raw, false, user);
     this._hide();
   },
 
   async createCode() {
     const raw = document.getElementById('onboardCode').value.trim();
     if (!raw || raw.length < 2) {
-      const el = document.getElementById('onboardCode');
-      el.placeholder = 'Enter a code first';
-      el.focus();
+      document.getElementById('onboardCode').placeholder = 'Enter a code first';
+      document.getElementById('onboardCode').focus();
       return;
     }
+    const user = this._saveIdentity();
+    if (!user) return;
     this._setLoading(true);
     const key = raw.toLowerCase().replace(/\s+/g, '-');
-    await Session._connect(key, raw, true, this._savedUser());
+    await Session._connect(key, raw, true, user);
     this._hide();
   },
 
   showStep(n) {
-    document.getElementById('onboardStep1').style.display = n === 1 ? 'block' : 'none';
-    document.getElementById('onboardStep2').style.display = n === 2 ? 'block' : 'none';
-    document.getElementById('onboardLoading').style.display = 'none';
+    // Legacy shim — no longer used, kept for Session.leave() call
     document.getElementById('onboardOverlay').classList.remove('hidden');
   },
 
@@ -2404,9 +2379,11 @@ const Onboard = {
 };
 
 Onboard.init();
-document.getElementById('continueBtn').addEventListener('click', function() {
-  Onboard.step1Next();
-});
+document.getElementById('btn-flpark').addEventListener('click', function() { Onboard.joinLocation('flpark'); });
+document.getElementById('btn-lhresort').addEventListener('click', function() { Onboard.joinLocation('lhresort'); });
+document.getElementById('btn-joinCode').addEventListener('click', function() { Onboard.joinCode(); });
+document.getElementById('btn-createCode').addEventListener('click', function() { Onboard.createCode(); });
+document.getElementById('onboardCode').addEventListener('keydown', function(e) { if (e.key === 'Enter') Onboard.joinCode(); });
 </script>
 </body>
 </html>
