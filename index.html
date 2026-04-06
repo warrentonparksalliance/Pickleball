@@ -1156,6 +1156,8 @@ const App = {
 
   removePlayer(id) {
     if (this.isPlayerOnCourt(id) || this.isPlayerPending(id)) return;
+    const p = this.getPlayer(id);
+    if (!confirm(`Remove ${p ? p.name : 'this player'} from the session?`)) return;
     this.state.players = this.state.players.filter(p => p.id !== id);
     this.state.teams = this.state.teams.filter(t => t.p1 !== id && t.p2 !== id);
     this.saveState();
