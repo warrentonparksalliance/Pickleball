@@ -823,7 +823,7 @@ body {
         <input class="input-name" type="text" id="playerName" placeholder="Player name" onkeydown="if(event.key==='Enter')App.addPlayer()">
         <div class="add-form-row2">
           <input class="input-score" type="number" id="playerScore" placeholder="Skill (1–10)" min="1" max="10" step="0.5" onkeydown="if(event.key==='Enter')App.addPlayer()">
-          <label class="singles-label"><input type="checkbox" id="playerSingles"> Prefers 1v1</label>
+          <label class="singles-label"><input type="checkbox" id="playerSingles"> Open to 1v1</label>
         </div>
         <button class="btn-add-player" onclick="App.addPlayer()">+ Add Player</button>
       </div>
@@ -1318,7 +1318,8 @@ const App = {
     const inAnyTeam = new Set(inLockedTeam);
     for (const t of flexTeams) { inAnyTeam.add(t.p1); inAnyTeam.add(t.p2); }
 
-    let soloDoubles = pool.filter(id => !this.getPlayer(id).wantsSingles && !inAnyTeam.has(id));
+    // All solo players are eligible for doubles; those open to 1v1 are also eligible for singles
+    let soloDoubles = pool.filter(id => !inAnyTeam.has(id));
     let soloSingles = pool.filter(id => this.getPlayer(id).wantsSingles && !inLockedTeam.has(id));
 
     if (this.state.options.useSkill) {
@@ -1648,7 +1649,7 @@ const App = {
         <span class="player-name${canSelect ? ' selectable' : ''}" onclick="${canSelect ? `App.selectPlayer(${p.id})` : ''}">${this.esc(p.name)}</span>
         ${onCourt ? `<span class="player-court-badge">Ct ${courtNum}</span>` : ''}
         ${isPending ? `<span class="player-pending-badge">Ct ${pendingCourt}</span>` : ''}
-        ${p.wantsSingles ? `<span class="player-pref wants-singles" onclick="App.toggleSingles(${p.id})" title="Click to remove">1v1</span>` : ''}
+        ${p.wantsSingles ? `<span class="player-pref wants-singles" onclick="App.toggleSingles(${p.id})" title="Open to 1v1 — click to remove">1v1</span>` : ''}
         ${p.roundsPlayed ? `<span class="player-rounds">${p.roundsPlayed} gm${p.roundsPlayed !== 1 ? 's' : ''}</span>` : ''}
         ${p.score !== null ? `<span class="player-score">${p.score}</span>` : ''}
         ${sitouts > 0 && !onCourt && !isPending ? `<span class="player-sitout">sat ${sitouts}</span>` : ''}
