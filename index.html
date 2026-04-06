@@ -2180,8 +2180,12 @@ const Session = {
 
   async _get() {
     try {
-      const res = await fetch(this._url());
-      return await res.json();
+      const ctrl = new AbortController();
+      const t = setTimeout(() => ctrl.abort(), 6000);
+      const res = await fetch(this._url(), { signal: ctrl.signal });
+      clearTimeout(t);
+      const json = await res.json();
+      return (json && json.error) ? null : json; // treat Firebase auth errors as no data
     } catch(e) { return null; }
   },
 
@@ -2272,28 +2276,25 @@ const Onboard = {
     return user;
   },
 
-  async joinLocation(key) {
+  joinLocation(key) {
     const loc = Session.LOCATIONS.find(l => l.key === key);
     if (!loc) return;
     const user = this._saveIdentity();
     if (!user) return;
-    this._setLoading(true);
-    await Session._connect(loc.key, loc.label, false, user);
     this._hide();
+    Session._connect(loc.key, loc.label, false, user);
   },
 
-  async joinCode() {
+  joinCode() {
     const raw = document.getElementById('onboardCode').value.trim();
     if (!raw || raw.length < 2) { document.getElementById('onboardCode').focus(); return; }
     const user = this._saveIdentity();
     if (!user) return;
-    this._setLoading(true);
-    const key = raw.toLowerCase().replace(/\s+/g, '-');
-    await Session._connect(key, raw, false, user);
     this._hide();
+    Session._connect(raw.toLowerCase().replace(/\s+/g, '-'), raw, false, user);
   },
 
-  async createCode() {
+  createCode() {
     const raw = document.getElementById('onboardCode').value.trim();
     if (!raw || raw.length < 2) {
       document.getElementById('onboardCode').placeholder = 'Enter a code first';
@@ -2302,10 +2303,8 @@ const Onboard = {
     }
     const user = this._saveIdentity();
     if (!user) return;
-    this._setLoading(true);
-    const key = raw.toLowerCase().replace(/\s+/g, '-');
-    await Session._connect(key, raw, true, user);
     this._hide();
+    Session._connect(raw.toLowerCase().replace(/\s+/g, '-'), raw, true, user);
   },
 
   showStep(n) {
