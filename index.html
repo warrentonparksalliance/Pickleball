@@ -1268,8 +1268,6 @@ const App = {
     if (existing) {
       this.state.teams = this.state.teams.filter(t => t.id !== existing.id);
     } else {
-      // Remove any prior team involving self, then add new one
-      this.state.teams = this.state.teams.filter(t => t.p1 !== selfId && t.p2 !== selfId);
       this.state.teams.push({ id: this.state.nextId++, p1: selfId, p2: playerId, doNotSplit: false });
     }
     this.saveState();
@@ -1902,9 +1900,9 @@ const App = {
       el.innerHTML = '<li style="color:var(--text-light);font-size:0.82rem;padding:4px 0;">No other players in session yet</li>';
       return;
     }
-    const selfTeam = this.state.teams.find(t => t.p1 === selfId || t.p2 === selfId);
+    const selfTeams = this.state.teams.filter(t => t.p1 === selfId || t.p2 === selfId);
     el.innerHTML = others.map(p => {
-      const isPaired = selfTeam && (selfTeam.p1 === p.id || selfTeam.p2 === p.id);
+      const isPaired = selfTeams.some(t => t.p1 === p.id || t.p2 === p.id);
       const scoreText = p.score != null ? `<span class="tm-score">${p.score}</span>` : '';
       const check = isPaired ? '<span class="tm-check">✓</span>' : scoreText;
       return `<li class="teammate-item${isPaired ? ' paired' : ''}" onclick="App.addTeamWithSelf(${p.id})">
