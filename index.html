@@ -968,7 +968,7 @@ body {
                min="2" max="8" step="0.01" onkeydown="if(event.key==='Enter')Onboard.step1Next()"
                onblur="App.fmtDUPR(this)">
       </div>
-      <button class="onboard-btn" onclick="Onboard.step1Next()">Continue →</button>
+      <button type="button" class="onboard-btn" onclick="Onboard.step1Next()">Continue →</button>
     </div>
 
     <!-- Step 2: Session -->
@@ -2279,7 +2279,7 @@ const Onboard = {
     }
     const skillRaw = document.getElementById('onboardSkill').value;
     const skill = skillRaw ? parseFloat(parseFloat(skillRaw).toFixed(2)) : null;
-    localStorage.setItem('pickleJarUser', JSON.stringify({ name, skill }));
+    try { localStorage.setItem('pickleJarUser', JSON.stringify({ name, skill })); } catch(e) {}
     this.showStep(2);
   },
 
@@ -2315,8 +2315,8 @@ const Onboard = {
   },
 
   showStep(n) {
-    document.getElementById('onboardStep1').style.display = n === 1 ? '' : 'none';
-    document.getElementById('onboardStep2').style.display = n === 2 ? '' : 'none';
+    document.getElementById('onboardStep1').style.display = n === 1 ? 'block' : 'none';
+    document.getElementById('onboardStep2').style.display = n === 2 ? 'block' : 'none';
     document.getElementById('onboardLoading').style.display = 'none';
     document.getElementById('onboardOverlay').classList.remove('hidden');
   },
