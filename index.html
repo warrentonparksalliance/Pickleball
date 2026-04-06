@@ -968,7 +968,7 @@ body {
                min="2" max="8" step="0.01" onkeydown="if(event.key==='Enter')Onboard.step1Next()"
                onblur="App.fmtDUPR(this)">
       </div>
-      <button type="button" class="onboard-btn" onclick="Onboard.step1Next()">Continue →</button>
+      <button type="button" class="onboard-btn" id="continueBtn">Continue →</button>
     </div>
 
     <!-- Step 2: Session -->
@@ -2269,18 +2269,35 @@ const Onboard = {
   },
 
   step1Next() {
-    const nameEl = document.getElementById('onboardName');
-    const name = nameEl.value.trim();
-    if (!name) {
-      nameEl.classList.add('error');
-      nameEl.focus();
-      nameEl.addEventListener('input', () => nameEl.classList.remove('error'), { once: true });
-      return;
+    try {
+      const nameEl = document.getElementById('onboardName');
+      const name = nameEl.value.trim();
+      if (!name) {
+        nameEl.classList.add('error');
+        nameEl.focus();
+        nameEl.addEventListener('input', () => nameEl.classList.remove('error'), { once: true });
+        this._setStep1Error('Please enter your name.');
+        return;
+      }
+      const skillRaw = document.getElementById('onboardSkill').value;
+      const skill = skillRaw ? parseFloat(parseFloat(skillRaw).toFixed(2)) : null;
+      try { localStorage.setItem('pickleJarUser', JSON.stringify({ name, skill })); } catch(e) {}
+      this._setStep1Error('');
+      this.showStep(2);
+    } catch(e) {
+      this._setStep1Error('Something went wrong: ' + e.message);
     }
-    const skillRaw = document.getElementById('onboardSkill').value;
-    const skill = skillRaw ? parseFloat(parseFloat(skillRaw).toFixed(2)) : null;
-    try { localStorage.setItem('pickleJarUser', JSON.stringify({ name, skill })); } catch(e) {}
-    this.showStep(2);
+  },
+
+  _setStep1Error(msg) {
+    let el = document.getElementById('step1Error');
+    if (!el) {
+      el = document.createElement('p');
+      el.id = 'step1Error';
+      el.style.cssText = 'color:var(--danger);font-size:0.85rem;margin-top:8px;';
+      document.getElementById('continueBtn').insertAdjacentElement('afterend', el);
+    }
+    el.textContent = msg;
   },
 
   async joinLocation(key) {
@@ -2387,6 +2404,9 @@ const Onboard = {
 };
 
 Onboard.init();
+document.getElementById('continueBtn').addEventListener('click', function() {
+  Onboard.step1Next();
+});
 </script>
 </body>
 </html>
