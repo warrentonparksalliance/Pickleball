@@ -993,6 +993,23 @@ body {
 <div class="session-bar" id="sessionBar" style="display:none;">
   <span class="session-status-dot"></span>
   <span class="session-active-name" id="sessionLocationName"></span>
+  <span class="session-divider">|</span>
+  <!-- Profile display -->
+  <div id="profileDisplay" style="display:flex;align-items:center;gap:6px;">
+    <span style="color:#94a3b8;font-size:0.8rem;">You:</span>
+    <span id="profileName" style="color:#e2e8f0;font-weight:600;font-size:0.85rem;"></span>
+    <span id="profileScore" style="color:#93c5fd;font-size:0.8rem;"></span>
+    <button class="btn-session-outline" onclick="Onboard.startEditProfile()">Edit</button>
+  </div>
+  <!-- Profile edit form -->
+  <div id="profileEdit" style="display:none;align-items:center;gap:6px;flex-wrap:wrap;">
+    <input type="text" id="profileEditName" placeholder="Name" maxlength="30"
+           onkeydown="if(event.key==='Enter')Onboard.saveProfile()">
+    <input type="number" id="profileEditScore" placeholder="2.5" min="2" max="8" step="0.01"
+           onblur="App.fmtDUPR(this)" onkeydown="if(event.key==='Enter')Onboard.saveProfile()">
+    <button class="btn-session-outline" onclick="Onboard.saveProfile()">Save</button>
+    <button class="btn-session-outline" onclick="Onboard.cancelEditProfile()">Cancel</button>
+  </div>
   <button class="btn-session-outline" onclick="Session.leave()">Change Location</button>
 </div>
 
@@ -2109,9 +2126,13 @@ const Session = {
     const already = App.state.players.find(
       p => p.name.toLowerCase() === user.name.toLowerCase()
     );
-    if (!already) {
+    if (already) {
+      Onboard.selfId = already.id;
+    } else {
+      const id = App.state.nextId++;
+      Onboard.selfId = id;
       App.state.players.push({
-        id: App.state.nextId++,
+        id,
         name: user.name,
         score: user.skill || null,
         active: true,
@@ -2172,6 +2193,7 @@ const Session = {
       bar.style.display = 'flex';
       bar.style.alignItems = 'center';
       nameEl.textContent = this.label || this.id;
+      Onboard._refreshProfileDisplay();
     } else {
       bar.style.display = 'none';
     }
@@ -2253,6 +2275,57 @@ const Onboard = {
     document.getElementById('onboardStep2').style.display = n === 2 ? '' : 'none';
     document.getElementById('onboardLoading').style.display = 'none';
     document.getElementById('onboardOverlay').classList.remove('hidden');
+  },
+
+  // ─── Profile editing ─────────────────────────
+  selfId: null,
+
+  startEditProfile() {
+    const user = this._savedUser();
+    if (user) {
+      document.getElementById('profileEditName').value = user.name;
+      document.getElementById('profileEditScore').value = user.skill || '';
+    }
+    document.getElementById('profileDisplay').style.display = 'none';
+    document.getElementById('profileEdit').style.display = 'flex';
+    document.getElementById('profileEditName').focus();
+  },
+
+  saveProfile() {
+    const nameEl = document.getElementById('profileEditName');
+    const name = nameEl.value.trim();
+    if (!name) { nameEl.focus(); return; }
+    App.fmtDUPR(document.getElementById('profileEditScore'));
+    const skillRaw = document.getElementById('profileEditScore').value;
+    const skill = skillRaw ? parseFloat(parseFloat(skillRaw).toFixed(2)) : null;
+
+    localStorage.setItem('pickleJarUser', JSON.stringify({ name, skill }));
+
+    if (this.selfId != null) {
+      const p = App.state.players.find(p => p.id === this.selfId);
+      if (p) {
+        p.name = name;
+        p.score = skill;
+        App.saveState();
+        App.render();
+      }
+    }
+
+    this.cancelEditProfile();
+    this._refreshProfileDisplay();
+  },
+
+  cancelEditProfile() {
+    document.getElementById('profileEdit').style.display = 'none';
+    document.getElementById('profileDisplay').style.display = 'flex';
+  },
+
+  _refreshProfileDisplay() {
+    const user = this._savedUser();
+    if (!user) return;
+    document.getElementById('profileName').textContent = user.name;
+    const scoreEl = document.getElementById('profileScore');
+    scoreEl.textContent = user.skill ? `· ${user.skill}` : '';
   },
 
   _hide() {
