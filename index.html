@@ -691,6 +691,75 @@ body {
 @media (max-width: 550px) {
   .courts-grid { grid-template-columns: 1fr; }
 }
+
+/* Session Bar */
+.session-bar {
+  background: #1e3a5f;
+  color: #e2e8f0;
+  padding: 8px 16px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 0.85rem;
+  flex-wrap: wrap;
+}
+[data-theme="dark"] .session-bar { background: #0f2340; }
+.session-bar input {
+  padding: 4px 8px;
+  border-radius: 4px;
+  border: 1px solid #4a7fb5;
+  background: #152d4a;
+  color: #e2e8f0;
+  font-size: 0.85rem;
+  width: 90px;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+}
+.session-bar input::placeholder { color: #64748b; text-transform: none; letter-spacing: normal; }
+.btn-session {
+  padding: 4px 12px;
+  border: 1px solid #4a7fb5;
+  border-radius: 4px;
+  background: #2563eb;
+  color: white;
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+.btn-session:hover { background: #1d4ed8; }
+.btn-session-outline {
+  padding: 4px 12px;
+  border: 1px solid #4a7fb5;
+  border-radius: 4px;
+  background: transparent;
+  color: #93c5fd;
+  font-size: 0.8rem;
+  cursor: pointer;
+}
+.btn-session-outline:hover { background: #1e3a5f; }
+.session-code-display {
+  font-family: monospace;
+  font-size: 1.1rem;
+  font-weight: 700;
+  letter-spacing: 0.15em;
+  background: #152d4a;
+  border: 1px solid #4a7fb5;
+  border-radius: 4px;
+  padding: 2px 10px;
+  color: #60a5fa;
+}
+.session-status-dot {
+  width: 8px; height: 8px;
+  border-radius: 50%;
+  background: #22c55e;
+  display: inline-block;
+  margin-right: 4px;
+  animation: pulse-dot 2s infinite;
+}
+@keyframes pulse-dot {
+  0%,100% { opacity: 1; } 50% { opacity: 0.4; }
+}
+.session-divider { color: #4a7fb5; }
 </style>
 </head>
 <body>
@@ -704,6 +773,23 @@ body {
     <button class="btn btn-assign" onclick="App.assign()">Assign Courts</button>
   </div>
 </header>
+
+<!-- Session Bar -->
+<div class="session-bar" id="sessionBar">
+  <div id="sessionSetup" style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+    <button class="btn-session" onclick="Session.create()">Start Shared Session</button>
+    <span class="session-divider">|</span>
+    <span style="color:#94a3b8;">Join:</span>
+    <input type="text" id="joinCode" placeholder="ABC123" maxlength="6" onkeydown="if(event.key==='Enter')Session.joinFromInput()">
+    <button class="btn-session-outline" onclick="Session.joinFromInput()">Join</button>
+  </div>
+  <div id="sessionActive" style="display:none;align-items:center;gap:8px;flex-wrap:wrap;">
+    <span><span class="session-status-dot"></span>Session:</span>
+    <span class="session-code-display" id="sessionCode"></span>
+    <button class="btn-session-outline" onclick="Session.copyLink()" id="copyLinkBtn">Copy Link</button>
+    <button class="btn-session-outline" onclick="Session.leave()">Leave</button>
+  </div>
+</div>
 
 <div class="app-layout">
   <aside class="sidebar">
@@ -828,6 +914,7 @@ const App = {
     this.state.options.useSkill = document.getElementById('optSkill').checked;
     this.state.options.minimizeRepeats = document.getElementById('optRepeats').checked;
     localStorage.setItem('pickleJar', JSON.stringify(this.state));
+    Session.push();
   },
 
   loadState() {
@@ -1750,6 +1837,151 @@ const App = {
 };
 
 App.init();
+
+// ─── Firebase Session Sync ──────────────────────────────────────────────────
+const Session = {
+  DB: 'https://pickleball-50914-default-rtdb.firebaseio.com',
+  id: null,
+  _receiving: false,
+  _sse: null,
+  _pushTimer: null,
+
+  // Generate a short human-readable session code
+  _genId() {
+    const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+    let id = '';
+    for (let i = 0; i < 6; i++) id += chars[Math.floor(Math.random() * chars.length)];
+    return id;
+  },
+
+  // ─── Public API ──────────────────────────────
+  async create() {
+    const id = this._genId();
+    this.id = id;
+    this._setURL(id);
+    await this._put(App.state);
+    this._listen();
+    this._updateUI();
+  },
+
+  async joinFromInput() {
+    const raw = document.getElementById('joinCode').value.trim().toUpperCase();
+    if (!raw || raw.length < 4) { alert('Enter a valid session code.'); return; }
+    await this.join(raw);
+  },
+
+  async join(id) {
+    this.id = id.toUpperCase();
+    this._setURL(this.id);
+    const data = await this._get();
+    if (data === null) {
+      alert(`Session "${this.id}" not found. It may have expired.`);
+      this.id = null;
+      this._setURL(null);
+      return;
+    }
+    this._receiving = true;
+    App.state = { ...App.state, ...data };
+    App.render();
+    this._receiving = false;
+    this._listen();
+    this._updateUI();
+  },
+
+  leave() {
+    if (this._sse) { this._sse.close(); this._sse = null; }
+    this.id = null;
+    this._setURL(null);
+    this._updateUI();
+  },
+
+  // Debounced push — called from App.saveState()
+  push() {
+    if (!this.id || this._receiving) return;
+    clearTimeout(this._pushTimer);
+    this._pushTimer = setTimeout(() => this._put(App.state), 300);
+  },
+
+  copyLink() {
+    const url = new URL(window.location.href);
+    url.searchParams.set('s', this.id);
+    navigator.clipboard.writeText(url.toString()).then(() => {
+      const btn = document.getElementById('copyLinkBtn');
+      btn.textContent = 'Copied!';
+      setTimeout(() => { btn.textContent = 'Copy Link'; }, 1500);
+    });
+  },
+
+  // ─── Internal ────────────────────────────────
+  _url() { return `${this.DB}/sessions/${this.id}.json`; },
+
+  async _get() {
+    try {
+      const res = await fetch(this._url());
+      return await res.json();
+    } catch(e) { return null; }
+  },
+
+  async _put(state) {
+    if (!this.id) return;
+    try {
+      await fetch(this._url(), {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(state),
+      });
+    } catch(e) { /* silent */ }
+  },
+
+  _listen() {
+    if (this._sse) this._sse.close();
+    const src = new EventSource(this._url());
+    this._sse = src;
+    src.addEventListener('put', (e) => {
+      try {
+        const msg = JSON.parse(e.data);
+        if (!msg || !msg.data) return;
+        this._receiving = true;
+        App.state = { ...App.state, ...msg.data };
+        App.render();
+        this._receiving = false;
+      } catch(err) { /* ignore */ }
+    });
+    src.onerror = () => {
+      // SSE errors are often transient; EventSource auto-reconnects
+    };
+  },
+
+  _setURL(id) {
+    const url = new URL(window.location.href);
+    if (id) { url.searchParams.set('s', id); }
+    else { url.searchParams.delete('s'); }
+    history.replaceState({}, '', url);
+  },
+
+  _updateUI() {
+    const setup = document.getElementById('sessionSetup');
+    const active = document.getElementById('sessionActive');
+    const code = document.getElementById('sessionCode');
+    if (this.id) {
+      setup.style.display = 'none';
+      active.style.display = 'flex';
+      code.textContent = this.id;
+    } else {
+      setup.style.display = 'flex';
+      active.style.display = 'none';
+    }
+  },
+
+  // Auto-join from URL on page load
+  initFromURL() {
+    const params = new URLSearchParams(window.location.search);
+    const s = params.get('s');
+    if (s) this.join(s);
+  },
+};
+
+Session.initFromURL();
 </script>
 </body>
 </html>
