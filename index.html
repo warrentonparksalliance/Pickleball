@@ -1890,7 +1890,7 @@ const App = {
   renderTeammateList() {
     const el = document.getElementById('teammateList');
     if (!el) return;
-    const selfId = Onboard.selfId;
+    const selfId = typeof Onboard !== 'undefined' ? Onboard.selfId : null;
     if (!selfId) {
       el.innerHTML = '<li style="color:var(--text-light);font-size:0.82rem;padding:4px 0;">Join a session to pick a teammate</li>';
       return;
