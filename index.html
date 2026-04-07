@@ -898,6 +898,25 @@ body {
   transition: background 0.15s;
 }
 .btn-setup-solid:hover { background: var(--primary-hover); }
+.session-loading {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 0 2px;
+  color: var(--text-light);
+  font-size: 0.85rem;
+  font-weight: 500;
+}
+.session-spinner {
+  width: 16px;
+  height: 16px;
+  border: 2px solid var(--border);
+  border-top-color: var(--primary);
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+  flex-shrink: 0;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
 
 </style>
 </head>
@@ -954,6 +973,10 @@ body {
           <button type="button" class="btn-setup-outline" id="btn-joinCode" style="flex:1;">Join</button>
           <button type="button" class="btn-setup-solid" id="btn-createCode" style="flex:1;">Create New</button>
         </div>
+      </div>
+      <div id="sessionLoading" class="session-loading" style="display:none;">
+        <span class="session-spinner"></span>
+        <span id="sessionLoadingText">Connecting…</span>
       </div>
     </div>
 
@@ -2059,6 +2082,7 @@ const Session = {
     this.id = id;
     this.label = label;
     this._setURL(id);
+    this._setLoading(true, isNew ? 'Creating session…' : 'Joining session…');
     try {
       const data = isNew ? null : await this._get();
       if (data) {
@@ -2070,9 +2094,21 @@ const Session = {
         this._put(App.state); // fire-and-forget — don't block UI on write
       }
     } catch(e) { /* always continue to show UI */ }
+    this._setLoading(false);
     if (user) this._addSelf(user);
     this._listen();
     this._updateUI();
+  },
+
+  _setLoading(on, text) {
+    const el = document.getElementById('sessionLoading');
+    const txt = document.getElementById('sessionLoadingText');
+    if (!el) return;
+    el.style.display = on ? 'flex' : 'none';
+    if (on && text && txt) txt.textContent = text;
+    // Disable all buttons in the setup section while loading
+    const btns = document.querySelectorAll('#sessionSetupSection button');
+    btns.forEach(b => b.disabled = on);
   },
 
   _addSelf(user) {
