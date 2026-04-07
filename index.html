@@ -245,6 +245,7 @@ body {
 .player-item:hover { background: var(--hover-bg); }
 .player-item.on-court { background: var(--bench-bg); }
 .player-item.on-court .player-name { color: var(--danger); font-weight: 600; }
+.player-item.inactive-player { opacity: 0.5; }
 .player-item input[type="checkbox"] {
   accent-color: var(--primary);
   width: 15px;
@@ -621,53 +622,21 @@ body {
   border: 1px solid #fecaca;
 }
 
-/* Queue */
-.queue-section {
+/* Assign header (main area) */
+.assign-header {
   background: var(--card);
   border-radius: var(--radius);
   border: 1px solid var(--border);
   box-shadow: var(--shadow-sm);
-  padding: 14px 16px;
-}
-.queue-header {
+  padding: 16px;
   display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 10px;
+  flex-direction: column;
+  gap: 14px;
 }
-.queue-title {
-  font-size: 0.72rem;
+.assign-count-label {
+  font-size: 1rem;
   font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.07em;
-  color: var(--text-muted);
-}
-.queue-count {
-  font-size: 0.75rem;
-  color: var(--text-light);
-  font-weight: 500;
-}
-.queue-players {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-  min-height: 32px;
-  margin-bottom: 14px;
-}
-.queue-chip {
-  background: var(--primary-light);
-  color: var(--primary);
-  border: 1px solid var(--primary-muted);
-  padding: 4px 12px;
-  border-radius: var(--radius-full);
-  font-size: 0.82rem;
-  font-weight: 600;
-  white-space: nowrap;
-}
-.queue-chip.inactive {
-  background: var(--hover-bg);
-  color: var(--text-muted);
-  border-color: var(--border);
+  color: var(--text);
 }
 .assign-bar {
   display: flex;
@@ -1107,15 +1076,14 @@ body {
       </div>
     </div>
 
-    <!-- Players -->
+    <!-- Queue (sidebar) -->
     <div class="sidebar-section" id="playersSection" style="display:none;">
-      <h2>Players</h2>
-      <button class="btn-add-another" id="addAnotherBtn" onclick="App.toggleAddForm()">+ Add Another Player</button>
+      <h2>Queue</h2>
+      <button class="btn-add-another" id="addAnotherBtn" onclick="App.toggleAddForm()">+ Add Player</button>
       <div class="add-form" id="addPlayerForm" style="display:none;">
         <input class="input-name" type="text" id="playerName" placeholder="Player name" onkeydown="if(event.key==='Enter')App.addPlayer()">
         <div class="add-form-row2">
           <input class="input-score" type="number" id="playerScore" placeholder="2.5" min="2" max="8" step="0.01" onkeydown="if(event.key==='Enter')App.addPlayer()" onblur="App.fmtDUPR(this)">
-          <label class="singles-label"><input type="checkbox" id="playerSingles"> Open to 1v1</label>
         </div>
         <div style="display:flex;gap:8px;">
           <button class="btn-add-player" style="flex:1;" onclick="App.addPlayer()">+ Add Player</button>
@@ -1153,13 +1121,9 @@ body {
       </div>
     </div>
 
-    <!-- Queue + Assign -->
-    <div class="queue-section" id="queueSection">
-      <div class="queue-header">
-        <span class="queue-title">Queue</span>
-        <span class="queue-count" id="queueCount"></span>
-      </div>
-      <div id="queuePlayers" class="queue-players"></div>
+    <!-- Assign -->
+    <div class="assign-header" id="assignHeader">
+      <span class="assign-count-label" id="assignCount"></span>
       <div class="assign-bar" id="assignBar" style="display:none;">
         <button type="button" class="btn-assign-mode mode-singles" id="btnAssign1v1" onclick="App.assignCourt('singles')">
           <span class="assign-mode-label">1v1</span>
@@ -1685,23 +1649,22 @@ const App = {
   },
 
   renderPlayers() {
+    // Sidebar queue: only players NOT currently on a court
     const el = document.getElementById('playerList');
-    if (this.state.players.length === 0) {
-      el.innerHTML = '<li style="color:var(--text-light);font-size:0.85rem;padding:4px 8px;">Add players to get started</li>';
+    const onCourts = this.getPlayersOnCourts();
+    const queuePlayers = this.state.players.filter(p => !onCourts.has(p.id));
+    if (queuePlayers.length === 0) {
+      el.innerHTML = '<li style="color:var(--text-light);font-size:0.85rem;padding:4px 8px;">No players in queue</li>';
       return;
     }
-    el.innerHTML = this.state.players.map(p => {
-      const courtNum = this.getPlayerCourt(p.id);
-      const onCourt = courtNum !== null;
-      const locked = onCourt;
-      const itemClass = ['player-item', onCourt ? 'on-court' : ''].filter(Boolean).join(' ');
+    el.innerHTML = queuePlayers.map(p => {
+      const itemClass = ['player-item', p.active ? '' : 'inactive-player'].filter(Boolean).join(' ');
       return `<li class="${itemClass}">
-        <input type="checkbox" ${p.active ? 'checked' : ''} ${locked ? 'disabled' : ''} onchange="App.togglePlayer(${p.id})">
+        <input type="checkbox" ${p.active ? 'checked' : ''} onchange="App.togglePlayer(${p.id})">
         <span class="player-name">${this.esc(p.name)}</span>
-        ${onCourt ? `<span class="player-court-badge">Ct ${courtNum}</span>` : ''}
         ${p.roundsPlayed ? `<span class="player-rounds">${p.roundsPlayed} gm${p.roundsPlayed !== 1 ? 's' : ''}</span>` : ''}
-        ${p.score !== null ? `<span class="player-score">${p.score}</span>` : ''}
-        <button class="btn btn-ghost btn-sm player-remove" onclick="App.removePlayer(${p.id})" ${locked ? 'disabled' : ''}>&times;</button>
+        ${p.score != null ? `<span class="player-score">${p.score}</span>` : ''}
+        <button class="btn btn-ghost btn-sm player-remove" onclick="App.removePlayer(${p.id})">&times;</button>
       </li>`;
     }).join('');
   },
@@ -1831,37 +1794,25 @@ const App = {
 
   renderQueue() {
     const onCourt = this.getPlayersOnCourts();
-    const all = this.state.players;
-    const queuePlayers = all.filter(p => !onCourt.has(p.id));
-    const active = queuePlayers.filter(p => p.active);
-
-    const countEl = document.getElementById('queueCount');
-    const playersEl = document.getElementById('queuePlayers');
+    const active = this.state.players.filter(p => p.active && !onCourt.has(p.id));
+    const countEl = document.getElementById('assignCount');
     const assignBar = document.getElementById('assignBar');
     const btn1v1 = document.getElementById('btnAssign1v1');
     const btn2v2 = document.getElementById('btnAssign2v2');
     if (!countEl) return;
 
-    countEl.textContent = active.length === 1 ? '1 player' : `${active.length} players`;
+    const n = active.length;
+    countEl.textContent = n === 0 ? 'No players in queue'
+      : n === 1 ? '1 player in queue'
+      : `${n} players in queue`;
 
-    if (queuePlayers.length === 0) {
-      playersEl.innerHTML = '<span style="color:var(--text-muted);font-size:0.85rem;font-style:italic;">No players yet — add players to get started</span>';
-    } else {
-      playersEl.innerHTML = queuePlayers.map(p => {
-        const scoreStr = p.score !== null ? ` · ${p.score}` : '';
-        return `<span class="queue-chip${p.active ? '' : ' inactive'}">${this.esc(p.name)}${scoreStr}</span>`;
-      }).join('');
-    }
-
-    // Show assign bar only with a session and enough players
-    if (Session.id && active.length >= 2) {
+    if (Session.id && n >= 2) {
       assignBar.style.display = 'flex';
-      // Check if all location courts are in use
       const loc = Session.LOCATIONS.find(l => l.key === Session.id);
       const allCourtsUsed = loc && loc.courts &&
         loc.courts.every(c => !!this.state.activeGames[c.id] || !!this.state.scoringGames[c.id]);
-      btn1v1.disabled = active.length < 2 || !!allCourtsUsed;
-      btn2v2.disabled = active.length < 4 || !!allCourtsUsed;
+      btn1v1.disabled = n < 2 || !!allCourtsUsed;
+      btn2v2.disabled = n < 4 || !!allCourtsUsed;
     } else {
       assignBar.style.display = 'none';
     }
