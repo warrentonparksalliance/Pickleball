@@ -1131,6 +1131,7 @@ const App = {
   },
 
   loadState() {
+    try {
     const saved = localStorage.getItem('pickleJar');
     if (saved) {
       try {
@@ -1152,6 +1153,7 @@ const App = {
         }
       } catch(e) { /* ignore */ }
     }
+    } catch(e) { /* ignore localStorage errors (e.g. Safari private mode) */ }
   },
 
   // ─── Players ───────────────────────────────────
@@ -2094,8 +2096,6 @@ const App = {
   },
 };
 
-App.init();
-
 // ─── Firebase Session Sync ──────────────────────────────────────────────────
 const Session = {
   DB: 'https://pickleball-50914-default-rtdb.firebaseio.com',
@@ -2420,6 +2420,7 @@ const Onboard = {
   },
 };
 
+App.init();
 Onboard.init();
 document.getElementById('btn-flpark').addEventListener('click', function() { Onboard.joinLocation('flpark'); });
 document.getElementById('btn-lhresort').addEventListener('click', function() { Onboard.joinLocation('lhresort'); });
