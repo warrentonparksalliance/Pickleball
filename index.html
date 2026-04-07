@@ -2040,7 +2040,9 @@ const Session = {
       // Ensure they're active in the queue when rejoining
       if (!already.active) {
         already.active = true;
-        App.saveState();
+        // PATCH only players — don't overwrite activeGames or other fields
+        try { localStorage.setItem('pickleJar', JSON.stringify(App.state)); } catch(e) {}
+        this._patch({ players: App.state.players });
         App.render();
       }
     } else {
@@ -2053,7 +2055,9 @@ const Session = {
         active: true,
         wantsSingles: !!(user.wantsSingles),
       });
-      App.saveState();
+      // PATCH only players + nextId — don't overwrite activeGames or other fields
+      try { localStorage.setItem('pickleJar', JSON.stringify(App.state)); } catch(e) {}
+      this._patch({ players: App.state.players, nextId: App.state.nextId });
       App.render();
     }
   },
@@ -2080,6 +2084,21 @@ const Session = {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(state),
+        signal: ctrl.signal,
+      });
+      clearTimeout(t);
+    } catch(e) { /* silent */ }
+  },
+
+  async _patch(data) {
+    if (!this.id) return;
+    try {
+      const ctrl = new AbortController();
+      const t = setTimeout(() => ctrl.abort(), 8000);
+      await fetch(this._url(), {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
         signal: ctrl.signal,
       });
       clearTimeout(t);
