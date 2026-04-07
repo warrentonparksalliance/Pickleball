@@ -1048,6 +1048,9 @@ body {
         <h2 style="font-size:1rem;font-weight:700;margin-bottom:14px;color:var(--text);">Join a Session</h2>
         <input type="text" class="setup-input" id="onboardName" placeholder="Your name" autocomplete="given-name">
         <input type="number" class="setup-input" id="onboardSkill" placeholder="Skill level (optional)" min="2" max="8" step="0.01" onblur="App.fmtDUPR(this)">
+        <label class="singles-label" style="margin-bottom:10px;display:flex;align-items:center;gap:6px;font-size:0.85rem;font-weight:500;color:var(--text-light);cursor:pointer;">
+          <input type="checkbox" id="onboardSingles" style="accent-color:var(--primary);width:15px;height:15px;"> Open to 1v1
+        </label>
         <p id="onboardNameError" class="setup-error">Enter your name first</p>
         <div class="setup-locations">
           <button type="button" class="btn-loc-setup" id="btn-flpark">📍 Fred Lindstrom Park</button>
@@ -1085,6 +1088,7 @@ body {
         <div class="add-form-row2">
           <input class="input-score" type="number" id="playerScore" placeholder="2.5" min="2" max="8" step="0.01" onkeydown="if(event.key==='Enter')App.addPlayer()" onblur="App.fmtDUPR(this)">
         </div>
+        <label class="singles-label"><input type="checkbox" id="playerSingles"> Open to 1v1</label>
         <div style="display:flex;gap:8px;">
           <button class="btn-add-player" style="flex:1;" onclick="App.addPlayer()">+ Add Player</button>
           <button class="btn-add-player" style="flex:0;background:var(--border);color:var(--text);" onclick="App.toggleAddForm()">Cancel</button>
@@ -1228,6 +1232,7 @@ const App = {
   addPlayer() {
     const nameEl = document.getElementById('playerName');
     const scoreEl = document.getElementById('playerScore');
+    const singlesEl = document.getElementById('playerSingles');
     const name = nameEl.value.trim();
     if (!name) return;
     const score = scoreEl.value ? parseFloat(scoreEl.value) : null;
@@ -1236,11 +1241,11 @@ const App = {
       name,
       score,
       active: true,
-      wantsSingles: false,
+      wantsSingles: !!(singlesEl?.checked),
     });
     nameEl.value = '';
     scoreEl.value = '';
-    singlesEl.checked = false;
+    if (singlesEl) singlesEl.checked = false;
     document.getElementById('addPlayerForm').style.display = 'none';
     this.saveState();
     this.render();
@@ -1961,7 +1966,7 @@ const Session = {
         name: user.name,
         score: user.skill || null,
         active: true,
-        wantsSingles: false,
+        wantsSingles: !!(user.wantsSingles),
       });
       App.saveState();
       App.render();
@@ -2068,6 +2073,8 @@ const Onboard = {
       const skillEl = document.getElementById('onboardSkill');
       if (nameEl) nameEl.value = user.name || '';
       if (skillEl && user.skill) skillEl.value = user.skill;
+      const singlesEl = document.getElementById('onboardSingles');
+      if (singlesEl) singlesEl.checked = !!(user.wantsSingles);
     }
     // Setup section is visible by default in HTML; no action needed
   },
@@ -2085,7 +2092,8 @@ const Onboard = {
     if (errEl) errEl.style.display = 'none';
     const skillRaw = document.getElementById('onboardSkill')?.value || '';
     const skill = skillRaw ? parseFloat(parseFloat(skillRaw).toFixed(2)) : null;
-    const user = { name, skill };
+    const wantsSingles = !!(document.getElementById('onboardSingles')?.checked);
+    const user = { name, skill, wantsSingles };
     try { localStorage.setItem('pickleJarUser', JSON.stringify(user)); } catch(e) {}
     return user;
   },
