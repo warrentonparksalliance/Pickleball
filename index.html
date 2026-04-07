@@ -389,6 +389,56 @@ body {
   border-radius: var(--radius-full);
 }
 
+/* Tooltips */
+.tooltip-wrap {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+}
+.tooltip-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: var(--border);
+  color: var(--text-light);
+  font-size: 0.65rem;
+  font-weight: 700;
+  cursor: default;
+  user-select: none;
+  flex-shrink: 0;
+}
+.tooltip-box {
+  display: none;
+  position: absolute;
+  bottom: calc(100% + 6px);
+  left: 50%;
+  transform: translateX(-50%);
+  background: #1e293b;
+  color: #e2e8f0;
+  font-size: 0.78rem;
+  font-weight: 400;
+  line-height: 1.4;
+  padding: 7px 10px;
+  border-radius: var(--radius-sm);
+  white-space: nowrap;
+  box-shadow: var(--shadow-md);
+  pointer-events: none;
+  z-index: 100;
+}
+.tooltip-box::after {
+  content: '';
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  border: 5px solid transparent;
+  border-top-color: #1e293b;
+}
+.tooltip-wrap:hover .tooltip-box { display: block; }
+
 /* Courts grid */
 .courts-grid {
   display: grid;
@@ -938,10 +988,18 @@ body {
     <!-- Options -->
     <div class="options-bar">
       <div class="option-group">
-        <label title="Balance teams so players with similar skill levels are matched against each other"><input type="checkbox" id="optSkill" onchange="App.saveState()"> Match by skill</label>
+        <label><input type="checkbox" id="optSkill" onchange="App.saveState()"> Match by skill</label>
+        <span class="tooltip-wrap">
+          <span class="tooltip-icon">?</span>
+          <span class="tooltip-box">Balance teams so players with similar skill levels are matched against each other</span>
+        </span>
       </div>
       <div class="option-group">
-        <label title="Prioritize pairing players who haven't played against each other recently"><input type="checkbox" id="optRepeats" onchange="App.saveState()"> Minimize repeats</label>
+        <label><input type="checkbox" id="optRepeats" onchange="App.saveState()"> Minimize repeats</label>
+        <span class="tooltip-wrap">
+          <span class="tooltip-icon">?</span>
+          <span class="tooltip-box">Prioritize pairing players who haven't faced each other recently</span>
+        </span>
       </div>
     </div>
 
