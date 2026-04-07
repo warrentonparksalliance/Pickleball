@@ -2001,15 +2001,17 @@ const Session = {
     this.id = id;
     this.label = label;
     this._setURL(id);
-    const data = isNew ? null : await this._get();
-    if (data) {
-      this._receiving = true;
-      App.state = { ...App.state, ...data };
-      App.render();
-      this._receiving = false;
-    } else {
-      await this._put(App.state);
-    }
+    try {
+      const data = isNew ? null : await this._get();
+      if (data) {
+        this._receiving = true;
+        App.state = { ...App.state, ...data };
+        App.render();
+        this._receiving = false;
+      } else {
+        this._put(App.state); // fire-and-forget — don't block UI on write
+      }
+    } catch(e) { /* always continue to show UI */ }
     if (user) this._addSelf(user);
     this._listen();
     this._updateUI();
@@ -2052,11 +2054,15 @@ const Session = {
   async _put(state) {
     if (!this.id) return;
     try {
+      const ctrl = new AbortController();
+      const t = setTimeout(() => ctrl.abort(), 8000);
       await fetch(this._url(), {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(state),
+        signal: ctrl.signal,
       });
+      clearTimeout(t);
     } catch(e) { /* silent */ }
   },
 
