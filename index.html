@@ -2165,7 +2165,7 @@ const Session = {
   async _get() {
     try {
       const ctrl = new AbortController();
-      const t = setTimeout(() => ctrl.abort(), 6000);
+      const t = setTimeout(() => ctrl.abort(), 3000);
       const res = await fetch(this._url(), { signal: ctrl.signal });
       clearTimeout(t);
       const json = await res.json();
@@ -2277,7 +2277,7 @@ const Onboard = {
     if (!loc) return;
     const user = this._saveIdentity();
     if (!user) return;
-    this._hide();
+    // Don't hide yet — keep setup section visible so loading spinner shows
     Session._connect(loc.key, loc.label, false, user);
   },
 
@@ -2286,7 +2286,6 @@ const Onboard = {
     if (raw.length < 2) { document.getElementById('onboardCode')?.focus(); return; }
     const user = this._saveIdentity();
     if (!user) return;
-    this._hide();
     Session._connect(raw.toLowerCase().replace(/\s+/g, '-'), raw, false, user);
   },
 
@@ -2299,7 +2298,6 @@ const Onboard = {
     }
     const user = this._saveIdentity();
     if (!user) return;
-    this._hide();
     Session._connect(raw.toLowerCase().replace(/\s+/g, '-'), raw, true, user);
   },
 
