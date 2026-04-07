@@ -1206,6 +1206,25 @@ const App = {
     setInterval(() => this.updateTimers(), 1000);
   },
 
+  // ─── State normalization ───────────────────────
+  // Firebase omits empty objects/arrays (stores as null).
+  // Call this after every Firebase merge to restore required fields.
+  _normState() {
+    const s = this.state;
+    if (!Array.isArray(s.players)) s.players = [];
+    if (!Array.isArray(s.teams)) s.teams = [];
+    if (!Array.isArray(s.roundHistory)) s.roundHistory = [];
+    if (!s.activeGames  || typeof s.activeGames  !== 'object' || Array.isArray(s.activeGames))  s.activeGames  = {};
+    if (!s.scoringGames || typeof s.scoringGames !== 'object' || Array.isArray(s.scoringGames)) s.scoringGames = {};
+    if (!s.opponentHistory || typeof s.opponentHistory !== 'object') s.opponentHistory = {};
+    if (!s.sitoutCounts    || typeof s.sitoutCounts    !== 'object') s.sitoutCounts    = {};
+    if (!s.options) s.options = { useSkill: false, minimizeRepeats: false };
+    if (!s.nextId)      s.nextId      = 1;
+    if (!s.nextCourtId) s.nextCourtId = 1;
+    // Remove legacy fields that may come back from old Firebase data
+    delete s.courts; delete s.pendingGames; delete s.currentSittingOut; delete s.selectedPlayerId;
+  },
+
   // ─── Persistence ───────────────────────────────
   saveState() {
     this.state.options.useSkill = document.getElementById('optSkill').checked;
@@ -1221,15 +1240,7 @@ const App = {
       try {
         const parsed = JSON.parse(saved);
         this.state = { ...this.state, ...parsed };
-        if (!this.state.activeGames) this.state.activeGames = {};
-        if (!this.state.scoringGames) this.state.scoringGames = {};
-        if (!this.state.roundHistory) this.state.roundHistory = [];
-        if (!this.state.nextCourtId) this.state.nextCourtId = 1;
-        // Remove legacy fields
-        delete this.state.courts;
-        delete this.state.pendingGames;
-        delete this.state.currentSittingOut;
-        delete this.state.selectedPlayerId;
+        this._normState();
         // Migrate old team data: canSplit -> doNotSplit
         for (const t of this.state.teams) {
           if ('canSplit' in t) {
@@ -1962,6 +1973,7 @@ const Session = {
       if (data) {
         this._receiving = true;
         App.state = { ...App.state, ...data };
+        App._normState();
         App.render();
         this._receiving = false;
       } else {
@@ -2044,6 +2056,7 @@ const Session = {
         if (!msg || !msg.data) return;
         this._receiving = true;
         App.state = { ...App.state, ...msg.data };
+        App._normState();
         App.render();
         this._receiving = false;
       } catch(err) { /* ignore */ }
