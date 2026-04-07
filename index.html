@@ -2016,8 +2016,7 @@ const Session = {
       }
     } catch(e) { /* always continue to show UI */ }
     this._setLoading(false);
-    if (user) this._addSelf(user);
-    this._listen();
+    this._listen(user); // user is added AFTER the initial SSE put to avoid race condition
     this._updateUI();
   },
 
@@ -2087,19 +2086,32 @@ const Session = {
     } catch(e) { /* silent */ }
   },
 
-  _listen() {
+  _listen(pendingUser) {
     if (this._sse) this._sse.close();
     const src = new EventSource(this._url());
     this._sse = src;
+    let selfAdded = false;
+    const addSelfOnce = () => {
+      if (!selfAdded && pendingUser) {
+        selfAdded = true;
+        this._addSelf(pendingUser);
+      }
+    };
     src.addEventListener('put', (e) => {
       try {
         const msg = JSON.parse(e.data);
-        if (!msg || !msg.data) return;
+        if (!msg || !msg.data) {
+          // Empty/null session — add self immediately
+          addSelfOnce();
+          return;
+        }
         this._receiving = true;
         App.state = { ...App.state, ...msg.data };
         App._normState();
         App.render();
         this._receiving = false;
+        // Add self AFTER the initial state is received so we don't get overwritten
+        addSelfOnce();
       } catch(err) { /* ignore */ }
     });
   },
