@@ -1862,9 +1862,13 @@ const App = {
     if (!countEl) return;
 
     const n = active.length;
-    countEl.textContent = n === 0 ? 'No players in queue'
-      : n === 1 ? '1 player in queue'
-      : `${n} players in queue`;
+    if (n === 0) {
+      countEl.innerHTML = 'No players in queue &nbsp;<span style="font-weight:400;color:var(--text-light);font-size:0.85rem;">— add a player above or have someone join the session to assign courts</span>';
+    } else if (n === 1) {
+      countEl.innerHTML = '1 player in queue &nbsp;<span style="font-weight:400;color:var(--text-light);font-size:0.85rem;">— need at least 2 to assign a court</span>';
+    } else {
+      countEl.textContent = `${n} players in queue`;
+    }
 
     if (Session.id && n >= 2) {
       assignBar.style.display = 'flex';
