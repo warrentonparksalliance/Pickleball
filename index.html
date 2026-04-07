@@ -621,6 +621,88 @@ body {
   border: 1px solid #fecaca;
 }
 
+/* Queue */
+.queue-section {
+  background: var(--card);
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow-sm);
+  padding: 14px 16px;
+}
+.queue-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 10px;
+}
+.queue-title {
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  color: var(--text-muted);
+}
+.queue-count {
+  font-size: 0.75rem;
+  color: var(--text-light);
+  font-weight: 500;
+}
+.queue-players {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  min-height: 32px;
+  margin-bottom: 14px;
+}
+.queue-chip {
+  background: var(--primary-light);
+  color: var(--primary);
+  border: 1px solid var(--primary-muted);
+  padding: 4px 12px;
+  border-radius: var(--radius-full);
+  font-size: 0.82rem;
+  font-weight: 600;
+  white-space: nowrap;
+}
+.queue-chip.inactive {
+  background: var(--hover-bg);
+  color: var(--text-muted);
+  border-color: var(--border);
+}
+.assign-bar {
+  display: flex;
+  gap: 10px;
+}
+.btn-assign-mode {
+  flex: 1;
+  padding: 12px 16px;
+  border: none;
+  border-radius: var(--radius);
+  font-family: inherit;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  transition: background 0.15s, opacity 0.15s, transform 0.1s;
+}
+.btn-assign-mode:disabled { opacity: 0.4; cursor: not-allowed; }
+.btn-assign-mode:not(:disabled):active { transform: scale(0.97); }
+.btn-assign-mode.mode-singles { background: #dbeafe; color: #1d4ed8; }
+.btn-assign-mode.mode-singles:not(:disabled):hover { background: #bfdbfe; }
+.btn-assign-mode.mode-doubles { background: #d1fae5; color: #065f46; }
+.btn-assign-mode.mode-doubles:not(:disabled):hover { background: #a7f3d0; }
+.assign-mode-label {
+  font-size: 1.1rem;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+}
+.assign-mode-desc {
+  font-size: 0.72rem;
+  font-weight: 500;
+  opacity: 0.75;
+}
+
 /* History */
 .history-section {
   background: var(--card);
@@ -962,7 +1044,6 @@ body {
   <div class="header-actions">
     <button class="btn btn-primary btn-sm" onclick="App.clearHistory()">Clear History</button>
     <button class="btn btn-primary btn-sm" onclick="App.resetAll()">Reset All</button>
-    <button class="btn btn-assign" onclick="App.assign()">Assign Courts</button>
   </div>
 </header>
 
@@ -1072,14 +1153,27 @@ body {
       </div>
     </div>
 
-    <!-- Courts -->
-    <div class="courts-grid" id="courtsGrid"></div>
-
-    <!-- Sitting out -->
-    <div class="sitting-out" id="sittingOut" style="display:none;">
-      <h3>Sitting Out</h3>
-      <div class="bench-players" id="benchPlayers"></div>
+    <!-- Queue + Assign -->
+    <div class="queue-section" id="queueSection">
+      <div class="queue-header">
+        <span class="queue-title">Queue</span>
+        <span class="queue-count" id="queueCount"></span>
+      </div>
+      <div id="queuePlayers" class="queue-players"></div>
+      <div class="assign-bar" id="assignBar" style="display:none;">
+        <button type="button" class="btn-assign-mode mode-singles" id="btnAssign1v1" onclick="App.assignCourt('singles')">
+          <span class="assign-mode-label">1v1</span>
+          <span class="assign-mode-desc">singles</span>
+        </button>
+        <button type="button" class="btn-assign-mode mode-doubles" id="btnAssign2v2" onclick="App.assignCourt('doubles')">
+          <span class="assign-mode-label">2v2</span>
+          <span class="assign-mode-desc">doubles</span>
+        </button>
+      </div>
     </div>
+
+    <!-- Courts (active games) -->
+    <div class="courts-grid" id="courtsGrid"></div>
 
     <!-- History -->
     <details class="history-section" id="historySection">
@@ -1093,26 +1187,16 @@ body {
 const App = {
   state: {
     players: [],
-    teams: [],        // { id, p1, p2, doNotSplit }
-    courts: [
-      { id: 1, active: false },
-      { id: 2, active: false },
-      { id: 3, active: false },
-      { id: 4, active: false },
-      { id: 5, active: false },
-      { id: 6, active: false },
-    ],
+    teams: [],
     options: { useSkill: false, minimizeRepeats: false },
     opponentHistory: {},
     sitoutCounts: {},
     round: 0,
-    activeGames: {},       // courtId -> { side1: [...], side2: [...], mode: 'doubles'|'singles' }
-    scoringGames: {},      // courtId -> true (court is in score-entry mode)
-    pendingGames: {},      // courtId -> { side1: [ids], side2: [ids] } (manual placement staging)
-    selectedPlayerId: null,
-    currentSittingOut: null,
-    roundHistory: [],      // [{ round, courtId, side1, side2, mode }]
+    activeGames: {},
+    scoringGames: {},
+    roundHistory: [],
     nextId: 1,
+    nextCourtId: 1,
   },
 
   // ─── Init ──────────────────────────────────────
@@ -1139,11 +1223,13 @@ const App = {
         this.state = { ...this.state, ...parsed };
         if (!this.state.activeGames) this.state.activeGames = {};
         if (!this.state.scoringGames) this.state.scoringGames = {};
-        if (!this.state.pendingGames) this.state.pendingGames = {};
         if (!this.state.roundHistory) this.state.roundHistory = [];
-        if (!Array.isArray(this.state.courts) || this.state.courts.length === 0) {
-          this.state.courts = [1,2,3,4,5,6].map(id => ({ id, active: false }));
-        }
+        if (!this.state.nextCourtId) this.state.nextCourtId = 1;
+        // Remove legacy fields
+        delete this.state.courts;
+        delete this.state.pendingGames;
+        delete this.state.currentSittingOut;
+        delete this.state.selectedPlayerId;
         // Migrate old team data: canSplit -> doNotSplit
         for (const t of this.state.teams) {
           if ('canSplit' in t) {
@@ -1187,7 +1273,7 @@ const App = {
   },
 
   removePlayer(id) {
-    if (this.isPlayerOnCourt(id) || this.isPlayerPending(id)) return;
+    if (this.isPlayerOnCourt(id)) return;
     const p = this.getPlayer(id);
     if (!confirm(`Remove ${p ? p.name : 'this player'} from the session?`)) return;
     this.state.players = this.state.players.filter(p => p.id !== id);
@@ -1197,7 +1283,7 @@ const App = {
   },
 
   togglePlayer(id) {
-    if (this.isPlayerOnCourt(id) || this.isPlayerPending(id)) return;
+    if (this.isPlayerOnCourt(id)) return;
     const p = this.state.players.find(p => p.id === id);
     if (p) p.active = !p.active;
     this.saveState();
@@ -1269,14 +1355,6 @@ const App = {
   },
 
   // ─── Courts ────────────────────────────────────
-  toggleCourt(id) {
-    if (this.state.activeGames[id] || this.state.pendingGames[id]) return;
-    const c = this.state.courts.find(c => c.id === id);
-    if (c) c.active = !c.active;
-    this.saveState();
-    this.render();
-  },
-
   endGame(courtId) {
     this.state.scoringGames[courtId] = true;
     this.saveState();
@@ -1323,84 +1401,24 @@ const App = {
     this.render();
   },
 
-  clearCourt(courtId) {
+  endWithoutScore(courtId) {
+    const game = this.state.activeGames[courtId];
+    if (game) {
+      this.recordOpponents(game.side1, game.side2);
+      for (const id of [...game.side1, ...game.side2]) {
+        const p = this.getPlayer(id);
+        if (p) p.roundsPlayed = (p.roundsPlayed || 0) + 1;
+      }
+      this.state.roundHistory.push({
+        round: this.state.round,
+        courtId,
+        side1: [...game.side1],
+        side2: [...game.side2],
+        mode: game.mode,
+      });
+    }
     delete this.state.activeGames[courtId];
-    this.saveState();
-    this.render();
-  },
-
-  // ─── Manual Assignment ─────────────────────────
-  isPlayerPending(id) {
-    for (const pg of Object.values(this.state.pendingGames)) {
-      if (pg.side1.includes(id) || pg.side2.includes(id)) return true;
-    }
-    return false;
-  },
-
-  getPlayerPendingCourt(id) {
-    for (const [courtId, pg] of Object.entries(this.state.pendingGames)) {
-      if (pg.side1.includes(id) || pg.side2.includes(id)) return parseInt(courtId);
-    }
-    return null;
-  },
-
-  selectPlayer(id) {
-    if (this.isPlayerOnCourt(id) || this.isPlayerPending(id)) return;
-    const p = this.getPlayer(id);
-    if (!p || !p.active) return;
-    this.state.selectedPlayerId = this.state.selectedPlayerId === id ? null : id;
-    this.render();
-  },
-
-  placePlayer(courtId) {
-    const pid = this.state.selectedPlayerId;
-    if (!pid) return;
-    if (this.isPlayerOnCourt(pid) || this.isPlayerPending(pid)) return;
-
-    if (!this.state.pendingGames[courtId]) {
-      this.state.pendingGames[courtId] = { side1: [], side2: [] };
-    }
-    const pg = this.state.pendingGames[courtId];
-    const total = pg.side1.length + pg.side2.length;
-    if (total >= 4) return;
-
-    if (pg.side1.length < 2) {
-      pg.side1.push(pid);
-    } else {
-      pg.side2.push(pid);
-    }
-
-    this.state.selectedPlayerId = null;
-    this.saveState();
-    this.render();
-  },
-
-  removeFromPending(courtId, playerId) {
-    const pg = this.state.pendingGames[courtId];
-    if (!pg) return;
-    pg.side1 = pg.side1.filter(id => id !== playerId);
-    pg.side2 = pg.side2.filter(id => id !== playerId);
-    // Rebalance: keep side1 filled first
-    const all = [...pg.side1, ...pg.side2];
-    pg.side1 = all.slice(0, Math.min(2, Math.ceil(all.length / 2)));
-    pg.side2 = all.slice(pg.side1.length);
-    if (all.length === 0) delete this.state.pendingGames[courtId];
-    this.saveState();
-    this.render();
-  },
-
-  clearPending(courtId) {
-    delete this.state.pendingGames[courtId];
-    this.saveState();
-    this.render();
-  },
-
-  startGame(courtId) {
-    const pg = this.state.pendingGames[courtId];
-    if (!pg || pg.side1.length === 0 || pg.side2.length === 0) return;
-    const mode = (pg.side1.length === 1 && pg.side2.length === 1) ? 'singles' : 'doubles';
-    this.state.activeGames[courtId] = { side1: [...pg.side1], side2: [...pg.side2], mode, startedAt: Date.now() };
-    delete this.state.pendingGames[courtId];
+    delete this.state.scoringGames[courtId];
     this.saveState();
     this.render();
   },
