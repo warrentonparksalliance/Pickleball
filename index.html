@@ -582,6 +582,17 @@ body {
   padding: 2px 7px;
   border-radius: var(--radius-full);
 }
+.court-type-badge {
+  font-size: 0.6rem;
+  font-weight: 600;
+  padding: 2px 6px;
+  border-radius: var(--radius-full);
+  opacity: 0.85;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+.court-type-net   { background: rgba(255,255,255,0.2); }
+.court-type-lines { background: rgba(0,0,0,0.2); }
 
 /* Sitting out */
 .sitting-out {
@@ -1948,6 +1959,7 @@ const App = {
       return `<div class="${cls}">
         <div class="court-header">
           <span>Court ${court.id} ${modeBadge} ${timerBadge}</span>
+          ${court.note ? `<span class="court-type-badge court-type-${court.type || ''}" title="${court.note}">${court.type === 'lines' ? 'Lines' : 'Net'}</span>` : ''}
           <div class="court-controls">
             ${statusLabel ? `<span class="court-status">${statusLabel}</span>` : ''}
             <label><input type="checkbox" ${court.active ? 'checked' : ''} ${hasGame || hasPending ? 'disabled' : ''} onchange="App.toggleCourt(${court.id})"> On</label>
@@ -2050,8 +2062,19 @@ App.init();
 const Session = {
   DB: 'https://pickleball-50914-default-rtdb.firebaseio.com',
   LOCATIONS: [
-    { key: 'flpark',   label: 'Fred Lindstrom Park' },
-    { key: 'lhresort', label: 'Lighthouse Resort'   },
+    {
+      key: 'flpark',
+      label: 'Fred Lindstrom Park',
+      courts: [
+        { id: 1, active: true,  type: 'net',    note: 'Permanent net' },
+        { id: 2, active: true,  type: 'net',    note: 'Permanent net' },
+        { id: 3, active: true,  type: 'net',    note: 'Permanent net' },
+        { id: 4, active: true,  type: 'net',    note: 'Permanent net' },
+        { id: 5, active: true,  type: 'lines',  note: 'Painted (tennis court)' },
+        { id: 6, active: true,  type: 'lines',  note: 'Painted (tennis court)' },
+      ],
+    },
+    { key: 'lhresort', label: 'Lighthouse Resort' },
   ],
   id: null,
   label: null,
@@ -2083,6 +2106,11 @@ const Session = {
     this.label = label;
     this._setURL(id);
     this._setLoading(true, isNew ? 'Creating session…' : 'Joining session…');
+    // Apply location-specific court config for new sessions
+    const loc = this.LOCATIONS.find(l => l.key === id);
+    if (loc && loc.courts) {
+      App.state.courts = loc.courts.map(c => ({ ...c }));
+    }
     try {
       const data = isNew ? null : await this._get();
       if (data) {
