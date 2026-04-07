@@ -992,7 +992,7 @@ body {
     </div>
 
     <!-- Players -->
-    <div class="sidebar-section">
+    <div class="sidebar-section" id="playersSection" style="display:none;">
       <h2>Players</h2>
       <button class="btn-add-another" id="addAnotherBtn" onclick="App.toggleAddForm()">+ Add Another Player</button>
       <div class="add-form" id="addPlayerForm" style="display:none;">
@@ -1010,7 +1010,7 @@ body {
     </div>
 
     <!-- Teams -->
-    <div class="sidebar-section">
+    <div class="sidebar-section" id="teamsSection" style="display:none;">
       <h2>Teams <span style="text-transform:none;font-weight:400;">(optional)</span></h2>
       <p class="teammate-hint">Tap a player to pair as your teammate</p>
       <ul class="teammate-list" id="teammateList"></ul>
@@ -2215,15 +2215,21 @@ const Session = {
     const bar = document.getElementById('sessionBar');
     const nameEl = document.getElementById('sessionLocationName');
     const setup = document.getElementById('sessionSetupSection');
+    const players = document.getElementById('playersSection');
+    const teams = document.getElementById('teamsSection');
     if (this.id) {
       bar.style.display = 'flex';
       bar.style.alignItems = 'center';
       nameEl.textContent = this.label || this.id;
       if (setup) setup.style.display = 'none';
+      if (players) players.style.display = '';
+      if (teams) teams.style.display = '';
       Onboard._refreshProfileDisplay();
     } else {
       bar.style.display = 'none';
       if (setup) setup.style.display = '';
+      if (players) players.style.display = 'none';
+      if (teams) teams.style.display = 'none';
     }
   },
 };
