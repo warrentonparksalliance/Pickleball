@@ -1104,6 +1104,11 @@ body {
       <ul class="teammate-list" id="teammateList"></ul>
       <ul class="team-list" id="teamList"></ul>
     </div>
+
+    <!-- Leave session -->
+    <div id="leaveSection" style="display:none;margin-top:auto;padding-top:8px;">
+      <button type="button" onclick="Session.leave()" style="width:100%;padding:9px;background:transparent;border:1px solid var(--border);border-radius:var(--radius-sm);color:var(--text-light);font-size:0.85rem;font-weight:600;font-family:inherit;cursor:pointer;transition:background 0.15s,color 0.15s;" onmouseover="this.style.background='var(--danger-light)';this.style.color='var(--danger)';this.style.borderColor='#fecaca'" onmouseout="this.style.background='transparent';this.style.color='var(--text-light)';this.style.borderColor='var(--border)'">Leave Session</button>
+    </div>
   </aside>
 
   <main class="main-content" id="mainContent" style="display:none;">
@@ -2032,6 +2037,7 @@ const Session = {
     const players = document.getElementById('playersSection');
     const teams = document.getElementById('teamsSection');
     const main = document.getElementById('mainContent');
+    const leave = document.getElementById('leaveSection');
     if (this.id) {
       bar.style.display = 'flex';
       bar.style.alignItems = 'center';
@@ -2040,6 +2046,7 @@ const Session = {
       if (players) players.style.display = '';
       if (teams) teams.style.display = '';
       if (main) main.style.display = '';
+      if (leave) leave.style.display = '';
       Onboard._refreshProfileDisplay();
     } else {
       bar.style.display = 'none';
@@ -2047,6 +2054,7 @@ const Session = {
       if (players) players.style.display = 'none';
       if (teams) teams.style.display = 'none';
       if (main) main.style.display = 'none';
+      if (leave) leave.style.display = 'none';
     }
   },
 };
