@@ -1228,7 +1228,6 @@ const App = {
   addPlayer() {
     const nameEl = document.getElementById('playerName');
     const scoreEl = document.getElementById('playerScore');
-    const singlesEl = document.getElementById('playerSingles');
     const name = nameEl.value.trim();
     if (!name) return;
     const score = scoreEl.value ? parseFloat(scoreEl.value) : null;
@@ -1237,7 +1236,7 @@ const App = {
       name,
       score,
       active: true,
-      wantsSingles: singlesEl.checked,
+      wantsSingles: false,
     });
     nameEl.value = '';
     scoreEl.value = '';
