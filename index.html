@@ -984,7 +984,7 @@ body {
     </div>
   </aside>
 
-  <main class="main-content">
+  <main class="main-content" id="mainContent" style="display:none;">
     <!-- Options -->
     <div class="options-bar">
       <div class="option-group">
@@ -1071,6 +1071,9 @@ const App = {
         if (!this.state.scoringGames) this.state.scoringGames = {};
         if (!this.state.pendingGames) this.state.pendingGames = {};
         if (!this.state.roundHistory) this.state.roundHistory = [];
+        if (!Array.isArray(this.state.courts) || this.state.courts.length === 0) {
+          this.state.courts = [1,2,3,4,5,6].map(id => ({ id, active: false }));
+        }
         // Migrate old team data: canSplit -> doNotSplit
         for (const t of this.state.teams) {
           if ('canSplit' in t) {
@@ -2183,6 +2186,7 @@ const Session = {
     const setup = document.getElementById('sessionSetupSection');
     const players = document.getElementById('playersSection');
     const teams = document.getElementById('teamsSection');
+    const main = document.getElementById('mainContent');
     if (this.id) {
       bar.style.display = 'flex';
       bar.style.alignItems = 'center';
@@ -2190,12 +2194,14 @@ const Session = {
       if (setup) setup.style.display = 'none';
       if (players) players.style.display = '';
       if (teams) teams.style.display = '';
+      if (main) main.style.display = '';
       Onboard._refreshProfileDisplay();
     } else {
       bar.style.display = 'none';
       if (setup) setup.style.display = '';
       if (players) players.style.display = 'none';
       if (teams) teams.style.display = 'none';
+      if (main) main.style.display = 'none';
     }
   },
 };
