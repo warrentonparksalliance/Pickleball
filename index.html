@@ -882,23 +882,28 @@ body {
   box-shadow: var(--shadow-sm);
 }
 /* Confirm panel */
+.confirm-card {
+  margin-top: 12px;
+  padding: 14px;
+  background: var(--primary-light);
+  border: 1.5px solid var(--primary-muted);
+  border-radius: var(--radius);
+}
 .confirm-location {
-  font-size: 1rem;
+  font-size: 0.82rem;
   font-weight: 700;
-  color: var(--text);
-  margin-bottom: 10px;
+  color: var(--primary);
+  margin-bottom: 8px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
 }
 .confirm-identity {
   display: flex;
   align-items: baseline;
   gap: 8px;
-  padding: 10px 14px;
-  background: var(--hover-bg);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-sm);
 }
-.confirm-name { font-size: 0.95rem; font-weight: 600; color: var(--text); }
-.confirm-skill { font-size: 0.82rem; color: var(--text-light); }
+.confirm-name { font-size: 1rem; font-weight: 700; color: var(--text); }
+.confirm-skill { font-size: 0.85rem; color: var(--text-light); }
 .btn-confirm-join {
   flex: 1;
   padding: 10px;
@@ -989,7 +994,6 @@ body {
   <aside class="sidebar">
     <!-- Session Setup -->
     <div class="sidebar-section setup-section" id="sessionSetupSection">
-      <!-- Form panel -->
       <div id="sessionFormPanel">
         <h2 style="font-size:1rem;font-weight:700;margin-bottom:14px;color:var(--text);">Join a Session</h2>
         <input type="text" class="setup-input" id="onboardName" placeholder="Your name" autocomplete="given-name">
@@ -999,25 +1003,26 @@ body {
           <button type="button" class="btn-loc-setup" id="btn-flpark">📍 Fred Lindstrom Park</button>
           <button type="button" class="btn-loc-setup" id="btn-lhresort">📍 Lighthouse Resort</button>
         </div>
-      </div>
 
-      <!-- Confirm panel -->
-      <div id="sessionConfirmPanel" style="display:none;">
-        <p class="confirm-location" id="confirmLocation"></p>
-        <div class="confirm-identity">
-          <span class="confirm-name" id="confirmName"></span>
-          <span class="confirm-skill" id="confirmSkill"></span>
+        <!-- Confirm panel — appears below location buttons -->
+        <div id="sessionConfirmPanel" style="display:none;">
+          <div class="confirm-card">
+            <p class="confirm-location" id="confirmLocation"></p>
+            <div class="confirm-identity">
+              <span class="confirm-name" id="confirmName"></span>
+              <span class="confirm-skill" id="confirmSkill"></span>
+            </div>
+            <div style="display:flex;gap:8px;margin-top:12px;">
+              <button type="button" class="btn-confirm-join" id="btn-confirmJoin">Join Session</button>
+              <button type="button" class="btn-confirm-back" id="btn-confirmBack">Back</button>
+            </div>
+          </div>
         </div>
-        <div style="display:flex;gap:8px;margin-top:16px;">
-          <button type="button" class="btn-confirm-join" id="btn-confirmJoin">Join Session</button>
-          <button type="button" class="btn-confirm-back" id="btn-confirmBack">Back</button>
-        </div>
-      </div>
 
-      <!-- Loading panel -->
-      <div id="sessionLoading" class="session-loading" style="display:none;">
-        <span class="session-spinner"></span>
-        <span id="sessionLoadingText">Connecting…</span>
+        <div id="sessionLoading" class="session-loading" style="display:none;">
+          <span class="session-spinner"></span>
+          <span id="sessionLoadingText">Connecting…</span>
+        </div>
       </div>
     </div>
 
@@ -2322,11 +2327,9 @@ const Onboard = {
     const user = this._saveIdentity();
     if (!user) return;
     this._pendingKey = key;
-    // Show confirm panel
     document.getElementById('confirmLocation').textContent = '📍 ' + loc.label;
     document.getElementById('confirmName').textContent = user.name;
-    document.getElementById('confirmSkill').textContent = user.skill ? '· ' + user.skill : '';
-    document.getElementById('sessionFormPanel').style.display = 'none';
+    document.getElementById('confirmSkill').textContent = user.skill ? '· Skill ' + user.skill : '';
     document.getElementById('sessionConfirmPanel').style.display = '';
   },
 
@@ -2344,7 +2347,6 @@ const Onboard = {
   cancelJoin() {
     this._pendingKey = null;
     document.getElementById('sessionConfirmPanel').style.display = 'none';
-    document.getElementById('sessionFormPanel').style.display = '';
   },
 
 
@@ -2352,10 +2354,7 @@ const Onboard = {
     // Show the sidebar setup section (called by Session.leave())
     const setup = document.getElementById('sessionSetupSection');
     if (setup) setup.style.display = '';
-    // Make sure form panel is visible and confirm panel is hidden
-    const form = document.getElementById('sessionFormPanel');
     const confirm = document.getElementById('sessionConfirmPanel');
-    if (form) form.style.display = '';
     if (confirm) confirm.style.display = 'none';
     this._pendingKey = null;
   },
