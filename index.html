@@ -1324,6 +1324,12 @@ const App = {
     return ids;
   },
 
+  getCourtMeta(courtId) {
+    const loc = Session.LOCATIONS.find(l => l.key === Session.id);
+    if (!loc || !loc.courts) return null;
+    return loc.courts.find(c => c.id === courtId) || null;
+  },
+
   // ─── Teams ─────────────────────────────────────
   addTeamWithSelf(playerId) {
     const selfId = Onboard.selfId;
@@ -1473,229 +1479,54 @@ const App = {
   },
 
   // ─── Assignment Algorithm ──────────────────────
-  assign() {
+  assignCourt(mode) {
+    const needed = mode === 'singles' ? 2 : 4;
     const onCourt = this.getPlayersOnCourts();
-    const pendingPlayerIds = new Set();
-    for (const pg of Object.values(this.state.pendingGames)) {
-      for (const id of [...pg.side1, ...pg.side2]) pendingPlayerIds.add(id);
-    }
-    const openCourts = this.state.courts.filter(c => c.active && !this.state.activeGames[c.id] && !this.state.pendingGames[c.id]);
+    const queue = this.state.players.filter(p => p.active && !onCourt.has(p.id));
+    if (queue.length < needed) return;
 
-    if (openCourts.length === 0) {
-      alert('No open courts. End a game to free up a court.');
-      return;
-    }
-
-    const available = this.state.players.filter(p => p.active && !onCourt.has(p.id) && !pendingPlayerIds.has(p.id));
-    if (available.length < 2) {
-      alert('Not enough available players. End some games first.');
-      return;
+    // Find next available court ID
+    let courtId;
+    const loc = Session.LOCATIONS.find(l => l.key === Session.id);
+    if (loc && loc.courts) {
+      const free = loc.courts.find(c => !this.state.activeGames[c.id] && !this.state.scoringGames[c.id]);
+      if (!free) return;
+      courtId = free.id;
+    } else {
+      courtId = this.state.nextCourtId;
+      this.state.nextCourtId++;
     }
 
-    // Central set: every player placed on a court goes here immediately
-    const assigned = new Set();
-    const isAvail = (id) => !assigned.has(id);
-
-    // Build pool with sitout priority
-    let pool = available.map(p => p.id);
+    // Build pool with priority ordering
+    let pool = queue.map(p => p.id);
     if (this.state.options.minimizeRepeats) {
       pool.sort((a, b) => this.getSitoutCount(b) - this.getSitoutCount(a));
     } else {
       pool = this.shuffle(pool);
     }
+    if (this.state.options.useSkill && mode !== 'singles') {
+      pool.sort((a, b) => (this.getPlayer(a).score || 4) - (this.getPlayer(b).score || 4));
+    }
 
-    const assignments = [];
-    const sittingOut = [];
-    const courts = [...openCourts];
-
-    // Helper: pick next available team from a list (both members must be free)
-    const pickTeam = (list) => {
-      for (let i = 0; i < list.length; i++) {
-        if (isAvail(list[i].p1) && isAvail(list[i].p2)) {
-          return list.splice(i, 1)[0];
-        }
-      }
-      return null;
-    };
-
-    // Helper: pick next available solo from a list
-    const pickSolo = (list) => {
-      for (let i = 0; i < list.length; i++) {
-        if (isAvail(list[i])) {
-          return list.splice(i, 1)[0];
-        }
-      }
-      return null;
-    };
-
-    // Helper: mark players as assigned
-    const markAssigned = (ids) => { for (const id of ids) assigned.add(id); };
-
-    // Build team pools
-    const availSet = new Set(pool);
-    let lockedTeams = this.shuffle(
-      this.state.teams.filter(t => t.doNotSplit && availSet.has(t.p1) && availSet.has(t.p2))
-    );
-    let flexTeams = this.shuffle(
-      this.state.teams.filter(t => !t.doNotSplit && availSet.has(t.p1) && availSet.has(t.p2))
-    );
-
-    // Build solo pools
-    const inLockedTeam = new Set();
-    for (const t of lockedTeams) { inLockedTeam.add(t.p1); inLockedTeam.add(t.p2); }
-    const inAnyTeam = new Set(inLockedTeam);
-    for (const t of flexTeams) { inAnyTeam.add(t.p1); inAnyTeam.add(t.p2); }
-
-    // All solo players are eligible for doubles; those open to 1v1 are also eligible for singles
-    let soloDoubles = pool.filter(id => !inAnyTeam.has(id));
-    let soloSingles = pool.filter(id => this.getPlayer(id).wantsSingles && !inLockedTeam.has(id));
-
-    if (this.state.options.useSkill) {
-      soloDoubles.sort((a, b) => (this.getPlayer(a).score || 4) - (this.getPlayer(b).score || 4));
+    const picked = pool.slice(0, needed);
+    let side1, side2;
+    if (mode === 'singles') {
+      side1 = [picked[0]];
+      side2 = [picked[1]];
     } else {
-      soloDoubles = this.shuffle(soloDoubles);
-    }
-    soloSingles = this.shuffle(soloSingles);
-
-    // ── Phase 1: Fill courts with 2v2 ──
-    while (courts.length > 0) {
-      let side1 = null, side2 = null;
-
-      // Try locked teams
-      let t = pickTeam(lockedTeams);
-      if (t) side1 = [t.p1, t.p2];
-      t = pickTeam(lockedTeams);
-      if (t) side2 = [t.p1, t.p2];
-
-      // Try flex teams
-      if (!side1) { t = pickTeam(flexTeams); if (t) side1 = [t.p1, t.p2]; }
-      if (!side2) { t = pickTeam(flexTeams); if (t) side2 = [t.p1, t.p2]; }
-
-      // Fill with solo doubles
-      if (!side1) {
-        const a = pickSolo(soloDoubles), b = pickSolo(soloDoubles);
-        if (a !== null && b !== null) side1 = [a, b];
-        else { if (a !== null) soloDoubles.unshift(a); }
-      }
-      if (!side2) {
-        const a = pickSolo(soloDoubles), b = pickSolo(soloDoubles);
-        if (a !== null && b !== null) side2 = [a, b];
-        else { if (a !== null) soloDoubles.unshift(a); }
-      }
-
-      if (side1 && side2) {
-        markAssigned([...side1, ...side2]);
-        if (this.state.options.useSkill) {
-          [side1, side2] = this.balanceDoublesSkill(side1, side2);
-        }
-        if (this.state.options.minimizeRepeats) {
-          [side1, side2] = this.optimizeDoublesRepeats(side1, side2);
-        }
-        const court = courts.shift();
-        assignments.push({ courtId: court.id, side1, side2, mode: 'doubles' });
-      } else {
-        // Can't form a full doubles match — put half-side back if it was a locked team
-        if (side1 && !side2) {
-          const wasLocked = lockedTeams.some(t =>
-            (t.p1 === side1[0] && t.p2 === side1[1]) || (t.p1 === side1[1] && t.p2 === side1[0])
-          );
-          if (!wasLocked) {
-            soloDoubles.unshift(side1[0], side1[1]);
-          }
-          // locked teams with no opponent sit out (handled at end)
-        }
-        break;
-      }
+      side1 = [picked[0], picked[1]];
+      side2 = [picked[2], picked[3]];
+      if (this.state.options.useSkill) [side1, side2] = this.balanceDoublesSkill(side1, side2);
+      if (this.state.options.minimizeRepeats) [side1, side2] = this.optimizeDoublesRepeats(side1, side2);
     }
 
-    // ── Phase 2: Remaining courts → 1v1 for singles-preference players ──
-    // Collect unassigned singles-wanting players (solos + flex team members who want 1v1)
-    let singlesEligible = soloSingles.filter(id => isAvail(id));
-
-    // Flex team members who want singles and are still free — split them out
-    for (const t of flexTeams) {
-      if (isAvail(t.p1) && this.getPlayer(t.p1).wantsSingles) singlesEligible.push(t.p1);
-      if (isAvail(t.p2) && this.getPlayer(t.p2).wantsSingles) singlesEligible.push(t.p2);
-    }
-    // Deduplicate
-    singlesEligible = [...new Set(singlesEligible)].filter(id => isAvail(id));
-    singlesEligible = this.shuffle(singlesEligible);
-    if (this.state.options.useSkill) {
-      singlesEligible.sort((a, b) => (this.getPlayer(a).score || 4) - (this.getPlayer(b).score || 4));
-    }
-
-    while (courts.length > 0 && singlesEligible.length >= 2) {
-      const p1 = pickSolo(singlesEligible);
-      if (p1 === null) break;
-      let p2 = null;
-      if (this.state.options.minimizeRepeats) {
-        let bestScore = Infinity, bestIdx = -1;
-        for (let i = 0; i < singlesEligible.length; i++) {
-          if (!isAvail(singlesEligible[i])) continue;
-          const sc = this.getOpponentCount(p1, singlesEligible[i]);
-          if (sc < bestScore) { bestScore = sc; bestIdx = i; }
-        }
-        if (bestIdx >= 0) p2 = singlesEligible.splice(bestIdx, 1)[0];
-      } else {
-        p2 = pickSolo(singlesEligible);
-      }
-      if (p2 === null) break;
-      markAssigned([p1, p2]);
-      const court = courts.shift();
-      assignments.push({ courtId: court.id, side1: [p1], side2: [p2], mode: 'singles' });
-    }
-
-    // ── Phase 3: Fill any remaining courts with whoever is left ──
-    // Only doubles for non-1v1 players; only 1v1 if both players opted in
-    let leftover = pool.filter(id => isAvail(id));
-    leftover = this.shuffle(leftover);
-
-    while (courts.length > 0 && leftover.length >= 2) {
-      leftover = leftover.filter(id => isAvail(id));
-      if (leftover.length >= 4) {
-        const side1 = [leftover.shift(), leftover.shift()];
-        const side2 = [leftover.shift(), leftover.shift()];
-        markAssigned([...side1, ...side2]);
-        const court = courts.shift();
-        assignments.push({ courtId: court.id, side1, side2, mode: 'doubles' });
-      } else {
-        // Only pair as 1v1 if both want singles
-        const singlesLeft = leftover.filter(id => this.getPlayer(id).wantsSingles);
-        if (singlesLeft.length >= 2) {
-          const p1 = singlesLeft[0], p2 = singlesLeft[1];
-          leftover = leftover.filter(id => id !== p1 && id !== p2);
-          markAssigned([p1, p2]);
-          const court = courts.shift();
-          assignments.push({ courtId: court.id, side1: [p1], side2: [p2], mode: 'singles' });
-        } else {
-          break;
-        }
-      }
-    }
-
-    // Everyone not assigned sits out
-    for (const id of pool) {
-      if (!assigned.has(id)) sittingOut.push(id);
-    }
-
-    for (const id of sittingOut) {
-      this.state.sitoutCounts[id] = (this.state.sitoutCounts[id] || 0) + 1;
-    }
-
-    // Cross-court optimization for doubles
-    const doublesOnly = assignments.filter(a => a.mode === 'doubles');
-    if (this.state.options.minimizeRepeats && doublesOnly.length > 1) {
-      this.crossCourtOptimize(doublesOnly);
-    }
-
-    // Activate games (history recorded when End Game is clicked)
-    const now = Date.now();
-    for (const a of assignments) {
-      this.state.activeGames[a.courtId] = { side1: [...a.side1], side2: [...a.side2], mode: a.mode, startedAt: now };
-    }
-
+    this.state.activeGames[courtId] = {
+      side1,
+      side2,
+      mode: mode === 'singles' ? 'singles' : 'doubles',
+      startedAt: Date.now(),
+    };
     this.state.round++;
-    this.state.currentSittingOut = sittingOut;
     this.saveState();
     this.render();
   },
@@ -1821,18 +1652,9 @@ const App = {
     localStorage.removeItem('pickleJar');
     this.state = {
       players: [], teams: [],
-      courts: [
-        { id: 1, active: false },
-        { id: 2, active: false },
-        { id: 3, active: false },
-        { id: 4, active: false },
-        { id: 5, active: false },
-        { id: 6, active: false },
-      ],
       options: { useSkill: false, minimizeRepeats: false },
       opponentHistory: {}, sitoutCounts: {}, round: 0,
-      activeGames: {}, scoringGames: {}, pendingGames: {}, selectedPlayerId: null,
-      currentSittingOut: null, roundHistory: [], nextId: 1,
+      activeGames: {}, scoringGames: {}, roundHistory: [], nextId: 1, nextCourtId: 1,
     };
     this.saveState();
     this.render();
@@ -1844,7 +1666,7 @@ const App = {
     this.renderTeammateList();
     this.renderTeams();
     this.renderCourts();
-    this.renderSittingOut();
+    this.renderQueue();
     this.renderHistory();
 
     document.getElementById('optSkill').checked = this.state.options.useSkill;
@@ -1858,29 +1680,16 @@ const App = {
       return;
     }
     el.innerHTML = this.state.players.map(p => {
-      const sitouts = this.getSitoutCount(p.id);
       const courtNum = this.getPlayerCourt(p.id);
       const onCourt = courtNum !== null;
-      const pendingCourt = this.getPlayerPendingCourt(p.id);
-      const isPending = pendingCourt !== null;
-      const isSelected = this.state.selectedPlayerId === p.id;
-      const locked = onCourt || isPending;
-      const itemClass = [
-        'player-item',
-        onCourt ? 'on-court' : '',
-        isPending ? 'pending' : '',
-        isSelected ? 'selected' : '',
-      ].filter(Boolean).join(' ');
-      const canSelect = p.active && !locked;
+      const locked = onCourt;
+      const itemClass = ['player-item', onCourt ? 'on-court' : ''].filter(Boolean).join(' ');
       return `<li class="${itemClass}">
         <input type="checkbox" ${p.active ? 'checked' : ''} ${locked ? 'disabled' : ''} onchange="App.togglePlayer(${p.id})">
-        <span class="player-name${canSelect ? ' selectable' : ''}" onclick="${canSelect ? `App.selectPlayer(${p.id})` : ''}">${this.esc(p.name)}</span>
+        <span class="player-name">${this.esc(p.name)}</span>
         ${onCourt ? `<span class="player-court-badge">Ct ${courtNum}</span>` : ''}
-        ${isPending ? `<span class="player-pending-badge">Ct ${pendingCourt}</span>` : ''}
-        ${p.wantsSingles ? `<span class="player-pref wants-singles" onclick="App.toggleSingles(${p.id})" title="Open to 1v1 — click to remove">1v1</span>` : ''}
         ${p.roundsPlayed ? `<span class="player-rounds">${p.roundsPlayed} gm${p.roundsPlayed !== 1 ? 's' : ''}</span>` : ''}
         ${p.score !== null ? `<span class="player-score">${p.score}</span>` : ''}
-        ${sitouts > 0 && !onCourt && !isPending ? `<span class="player-sitout">sat ${sitouts}</span>` : ''}
         <button class="btn btn-ghost btn-sm player-remove" onclick="App.removePlayer(${p.id})" ${locked ? 'disabled' : ''}>&times;</button>
       </li>`;
     }).join('');
@@ -1931,64 +1740,42 @@ const App = {
 
   renderCourts() {
     const el = document.getElementById('courtsGrid');
+    const activeIds = Object.keys(this.state.activeGames).map(Number).sort((a, b) => a - b);
 
-    el.innerHTML = this.state.courts.map(court => {
-      const game = this.state.activeGames[court.id];
-      const pending = this.state.pendingGames[court.id];
-      const hasGame = !!game;
-      const hasPending = !!pending;
-      const cls = [
-        'court-card',
-        !court.active ? 'inactive' : '',
-        hasGame ? 'game-active' : '',
-        hasPending ? 'pending' : '',
-      ].filter(Boolean).join(' ');
+    if (activeIds.length === 0) {
+      el.innerHTML = '';
+      return;
+    }
 
-      const isScoring = !!this.state.scoringGames[court.id];
+    el.innerHTML = activeIds.map(courtId => {
+      const game = this.state.activeGames[courtId];
+      const isScoring = !!this.state.scoringGames[courtId];
+      const meta = this.getCourtMeta(courtId);
+      const modeBadge = `<span class="court-mode-badge">${game.mode === 'singles' ? '1v1' : '2v2'}</span>`;
+      const timerBadge = game.startedAt ? `<span class="court-timer" id="timer-${courtId}">${this.formatTimer(Date.now() - game.startedAt)}</span>` : '';
+      const typeBadge = meta ? `<span class="court-type-badge court-type-${meta.type || ''}" title="${meta.note || ''}">${meta.type === 'lines' ? 'Lines' : 'Net'}</span>` : '';
+      const cardClass = isScoring ? 'court-card' : 'court-card game-active';
+
       let bodyHTML;
-      if (hasPending && !hasGame) {
-        const canStart = pending.side1.length >= 1 && pending.side2.length >= 1;
-        const renderSlots = (side, sideNum) => {
-          const slots = [];
-          for (let i = 0; i < 2; i++) {
-            if (side[i]) {
-              const p = this.getPlayer(side[i]);
-              slots.push(`<div class="pending-player"><span>${p ? this.esc(p.name) : '?'}</span><button class="btn btn-ghost btn-sm" onclick="App.removeFromPending(${court.id},${side[i]})">&times;</button></div>`);
-            } else {
-              slots.push(`<div class="pending-slot">tap player, then tap here</div>`);
-            }
-          }
-          return slots.join('');
-        };
-        bodyHTML = `<div class="pending-assignment" onclick="App.placePlayer(${court.id})">
-          <div class="pending-side side-1">${renderSlots(pending.side1, 1)}</div>
-          <div class="court-vs">VS</div>
-          <div class="pending-side side-2">${renderSlots(pending.side2, 2)}</div>
-          <div class="pending-buttons">
-            ${canStart ? `<button class="btn btn-start-game" onclick="event.stopPropagation();App.startGame(${court.id})">Start Game</button>` : ''}
-            <button class="btn btn-outline btn-sm" onclick="event.stopPropagation();App.clearPending(${court.id})">Clear</button>
-          </div>
-        </div>`;
-      } else if (hasGame && isScoring) {
+      if (isScoring) {
         const s1Names = game.side1.map(id => { const p = this.getPlayer(id); return p ? this.esc(p.name) : '?'; }).join(' & ');
         const s2Names = game.side2.map(id => { const p = this.getPlayer(id); return p ? this.esc(p.name) : '?'; }).join(' & ');
         bodyHTML = `<div class="score-entry">
           <div class="score-side side-1">
             <span class="side-names">${s1Names}</span>
-            <input type="number" id="score-s1-${court.id}" min="0" placeholder="0" onkeydown="if(event.key==='Enter')App.submitScore(${court.id})">
+            <input type="number" id="score-s1-${courtId}" min="0" placeholder="0" onkeydown="if(event.key==='Enter')App.submitScore(${courtId})">
           </div>
           <div class="court-vs">VS</div>
           <div class="score-side side-2">
             <span class="side-names">${s2Names}</span>
-            <input type="number" id="score-s2-${court.id}" min="0" placeholder="0" onkeydown="if(event.key==='Enter')App.submitScore(${court.id})">
+            <input type="number" id="score-s2-${courtId}" min="0" placeholder="0" onkeydown="if(event.key==='Enter')App.submitScore(${courtId})">
           </div>
           <div class="score-buttons">
-            <button class="btn btn-assign" style="padding:8px 16px;font-size:0.85rem;" onclick="App.submitScore(${court.id})">Submit</button>
-            <button class="btn btn-outline" onclick="App.cancelScoring(${court.id})">Cancel</button>
+            <button class="btn btn-assign" style="padding:8px 16px;font-size:0.85rem;" onclick="App.submitScore(${courtId})">Save Score</button>
+            <button class="btn btn-outline" onclick="App.endWithoutScore(${courtId})">End without score</button>
           </div>
         </div>`;
-      } else if (hasGame) {
-        const modeLabel = game.mode === 'singles' ? '1v1' : '2v2';
+      } else {
         bodyHTML = `<div class="court-assignment">
           <div class="court-side side-1">
             ${game.side1.map(id => this.renderSidePlayer(id, game.side1)).join('')}
@@ -1997,30 +1784,16 @@ const App = {
           <div class="court-side side-2">
             ${game.side2.map(id => this.renderSidePlayer(id, game.side2)).join('')}
           </div>
-          <div style="display:flex;gap:6px;margin-top:8px;">
-            <button class="btn btn-end-game" style="margin-top:0;" onclick="App.endGame(${court.id})">End Game</button>
-            <button class="btn btn-end-game" style="margin-top:0;color:var(--text-light);border-color:var(--border);" onclick="App.clearCourt(${court.id})">Clear</button>
-          </div>
+          <button class="btn btn-end-game" onclick="App.endGame(${courtId})">End Match</button>
         </div>`;
-      } else {
-        const hasSelected = !!this.state.selectedPlayerId;
-        const clickHandler = court.active && hasSelected ? `onclick="App.placePlayer(${court.id})"` : '';
-        const label = !court.active ? 'Inactive' : hasSelected ? 'Tap to place player here' : 'Open';
-        bodyHTML = `<div class="court-empty${court.active && hasSelected ? ' clickable' : ''}" ${clickHandler}>${label}</div>`;
       }
 
-      const modeBadge = hasGame ? `<span class="court-mode-badge">${game.mode === 'singles' ? '1v1' : '2v2'}</span>` : '';
-      const timerBadge = hasGame && game.startedAt ? `<span class="court-timer" id="timer-${court.id}">${this.formatTimer(Date.now() - game.startedAt)}</span>` : '';
-      const hasPendingForStatus = hasPending && !hasGame;
-      const statusLabel = hasGame ? 'Playing' : hasPendingForStatus ? 'Setting up' : '';
-
-      return `<div class="${cls}">
+      return `<div class="${cardClass}">
         <div class="court-header">
-          <span>Court ${court.id} ${modeBadge} ${timerBadge}</span>
-          ${court.note ? `<span class="court-type-badge court-type-${court.type || ''}" title="${court.note}">${court.type === 'lines' ? 'Lines' : 'Net'}</span>` : ''}
-          <div class="court-controls">
-            ${statusLabel ? `<span class="court-status">${statusLabel}</span>` : ''}
-            <label><input type="checkbox" ${court.active ? 'checked' : ''} ${hasGame || hasPending ? 'disabled' : ''} onchange="App.toggleCourt(${court.id})"> On</label>
+          <span>Court ${courtId} ${modeBadge} ${timerBadge}</span>
+          <div class="court-controls" style="gap:8px;">
+            ${typeBadge}
+            <span class="court-status">${isScoring ? 'Score entry' : 'Playing'}</span>
           </div>
         </div>
         <div class="court-body">${bodyHTML}</div>
@@ -2045,20 +1818,42 @@ const App = {
     </div>`;
   },
 
-  renderSittingOut() {
-    const el = document.getElementById('sittingOut');
-    const bench = document.getElementById('benchPlayers');
-    const sitting = this.state.currentSittingOut;
+  renderQueue() {
+    const onCourt = this.getPlayersOnCourts();
+    const all = this.state.players;
+    const queuePlayers = all.filter(p => !onCourt.has(p.id));
+    const active = queuePlayers.filter(p => p.active);
 
-    if (!sitting || sitting.length === 0) {
-      el.style.display = 'none';
-      return;
+    const countEl = document.getElementById('queueCount');
+    const playersEl = document.getElementById('queuePlayers');
+    const assignBar = document.getElementById('assignBar');
+    const btn1v1 = document.getElementById('btnAssign1v1');
+    const btn2v2 = document.getElementById('btnAssign2v2');
+    if (!countEl) return;
+
+    countEl.textContent = active.length === 1 ? '1 player' : `${active.length} players`;
+
+    if (queuePlayers.length === 0) {
+      playersEl.innerHTML = '<span style="color:var(--text-muted);font-size:0.85rem;font-style:italic;">No players yet — add players to get started</span>';
+    } else {
+      playersEl.innerHTML = queuePlayers.map(p => {
+        const scoreStr = p.score !== null ? ` · ${p.score}` : '';
+        return `<span class="queue-chip${p.active ? '' : ' inactive'}">${this.esc(p.name)}${scoreStr}</span>`;
+      }).join('');
     }
-    el.style.display = '';
-    bench.innerHTML = sitting.map(id => {
-      const p = this.getPlayer(id);
-      return p ? `<span class="bench-player">${this.esc(p.name)} (sat ${this.getSitoutCount(id)})</span>` : '';
-    }).join('');
+
+    // Show assign bar only with a session and enough players
+    if (Session.id && active.length >= 2) {
+      assignBar.style.display = 'flex';
+      // Check if all location courts are in use
+      const loc = Session.LOCATIONS.find(l => l.key === Session.id);
+      const allCourtsUsed = loc && loc.courts &&
+        loc.courts.every(c => !!this.state.activeGames[c.id] || !!this.state.scoringGames[c.id]);
+      btn1v1.disabled = active.length < 2 || !!allCourtsUsed;
+      btn2v2.disabled = active.length < 4 || !!allCourtsUsed;
+    } else {
+      assignBar.style.display = 'none';
+    }
   },
 
   renderHistory() {
@@ -2162,11 +1957,6 @@ const Session = {
     this.label = label;
     this._setURL(id);
     this._setLoading(true, isNew ? 'Creating session…' : 'Joining session…');
-    // Apply location-specific court config for new sessions
-    const loc = this.LOCATIONS.find(l => l.key === id);
-    if (loc && loc.courts) {
-      App.state.courts = loc.courts.map(c => ({ ...c }));
-    }
     try {
       const data = isNew ? null : await this._get();
       if (data) {
