@@ -881,6 +881,53 @@ body {
   color: var(--primary);
   box-shadow: var(--shadow-sm);
 }
+/* Confirm panel */
+.confirm-location {
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--text);
+  margin-bottom: 10px;
+}
+.confirm-identity {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  padding: 10px 14px;
+  background: var(--hover-bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+}
+.confirm-name { font-size: 0.95rem; font-weight: 600; color: var(--text); }
+.confirm-skill { font-size: 0.82rem; color: var(--text-light); }
+.btn-confirm-join {
+  flex: 1;
+  padding: 10px;
+  background: var(--primary);
+  color: white;
+  border: none;
+  border-radius: var(--radius-sm);
+  font-size: 0.9rem;
+  font-weight: 700;
+  font-family: inherit;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+.btn-confirm-join:hover { background: var(--primary-hover); }
+.btn-confirm-back {
+  flex: 1;
+  padding: 10px;
+  background: transparent;
+  color: var(--text-light);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  font-size: 0.9rem;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+.btn-confirm-back:hover { background: var(--hover-bg); }
+
 .session-loading {
   display: flex;
   align-items: center;
@@ -942,15 +989,32 @@ body {
   <aside class="sidebar">
     <!-- Session Setup -->
     <div class="sidebar-section setup-section" id="sessionSetupSection">
-      <h2>Join a Session</h2>
-      <input type="text" class="setup-input" id="onboardName" placeholder="Your name" autocomplete="given-name">
-      <input type="number" class="setup-input" id="onboardSkill" placeholder="Skill level (optional)" min="2" max="8" step="0.01" onblur="App.fmtDUPR(this)">
-      <p id="onboardNameError" class="setup-error">Enter your name first</p>
-      <div class="setup-locations">
-        <button type="button" class="btn-loc-setup" id="btn-flpark">📍 Fred Lindstrom Park</button>
-        <button type="button" class="btn-loc-setup" id="btn-lhresort">📍 Lighthouse Resort</button>
+      <!-- Form panel -->
+      <div id="sessionFormPanel">
+        <h2 style="font-size:1rem;font-weight:700;margin-bottom:14px;color:var(--text);">Join a Session</h2>
+        <input type="text" class="setup-input" id="onboardName" placeholder="Your name" autocomplete="given-name">
+        <input type="number" class="setup-input" id="onboardSkill" placeholder="Skill level (optional)" min="2" max="8" step="0.01" onblur="App.fmtDUPR(this)">
+        <p id="onboardNameError" class="setup-error">Enter your name first</p>
+        <div class="setup-locations">
+          <button type="button" class="btn-loc-setup" id="btn-flpark">📍 Fred Lindstrom Park</button>
+          <button type="button" class="btn-loc-setup" id="btn-lhresort">📍 Lighthouse Resort</button>
+        </div>
       </div>
 
+      <!-- Confirm panel -->
+      <div id="sessionConfirmPanel" style="display:none;">
+        <p class="confirm-location" id="confirmLocation"></p>
+        <div class="confirm-identity">
+          <span class="confirm-name" id="confirmName"></span>
+          <span class="confirm-skill" id="confirmSkill"></span>
+        </div>
+        <div style="display:flex;gap:8px;margin-top:16px;">
+          <button type="button" class="btn-confirm-join" id="btn-confirmJoin">Join Session</button>
+          <button type="button" class="btn-confirm-back" id="btn-confirmBack">Back</button>
+        </div>
+      </div>
+
+      <!-- Loading panel -->
       <div id="sessionLoading" class="session-loading" style="display:none;">
         <span class="session-spinner"></span>
         <span id="sessionLoadingText">Connecting…</span>
@@ -2250,13 +2314,37 @@ const Onboard = {
     return user;
   },
 
+  _pendingKey: null,
+
   joinLocation(key) {
     const loc = Session.LOCATIONS.find(l => l.key === key);
     if (!loc) return;
     const user = this._saveIdentity();
     if (!user) return;
-    // Don't hide yet — keep setup section visible so loading spinner shows
+    this._pendingKey = key;
+    // Show confirm panel
+    document.getElementById('confirmLocation').textContent = '📍 ' + loc.label;
+    document.getElementById('confirmName').textContent = user.name;
+    document.getElementById('confirmSkill').textContent = user.skill ? '· ' + user.skill : '';
+    document.getElementById('sessionFormPanel').style.display = 'none';
+    document.getElementById('sessionConfirmPanel').style.display = '';
+  },
+
+  confirmJoin() {
+    const key = this._pendingKey;
+    if (!key) return;
+    const loc = Session.LOCATIONS.find(l => l.key === key);
+    if (!loc) return;
+    const user = this._savedUser();
+    if (!user) return;
+    document.getElementById('sessionConfirmPanel').style.display = 'none';
     Session._connect(loc.key, loc.label, false, user);
+  },
+
+  cancelJoin() {
+    this._pendingKey = null;
+    document.getElementById('sessionConfirmPanel').style.display = 'none';
+    document.getElementById('sessionFormPanel').style.display = '';
   },
 
 
@@ -2264,6 +2352,12 @@ const Onboard = {
     // Show the sidebar setup section (called by Session.leave())
     const setup = document.getElementById('sessionSetupSection');
     if (setup) setup.style.display = '';
+    // Make sure form panel is visible and confirm panel is hidden
+    const form = document.getElementById('sessionFormPanel');
+    const confirm = document.getElementById('sessionConfirmPanel');
+    if (form) form.style.display = '';
+    if (confirm) confirm.style.display = 'none';
+    this._pendingKey = null;
   },
 
   // ─── Profile editing ─────────────────────────
@@ -2330,6 +2424,8 @@ const Onboard = {
 Onboard.init();
 document.getElementById('btn-flpark').addEventListener('click', function() { Onboard.joinLocation('flpark'); });
 document.getElementById('btn-lhresort').addEventListener('click', function() { Onboard.joinLocation('lhresort'); });
+document.getElementById('btn-confirmJoin').addEventListener('click', function() { Onboard.confirmJoin(); });
+document.getElementById('btn-confirmBack').addEventListener('click', function() { Onboard.cancelJoin(); });
 </script>
 </body>
 </html>
