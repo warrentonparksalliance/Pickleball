@@ -881,34 +881,6 @@ body {
   color: var(--primary);
   box-shadow: var(--shadow-sm);
 }
-.setup-code-row { border-top: 1px solid var(--border); padding-top: 14px; margin-top: 6px; }
-.setup-code-row .setup-input { margin-bottom: 8px; }
-.btn-setup-outline {
-  padding: 8px 12px;
-  border: 1.5px solid var(--primary);
-  border-radius: var(--radius-sm);
-  background: transparent;
-  color: var(--primary);
-  font-size: 0.85rem;
-  font-weight: 600;
-  font-family: inherit;
-  cursor: pointer;
-  transition: background 0.15s;
-}
-.btn-setup-outline:hover { background: var(--primary-light); }
-.btn-setup-solid {
-  padding: 8px 12px;
-  border: none;
-  border-radius: var(--radius-sm);
-  background: var(--primary);
-  color: white;
-  font-size: 0.85rem;
-  font-weight: 600;
-  font-family: inherit;
-  cursor: pointer;
-  transition: background 0.15s;
-}
-.btn-setup-solid:hover { background: var(--primary-hover); }
 .session-loading {
   display: flex;
   align-items: center;
@@ -978,13 +950,7 @@ body {
         <button type="button" class="btn-loc-setup" id="btn-flpark">📍 Fred Lindstrom Park</button>
         <button type="button" class="btn-loc-setup" id="btn-lhresort">📍 Lighthouse Resort</button>
       </div>
-      <div class="setup-code-row">
-        <input type="text" class="setup-input" id="onboardCode" placeholder="Or enter a session code">
-        <div style="display:flex;gap:6px;margin-top:6px;">
-          <button type="button" class="btn-setup-outline" id="btn-joinCode" style="flex:1;">Join</button>
-          <button type="button" class="btn-setup-solid" id="btn-createCode" style="flex:1;">Create New</button>
-        </div>
-      </div>
+
       <div id="sessionLoading" class="session-loading" style="display:none;">
         <span class="session-spinner"></span>
         <span id="sessionLoadingText">Connecting…</span>
@@ -2287,25 +2253,6 @@ const Onboard = {
     Session._connect(loc.key, loc.label, false, user);
   },
 
-  joinCode() {
-    const raw = document.getElementById('onboardCode')?.value.trim() || '';
-    if (raw.length < 2) { document.getElementById('onboardCode')?.focus(); return; }
-    const user = this._saveIdentity();
-    if (!user) return;
-    Session._connect(raw.toLowerCase().replace(/\s+/g, '-'), raw, false, user);
-  },
-
-  createCode() {
-    const codeEl = document.getElementById('onboardCode');
-    const raw = codeEl?.value.trim() || '';
-    if (raw.length < 2) {
-      if (codeEl) { codeEl.placeholder = 'Enter a code first'; codeEl.focus(); }
-      return;
-    }
-    const user = this._saveIdentity();
-    if (!user) return;
-    Session._connect(raw.toLowerCase().replace(/\s+/g, '-'), raw, true, user);
-  },
 
   showStep() {
     // Show the sidebar setup section (called by Session.leave())
@@ -2377,9 +2324,6 @@ const Onboard = {
 Onboard.init();
 document.getElementById('btn-flpark').addEventListener('click', function() { Onboard.joinLocation('flpark'); });
 document.getElementById('btn-lhresort').addEventListener('click', function() { Onboard.joinLocation('lhresort'); });
-document.getElementById('btn-joinCode').addEventListener('click', function() { Onboard.joinCode(); });
-document.getElementById('btn-createCode').addEventListener('click', function() { Onboard.createCode(); });
-document.getElementById('onboardCode').addEventListener('keydown', function(e) { if (e.key === 'Enter') Onboard.joinCode(); });
 </script>
 </body>
 </html>
