@@ -1309,13 +1309,26 @@ const App = {
     this.render();
   },
 
+  _pendingRemove: null,
+
   removePlayer(id) {
     if (this.isPlayerOnCourt(id)) return;
-    const p = this.getPlayer(id);
-    if (!confirm(`Remove ${p ? p.name : 'this player'} from the session?`)) return;
-    this.state.players = this.state.players.filter(p => p.id !== id);
-    this.state.teams = this.state.teams.filter(t => t.p1 !== id && t.p2 !== id);
-    this.saveState();
+    if (this._pendingRemove === id) {
+      // Confirmed — actually remove
+      this._pendingRemove = null;
+      this.state.players = this.state.players.filter(p => p.id !== id);
+      this.state.teams = this.state.teams.filter(t => t.p1 !== id && t.p2 !== id);
+      this.saveState();
+      this.render();
+    } else {
+      // First tap — ask for confirmation
+      this._pendingRemove = id;
+      this.render();
+    }
+  },
+
+  cancelRemove() {
+    this._pendingRemove = null;
     this.render();
   },
 
@@ -1719,6 +1732,13 @@ const App = {
       return;
     }
     el.innerHTML = queuePlayers.map(p => {
+      if (this._pendingRemove === p.id) {
+        return `<span class="queue-chip" style="display:inline-flex;align-items:center;gap:6px;background:#fef2f2;border-color:#fecaca;color:var(--danger);">
+          <span>Remove ${this.esc(p.name)}?</span>
+          <button class="btn btn-ghost" style="padding:1px 6px;font-size:0.78rem;font-weight:700;color:var(--danger);border:1px solid #fca5a5;border-radius:4px;" onclick="App.removePlayer(${p.id})">Yes</button>
+          <button class="btn btn-ghost" style="padding:1px 6px;font-size:0.78rem;font-weight:700;color:var(--text-light);border:1px solid var(--border);border-radius:4px;" onclick="App.cancelRemove()">No</button>
+        </span>`;
+      }
       const base = p.active ? 'queue-chip' : 'queue-chip inactive';
       const scoreStr = p.score != null ? ` · ${p.score}` : '';
       const singlesStr = p.wantsSingles ? ' <span style="font-size:0.65rem;opacity:0.7;">1v1</span>' : '';
@@ -2018,6 +2038,12 @@ const Session = {
     );
     if (already) {
       Onboard.selfId = already.id;
+      // Ensure they're active in the queue when rejoining
+      if (!already.active) {
+        already.active = true;
+        App.saveState();
+        App.render();
+      }
     } else {
       const id = App.state.nextId++;
       Onboard.selfId = id;
