@@ -2131,7 +2131,29 @@ const Session = {
           return;
         }
         this._receiving = true;
+
+        // Stale-PUT protection: a full PUT snapshot that arrived AFTER we locally
+        // assigned a court (e.g. _addSelf from old code, or a joiner whose PUT was
+        // in-flight) would wipe activeGames.  Detect by checking whether we have
+        // local active courts that the incoming snapshot doesn't know about, with
+        // no additional round history to justify their removal.
+        const localGames   = App.state.activeGames  || {};
+        const localScoring = App.state.scoringGames || {};
+        const hasLocalGames    = Object.keys(localGames).length > 0 || Object.keys(localScoring).length > 0;
+        const incomingGames    = msg.data.activeGames;
+        const hasIncomingGames = incomingGames && Object.keys(incomingGames).length > 0;
+        const incomingHistLen  = (msg.data.roundHistory || []).length;
+        const localHistLen     = (App.state.roundHistory || []).length;
+        const isStale = hasLocalGames && !hasIncomingGames && incomingHistLen <= localHistLen;
+
         App.state = { ...App.state, ...msg.data };
+
+        if (isStale) {
+          // Restore courts the stale PUT wiped — players/options still update
+          App.state.activeGames  = localGames;
+          App.state.scoringGames = localScoring;
+        }
+
         App._normState();
         App.render();
         this._receiving = false;
