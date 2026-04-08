@@ -2011,9 +2011,11 @@ const Session = {
         App._normState();
         App.render();
         this._receiving = false;
-      } else {
-        this._put(App.state); // fire-and-forget — don't block UI on write
       }
+      // If data is null (session doesn't exist yet OR network error), don't PUT —
+      // the SSE initial 'put' event will deliver the real state. _addSelf via
+      // addSelfOnce will PATCH-create the session minimally so we don't risk
+      // overwriting an existing session with stale local state.
     } catch(e) { /* always continue to show UI */ }
     this._setLoading(false);
     this._listen(user); // user is added AFTER the initial SSE put to avoid race condition
@@ -2131,6 +2133,19 @@ const Session = {
         this._receiving = false;
         // Add self AFTER the initial state is received so we don't get overwritten
         addSelfOnce();
+      } catch(err) { /* ignore */ }
+    });
+
+    // Handle Firebase PATCH events (partial updates, e.g. from _addSelf on other devices)
+    src.addEventListener('patch', (e) => {
+      try {
+        const msg = JSON.parse(e.data);
+        if (!msg || !msg.data || msg.path !== '/') return;
+        this._receiving = true;
+        App.state = { ...App.state, ...msg.data };
+        App._normState();
+        App.render();
+        this._receiving = false;
       } catch(err) { /* ignore */ }
     });
   },
