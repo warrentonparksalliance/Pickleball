@@ -847,8 +847,9 @@ body {
   border-color: var(--primary);
   box-shadow: 0 0 0 3px var(--primary-light);
 }
-.score-buttons { display: flex; gap: 6px; margin-top: 6px; }
-.score-buttons .btn { flex: 1; }
+.score-buttons { display: flex; gap: 6px; margin-top: 6px; flex-wrap: wrap; }
+.score-buttons .btn { flex: 1; min-width: 80px; }
+.score-error { font-size: 0.8rem; color: var(--danger); min-height: 1em; }
 
 /* History winner */
 .history-match .winner { font-weight: 700; }
@@ -1423,7 +1424,8 @@ const App = {
     const score1 = parseInt(s1Input.value);
     const score2 = parseInt(s2Input.value);
     if (isNaN(score1) || isNaN(score2)) {
-      alert('Please enter scores for both sides.');
+      const errEl = document.getElementById(`score-err-${courtId}`);
+      if (errEl) errEl.textContent = 'Enter a score for both sides.';
       return;
     }
     const game = this.state.activeGames[courtId];
@@ -1817,16 +1819,18 @@ const App = {
         bodyHTML = `<div class="score-entry">
           <div class="score-side side-1">
             <span class="side-names">${s1Names}</span>
-            <input type="number" id="score-s1-${courtId}" min="0" placeholder="0" onkeydown="if(event.key==='Enter')App.submitScore(${courtId})">
+            <input type="number" id="score-s1-${courtId}" min="0" placeholder="–" onkeydown="if(event.key==='Enter')App.submitScore(${courtId})" oninput="document.getElementById('score-err-${courtId}').textContent=''">
           </div>
           <div class="court-vs">VS</div>
           <div class="score-side side-2">
             <span class="side-names">${s2Names}</span>
-            <input type="number" id="score-s2-${courtId}" min="0" placeholder="0" onkeydown="if(event.key==='Enter')App.submitScore(${courtId})">
+            <input type="number" id="score-s2-${courtId}" min="0" placeholder="–" onkeydown="if(event.key==='Enter')App.submitScore(${courtId})" oninput="document.getElementById('score-err-${courtId}').textContent=''">
           </div>
+          <div id="score-err-${courtId}" class="score-error"></div>
           <div class="score-buttons">
             <button class="btn btn-assign" style="padding:8px 16px;font-size:0.85rem;" onclick="App.submitScore(${courtId})">Save Score</button>
-            <button class="btn btn-outline" onclick="App.endWithoutScore(${courtId})">End without score</button>
+            <button class="btn btn-outline" onclick="App.endWithoutScore(${courtId})">No score</button>
+            <button class="btn btn-ghost" onclick="App.cancelScoring(${courtId})">Cancel</button>
           </div>
         </div>`;
       } else {
