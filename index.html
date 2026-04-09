@@ -1494,12 +1494,14 @@ const App = {
     } else {
       this.state.teams.push({ id: this.state.nextId++, p1: selfId, p2: playerId, doNotSplit: true });
     }
+    this._teamsLocalChange = Date.now();
     this.saveState();
     this.render();
   },
 
   removeTeam(id) {
     this.state.teams = this.state.teams.filter(t => t.id !== id);
+    this._teamsLocalChange = Date.now();
     this.saveState();
     this.render();
   },
@@ -2305,9 +2307,10 @@ const Session = {
         }
         this._receiving = true;
 
-        // Snapshot local courts and history BEFORE merging
+        // Snapshot local state BEFORE merging
         const localGames   = { ...(App.state.activeGames  || {}) };
         const localScoring = { ...(App.state.scoringGames || {}) };
+        const localTeams   = [...(App.state.teams || [])];
         const localHistLen = (App.state.roundHistory || []).length;
 
         // Merge incoming state
@@ -2330,6 +2333,12 @@ const Session = {
           if (!App.state.scoringGames[id] && !newlyEndedIds.has(String(id))) {
             App.state.scoringGames[id] = scoring;
           }
+        }
+
+        // Team protection: if teams were changed locally within the last 5 seconds,
+        // don't let a stale full-PUT from another device restore the old pairing.
+        if (App._teamsLocalChange && Date.now() - App._teamsLocalChange < 5000) {
+          App.state.teams = localTeams;
         }
 
         App.render();
