@@ -547,11 +547,11 @@ body {
 }
 .tooltip-wrap:hover .tooltip-box { display: block; }
 
-/* Courts grid */
+/* Courts grid — single column */
 .courts-grid {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
 }
 
 /* Court card */
@@ -738,46 +738,74 @@ body {
   padding: 16px;
   display: flex;
   flex-direction: column;
-  gap: 14px;
-}
-.assign-count-label {
-  font-size: 1rem;
-  font-weight: 700;
-  color: var(--text);
-}
-.assign-bar {
-  display: flex;
   gap: 10px;
 }
-.btn-assign-mode {
-  flex: 1;
-  padding: 12px 16px;
-  border: none;
-  border-radius: var(--radius);
-  font-family: inherit;
-  cursor: pointer;
+.assign-controls {
   display: flex;
   flex-direction: column;
+  gap: 10px;
+}
+.assign-options-row {
+  display: flex;
   align-items: center;
-  gap: 2px;
-  transition: background 0.15s, opacity 0.15s, transform 0.1s;
+  gap: 10px;
+  flex-wrap: wrap;
 }
-.btn-assign-mode:disabled { opacity: 0.4; cursor: not-allowed; }
-.btn-assign-mode:not(:disabled):active { transform: scale(0.97); }
-.btn-assign-mode.mode-singles { background: #dbeafe; color: #1d4ed8; }
-.btn-assign-mode.mode-singles:not(:disabled):hover { background: #bfdbfe; }
-.btn-assign-mode.mode-doubles { background: #d1fae5; color: #065f46; }
-.btn-assign-mode.mode-doubles:not(:disabled):hover { background: #a7f3d0; }
-.assign-mode-label {
-  font-size: 1.1rem;
-  font-weight: 800;
-  letter-spacing: -0.02em;
-}
-.assign-mode-desc {
-  font-size: 0.72rem;
+.assign-option-label {
+  font-size: 0.82rem;
+  color: var(--text-light);
   font-weight: 500;
-  opacity: 0.75;
+  white-space: nowrap;
 }
+.assign-court-select {
+  padding: 5px 8px;
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius-sm);
+  font-size: 0.875rem;
+  font-family: inherit;
+  background: var(--bg);
+  color: var(--text);
+  cursor: pointer;
+  font-weight: 600;
+  width: 60px;
+}
+.assign-court-select:focus { outline: none; border-color: var(--primary); }
+.assign-mode-toggle {
+  display: flex;
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+  margin-left: auto;
+}
+.btn-mode-pill {
+  padding: 5px 16px;
+  border: none;
+  background: transparent;
+  color: var(--text-light);
+  font-size: 0.82rem;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+}
+.btn-mode-pill + .btn-mode-pill { border-left: 1.5px solid var(--border); }
+.btn-mode-pill.active { background: var(--primary); color: white; }
+.btn-mode-pill:disabled { opacity: 0.4; cursor: not-allowed; }
+.btn-assign-all {
+  width: 100%;
+  padding: 11px;
+  background: var(--success);
+  color: white;
+  border: none;
+  border-radius: var(--radius-sm);
+  font-size: 0.95rem;
+  font-weight: 700;
+  font-family: inherit;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+.btn-assign-all:hover:not(:disabled) { background: #047857; }
+.btn-assign-all:disabled { opacity: 0.45; cursor: not-allowed; }
 
 /* History */
 .history-section {
@@ -910,11 +938,7 @@ body {
 
 /* Responsive */
 @media (max-width: 600px) {
-  .courts-grid { grid-template-columns: 1fr; }
   .page-wrap { padding: 12px 10px; }
-}
-@media (max-width: 550px) {
-  .courts-grid { grid-template-columns: 1fr; }
 }
 
 /* Session Bar */
@@ -1250,15 +1274,23 @@ body {
         <div class="section-title">Assign Courts</div>
         <div class="section-subtitle" id="assignCount"></div>
       </div>
-      <div class="assign-bar" id="assignBar" style="display:none;">
-        <button type="button" class="btn-assign-mode mode-singles" id="btnAssign1v1" onclick="App.assignCourt('singles')">
-          <span class="assign-mode-label">1v1</span>
-          <span class="assign-mode-desc">singles</span>
-        </button>
-        <button type="button" class="btn-assign-mode mode-doubles" id="btnAssign2v2" onclick="App.assignCourt('doubles')">
-          <span class="assign-mode-label">2v2</span>
-          <span class="assign-mode-desc">doubles</span>
-        </button>
+      <div class="assign-controls" id="assignControls" style="display:none;">
+        <div class="assign-options-row">
+          <span class="assign-option-label">Courts available</span>
+          <select id="courtCountSelect" class="assign-court-select" onchange="App.setAvailableCourts(this.value)">
+            <option value="1">1</option>
+            <option value="2">2</option>
+            <option value="3">3</option>
+            <option value="4">4</option>
+            <option value="5">5</option>
+            <option value="6">6</option>
+          </select>
+          <div class="assign-mode-toggle">
+            <button id="btnMode1v1" class="btn-mode-pill" onclick="App.setAssignMode('singles')">1v1</button>
+            <button id="btnMode2v2" class="btn-mode-pill" onclick="App.setAssignMode('doubles')">2v2</button>
+          </div>
+        </div>
+        <button id="btnAssignAll" class="btn-assign-all" onclick="App.assignAll()">Assign Courts</button>
       </div>
     </div>
 
@@ -1288,6 +1320,8 @@ const App = {
     roundHistory: [],
     nextId: 1,
     nextCourtId: 1,
+    assignMode: 'doubles',
+    availableCourts: 2,
   },
 
   // ─── Init ──────────────────────────────────────
@@ -1312,6 +1346,8 @@ const App = {
     if (!s.options) s.options = { useSkill: false, minimizeRepeats: false };
     if (!s.nextId)      s.nextId      = 1;
     if (!s.nextCourtId) s.nextCourtId = 1;
+    if (!s.assignMode)  s.assignMode  = 'doubles';
+    if (s.availableCourts == null) s.availableCourts = 2;
     // Remove legacy fields that may come back from old Firebase data
     delete s.courts; delete s.pendingGames; delete s.currentSittingOut; delete s.selectedPlayerId;
   },
@@ -1588,7 +1624,37 @@ const App = {
   },
 
   // ─── Assignment Algorithm ──────────────────────
-  assignCourt(mode) {
+  setAssignMode(mode) {
+    this.state.assignMode = mode;
+    this.saveState();
+    this.render();
+  },
+
+  setAvailableCourts(n) {
+    this.state.availableCourts = parseInt(n) || 2;
+    this.saveState();
+    this.render();
+  },
+
+  // Assign up to availableCourts courts in one batch
+  assignAll() {
+    const mode = this.state.assignMode || 'doubles';
+    const max = this.state.availableCourts || 2;
+    let anyAssigned = false;
+    for (let i = 0; i < max; i++) {
+      if (!this._assignOneCourt(mode)) break;
+      anyAssigned = true;
+    }
+    if (anyAssigned) {
+      this.state.round++;
+      this.saveState();
+      this.render();
+    }
+  },
+
+  // Returns true if a court was successfully assigned, false otherwise
+  _assignOneCourt(mode) {
+    const maxCourts = this.state.availableCourts || 2;
     const onCourt = this.getPlayersOnCourts();
     const allQueue = this.state.players.filter(p => p.active && !onCourt.has(p.id));
 
@@ -1596,18 +1662,16 @@ const App = {
     const activePairs = this.state.teams.filter(t =>
       allQueue.some(p => p.id === t.p1) && allQueue.some(p => p.id === t.p2)
     );
-    const activePairedIds = new Set(activePairs.flatMap(t => [t.p1, t.p2]));
-    // All players who have any partner preference (even if partner is sitting out)
     const allTeamIds = new Set(this.state.teams.flatMap(t => [t.p1, t.p2]));
-    // Solo: active in queue with no partner pairing set
     const soloPlayers = allQueue.filter(p => !allTeamIds.has(p.id));
 
-    // Find available court
+    // Find available court (respecting availableCourts limit)
     let courtId;
     const loc = Session.LOCATIONS.find(l => l.key === Session.id);
     if (loc && loc.courts) {
-      const free = loc.courts.find(c => !this.state.activeGames[c.id] && !this.state.scoringGames[c.id]);
-      if (!free) return;
+      const limited = loc.courts.slice(0, maxCourts);
+      const free = limited.find(c => !this.state.activeGames[c.id] && !this.state.scoringGames[c.id]);
+      if (!free) return false;
       courtId = free.id;
     } else {
       courtId = this.state.nextCourtId;
@@ -1617,20 +1681,15 @@ const App = {
     let side1, side2;
 
     if (mode === 'singles') {
-      // Paired players skip singles — they wait for doubles with their partner
       let pool = soloPlayers.map(p => p.id);
-      if (pool.length < 2) return;
+      if (pool.length < 2) return false;
       pool = this.shuffle(pool);
       side1 = [pool[0]];
       side2 = [pool[1]];
     } else {
-      // Doubles: partner pairs go on the same side; fill remaining slots with solos
       const shuffledPairs = this.shuffle([...activePairs]);
       const shuffledSolos = this.shuffle(soloPlayers.map(p => p.id));
-
-      let pickedPairs = [];
-      let pickedSolos = [];
-      let total = 0;
+      let pickedPairs = [], pickedSolos = [], total = 0;
 
       for (const pair of shuffledPairs) {
         if (total + 2 <= 4) { pickedPairs.push(pair); total += 2; }
@@ -1638,21 +1697,17 @@ const App = {
       }
       for (const id of shuffledSolos) {
         if (total >= 4) break;
-        pickedSolos.push(id);
-        total++;
+        pickedSolos.push(id); total++;
       }
-      if (total < 4) return;
+      if (total < 4) return false;
 
       if (pickedPairs.length === 2) {
-        // Two partner pairs face each other
         side1 = [pickedPairs[0].p1, pickedPairs[0].p2];
         side2 = [pickedPairs[1].p1, pickedPairs[1].p2];
       } else if (pickedPairs.length === 1) {
-        // One partner pair vs two solos
         side1 = [pickedPairs[0].p1, pickedPairs[0].p2];
         side2 = pickedSolos;
       } else {
-        // No pairs — standard algorithm applies
         side1 = [pickedSolos[0], pickedSolos[1]];
         side2 = [pickedSolos[2], pickedSolos[3]];
         if (this.state.options.useSkill) [side1, side2] = this.balanceDoublesSkill(side1, side2);
@@ -1665,9 +1720,7 @@ const App = {
       mode: mode === 'singles' ? 'singles' : 'doubles',
       startedAt: Date.now(),
     };
-    this.state.round++;
-    this.saveState();
-    this.render();
+    return true;
   },
 
   balanceDoublesSkill(s1, s2) {
@@ -1794,6 +1847,7 @@ const App = {
       options: { useSkill: false, minimizeRepeats: false },
       opponentHistory: {}, sitoutCounts: {}, round: 0,
       activeGames: {}, scoringGames: {}, roundHistory: [], nextId: 1, nextCourtId: 1,
+      assignMode: 'doubles', availableCourts: 2,
     };
     this.saveState();
     this.render();
@@ -1971,9 +2025,11 @@ const App = {
     const onCourt = this.getPlayersOnCourts();
     const active = this.state.players.filter(p => p.active && !onCourt.has(p.id));
     const countEl = document.getElementById('assignCount');
-    const assignBar = document.getElementById('assignBar');
-    const btn1v1 = document.getElementById('btnAssign1v1');
-    const btn2v2 = document.getElementById('btnAssign2v2');
+    const controls = document.getElementById('assignControls');
+    const btnAssignAll = document.getElementById('btnAssignAll');
+    const btnMode1v1 = document.getElementById('btnMode1v1');
+    const btnMode2v2 = document.getElementById('btnMode2v2');
+    const courtSelect = document.getElementById('courtCountSelect');
     if (!countEl) return;
 
     // Partner pairing awareness
@@ -1984,33 +2040,42 @@ const App = {
     const activePairedIds = new Set(activePairs.flatMap(t => [t.p1, t.p2]));
     const soloActive = active.filter(p => !allTeamIds.has(p.id));
     const doublesEligible = soloActive.length + activePairedIds.size;
-    // Players who have a partner set but partner isn't in queue
     const waitingForPartner = active.filter(p => allTeamIds.has(p.id) && !activePairedIds.has(p.id));
 
     const n = active.length;
+    const mode = this.state.assignMode || 'doubles';
+
     if (n === 0) {
       countEl.textContent = 'No players in queue yet';
     } else if (n === 1) {
       countEl.textContent = '1 player in queue — need at least 2 to assign';
     } else {
       let msg = `${n} players in queue`;
-      if (waitingForPartner.length > 0) {
-        msg += ` · ${waitingForPartner.length} waiting for partner`;
-      }
+      if (waitingForPartner.length > 0) msg += ` · ${waitingForPartner.length} waiting for partner`;
       countEl.textContent = msg;
     }
 
     if (Session.id && n >= 2) {
-      assignBar.style.display = 'flex';
+      controls.style.display = 'flex';
+
+      // Sync dropdown to current state
+      if (courtSelect) courtSelect.value = this.state.availableCourts || 2;
+
+      // Mode pill active states
+      if (btnMode1v1) { btnMode1v1.classList.toggle('active', mode === 'singles'); btnMode1v1.disabled = soloActive.length < 2; }
+      if (btnMode2v2) { btnMode2v2.classList.toggle('active', mode === 'doubles'); btnMode2v2.disabled = doublesEligible < 4; }
+
+      // Can we assign at least one court in the current mode?
       const loc = Session.LOCATIONS.find(l => l.key === Session.id);
+      const maxCourts = this.state.availableCourts || 2;
       const allCourtsUsed = loc && loc.courts &&
-        loc.courts.every(c => !!this.state.activeGames[c.id] || !!this.state.scoringGames[c.id]);
-      // Singles: need ≥2 solo (unpaired) players
-      btn1v1.disabled = soloActive.length < 2 || !!allCourtsUsed;
-      // Doubles: need ≥4 players eligible (active pairs + solos)
-      btn2v2.disabled = doublesEligible < 4 || !!allCourtsUsed;
+        loc.courts.slice(0, maxCourts).every(c => !!this.state.activeGames[c.id] || !!this.state.scoringGames[c.id]);
+      const canAssign = !allCourtsUsed && (
+        mode === 'singles' ? soloActive.length >= 2 : doublesEligible >= 4
+      );
+      if (btnAssignAll) btnAssignAll.disabled = !canAssign;
     } else {
-      assignBar.style.display = 'none';
+      controls.style.display = 'none';
     }
   },
 
