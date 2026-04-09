@@ -2002,8 +2002,8 @@ const App = {
     const now = Date.now();
     for (const [courtId, game] of Object.entries(this.state.activeGames)) {
       const el = document.getElementById(`timer-${courtId}`);
-      if (el && game.startedAt) {
-        el.textContent = this.formatTimer(now - game.startedAt);
+      if (el && game.startTime) {
+        el.textContent = this.formatTimer(now - game.startTime);
       }
     }
   },
@@ -2274,7 +2274,7 @@ const App = {
     this.state.activeGames[courtId] = {
       side1, side2,
       mode: mode === 'singles' ? 'singles' : 'doubles',
-      startedAt: Date.now(),
+      startTime: Date.now(),
     };
     return true;
   },
@@ -2660,7 +2660,7 @@ const App = {
       const game = this.state.activeGames[courtId];
       const isScoring = !!this.state.scoringGames[courtId];
       const modeBadge = `<span class="court-mode-badge">${game.mode === 'singles' ? '1v1' : '2v2'}</span>`;
-      const timerBadge = game.startedAt ? `<span class="court-timer" id="timer-${courtId}">${this.formatTimer(Date.now() - game.startedAt)}</span>` : '';
+      const timerBadge = game.startTime ? `<span class="court-timer" id="timer-${courtId}">${this.formatTimer(Date.now() - game.startTime)}</span>` : '';
       const cardClass = isScoring ? 'court-card' : 'court-card game-active';
 
       let bodyHTML;
