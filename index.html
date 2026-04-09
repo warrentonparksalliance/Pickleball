@@ -47,11 +47,14 @@
   --tab-height: 52px;
 }
 
+html { overflow-x: hidden; }
 body {
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   background: var(--bg);
   color: var(--text);
   min-height: 100vh;
+  max-width: 100vw;
+  overflow-x: hidden;
   -webkit-font-smoothing: antialiased;
 }
 
@@ -164,6 +167,7 @@ body {
 /* ── Tab content ────────────────────────────── */
 .tab-panel {
   display: none;
+  overflow-x: hidden;
 }
 .tab-panel.active {
   display: block;
@@ -310,6 +314,14 @@ body {
 .setup-input:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 3px var(--primary-light); }
 .setup-input::placeholder { color: var(--text-muted); }
 .setup-error { font-size: 0.78rem; color: var(--danger); margin-bottom: 8px; display: none; font-weight: 500; }
+.setup-section-label {
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-muted);
+  margin-bottom: 8px;
+}
 .setup-locations { display: flex; flex-direction: column; gap: 8px; margin-bottom: 14px; }
 .btn-loc-setup {
   display: flex;
@@ -609,12 +621,16 @@ body {
 .queue-row.inactive { opacity: 0.45; }
 .queue-row-name {
   flex: 1;
+  min-width: 0;
   font-weight: 600;
   user-select: none;
   display: flex;
   align-items: center;
   gap: 6px;
+  overflow: hidden;
 }
+.queue-row-name .side-player-name,
+.queue-row-name > span:first-child { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .queue-row-you {
   font-size: 0.68rem;
   font-weight: 700;
@@ -1056,7 +1072,7 @@ body {
 }
 .side-1 { background: var(--side1-bg); }
 .side-2 { background: var(--side2-bg); }
-.court-side .side-player-name { white-space: nowrap; }
+.court-side .side-player-name { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .court-side .side-player-skill { color: var(--text-light); font-weight: 400; font-size: 0.78rem; }
 .court-side .side-amp { color: var(--text-muted); font-weight: 500; flex-shrink: 0; }
 .side-names-row .side-player-left { flex: 1; min-width: 0; display: flex; justify-content: flex-end; align-items: center; gap: 3px; }
@@ -1252,11 +1268,30 @@ body {
 }
 .btn-clear-history:hover { color: var(--danger); border-color: #fecaca; background: var(--danger-light); }
 
+/* ── Footer ─────────────────────────────────── */
+.app-footer {
+  text-align: center;
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  padding: 20px 10px 24px;
+  line-height: 1.7;
+  margin-top: auto;
+}
+.app-footer a {
+  color: var(--primary);
+  text-decoration: none;
+}
+.app-footer a:hover { text-decoration: underline; }
+
 /* ── Responsive ─────────────────────────────── */
 @media (max-width: 600px) {
-  .page-wrap { padding: 12px 10px; }
-  .header { padding: 10px 14px; }
+  .page-wrap { padding: 12px 8px; }
+  .header { padding: 10px 12px; }
   .header-loc-name { font-size: 0.8rem; }
+  .queue-bar-wrap { padding: 12px 10px; }
+  .settings-card { padding: 12px 10px; }
+  .history-table th, .history-table td { padding: 5px 4px; font-size: 0.78rem; }
+  .court-card { margin: 0 -2px; }
 }
 </style>
 </head>
@@ -1299,9 +1334,29 @@ body {
         <input type="checkbox" id="onboardSingles" style="accent-color:var(--primary);width:15px;height:15px;"> Open to 1v1
       </label>
       <p id="onboardNameError" class="setup-error">Enter your name first</p>
-      <div class="setup-locations">
-        <button type="button" class="btn-loc-setup" id="btn-flpark">&#x1f4cd; Fred Lindstrom Park</button>
-        <button type="button" class="btn-loc-setup" id="btn-lhresort">&#x1f4cd; Lighthouse Resort</button>
+      <div class="setup-section-label">Public Session</div>
+      <div style="display:flex;gap:8px;margin-bottom:14px;">
+        <select class="setup-input" id="publicLocationSelect" style="flex:1;margin-bottom:0;cursor:pointer;">
+          <option value="">Select a location...</option>
+        </select>
+        <button type="button" class="btn-confirm-join" onclick="Onboard.joinPublic()" style="white-space:nowrap;">Join</button>
+      </div>
+      <div class="setup-section-label">Private Session</div>
+      <div style="display:flex;gap:8px;margin-bottom:8px;">
+        <select class="setup-input" id="privateSessionSelect" style="flex:1;margin-bottom:0;cursor:pointer;">
+          <option value="">Select a session...</option>
+        </select>
+        <button type="button" class="btn-confirm-join" onclick="Onboard.joinSavedPrivate()" style="white-space:nowrap;">Join</button>
+      </div>
+      <button type="button" class="btn-outline" onclick="Onboard.toggleCreatePrivate()" id="btn-create-private" style="width:100%;margin-bottom:8px;padding:9px 14px;">Create New Private Session</button>
+      <div id="privateCreateForm" style="display:none;">
+        <input type="text" class="setup-input" id="privateSessionName" placeholder="Session name" maxlength="20" style="margin-bottom:8px;">
+        <div style="display:flex;gap:8px;align-items:center;margin-bottom:8px;">
+          <input type="text" class="setup-input" id="privatePasscode" placeholder="4-character passcode" maxlength="4" style="flex:1;margin-bottom:0;text-transform:uppercase;letter-spacing:0.15em;font-weight:600;">
+          <button type="button" class="btn-outline" onclick="Onboard.randomPasscode()" style="white-space:nowrap;padding:8px 12px;">Random</button>
+        </div>
+        <p id="privateSessionError" class="setup-error" style="display:none;">Enter a session name and 4-character passcode</p>
+        <button type="button" class="btn-confirm-join" onclick="Onboard.createPrivate()" style="width:100%;">Create &amp; Join</button>
       </div>
       <div id="sessionConfirmPanel" style="display:none;">
         <div class="confirm-card">
@@ -1322,7 +1377,13 @@ body {
       </div>
     </div>
     <div class="admin-login-section">
-      <button class="btn-admin-login" id="btnAdminLogin" onclick="Admin.signIn()">Admin Login</button>
+      <button class="btn-admin-login" id="btnAdminLogin" onclick="Admin.signIn()">Sign in with Google</button>
+      <div id="signedInAs" style="display:none;margin-top:6px;"></div>
+    </div>
+    <!-- Super admin panel -->
+    <div id="superAdminSection" class="settings-card" style="display:none;margin-top:14px;">
+      <div class="settings-card-title">Super Admin Management</div>
+      <div id="superAdminPanel"></div>
     </div>
   </div>
 
@@ -1457,6 +1518,12 @@ body {
     </div>
   </div>
 
+  <footer class="app-footer">
+    <div>Provided by <a href="https://www.warrentonparksalliance.com" target="_blank" rel="noopener">Warrenton Parks Alliance</a></div>
+    <div>Love Pickle Jar? <a href="https://www.warrentonparksalliance.com" target="_blank" rel="noopener">Donate</a> to support our mission.</div>
+    <div><a href="mailto:brooke@warrentonparksalliance.com">Send feedback</a></div>
+  </footer>
+
 </div>
 
 <script>
@@ -1540,6 +1607,7 @@ const App = {
     if (!s.nextCourtId) s.nextCourtId = 1;
     if (s.availableCourts == null) s.availableCourts = 2;
     if (!Array.isArray(s.adminLog)) s.adminLog = [];
+    if (!Array.isArray(s._admins)) s._admins = s._admins ? Object.values(s._admins) : [];
     delete s.assignMode;
     delete s.courts; delete s.pendingGames; delete s.currentSittingOut; delete s.selectedPlayerId;
   },
@@ -2168,9 +2236,13 @@ const App = {
     if (!confirm('Reset everything? All players, teams, courts, and history will be cleared. All users will be logged out of the session.')) return;
     this._logAdmin('Reset Everything');
     const prevLog = [...this.state.adminLog];
+    const prevPasscode = this.state._passcode;
+    const prevAdmins = [...(this.state._admins || [])];
     const fresh = this._freshState();
     fresh._resetAt = Date.now();
     fresh.adminLog = prevLog;
+    if (prevPasscode) fresh._passcode = prevPasscode;
+    if (prevAdmins.length) fresh._admins = prevAdmins;
     localStorage.removeItem('pickleJar');
     this._myGuests = new Set();
     this._saveMyGuests();
@@ -2635,11 +2707,12 @@ const Session = {
 
   _url() { return `${this.DB}/sessions/${this.id}.json`; },
 
-  async _get() {
+  async _get(id) {
     try {
+      const url = id ? `${this.DB}/sessions/${id}.json` : this._url();
       const ctrl = new AbortController();
       const t = setTimeout(() => ctrl.abort(), 3000);
-      const res = await fetch(this._url(), { signal: ctrl.signal });
+      const res = await fetch(url, { signal: ctrl.signal });
       clearTimeout(t);
       const json = await res.json();
       return (json && json.error) ? null : json;
@@ -2805,10 +2878,34 @@ const Onboard = {
     const user = this._savedUser();
     const s = new URLSearchParams(window.location.search).get('s');
 
+    // Populate dropdowns
+    this._populatePublicDropdown();
+    this._populatePrivateDropdown();
+
     if (user && s) {
-      this._hide();
       const loc = Session.LOCATIONS.find(l => l.key === s.toLowerCase());
-      Session._connect(s, loc ? loc.label : s, false, user);
+      const pvt = this._getSavedPrivateSessions().find(p => p.id === s);
+      const label = loc ? loc.label : (pvt ? pvt.name : s);
+      if (s.startsWith('pvt-')) {
+        // Private session via URL — verify passcode
+        this._hide();
+        (async () => {
+          const data = await Session._get(s);
+          if (data && data._passcode) {
+            const entered = prompt('Enter the 4-character passcode for "' + label + '":');
+            if (!entered || entered.trim().toUpperCase() !== data._passcode) {
+              alert('Incorrect passcode.');
+              this.showStep();
+              return;
+            }
+          }
+          this._savePrivateSession(s, label);
+          Session._connect(s, label, false, user);
+        })();
+      } else {
+        this._hide();
+        Session._connect(s, label, false, user);
+      }
       return;
     }
 
@@ -2841,32 +2938,169 @@ const Onboard = {
   },
 
   _pendingKey: null,
+  _pendingLabel: null,
 
-  joinLocation(key) {
+  // ─── Public sessions ───────────────────────
+  _populatePublicDropdown() {
+    const sel = document.getElementById('publicLocationSelect');
+    if (!sel) return;
+    Session.LOCATIONS.forEach(loc => {
+      const opt = document.createElement('option');
+      opt.value = loc.key;
+      opt.textContent = loc.label;
+      sel.appendChild(opt);
+    });
+  },
+
+  joinPublic() {
+    const sel = document.getElementById('publicLocationSelect');
+    const key = sel?.value;
+    if (!key) return;
     const loc = Session.LOCATIONS.find(l => l.key === key);
     if (!loc) return;
     const user = this._saveIdentity();
     if (!user) return;
     this._pendingKey = key;
+    this._pendingLabel = loc.label;
     document.getElementById('confirmLocation').textContent = '\u{1f4cd} ' + loc.label;
     document.getElementById('confirmName').textContent = user.name;
     document.getElementById('confirmSkill').textContent = user.skill ? '\u00b7 Skill ' + user.skill : '';
     document.getElementById('sessionConfirmPanel').style.display = '';
   },
 
-  confirmJoin() {
+  // ─── Private sessions ──────────────────────
+  _getSavedPrivateSessions() {
+    try { return JSON.parse(localStorage.getItem('pj_privateSessions')) || []; } catch(e) { return []; }
+  },
+
+  _savePrivateSession(id, name) {
+    const sessions = this._getSavedPrivateSessions().filter(s => s.id !== id);
+    sessions.unshift({ id, name });
+    try { localStorage.setItem('pj_privateSessions', JSON.stringify(sessions.slice(0, 20))); } catch(e) {}
+    this._populatePrivateDropdown();
+  },
+
+  _populatePrivateDropdown() {
+    const sel = document.getElementById('privateSessionSelect');
+    if (!sel) return;
+    const saved = this._getSavedPrivateSessions();
+    // Keep the placeholder, clear the rest
+    while (sel.options.length > 1) sel.remove(1);
+    if (saved.length === 0) {
+      sel.options[0].textContent = 'No saved sessions';
+      sel.disabled = true;
+    } else {
+      sel.options[0].textContent = 'Select a session...';
+      sel.disabled = false;
+      saved.forEach(s => {
+        const opt = document.createElement('option');
+        opt.value = s.id;
+        opt.textContent = s.name;
+        sel.appendChild(opt);
+      });
+    }
+  },
+
+  joinSavedPrivate() {
+    const sel = document.getElementById('privateSessionSelect');
+    const id = sel?.value;
+    if (!id) return;
+    const saved = this._getSavedPrivateSessions().find(s => s.id === id);
+    if (!saved) return;
+    const user = this._saveIdentity();
+    if (!user) return;
+    this._pendingKey = id;
+    this._pendingLabel = saved.name;
+    document.getElementById('confirmLocation').textContent = '\u{1f512} ' + saved.name;
+    document.getElementById('confirmName').textContent = user.name;
+    document.getElementById('confirmSkill').textContent = user.skill ? '\u00b7 Skill ' + user.skill : '';
+    document.getElementById('sessionConfirmPanel').style.display = '';
+  },
+
+  toggleCreatePrivate() {
+    const form = document.getElementById('privateCreateForm');
+    if (form) form.style.display = form.style.display === 'none' ? '' : 'none';
+  },
+
+  randomPasscode() {
+    const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+    let code = '';
+    for (let i = 0; i < 4; i++) code += chars[Math.floor(Math.random() * chars.length)];
+    document.getElementById('privatePasscode').value = code;
+  },
+
+  createPrivate() {
+    if (!Admin.isSignedIn()) {
+      alert('Please sign in with Google before creating a private session.');
+      return;
+    }
+    const user = this._saveIdentity();
+    if (!user) return;
+    const nameEl = document.getElementById('privateSessionName');
+    const codeEl = document.getElementById('privatePasscode');
+    const errEl = document.getElementById('privateSessionError');
+    const sessionName = (nameEl?.value || '').trim();
+    const passcode = (codeEl?.value || '').trim().toUpperCase();
+    if (!sessionName || passcode.length !== 4) {
+      if (errEl) { errEl.textContent = 'Enter a session name and 4-character passcode'; errEl.style.display = 'block'; }
+      return;
+    }
+    if (errEl) errEl.style.display = 'none';
+    const id = 'pvt-' + sessionName.toLowerCase().replace(/[^a-z0-9]/g, '');
+    this._savePrivateSession(id, sessionName);
+    this._pendingKey = id;
+    this._pendingLabel = sessionName;
+    this._pendingPasscode = passcode;
+    this._pendingIsCreate = true;
+    document.getElementById('confirmLocation').textContent = '\u{1f512} ' + sessionName;
+    document.getElementById('confirmName').textContent = user.name;
+    document.getElementById('confirmSkill').textContent = user.skill ? '\u00b7 Skill ' + user.skill : '';
+    document.getElementById('sessionConfirmPanel').style.display = '';
+  },
+
+  // ─── Confirm / Cancel / Navigation ─────────
+  async confirmJoin() {
     const key = this._pendingKey;
-    if (!key) return;
-    const loc = Session.LOCATIONS.find(l => l.key === key);
-    if (!loc) return;
+    const label = this._pendingLabel;
+    if (!key || !label) return;
     const user = this._savedUser();
     if (!user) return;
-    document.getElementById('sessionConfirmPanel').style.display = 'none';
-    Session._connect(loc.key, loc.label, false, user);
+
+    if (key.startsWith('pvt-')) {
+      if (this._pendingIsCreate) {
+        // Creating new — set passcode and creator as session admin
+        document.getElementById('sessionConfirmPanel').style.display = 'none';
+        this._savePrivateSession(key, label);
+        App.state._passcode = this._pendingPasscode;
+        App.state._admins = Admin._user ? [Admin._user.uid] : [];
+        Session._connect(key, label, true, user);
+      } else {
+        // Joining existing — verify passcode
+        const data = await Session._get(key);
+        if (data && data._passcode) {
+          const entered = prompt('Enter the 4-character passcode for "' + label + '":');
+          if (!entered || entered.trim().toUpperCase() !== data._passcode) {
+            alert('Incorrect passcode.');
+            return;
+          }
+        }
+        document.getElementById('sessionConfirmPanel').style.display = 'none';
+        this._savePrivateSession(key, label);
+        Session._connect(key, label, false, user);
+      }
+    } else {
+      document.getElementById('sessionConfirmPanel').style.display = 'none';
+      Session._connect(key, label, false, user);
+    }
+    this._pendingPasscode = null;
+    this._pendingIsCreate = false;
   },
 
   cancelJoin() {
     this._pendingKey = null;
+    this._pendingLabel = null;
+    this._pendingPasscode = null;
+    this._pendingIsCreate = false;
     document.getElementById('sessionConfirmPanel').style.display = 'none';
   },
 
@@ -2875,7 +3109,13 @@ const Onboard = {
     if (setup) setup.style.display = '';
     const confirm = document.getElementById('sessionConfirmPanel');
     if (confirm) confirm.style.display = 'none';
+    const pvtForm = document.getElementById('privateCreateForm');
+    if (pvtForm) pvtForm.style.display = 'none';
     this._pendingKey = null;
+    this._pendingLabel = null;
+    this._pendingPasscode = null;
+    this._pendingIsCreate = false;
+    this._populatePrivateDropdown();
   },
 
   _hide() {
@@ -2892,6 +3132,9 @@ const Onboard = {
 const Admin = {
   _user: null,
   _fb: null,
+  _superAdmins: {},
+  _isSuperAdmin: false,
+  DB: 'https://pickleball-50914-default-rtdb.firebaseio.com',
 
   init() {
     const script = document.createElement('script');
@@ -2907,17 +3150,70 @@ const Admin = {
       });
       const auth = getAuth(app);
       Admin._fb = { auth, GoogleAuthProvider, signInWithPopup, signOut };
-      onAuthStateChanged(auth, (user) => {
+      onAuthStateChanged(auth, async (user) => {
         Admin._user = user;
+        if (user) {
+          await Admin._checkSuperAdmin();
+        } else {
+          Admin._isSuperAdmin = false;
+        }
         Admin._updateUI();
       });
     `;
     document.head.appendChild(script);
+    // Seed brooke@warrentonparksalliance.com as super admin
+    this._seedSuperAdmin();
+  },
+
+  async _seedSuperAdmin() {
+    const key = this._emailKey('brooke@warrentonparksalliance.com');
+    try {
+      const res = await fetch(`${this.DB}/superAdmins/${key}.json`);
+      const val = await res.json();
+      if (!val) {
+        await fetch(`${this.DB}/superAdmins/${key}.json`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email: 'brooke@warrentonparksalliance.com', name: 'Brooke Terry', addedAt: Date.now() }),
+        });
+      }
+    } catch(e) { /* silent */ }
+  },
+
+  _emailKey(email) {
+    return email.toLowerCase().replace(/\./g, ',');
+  },
+
+  async _checkSuperAdmin() {
+    if (!this._user?.email) { this._isSuperAdmin = false; return; }
+    try {
+      const key = this._emailKey(this._user.email);
+      const res = await fetch(`${this.DB}/superAdmins/${key}.json`);
+      const val = await res.json();
+      this._isSuperAdmin = !!val;
+    } catch(e) { this._isSuperAdmin = false; }
+  },
+
+  async _loadSuperAdmins() {
+    try {
+      const res = await fetch(`${this.DB}/superAdmins.json`);
+      this._superAdmins = (await res.json()) || {};
+    } catch(e) { this._superAdmins = {}; }
+  },
+
+  isSuperAdmin() { return this._isSuperAdmin; },
+
+  isSessionAdmin() {
+    if (!this._user) return false;
+    const admins = App.state._admins || [];
+    return admins.includes(this._user.uid);
   },
 
   isAdmin() {
-    return !!this._user;
+    return this.isSuperAdmin() || this.isSessionAdmin();
   },
+
+  isSignedIn() { return !!this._user; },
 
   async signIn() {
     if (!this._fb) return;
@@ -2936,13 +3232,77 @@ const Admin = {
     await this._fb.signOut(this._fb.auth);
   },
 
+  // ─── Super admin management ────────────────
+  async addSuperAdmin(email) {
+    email = (email || '').trim().toLowerCase();
+    if (!email) return;
+    const key = this._emailKey(email);
+    await fetch(`${this.DB}/superAdmins/${key}.json`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, addedAt: Date.now() }),
+    });
+    await this._loadSuperAdmins();
+    this.renderSuperAdminPanel();
+  },
+
+  async removeSuperAdmin(email) {
+    email = (email || '').trim().toLowerCase();
+    if (email === 'brooke@warrentonparksalliance.com') return; // protect bootstrap admin
+    const key = this._emailKey(email);
+    await fetch(`${this.DB}/superAdmins/${key}.json`, { method: 'DELETE' });
+    await this._loadSuperAdmins();
+    this.renderSuperAdminPanel();
+  },
+
+  async renderSuperAdminPanel() {
+    const panel = document.getElementById('superAdminPanel');
+    if (!panel) return;
+    await this._loadSuperAdmins();
+    const admins = Object.values(this._superAdmins).filter(a => a && a.email);
+    const listHtml = admins.map(a => {
+      const isProtected = a.email === 'brooke@warrentonparksalliance.com';
+      const removeBtn = isProtected ? '' : `<button class="btn-admin-logout" onclick="Admin.removeSuperAdmin('${App.esc(a.email)}')" style="color:var(--danger);">remove</button>`;
+      return `<div style="display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid var(--border);">
+        <span style="font-size:0.82rem;">${App.esc(a.email)}</span>
+        ${removeBtn}
+      </div>`;
+    }).join('');
+    panel.innerHTML = `
+      <div style="margin-bottom:10px;">${listHtml || '<div style="color:var(--text-muted);font-size:0.82rem;font-style:italic;">No super admins</div>'}</div>
+      <div style="display:flex;gap:8px;">
+        <input type="email" id="newSuperAdminEmail" class="setup-input" placeholder="Email address" style="flex:1;margin-bottom:0;">
+        <button type="button" class="btn-confirm-join" onclick="Admin.addSuperAdmin(document.getElementById('newSuperAdminEmail').value);document.getElementById('newSuperAdminEmail').value='';" style="white-space:nowrap;">Add</button>
+      </div>`;
+  },
+
   _updateUI() {
     const isAdmin = this.isAdmin();
+    const isSuperAdmin = this.isSuperAdmin();
+    const isSignedIn = this.isSignedIn();
     document.querySelectorAll('.admin-only').forEach(el => {
       el.style.display = isAdmin ? '' : 'none';
     });
+    // Landing page sign-in
     const loginBtn = document.getElementById('btnAdminLogin');
-    if (loginBtn) loginBtn.style.display = isAdmin ? 'none' : '';
+    if (loginBtn) loginBtn.style.display = isSignedIn ? 'none' : '';
+    const signedInAs = document.getElementById('signedInAs');
+    if (signedInAs) {
+      if (isSignedIn) {
+        const label = isSuperAdmin ? 'Super Admin' : 'Signed in';
+        signedInAs.style.display = '';
+        signedInAs.innerHTML = `<span style="font-size:0.78rem;color:var(--text-muted);">${label}: ${App.esc(this._user.email)}</span> <button class="btn-admin-logout" onclick="Admin.logout()">sign out</button>`;
+      } else {
+        signedInAs.style.display = 'none';
+      }
+    }
+    // Super admin panel
+    const superSection = document.getElementById('superAdminSection');
+    if (superSection) {
+      superSection.style.display = isSuperAdmin ? '' : 'none';
+      if (isSuperAdmin) this.renderSuperAdminPanel();
+    }
+    // Header badge
     const badge = document.getElementById('adminHeaderBadge');
     if (badge) {
       if (isAdmin) {
@@ -2959,8 +3319,6 @@ const Admin = {
 App.init();
 Admin.init();
 Onboard.init();
-document.getElementById('btn-flpark').addEventListener('click', function() { Onboard.joinLocation('flpark'); });
-document.getElementById('btn-lhresort').addEventListener('click', function() { Onboard.joinLocation('lhresort'); });
 document.getElementById('btn-confirmJoin').addEventListener('click', function() { Onboard.confirmJoin(); });
 document.getElementById('btn-confirmBack').addEventListener('click', function() { Onboard.cancelJoin(); });
 </script>
