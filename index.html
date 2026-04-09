@@ -1467,15 +1467,25 @@ const App = {
   },
 
   // ─── State normalization ───────────────────
+  _toObject(val) {
+    if (Array.isArray(val)) {
+      const obj = {};
+      val.forEach((v, i) => { if (v != null) obj[i] = v; });
+      return obj;
+    }
+    if (!val || typeof val !== 'object') return {};
+    return val;
+  },
+
   _normState() {
     const s = this.state;
     if (!Array.isArray(s.players)) s.players = [];
     if (!Array.isArray(s.teams)) s.teams = [];
     if (!Array.isArray(s.roundHistory)) s.roundHistory = [];
-    if (!s.activeGames  || typeof s.activeGames  !== 'object' || Array.isArray(s.activeGames))  s.activeGames  = {};
-    if (!s.scoringGames || typeof s.scoringGames !== 'object' || Array.isArray(s.scoringGames)) s.scoringGames = {};
-    if (!s.opponentHistory || typeof s.opponentHistory !== 'object') s.opponentHistory = {};
-    if (!s.sitoutCounts    || typeof s.sitoutCounts    !== 'object') s.sitoutCounts    = {};
+    s.activeGames  = this._toObject(s.activeGames);
+    s.scoringGames = this._toObject(s.scoringGames);
+    s.opponentHistory = this._toObject(s.opponentHistory);
+    s.sitoutCounts    = this._toObject(s.sitoutCounts);
     if (!s.options) s.options = { useSkill: false, minimizeRepeats: false };
     if (!s.nextId)      s.nextId      = 1;
     if (!s.nextCourtId) s.nextCourtId = 1;
