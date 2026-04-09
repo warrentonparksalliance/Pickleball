@@ -1502,6 +1502,7 @@ const App = {
 
   // ─── Init ──────────────────────────────────
   init() {
+    this._loadMyGuests();
     this.loadState();
     this.render();
     setInterval(() => this.updateTimers(), 1000);
@@ -1635,6 +1636,7 @@ const App = {
       isLive: false,
     });
     this._myGuests.add(newId);
+    this._saveMyGuests();
     nameEl.value = '';
     scoreEl.value = '';
     if (singlesEl) singlesEl.checked = false;
@@ -1647,10 +1649,15 @@ const App = {
 
   removePlayer(id) {
     if (this.isPlayerOnCourt(id)) return;
+    const isSelf = id === Onboard.selfId;
+    const isMyGuest = this._myGuests.has(id);
+    if (!isSelf && !isMyGuest && !Admin.isAdmin()) return;
     if (this._pendingRemove === id) {
       this._pendingRemove = null;
       this.state.players = this.state.players.filter(p => p.id !== id);
       this.state.teams = this.state.teams.filter(t => t.p1 !== id && t.p2 !== id);
+      this._myGuests.delete(id);
+      this._saveMyGuests();
       this.saveState();
       this.render();
     } else {
@@ -1666,6 +1673,15 @@ const App = {
 
   _editingGuest: null,
   _myGuests: new Set(),
+  _loadMyGuests() {
+    try {
+      const raw = localStorage.getItem('pj_myGuests');
+      if (raw) this._myGuests = new Set(JSON.parse(raw));
+    } catch(e) {}
+  },
+  _saveMyGuests() {
+    localStorage.setItem('pj_myGuests', JSON.stringify([...this._myGuests]));
+  },
 
   editGuest(id) {
     this._editingGuest = id;
@@ -2200,21 +2216,24 @@ const App = {
         (t.p1 === selfId && t.p2 === p.id) || (t.p2 === selfId && t.p1 === p.id)
       );
       const partnerBadge = isPartner ? '<span class="queue-partner-badge">partner</span>' : '';
+      const canEdit = !p.isLive && !isYou && this._myGuests.has(p.id);
+      const editBtn = canEdit ? `<button class="queue-row-action" onclick="App.editGuest(${p.id})" title="Edit guest">&#x270E;</button>` : '';
       const statusBadge = isYou ? '<span class="queue-row-you">you</span>'
         : p.isLive ? '<span class="queue-row-status user">user</span>'
         : '<span class="queue-row-status guest">guest</span>';
       const pauseBtn = p.active
         ? `<button class="queue-row-action" onclick="App.togglePlayer(${p.id})" title="Sit out">&#x23F8;</button>`
         : `<button class="queue-row-action play" onclick="App.togglePlayer(${p.id})" title="Rejoin queue">&#x25B6;</button>`;
-      const canEdit = !p.isLive && !isYou && this._myGuests.has(p.id);
-      const editBtn = canEdit ? `<button class="queue-row-action" onclick="App.editGuest(${p.id})" title="Edit guest">&#x270E;</button>` : '';
+      const canRemove = isYou || this._myGuests.has(p.id) || Admin.isAdmin();
+      const removeBtn = canRemove
+        ? `<button class="queue-row-remove" onclick="${isYou ? 'Session.leave()' : `App.removePlayer(${p.id})`}" title="${isYou ? 'Leave session' : 'Remove'}">&times;</button>`
+        : '';
       return `<div class="${rowClass}">
-        <span class="queue-row-name">${this.esc(p.name)}${statusBadge}${partnerBadge}</span>
+        <span class="queue-row-name">${this.esc(p.name)}${editBtn}${statusBadge}${partnerBadge}</span>
         ${singlesBadge}
         ${skillStr ? `<span class="queue-row-skill">${skillStr}</span>` : ''}
-        ${editBtn}
         ${pauseBtn}
-        <button class="queue-row-remove" onclick="${isYou ? 'Session.leave()' : `App.removePlayer(${p.id})`}" title="${isYou ? 'Leave session' : 'Remove'}">&times;</button>
+        ${removeBtn}
       </div>`;
     }).join('');
   },
@@ -2858,7 +2877,7 @@ const Admin = {
         badge.style.cssText = 'display:flex;align-items:center;gap:6px;';
         headerRight.insertBefore(badge, headerRight.firstChild);
       }
-      badge.innerHTML = `<span class="admin-badge">admin</span> <button class="btn-admin-logout" onclick="Admin.logout()">logout</button>`;
+      badge.innerHTML = `<button class="btn-admin-logout" onclick="Admin.logout()">admin logout</button>`;
     } else if (badge) {
       badge.remove();
     }
