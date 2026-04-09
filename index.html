@@ -44,6 +44,7 @@
   --pending-bg: #fffbeb;
   --pending-text: #92400e;
   --pending-border: #fbbf24;
+  --tab-height: 52px;
 }
 
 body {
@@ -54,7 +55,7 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 
-/* Header */
+/* ── Header ─────────────────────────────────── */
 .header {
   background: #0f172a;
   color: white;
@@ -71,9 +72,104 @@ body {
 .header h1 { font-size: 1.2rem; font-weight: 700; letter-spacing: -0.03em; color: #f8fafc; }
 .header-tagline { font-size: 0.75rem; color: #64748b; display: none; }
 @media (min-width: 640px) { .header-tagline { display: inline; } }
-.header-actions { display: flex; gap: 6px; align-items: center; }
+.header-right { display: flex; align-items: center; gap: 10px; }
+.header-location {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.session-status-dot {
+  width: 7px; height: 7px;
+  border-radius: 50%;
+  background: #4ade80;
+  display: inline-block;
+  flex-shrink: 0;
+  animation: pulse-dot 2.5s ease-in-out infinite;
+}
+@keyframes pulse-dot {
+  0%,100% { opacity: 1; box-shadow: 0 0 0 0 rgba(74,222,128,0.4); }
+  50% { opacity: 0.7; box-shadow: 0 0 0 4px rgba(74,222,128,0); }
+}
+.header-loc-name {
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: #a5b4fc;
+}
+.btn-header {
+  padding: 5px 12px;
+  border: 1px solid rgba(255,255,255,0.15);
+  border-radius: var(--radius-sm);
+  background: rgba(255,255,255,0.08);
+  color: #94a3b8;
+  font-size: 0.78rem;
+  font-weight: 500;
+  cursor: pointer;
+  font-family: inherit;
+  white-space: nowrap;
+  transition: background 0.15s, color 0.15s;
+}
+.btn-header:hover { background: rgba(255,255,255,0.15); color: #e2e8f0; }
+.btn-header.leave { color: #f87171; }
+.btn-header.leave:hover { background: rgba(248,113,113,0.15); }
 
-/* Buttons */
+/* ── Tab Bar ────────────────────────────────── */
+.tab-bar {
+  display: flex;
+  background: #1e293b;
+  border-bottom: 1px solid #334155;
+  position: sticky;
+  top: 52px;
+  z-index: 45;
+}
+.tab-btn {
+  flex: 1;
+  padding: 12px 0;
+  border: none;
+  background: transparent;
+  color: #64748b;
+  font-size: 0.85rem;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  transition: color 0.15s, box-shadow 0.15s;
+  position: relative;
+  text-align: center;
+  letter-spacing: -0.01em;
+}
+.tab-btn:hover { color: #94a3b8; }
+.tab-btn.active {
+  color: #e2e8f0;
+  box-shadow: inset 0 -2px 0 #6366f1;
+}
+.tab-btn .tab-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 5px;
+  border-radius: var(--radius-full);
+  background: #334155;
+  color: #94a3b8;
+  font-size: 0.68rem;
+  font-weight: 700;
+  margin-left: 5px;
+  vertical-align: middle;
+}
+.tab-btn.active .tab-badge {
+  background: #4f46e5;
+  color: white;
+}
+
+/* ── Tab content ────────────────────────────── */
+.tab-panel {
+  display: none;
+}
+.tab-panel.active {
+  display: block;
+}
+
+/* ── Buttons ────────────────────────────────── */
 .btn {
   padding: 7px 14px;
   border: none;
@@ -131,7 +227,7 @@ body {
 }
 .btn-end-game:hover { background: #fee2e2; }
 
-/* Page layout — single column */
+/* ── Page layout ────────────────────────────── */
 .page-wrap {
   max-width: 860px;
   margin: 0 auto;
@@ -142,7 +238,7 @@ body {
   min-height: calc(100vh - 52px);
 }
 
-/* Session setup centered card */
+/* ── Session setup centered card ────────────── */
 .setup-center {
   display: flex;
   justify-content: center;
@@ -152,869 +248,6 @@ body {
   width: 100%;
   max-width: 420px;
 }
-
-/* Queue bar */
-.queue-bar-wrap {
-  background: var(--card);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  box-shadow: var(--shadow-sm);
-  padding: 14px 16px;
-}
-.queue-bar-top {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 10px;
-}
-.queue-bar-label {
-  font-size: 0.7rem;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-  color: var(--text-muted);
-}
-.section-title {
-  font-size: 0.95rem;
-  font-weight: 700;
-  color: var(--text);
-  line-height: 1.2;
-}
-.section-subtitle {
-  font-size: 0.76rem;
-  color: var(--text-muted);
-  line-height: 1.35;
-  margin-top: 2px;
-}
-.queue-list {
-  display: flex;
-  flex-direction: column;
-  gap: 0;
-}
-.queue-row {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 7px 0;
-  border-bottom: 1px solid var(--border);
-  font-size: 0.9rem;
-}
-.queue-row:last-child { border-bottom: none; }
-.queue-row.inactive { opacity: 0.45; }
-.queue-row-name {
-  flex: 1;
-  font-weight: 600;
-  cursor: pointer;
-  user-select: none;
-}
-.queue-row-skill {
-  font-size: 0.8rem;
-  color: var(--text-muted);
-  min-width: 28px;
-  text-align: right;
-}
-.queue-row-badge {
-  font-size: 0.7rem;
-  color: var(--text-muted);
-  border: 1px solid var(--border);
-  border-radius: 3px;
-  padding: 1px 4px;
-}
-.queue-row-remove {
-  background: none;
-  border: none;
-  color: var(--text-muted);
-  cursor: pointer;
-  font-size: 1rem;
-  line-height: 1;
-  padding: 0 2px;
-}
-.queue-row-remove:hover { color: var(--danger); }
-.queue-row-confirm {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  font-size: 0.82rem;
-  color: var(--danger);
-  flex: 1;
-}
-.queue-row-confirm button {
-  font-size: 0.75rem;
-  padding: 1px 7px;
-  border-radius: 4px;
-  border: 1px solid;
-  cursor: pointer;
-  background: none;
-}
-
-/* Teams collapsible */
-.teams-details {
-  background: var(--card);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  box-shadow: var(--shadow-sm);
-  overflow: hidden;
-}
-.teams-details > summary {
-  padding: 11px 16px;
-  font-size: 0.82rem;
-  font-weight: 600;
-  color: var(--text-light);
-  cursor: pointer;
-  user-select: none;
-  list-style: none;
-}
-.teams-details > summary:hover { background: var(--hover-bg); }
-.teams-details-body { padding: 0 16px 14px; }
-
-/* Forms */
-.add-form {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  margin-bottom: 12px;
-  background: var(--primary-light);
-  border: 1px solid var(--primary-muted);
-  border-radius: var(--radius);
-  padding: 12px;
-}
-.add-form input {
-  padding: 8px 10px;
-  border: 1px solid var(--border);
-  border-radius: var(--radius-sm);
-  font-size: 0.875rem;
-  background: var(--card);
-  color: var(--text);
-  font-family: inherit;
-  width: 100%;
-}
-.add-form input:focus {
-  outline: none;
-  border-color: var(--primary);
-  box-shadow: 0 0 0 3px var(--primary-light);
-}
-.add-form input::placeholder { color: var(--text-muted); }
-.add-form-row2 {
-  display: flex;
-  gap: 8px;
-  align-items: center;
-}
-.input-score { flex: 1; }
-.add-form .singles-label {
-  font-size: 0.78rem;
-  color: var(--text-light);
-  display: flex;
-  align-items: center;
-  gap: 5px;
-  cursor: pointer;
-  white-space: nowrap;
-  font-weight: 500;
-}
-.add-form .singles-label input { accent-color: var(--primary); }
-.btn-add-another {
-  width: 100%;
-  padding: 9px;
-  background: transparent;
-  color: var(--primary);
-  border: 1.5px dashed var(--primary-muted);
-  border-radius: var(--radius-sm);
-  font-size: 0.85rem;
-  font-weight: 600;
-  font-family: inherit;
-  cursor: pointer;
-  margin-bottom: 8px;
-  transition: background 0.15s, border-color 0.15s;
-}
-.btn-add-another:hover { background: var(--primary-light); border-color: var(--primary); }
-.btn-add-player {
-  width: 100%;
-  padding: 9px;
-  background: var(--primary);
-  color: white;
-  border: none;
-  border-radius: var(--radius-sm);
-  font-size: 0.875rem;
-  font-weight: 700;
-  font-family: inherit;
-  cursor: pointer;
-  transition: background 0.15s;
-}
-.btn-add-player:hover { background: var(--primary-hover); }
-
-/* Player list */
-.player-list { list-style: none; display: flex; flex-direction: column; gap: 2px; }
-.player-item {
-  display: flex;
-  align-items: center;
-  gap: 7px;
-  padding: 7px 8px;
-  border-radius: var(--radius-sm);
-  transition: background 0.1s;
-}
-.player-item:hover { background: var(--hover-bg); }
-.player-item.on-court { background: var(--bench-bg); }
-.player-item.on-court .player-name { color: var(--danger); font-weight: 600; }
-.player-item.inactive-player { opacity: 0.5; }
-.player-item input[type="checkbox"] {
-  accent-color: var(--primary);
-  width: 15px;
-  height: 15px;
-  cursor: pointer;
-  flex-shrink: 0;
-}
-.player-name { flex: 1; font-size: 0.875rem; font-weight: 500; }
-.player-score {
-  font-size: 0.75rem;
-  color: var(--text-light);
-  background: var(--hover-bg);
-  padding: 2px 7px;
-  border-radius: var(--radius-full);
-  font-weight: 600;
-  min-width: 22px;
-  text-align: center;
-}
-.player-pref {
-  font-size: 0.65rem;
-  font-weight: 700;
-  padding: 2px 6px;
-  border-radius: var(--radius-full);
-  cursor: pointer;
-  user-select: none;
-  border: 1px solid transparent;
-  letter-spacing: 0.02em;
-}
-.player-pref.wants-singles {
-  background: var(--primary-light);
-  color: var(--primary);
-  border-color: var(--primary-muted);
-}
-.player-court-badge {
-  font-size: 0.65rem;
-  font-weight: 700;
-  background: var(--primary-light);
-  color: var(--primary);
-  padding: 2px 6px;
-  border-radius: var(--radius-full);
-}
-.player-sitout {
-  font-size: 0.68rem;
-  color: var(--warning);
-  font-weight: 600;
-}
-.player-remove { font-size: 1rem; line-height: 1; }
-
-/* Team list */
-.teammate-hint { font-size: 0.78rem; color: var(--text-muted); margin-bottom: 8px; }
-.teammate-list { list-style: none; display: flex; flex-direction: column; gap: 5px; margin-bottom: 10px; }
-.teammate-item {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 9px 12px;
-  border: 1.5px solid var(--border);
-  border-radius: var(--radius-sm);
-  cursor: pointer;
-  transition: border-color 0.15s, background 0.15s, box-shadow 0.15s;
-  font-size: 0.875rem;
-  font-weight: 500;
-}
-.teammate-item:hover { border-color: var(--primary); background: var(--primary-light); box-shadow: var(--shadow-sm); }
-.teammate-item.paired { border-color: var(--primary); background: var(--primary-light); font-weight: 700; color: var(--primary); }
-.teammate-item .tm-check { margin-left: auto; color: var(--primary); font-size: 0.95rem; }
-.teammate-item .tm-score { margin-left: auto; color: var(--text-muted); font-size: 0.75rem; font-weight: 500; }
-
-.team-list { list-style: none; display: flex; flex-direction: column; gap: 5px; }
-.team-item {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 8px 10px;
-  border-radius: var(--radius-sm);
-  background: var(--primary-light);
-  border: 1px solid var(--primary-muted);
-  font-size: 0.85rem;
-}
-.team-item .team-names { flex: 1; font-weight: 500; }
-.team-item .team-lock {
-  font-size: 0.62rem;
-  font-weight: 700;
-  padding: 2px 7px;
-  border-radius: var(--radius-full);
-  letter-spacing: 0.04em;
-  cursor: pointer;
-}
-.team-item .team-lock.locked { background: var(--danger-light); color: var(--danger); }
-.team-item .team-lock.flexible { background: var(--hover-bg); color: var(--text-muted); }
-
-/* Main content */
-.main-content {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-  overflow-y: auto;
-  background: var(--bg);
-}
-
-/* Options bar */
-.options-bar {
-  display: flex;
-  gap: 20px;
-  align-items: center;
-  flex-wrap: wrap;
-  padding: 10px 16px;
-  background: var(--card);
-  border-radius: var(--radius);
-  border: 1px solid var(--border);
-  box-shadow: var(--shadow-sm);
-}
-.option-group {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-}
-.option-group label {
-  font-size: 0.83rem;
-  font-weight: 500;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  user-select: none;
-  color: var(--text-light);
-}
-.option-group input[type="checkbox"] {
-  accent-color: var(--primary);
-  width: 15px;
-  height: 15px;
-  cursor: pointer;
-}
-.player-rounds {
-  font-size: 0.68rem;
-  color: var(--primary);
-  font-weight: 700;
-  background: var(--primary-light);
-  padding: 1px 5px;
-  border-radius: var(--radius-full);
-}
-
-/* Tooltips */
-.tooltip-wrap {
-  position: relative;
-  display: inline-flex;
-  align-items: center;
-}
-.tooltip-icon {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 16px;
-  height: 16px;
-  border-radius: 50%;
-  background: var(--border);
-  color: var(--text-light);
-  font-size: 0.65rem;
-  font-weight: 700;
-  cursor: default;
-  user-select: none;
-  flex-shrink: 0;
-}
-.tooltip-box {
-  display: none;
-  position: absolute;
-  bottom: calc(100% + 6px);
-  left: 50%;
-  transform: translateX(-50%);
-  background: #1e293b;
-  color: #e2e8f0;
-  font-size: 0.78rem;
-  font-weight: 400;
-  line-height: 1.4;
-  padding: 7px 10px;
-  border-radius: var(--radius-sm);
-  white-space: nowrap;
-  box-shadow: var(--shadow-md);
-  pointer-events: none;
-  z-index: 100;
-}
-.tooltip-box::after {
-  content: '';
-  position: absolute;
-  top: 100%;
-  left: 50%;
-  transform: translateX(-50%);
-  border: 5px solid transparent;
-  border-top-color: #1e293b;
-}
-.tooltip-wrap:hover .tooltip-box { display: block; }
-
-/* Courts grid — single column */
-.courts-grid {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-
-/* Court card */
-.court-card {
-  background: var(--card);
-  border-radius: var(--radius);
-  box-shadow: var(--shadow);
-  overflow: hidden;
-  transition: box-shadow 0.2s, border-color 0.2s, transform 0.15s;
-  border: 1.5px solid var(--border);
-}
-.court-card:hover { box-shadow: var(--shadow-md); }
-.court-card.inactive { opacity: 0.45; }
-.court-card.game-active {
-  border-color: #6ee7b7;
-  box-shadow: 0 0 0 1px #6ee7b7, var(--shadow-md);
-}
-.court-card.pending {
-  border-color: var(--pending-border);
-  border-style: solid;
-}
-
-.court-header {
-  padding: 10px 14px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  background: #6366f1;
-  color: white;
-  font-weight: 700;
-  font-size: 0.85rem;
-  letter-spacing: -0.01em;
-}
-.court-card.inactive .court-header { background: #9ca3af; }
-.court-card.game-active .court-header { background: #059669; }
-.court-card.pending .court-header { background: #d97706; }
-
-.court-status {
-  font-size: 0.68rem;
-  font-weight: 500;
-  opacity: 0.85;
-}
-
-.court-controls {
-  display: flex;
-  gap: 6px;
-  align-items: center;
-}
-.court-controls label {
-  font-size: 0.72rem;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  gap: 3px;
-  color: rgba(255,255,255,0.85);
-  font-weight: 500;
-}
-.court-controls input[type="checkbox"] { accent-color: white; }
-
-.court-body {
-  padding: 14px;
-  min-height: 120px;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-}
-
-.court-empty {
-  text-align: center;
-  color: var(--text-muted);
-  font-size: 0.82rem;
-  font-style: italic;
-}
-.court-empty.clickable {
-  cursor: pointer;
-  color: var(--primary);
-  font-style: normal;
-  font-weight: 600;
-}
-
-.court-assignment {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
-.court-side {
-  padding: 9px 11px;
-  border-radius: var(--radius-sm);
-  display: flex;
-  flex-direction: column;
-  gap: 3px;
-}
-.side-1 { background: var(--side1-bg); }
-.side-2 { background: var(--side2-bg); }
-
-.court-side .side-player {
-  font-size: 0.85rem;
-  font-weight: 600;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-.court-side .side-player .score { color: var(--text-light); font-weight: 400; font-size: 0.78rem; }
-.court-side .team-badge {
-  font-size: 0.6rem;
-  color: var(--primary);
-  font-weight: 700;
-  background: var(--primary-light);
-  padding: 1px 5px;
-  border-radius: var(--radius-full);
-  letter-spacing: 0.04em;
-}
-
-.court-vs {
-  text-align: center;
-  font-weight: 800;
-  font-size: 0.7rem;
-  color: var(--text-muted);
-  letter-spacing: 0.1em;
-  padding: 1px 0;
-}
-
-.court-mode-badge {
-  font-size: 0.65rem;
-  font-weight: 700;
-  background: rgba(255,255,255,0.22);
-  padding: 2px 7px;
-  border-radius: var(--radius-full);
-  letter-spacing: 0.04em;
-}
-.court-timer {
-  font-size: 0.72rem;
-  font-weight: 600;
-  font-variant-numeric: tabular-nums;
-  background: rgba(0,0,0,0.15);
-  padding: 2px 7px;
-  border-radius: var(--radius-full);
-}
-.court-type-badge {
-  font-size: 0.6rem;
-  font-weight: 600;
-  padding: 2px 6px;
-  border-radius: var(--radius-full);
-  opacity: 0.85;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-}
-.court-type-net   { background: rgba(255,255,255,0.2); }
-.court-type-lines { background: rgba(0,0,0,0.2); }
-
-/* Sitting out */
-.sitting-out {
-  padding: 12px 16px;
-  background: var(--card);
-  border-radius: var(--radius);
-  border: 1px solid var(--border);
-  box-shadow: var(--shadow-sm);
-}
-.sitting-out h3 {
-  font-size: 0.72rem;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.07em;
-  color: var(--text-muted);
-  margin-bottom: 8px;
-}
-.sitting-out .bench-players { display: flex; gap: 6px; flex-wrap: wrap; }
-.bench-player {
-  background: var(--bench-bg);
-  padding: 4px 11px;
-  border-radius: var(--radius-full);
-  font-size: 0.78rem;
-  font-weight: 500;
-  color: var(--bench-text);
-  border: 1px solid #fecaca;
-}
-
-/* Assign header (main area) */
-.assign-header {
-  background: var(--card);
-  border-radius: var(--radius);
-  border: 1px solid var(--border);
-  box-shadow: var(--shadow-sm);
-  padding: 16px;
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-.assign-controls {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-.assign-options-row {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  flex-wrap: wrap;
-}
-.assign-option-label {
-  font-size: 0.82rem;
-  color: var(--text-light);
-  font-weight: 500;
-  white-space: nowrap;
-}
-.assign-court-select {
-  padding: 5px 8px;
-  border: 1.5px solid var(--border);
-  border-radius: var(--radius-sm);
-  font-size: 0.875rem;
-  font-family: inherit;
-  background: var(--bg);
-  color: var(--text);
-  cursor: pointer;
-  font-weight: 600;
-  width: 60px;
-}
-.assign-court-select:focus { outline: none; border-color: var(--primary); }
-.assign-mode-toggle {
-  display: flex;
-  border: 1.5px solid var(--border);
-  border-radius: var(--radius-sm);
-  overflow: hidden;
-  margin-left: auto;
-}
-.btn-mode-pill {
-  padding: 5px 16px;
-  border: none;
-  background: transparent;
-  color: var(--text-light);
-  font-size: 0.82rem;
-  font-weight: 600;
-  font-family: inherit;
-  cursor: pointer;
-  transition: background 0.15s, color 0.15s;
-}
-.btn-mode-pill + .btn-mode-pill { border-left: 1.5px solid var(--border); }
-.btn-mode-pill.active { background: var(--primary); color: white; }
-.btn-mode-pill:disabled { opacity: 0.4; cursor: not-allowed; }
-.btn-assign-all {
-  width: 100%;
-  padding: 11px;
-  background: var(--success);
-  color: white;
-  border: none;
-  border-radius: var(--radius-sm);
-  font-size: 0.95rem;
-  font-weight: 700;
-  font-family: inherit;
-  cursor: pointer;
-  transition: background 0.15s;
-}
-.btn-assign-all:hover:not(:disabled) { background: #047857; }
-.btn-assign-all:disabled { opacity: 0.45; cursor: not-allowed; }
-
-/* History */
-.history-section {
-  background: var(--card);
-  border-radius: var(--radius);
-  border: 1px solid var(--border);
-  box-shadow: var(--shadow-sm);
-  overflow: hidden;
-}
-.history-section summary {
-  padding: 11px 16px;
-  font-size: 0.82rem;
-  font-weight: 600;
-  color: var(--text-light);
-  cursor: pointer;
-  user-select: none;
-  list-style: none;
-}
-.history-section summary:hover { background: var(--hover-bg); }
-.history-rounds { padding: 0 16px 12px; }
-.history-round { border-top: 1px solid var(--border); padding: 8px 0; }
-.history-round-label {
-  font-size: 0.68rem;
-  font-weight: 700;
-  color: var(--text-muted);
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-  margin-bottom: 4px;
-}
-.history-match { font-size: 0.8rem; padding: 3px 0; color: var(--text); }
-.history-match .court-label { color: var(--text-muted); font-size: 0.7rem; }
-.history-empty { padding: 8px 0; font-size: 0.8rem; color: var(--text-muted); font-style: italic; }
-
-/* Player selection for manual assignment */
-.player-item.selected {
-  background: var(--primary-light);
-  outline: 2px solid var(--primary);
-  outline-offset: -1px;
-}
-.player-item.pending { background: var(--pending-bg); }
-.player-item.pending .player-name { color: var(--pending-text); font-weight: 600; }
-.player-name.selectable { cursor: pointer; }
-.player-pending-badge {
-  font-size: 0.62rem;
-  font-weight: 700;
-  background: var(--pending-bg);
-  color: var(--pending-text);
-  padding: 2px 6px;
-  border-radius: var(--radius-full);
-  border: 1px solid var(--pending-border);
-}
-
-/* Pending court */
-.court-body.clickable { cursor: pointer; }
-.pending-assignment { display: flex; flex-direction: column; gap: 6px; }
-.pending-side {
-  padding: 9px 11px;
-  border-radius: var(--radius-sm);
-  display: flex;
-  flex-direction: column;
-  gap: 3px;
-  min-height: 36px;
-  background: var(--hover-bg);
-  border: 1px solid var(--border);
-}
-.pending-player {
-  font-size: 0.85rem;
-  font-weight: 600;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-.pending-player .btn-ghost { padding: 0 4px; font-size: 0.85rem; }
-.pending-slot {
-  font-size: 0.78rem;
-  color: var(--text-muted);
-  border: 1px dashed var(--border-strong);
-  border-radius: var(--radius-sm);
-  padding: 4px 8px;
-  text-align: center;
-  font-style: italic;
-}
-.pending-buttons { display: flex; gap: 6px; margin-top: 6px; }
-.pending-buttons .btn { flex: 1; }
-.btn-start-game {
-  background: var(--success);
-  color: white;
-  padding: 7px 14px;
-  font-size: 0.82rem;
-  border-radius: var(--radius-sm);
-}
-.btn-start-game:hover:not(:disabled) { background: #047857; }
-
-/* Score entry */
-.score-entry { display: flex; flex-direction: column; gap: 6px; }
-.score-side {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 9px 11px;
-  border-radius: var(--radius-sm);
-}
-.score-side .side-names { flex: 1; font-size: 0.85rem; font-weight: 600; }
-.score-side input[type="number"] {
-  width: 62px;
-  padding: 6px 8px;
-  border: 1.5px solid var(--border);
-  border-radius: var(--radius-sm);
-  font-size: 1rem;
-  font-weight: 700;
-  text-align: center;
-  font-family: inherit;
-  background: var(--card);
-  color: var(--text);
-}
-.score-side input[type="number"]:focus {
-  outline: none;
-  border-color: var(--primary);
-  box-shadow: 0 0 0 3px var(--primary-light);
-}
-.score-buttons { display: flex; gap: 6px; margin-top: 6px; flex-wrap: wrap; }
-.score-buttons .btn { flex: 1; min-width: 80px; }
-.score-error { font-size: 0.8rem; color: var(--danger); min-height: 1em; }
-
-/* History winner */
-.history-match .winner { font-weight: 700; }
-.history-match .loser { color: var(--text-muted); }
-.history-match .match-score { font-weight: 600; color: var(--primary); margin-left: 6px; }
-
-
-/* Responsive */
-@media (max-width: 600px) {
-  .page-wrap { padding: 12px 10px; }
-}
-
-/* Session Bar */
-.session-bar {
-  background: #1e293b;
-  color: #cbd5e1;
-  padding: 7px 20px;
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  font-size: 0.83rem;
-  flex-wrap: wrap;
-  border-bottom: 1px solid #0f172a;
-}
-.session-bar-label { color: #475569; font-size: 0.78rem; white-space: nowrap; }
-.btn-loc {
-  padding: 4px 12px;
-  border: 1px solid #334155;
-  border-radius: var(--radius-full);
-  background: #0f172a;
-  color: #93c5fd;
-  font-size: 0.78rem;
-  font-weight: 600;
-  cursor: pointer;
-  font-family: inherit;
-  transition: background 0.15s, border-color 0.15s;
-  white-space: nowrap;
-}
-.btn-loc:hover { background: #1e3a5f; border-color: #60a5fa; }
-.session-bar input {
-  padding: 4px 8px;
-  border-radius: var(--radius-sm);
-  border: 1px solid #334155;
-  background: #0f172a;
-  color: #e2e8f0;
-  font-size: 0.82rem;
-  width: 100px;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-  font-family: inherit;
-}
-.session-bar input::placeholder { color: #475569; text-transform: none; letter-spacing: normal; }
-.btn-session-outline {
-  padding: 4px 10px;
-  border: 1px solid #334155;
-  border-radius: var(--radius-sm);
-  background: transparent;
-  color: #94a3b8;
-  font-size: 0.78rem;
-  font-weight: 500;
-  cursor: pointer;
-  font-family: inherit;
-  white-space: nowrap;
-  transition: background 0.15s, color 0.15s;
-}
-.btn-session-outline:hover { background: rgba(255,255,255,0.06); color: #e2e8f0; }
-.session-active-name {
-  font-weight: 700;
-  font-size: 0.9rem;
-  color: #a5b4fc;
-}
-.session-status-dot {
-  width: 7px; height: 7px;
-  border-radius: 50%;
-  background: #4ade80;
-  display: inline-block;
-  flex-shrink: 0;
-  animation: pulse-dot 2.5s ease-in-out infinite;
-}
-@keyframes pulse-dot {
-  0%,100% { opacity: 1; box-shadow: 0 0 0 0 rgba(74,222,128,0.4); }
-  50% { opacity: 0.7; box-shadow: 0 0 0 4px rgba(74,222,128,0); }
-}
-.session-divider { color: #334155; }
-
-/* ── Session Setup (sidebar) ────────────────────── */
 .setup-section { border-bottom: 1px solid var(--border); padding-bottom: 20px; }
 .setup-section h2 {
   font-size: 1rem !important;
@@ -1063,7 +296,6 @@ body {
   color: var(--primary);
   box-shadow: var(--shadow-sm);
 }
-/* Confirm panel */
 .confirm-card {
   margin-top: 12px;
   padding: 14px;
@@ -1079,11 +311,7 @@ body {
   text-transform: uppercase;
   letter-spacing: 0.05em;
 }
-.confirm-identity {
-  display: flex;
-  align-items: baseline;
-  gap: 8px;
-}
+.confirm-identity { display: flex; align-items: baseline; gap: 8px; }
 .confirm-name { font-size: 1rem; font-weight: 700; color: var(--text); }
 .confirm-skill { font-size: 0.85rem; color: var(--text-light); }
 .btn-confirm-join {
@@ -1114,7 +342,6 @@ body {
   transition: background 0.15s;
 }
 .btn-confirm-back:hover { background: var(--hover-bg); }
-
 .session-loading {
   display: flex;
   align-items: center;
@@ -1135,46 +362,893 @@ body {
 }
 @keyframes spin { to { transform: rotate(360deg); } }
 
+/* ── Settings tab ───────────────────────────── */
+.settings-card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-sm);
+  padding: 16px;
+  margin-bottom: 14px;
+}
+.settings-card-title {
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-muted);
+  margin-bottom: 12px;
+}
+.settings-field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-bottom: 12px;
+}
+.settings-field:last-child { margin-bottom: 0; }
+.settings-field label {
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--text-light);
+}
+.settings-field input[type="text"],
+.settings-field input[type="number"] {
+  padding: 9px 12px;
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius-sm);
+  font-size: 0.875rem;
+  background: var(--bg);
+  color: var(--text);
+  font-family: inherit;
+}
+.settings-field input:focus {
+  outline: none;
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px var(--primary-light);
+}
+.settings-toggle {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--border);
+}
+.settings-toggle:last-child { border-bottom: none; }
+.settings-toggle label {
+  font-size: 0.85rem;
+  font-weight: 500;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 1;
+  color: var(--text);
+}
+.settings-toggle input[type="checkbox"] {
+  accent-color: var(--primary);
+  width: 16px;
+  height: 16px;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+.settings-toggle .hint {
+  font-size: 0.76rem;
+  color: var(--text-muted);
+  margin-left: 24px;
+  margin-top: 2px;
+}
+
+/* ── Partner list in settings ───────────────── */
+.btn-add-partner {
+  width: 100%;
+  padding: 8px;
+  border: 1.5px dashed var(--border-strong);
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--text-light);
+  font-size: 0.82rem;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  transition: border-color 0.15s, color 0.15s;
+}
+.btn-add-partner:hover { border-color: var(--primary); color: var(--primary); }
+.partner-picker {
+  margin-top: 8px;
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+}
+.partner-picker-list { display: flex; flex-direction: column; }
+.partner-picker-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 9px 12px;
+  cursor: pointer;
+  font-size: 0.85rem;
+  font-weight: 500;
+  border-bottom: 1px solid var(--border);
+  transition: background 0.12s;
+}
+.partner-picker-item:last-child { border-bottom: none; }
+.partner-picker-item:hover { background: var(--primary-light); }
+.partner-chip {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  border-radius: var(--radius-sm);
+  background: var(--primary-light);
+  border: 1px solid var(--primary-muted);
+  font-size: 0.85rem;
+  font-weight: 500;
+  margin-bottom: 6px;
+}
+.partner-chip .partner-chip-name { flex: 1; }
+.partner-chip .partner-chip-remove {
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  font-size: 1rem;
+  cursor: pointer;
+  padding: 0 2px;
+  line-height: 1;
+}
+.partner-chip .partner-chip-remove:hover { color: var(--danger); }
+.queue-partner-badge {
+  font-size: 0.68rem;
+  font-weight: 700;
+  color: #92400e;
+  background: #fef3c7;
+  padding: 1px 5px;
+  border-radius: var(--radius-full);
+  letter-spacing: 0.02em;
+}
+.settings-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 16px;
+  padding-top: 14px;
+  border-top: 1px solid var(--border);
+}
+.btn-reset-all {
+  padding: 8px 16px;
+  background: var(--danger-light);
+  color: var(--danger);
+  border: 1px solid #fecaca;
+  border-radius: var(--radius-sm);
+  font-size: 0.82rem;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+}
+.btn-reset-all:hover { background: #fee2e2; }
+
+/* ── Queue bar (Courts tab) ─────────────────── */
+.queue-bar-wrap {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-sm);
+  padding: 14px 16px;
+}
+.queue-bar-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 10px;
+}
+.queue-bar-label {
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-muted);
+}
+.section-title {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--text);
+  line-height: 1.2;
+}
+.section-subtitle {
+  font-size: 0.76rem;
+  color: var(--text-muted);
+  line-height: 1.35;
+  margin-top: 2px;
+}
+.queue-list { display: flex; flex-direction: column; gap: 0; }
+.queue-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 0;
+  border-bottom: 1px solid var(--border);
+  font-size: 0.9rem;
+}
+.queue-row:last-child { border-bottom: none; }
+.queue-row.inactive { opacity: 0.45; }
+.queue-row-name {
+  flex: 1;
+  font-weight: 600;
+  user-select: none;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.queue-row-you {
+  font-size: 0.68rem;
+  font-weight: 700;
+  color: var(--success);
+  background: var(--success-light);
+  padding: 1px 5px;
+  border-radius: var(--radius-full);
+  letter-spacing: 0.02em;
+}
+.queue-row-status {
+  font-size: 0.62rem;
+  font-weight: 700;
+  padding: 1px 5px;
+  border-radius: var(--radius-full);
+  letter-spacing: 0.02em;
+}
+.queue-row-status.guest {
+  color: var(--text-muted);
+  background: var(--hover-bg);
+  border: 1px solid var(--border);
+}
+.queue-row-status.user {
+  color: var(--primary);
+  background: var(--primary-light);
+  border: 1px solid var(--primary-muted);
+}
+.queue-row-skill {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  min-width: 28px;
+  text-align: right;
+}
+.queue-row-badge {
+  font-size: 0.7rem;
+  color: var(--text-muted);
+  border: 1px solid var(--border);
+  border-radius: 3px;
+  padding: 1px 4px;
+}
+.queue-row-edit {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--border);
+  flex-wrap: wrap;
+}
+.queue-row-edit input[type="text"],
+.queue-row-edit input[type="number"] {
+  padding: 5px 8px;
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius-sm);
+  font-size: 0.82rem;
+  font-family: inherit;
+  background: var(--card);
+  color: var(--text);
+}
+.queue-row-edit input[type="text"] { flex: 1; min-width: 90px; }
+.queue-row-edit input[type="number"] { width: 60px; }
+.queue-row-edit input:focus {
+  outline: none;
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px var(--primary-light);
+}
+.edit-guest-singles {
+  font-size: 0.78rem;
+  font-weight: 500;
+  color: var(--text-light);
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.edit-guest-singles input { accent-color: var(--primary); width: 14px; height: 14px; }
+.btn-edit-save {
+  padding: 4px 10px;
+  background: var(--primary);
+  color: white;
+  border: none;
+  border-radius: var(--radius-sm);
+  font-size: 0.78rem;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+}
+.btn-edit-save:hover { background: var(--primary-hover); }
+.btn-edit-cancel {
+  padding: 4px 10px;
+  background: transparent;
+  color: var(--text-muted);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  font-size: 0.78rem;
+  font-weight: 500;
+  font-family: inherit;
+  cursor: pointer;
+}
+.btn-edit-cancel:hover { background: var(--hover-bg); }
+
+.queue-row-action {
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  font-size: 0.75rem;
+  line-height: 1;
+  padding: 2px 4px;
+  border-radius: 4px;
+  transition: color 0.15s, background 0.15s;
+}
+.queue-row-action:hover { color: var(--warning); background: var(--warning-light); }
+.queue-row-action.play { color: var(--success); }
+.queue-row-action.play:hover { background: var(--success-light); }
+.queue-row-remove {
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  font-size: 1rem;
+  line-height: 1;
+  padding: 0 2px;
+}
+.queue-row-remove:hover { color: var(--danger); }
+.queue-row-confirm {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.82rem;
+  color: var(--danger);
+  flex: 1;
+}
+.queue-row-confirm button {
+  font-size: 0.75rem;
+  padding: 1px 7px;
+  border-radius: 4px;
+  border: 1px solid;
+  cursor: pointer;
+  background: none;
+}
+
+/* ── Add player form ────────────────────────── */
+.add-form {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 12px;
+  background: var(--primary-light);
+  border: 1px solid var(--primary-muted);
+  border-radius: var(--radius);
+  padding: 12px;
+}
+.add-form input {
+  padding: 8px 10px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  font-size: 0.875rem;
+  background: var(--card);
+  color: var(--text);
+  font-family: inherit;
+  width: 100%;
+}
+.add-form input:focus {
+  outline: none;
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px var(--primary-light);
+}
+.add-form input::placeholder { color: var(--text-muted); }
+.add-form-row2 { display: flex; gap: 8px; align-items: center; }
+.input-score { flex: 1; }
+.add-form .singles-label {
+  font-size: 0.78rem;
+  color: var(--text-light);
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  cursor: pointer;
+  white-space: nowrap;
+  font-weight: 500;
+  align-self: flex-start;
+}
+.add-form .singles-label input { accent-color: var(--primary); }
+.btn-add-another {
+  width: 100%;
+  padding: 9px;
+  background: transparent;
+  color: var(--primary);
+  border: 1.5px dashed var(--primary-muted);
+  border-radius: var(--radius-sm);
+  font-size: 0.85rem;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  margin-bottom: 8px;
+  transition: background 0.15s, border-color 0.15s;
+}
+.btn-add-another:hover { background: var(--primary-light); border-color: var(--primary); }
+.btn-add-player {
+  width: 100%;
+  padding: 9px;
+  background: var(--primary);
+  color: white;
+  border: none;
+  border-radius: var(--radius-sm);
+  font-size: 0.875rem;
+  font-weight: 700;
+  font-family: inherit;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+.btn-add-player:hover { background: var(--primary-hover); }
+
+/* ── Assign header ──────────────────────────── */
+.assign-header {
+  background: var(--card);
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow-sm);
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.assign-controls { display: flex; flex-direction: column; gap: 10px; }
+.assign-options-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+.assign-option-label {
+  font-size: 0.82rem;
+  color: var(--text-light);
+  font-weight: 500;
+  white-space: nowrap;
+}
+.assign-court-select {
+  padding: 5px 8px;
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius-sm);
+  font-size: 0.875rem;
+  font-family: inherit;
+  background: var(--bg);
+  color: var(--text);
+  cursor: pointer;
+  font-weight: 600;
+  width: 60px;
+}
+.assign-court-select:focus { outline: none; border-color: var(--primary); }
+.assign-match-options {
+  display: flex;
+  gap: 16px;
+  font-size: 0.82rem;
+  color: var(--text-light);
+}
+.assign-match-options label {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  cursor: pointer;
+  font-weight: 500;
+}
+.btn-assign-all {
+  width: 100%;
+  padding: 11px;
+  background: var(--success);
+  color: white;
+  border: none;
+  border-radius: var(--radius-sm);
+  font-size: 0.95rem;
+  font-weight: 700;
+  font-family: inherit;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+.btn-assign-all:hover:not(:disabled) { background: #047857; }
+.btn-assign-all:disabled { opacity: 0.45; cursor: not-allowed; }
+
+/* ── Options bar ────────────────────────────── */
+.options-bar {
+  display: flex;
+  gap: 20px;
+  align-items: center;
+  flex-wrap: wrap;
+  padding: 10px 16px;
+  background: var(--card);
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow-sm);
+}
+.option-group { display: flex; align-items: center; gap: 6px; }
+.option-group label {
+  font-size: 0.83rem;
+  font-weight: 500;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  user-select: none;
+  color: var(--text-light);
+}
+.option-group input[type="checkbox"] {
+  accent-color: var(--primary);
+  width: 15px;
+  height: 15px;
+  cursor: pointer;
+}
+
+/* ── Tooltips ───────────────────────────────── */
+.tooltip-wrap { position: relative; display: inline-flex; align-items: center; }
+.tooltip-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: var(--border);
+  color: var(--text-light);
+  font-size: 0.65rem;
+  font-weight: 700;
+  cursor: default;
+  user-select: none;
+  flex-shrink: 0;
+}
+.tooltip-box {
+  display: none;
+  position: absolute;
+  bottom: calc(100% + 6px);
+  left: 50%;
+  transform: translateX(-50%);
+  background: #1e293b;
+  color: #e2e8f0;
+  font-size: 0.78rem;
+  font-weight: 400;
+  line-height: 1.4;
+  padding: 7px 10px;
+  border-radius: var(--radius-sm);
+  white-space: nowrap;
+  box-shadow: var(--shadow-md);
+  pointer-events: none;
+  z-index: 100;
+}
+.tooltip-box::after {
+  content: '';
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  border: 5px solid transparent;
+  border-top-color: #1e293b;
+}
+.tooltip-wrap:hover .tooltip-box { display: block; }
+
+/* ── Courts grid ────────────────────────────── */
+.courts-grid { display: flex; flex-direction: column; gap: 12px; }
+
+/* ── Court card ─────────────────────────────── */
+.court-card {
+  background: var(--card);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  overflow: hidden;
+  transition: box-shadow 0.2s, border-color 0.2s, transform 0.15s;
+  border: 1.5px solid var(--border);
+}
+.court-card:hover { box-shadow: var(--shadow-md); }
+.court-card.inactive { opacity: 0.45; }
+.court-card.game-active {
+  border-color: #6ee7b7;
+  box-shadow: 0 0 0 1px #6ee7b7, var(--shadow-md);
+}
+.court-card.pending {
+  border-color: var(--pending-border);
+  border-style: solid;
+}
+.court-header {
+  padding: 10px 14px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: #6366f1;
+  color: white;
+  font-weight: 700;
+  font-size: 0.85rem;
+  letter-spacing: -0.01em;
+}
+.court-card.inactive .court-header { background: #9ca3af; }
+.court-card.game-active .court-header { background: #059669; }
+.court-card.pending .court-header { background: #d97706; }
+.court-status { font-size: 0.68rem; font-weight: 500; opacity: 0.85; }
+.btn-cancel-game {
+  background: rgba(255,255,255,0.2);
+  border: none;
+  color: white;
+  font-size: 1rem;
+  line-height: 1;
+  padding: 1px 6px;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  opacity: 0.8;
+}
+.btn-cancel-game:hover { opacity: 1; background: rgba(255,255,255,0.35); }
+.court-controls { display: flex; gap: 6px; align-items: center; }
+.court-body {
+  padding: 14px;
+  min-height: 120px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+.court-empty {
+  text-align: center;
+  color: var(--text-muted);
+  font-size: 0.82rem;
+  font-style: italic;
+}
+.court-assignment { display: flex; flex-direction: column; gap: 6px; }
+.court-side {
+  padding: 9px 11px;
+  border-radius: var(--radius-sm);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+.side-names-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  width: 100%;
+}
+.side-partners-row {
+  display: flex;
+  justify-content: center;
+}
+.side-1 { background: var(--side1-bg); }
+.side-2 { background: var(--side2-bg); }
+.court-side .side-player-name { white-space: nowrap; }
+.court-side .side-player-skill { color: var(--text-light); font-weight: 400; font-size: 0.78rem; }
+.court-side .side-amp { color: var(--text-muted); font-weight: 500; flex-shrink: 0; }
+.side-names-row .side-player-left { flex: 1; min-width: 0; display: flex; justify-content: flex-end; align-items: center; gap: 3px; }
+.side-names-row .side-player-right { flex: 1; min-width: 0; display: flex; justify-content: flex-start; align-items: center; gap: 3px; }
+.court-side .side-player-solo { text-align: center; display: flex; justify-content: center; align-items: center; gap: 3px; }
+.side-partners-badge {
+  font-size: 0.68rem;
+  font-weight: 700;
+  color: #92400e;
+  background: #fef3c7;
+  padding: 1px 8px;
+  border-radius: var(--radius-full);
+  letter-spacing: 0.02em;
+}
+.court-vs {
+  text-align: center;
+  font-weight: 800;
+  font-size: 0.7rem;
+  color: var(--text-muted);
+  letter-spacing: 0.1em;
+  padding: 1px 0;
+}
+.court-mode-badge {
+  font-size: 0.65rem;
+  font-weight: 700;
+  background: rgba(255,255,255,0.22);
+  padding: 2px 7px;
+  border-radius: var(--radius-full);
+  letter-spacing: 0.04em;
+}
+.court-timer {
+  font-size: 0.72rem;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  background: rgba(0,0,0,0.15);
+  padding: 2px 7px;
+  border-radius: var(--radius-full);
+}
+
+/* ── Sitting out ────────────────────────────── */
+.sitting-out {
+  padding: 12px 16px;
+  background: var(--card);
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow-sm);
+}
+.sitting-out h3 {
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  color: var(--text-muted);
+  margin-bottom: 8px;
+}
+.sitting-out .bench-players { display: flex; gap: 6px; flex-wrap: wrap; }
+.bench-player {
+  background: var(--bench-bg);
+  padding: 4px 11px;
+  border-radius: var(--radius-full);
+  font-size: 0.78rem;
+  font-weight: 500;
+  color: var(--bench-text);
+  border: 1px solid #fecaca;
+}
+
+/* ── Score entry ────────────────────────────── */
+.score-entry { display: flex; flex-direction: column; gap: 6px; }
+.score-side {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 11px;
+  border-radius: var(--radius-sm);
+}
+.score-side .side-names { flex: 1; font-size: 0.85rem; font-weight: 600; }
+.score-side input[type="number"] {
+  width: 62px;
+  padding: 6px 8px;
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius-sm);
+  font-size: 1rem;
+  font-weight: 700;
+  text-align: center;
+  font-family: inherit;
+  background: var(--card);
+  color: var(--text);
+}
+.score-side input[type="number"]:focus {
+  outline: none;
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px var(--primary-light);
+}
+.score-buttons { display: flex; gap: 6px; margin-top: 6px; flex-wrap: wrap; }
+.score-buttons .btn { flex: 1; min-width: 80px; }
+.score-error { font-size: 0.8rem; color: var(--danger); min-height: 1em; }
+
+/* ── History tab ────────────────────────────── */
+.history-section {
+  background: var(--card);
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow-sm);
+  padding: 16px;
+}
+.history-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+.history-filters {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 12px;
+  flex-wrap: wrap;
+}
+.history-search {
+  flex: 1;
+  min-width: 120px;
+  padding: 6px 10px;
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius-sm);
+  font-size: 0.82rem;
+  font-family: inherit;
+  background: var(--bg);
+  color: var(--text);
+}
+.history-search:focus { outline: none; border-color: var(--primary); }
+.history-filter-select {
+  padding: 6px 8px;
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius-sm);
+  font-size: 0.82rem;
+  font-family: inherit;
+  background: var(--bg);
+  color: var(--text);
+  cursor: pointer;
+}
+.history-table-wrap { overflow-x: auto; }
+.history-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.82rem;
+}
+.history-table th {
+  text-align: left;
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  padding: 6px 8px;
+  border-bottom: 2px solid var(--border);
+  white-space: nowrap;
+}
+.history-table td {
+  padding: 7px 8px;
+  border-bottom: 1px solid var(--border);
+  vertical-align: middle;
+}
+.history-table tr:last-child td { border-bottom: none; }
+.history-table .winner { font-weight: 700; }
+.history-table .loser { color: var(--text-muted); }
+.history-table .match-score { font-weight: 600; color: var(--primary); }
+.history-table .mode-badge {
+  font-size: 0.68rem;
+  font-weight: 600;
+  padding: 1px 6px;
+  border-radius: var(--radius-full);
+  background: var(--bg);
+  color: var(--text-light);
+}
+.history-empty { padding: 8px 0; font-size: 0.82rem; color: var(--text-muted); font-style: italic; }
+.player-rounds {
+  font-size: 0.68rem;
+  color: var(--primary);
+  font-weight: 700;
+  background: var(--primary-light);
+  padding: 1px 5px;
+  border-radius: var(--radius-full);
+}
+.btn-clear-history {
+  padding: 6px 14px;
+  background: transparent;
+  color: var(--text-muted);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  font-size: 0.78rem;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+}
+.btn-clear-history:hover { color: var(--danger); border-color: #fecaca; background: var(--danger-light); }
+
+/* ── Responsive ─────────────────────────────── */
+@media (max-width: 600px) {
+  .page-wrap { padding: 12px 10px; }
+  .header { padding: 10px 14px; }
+  .header-loc-name { font-size: 0.8rem; }
+}
 </style>
 </head>
 <body>
 
+<!-- ── Header ──────────────────────────────────── -->
 <header class="header">
-  <div class="header-brand"><h1>🥒 Pickle Jar</h1><span class="header-tagline">Everyone's in the jar. Shake it up.</span></div>
-  <div class="header-actions">
-    <button class="btn btn-primary btn-sm" onclick="App.clearHistory()">Clear History</button>
-    <button class="btn btn-primary btn-sm" onclick="App.resetAll()">Reset All</button>
+  <div class="header-brand">
+    <h1>&#x1f952; Pickle Jar</h1>
+    <span class="header-tagline">Everyone's in the jar. Shake it up.</span>
+  </div>
+  <div class="header-right" id="headerRight" style="display:none;">
+    <div class="header-location">
+      <span class="session-status-dot"></span>
+      <span class="header-loc-name" id="headerLocName"></span>
+    </div>
+    <button class="btn-header leave" onclick="Session.leave()">Leave Session</button>
   </div>
 </header>
 
-<!-- Session Bar (shown only when active) -->
-<div class="session-bar" id="sessionBar" style="display:none;">
-  <span class="session-status-dot"></span>
-  <span class="session-active-name" id="sessionLocationName"></span>
-  <span class="session-divider">|</span>
-  <!-- Profile display -->
-  <div id="profileDisplay" style="display:flex;align-items:center;gap:6px;">
-    <span style="color:#94a3b8;font-size:0.8rem;">You:</span>
-    <span id="profileName" style="color:#e2e8f0;font-weight:600;font-size:0.85rem;"></span>
-    <span id="profileScore" style="color:#93c5fd;font-size:0.8rem;"></span>
-    <button class="btn-session-outline" onclick="Onboard.startEditProfile()">Edit</button>
-  </div>
-  <!-- Profile edit form -->
-  <div id="profileEdit" style="display:none;align-items:center;gap:6px;flex-wrap:wrap;">
-    <input type="text" id="profileEditName" placeholder="Name" maxlength="30"
-           onkeydown="if(event.key==='Enter')Onboard.saveProfile()">
-    <input type="number" id="profileEditScore" placeholder="2.5" min="2" max="8" step="0.01"
-           onblur="App.fmtDUPR(this)" onkeydown="if(event.key==='Enter')Onboard.saveProfile()">
-    <button class="btn-session-outline" onclick="Onboard.saveProfile()">Save</button>
-    <button class="btn-session-outline" onclick="Onboard.cancelEditProfile()">Cancel</button>
-  </div>
-  <button class="btn-session-outline" onclick="Session.leave()">Change Location</button>
-  <button class="btn-session-outline" onclick="Session.leave()" style="color:#f87171;border-color:#475569;">Leave Session</button>
-</div>
+<!-- ── Tab Bar (shown when in session) ─────────── -->
+<nav class="tab-bar" id="tabBar" style="display:none;">
+  <button class="tab-btn active" data-tab="courts" onclick="App.switchTab('courts')">Courts <span class="tab-badge" id="tabBadgeCourts">0</span></button>
+  <button class="tab-btn" data-tab="settings" onclick="App.switchTab('settings')">Settings</button>
+  <button class="tab-btn" data-tab="history" onclick="App.switchTab('history')">History <span class="tab-badge" id="tabBadgeHistory">0</span></button>
+</nav>
 
 <div class="page-wrap">
 
-  <!-- Session setup (shown before joining) -->
+  <!-- ── Session setup (shown before joining) ─── -->
   <div id="sessionSetupSection" class="setup-center">
     <div class="setup-card">
       <h2 style="font-size:1.1rem;font-weight:700;margin-bottom:16px;color:var(--text);">Join a Session</h2>
@@ -1185,8 +1259,8 @@ body {
       </label>
       <p id="onboardNameError" class="setup-error">Enter your name first</p>
       <div class="setup-locations">
-        <button type="button" class="btn-loc-setup" id="btn-flpark">📍 Fred Lindstrom Park</button>
-        <button type="button" class="btn-loc-setup" id="btn-lhresort">📍 Lighthouse Resort</button>
+        <button type="button" class="btn-loc-setup" id="btn-flpark">&#x1f4cd; Fred Lindstrom Park</button>
+        <button type="button" class="btn-loc-setup" id="btn-lhresort">&#x1f4cd; Lighthouse Resort</button>
       </div>
       <div id="sessionConfirmPanel" style="display:none;">
         <div class="confirm-card">
@@ -1203,80 +1277,46 @@ body {
       </div>
       <div id="sessionLoading" class="session-loading" style="display:none;">
         <span class="session-spinner"></span>
-        <span id="sessionLoadingText">Connecting…</span>
+        <span id="sessionLoadingText">Connecting&#x2026;</span>
       </div>
     </div>
   </div>
 
-  <!-- Queue bar (shown when in session) -->
-  <div id="playersSection" class="queue-bar-wrap" style="display:none;">
-    <div class="queue-bar-top">
-      <div>
-        <div class="section-title">Queue</div>
-        <div class="section-subtitle">Players waiting to play — tap a name to sit out</div>
-      </div>
-      <button class="btn-add-another" id="addAnotherBtn" onclick="App.toggleAddForm()" style="width:auto;white-space:nowrap;flex-shrink:0;margin-bottom:0;">+ Add Player</button>
-    </div>
-    <div class="add-form" id="addPlayerForm" style="display:none;">
-      <input class="input-name" type="text" id="playerName" placeholder="Player name" onkeydown="if(event.key==='Enter')App.addPlayer()">
-      <div class="add-form-row2">
-        <input class="input-score" type="number" id="playerScore" placeholder="2.5" min="2" max="8" step="0.01" onkeydown="if(event.key==='Enter')App.addPlayer()" onblur="App.fmtDUPR(this)">
-      </div>
-      <label class="singles-label"><input type="checkbox" id="playerSingles"> Open to 1v1</label>
-      <div style="display:flex;gap:8px;">
-        <button class="btn-add-player" style="flex:1;" onclick="App.addPlayer()">+ Add Player</button>
-        <button class="btn-add-player" style="flex:0;background:var(--border);color:var(--text);" onclick="App.toggleAddForm()">Cancel</button>
-      </div>
-    </div>
-    <div id="playerList" class="queue-list"></div>
-  </div>
+  <!-- ═══════════════ TAB: COURTS ═══════════════ -->
+  <div id="tabCourts" class="tab-panel active" style="display:none;">
 
-  <!-- Teams (collapsible, shown when in session) -->
-  <details id="teamsSection" class="teams-details" style="display:none;">
-    <summary>
-      <span style="font-size:0.95rem;font-weight:700;color:var(--text);">Partner Preference</span>
-      <span style="font-weight:400;color:var(--text-muted);font-size:0.76rem;margin-left:6px;">optional</span>
-    </summary>
-    <div class="teams-details-body">
-      <p class="section-subtitle" style="margin-bottom:10px;">Select your partner if you don't want to be split up — you'll only be assigned to doubles together. Resets automatically if they leave the session.</p>
-      <ul class="teammate-list" id="teammateList"></ul>
-      <ul class="team-list" id="teamList"></ul>
-    </div>
-  </details>
-
-  <!-- Main content (shown when in session) -->
-  <main class="main-content" id="mainContent" style="display:none;">
-    <!-- Options -->
-    <div class="options-bar">
-      <div style="flex-basis:100%;margin-bottom:6px;">
-        <div class="section-title" style="font-size:0.88rem;">Match Settings</div>
-        <div class="section-subtitle">Customize how courts are assigned</div>
+    <!-- Queue -->
+    <div id="playersSection" class="queue-bar-wrap" style="margin-bottom:14px;">
+      <div class="queue-bar-top">
+        <div>
+          <div class="section-title">Queue</div>
+          <div class="section-subtitle">Players waiting to be assigned to a court. Use &#x23F8; to sit out temporarily or &times; to remove from the session.</div>
+        </div>
+        <button class="btn-add-another" id="addAnotherBtn" onclick="App.toggleAddForm()" style="width:auto;white-space:nowrap;flex-shrink:0;margin-bottom:0;">+ Add Guest</button>
       </div>
-      <div class="option-group">
-        <label><input type="checkbox" id="optSkill" onchange="App.saveState()"> Match by skill</label>
-        <span class="tooltip-wrap">
-          <span class="tooltip-icon">?</span>
-          <span class="tooltip-box">Balance teams so players with similar skill levels are matched against each other</span>
-        </span>
+      <div class="add-form" id="addPlayerForm" style="display:none;">
+        <input class="input-name" type="text" id="playerName" placeholder="Player name" onkeydown="if(event.key==='Enter')App.addPlayer()">
+        <div class="add-form-row2">
+          <input class="input-score" type="number" id="playerScore" placeholder="2.5" min="2" max="8" step="0.01" onkeydown="if(event.key==='Enter')App.addPlayer()" onblur="App.fmtDUPR(this)">
+        </div>
+        <label class="singles-label"><input type="checkbox" id="playerSingles"> Open to 1v1</label>
+        <div style="display:flex;gap:8px;">
+          <button class="btn-add-player" style="flex:1;" onclick="App.addPlayer()">+ Add Guest</button>
+          <button class="btn-add-player" style="flex:0;background:var(--border);color:var(--text);" onclick="App.toggleAddForm()">Cancel</button>
+        </div>
       </div>
-      <div class="option-group">
-        <label><input type="checkbox" id="optRepeats" onchange="App.saveState()"> Minimize repeats</label>
-        <span class="tooltip-wrap">
-          <span class="tooltip-icon">?</span>
-          <span class="tooltip-box">Prioritize pairing players who haven't faced each other recently</span>
-        </span>
-      </div>
+      <div id="playerList" class="queue-list"></div>
     </div>
 
     <!-- Assign -->
-    <div class="assign-header" id="assignHeader">
+    <div class="assign-header" id="assignHeader" style="margin-bottom:14px;">
       <div>
         <div class="section-title">Assign Courts</div>
         <div class="section-subtitle" id="assignCount"></div>
       </div>
       <div class="assign-controls" id="assignControls" style="display:none;">
         <div class="assign-options-row">
-          <span class="assign-option-label">Courts available</span>
+          <span class="assign-option-label">Courts available now</span>
           <select id="courtCountSelect" class="assign-court-select" onchange="App.setAvailableCourts(this.value)">
             <option value="1">1</option>
             <option value="2">2</option>
@@ -1284,25 +1324,90 @@ body {
             <option value="4">4</option>
             <option value="5">5</option>
             <option value="6">6</option>
+            <option value="7">7</option>
+            <option value="8">8</option>
+            <option value="9">9</option>
+            <option value="10">10</option>
           </select>
-          <div class="assign-mode-toggle">
-            <button id="btnMode1v1" class="btn-mode-pill" onclick="App.setAssignMode('singles')">1v1</button>
-            <button id="btnMode2v2" class="btn-mode-pill" onclick="App.setAssignMode('doubles')">2v2</button>
-          </div>
+        </div>
+        <div class="assign-match-options">
+          <label><input type="checkbox" id="optSkill" onchange="App.saveState()"> Match by skill</label>
+          <label><input type="checkbox" id="optRepeats" onchange="App.saveState()"> Minimize repeats</label>
         </div>
         <button id="btnAssignAll" class="btn-assign-all" onclick="App.assignAll()">Assign Courts</button>
       </div>
     </div>
 
-    <!-- Courts (active games) -->
+    <!-- Courts grid (active games) -->
     <div class="courts-grid" id="courtsGrid"></div>
+  </div>
 
-    <!-- History -->
-    <details class="history-section" id="historySection">
-      <summary>Match History</summary>
-      <div class="history-rounds" id="historyRounds"></div>
-    </details>
-  </main>
+  <!-- ═══════════════ TAB: SETTINGS ═════════════ -->
+  <div id="tabSettings" class="tab-panel" style="display:none;">
+
+    <!-- Profile -->
+    <div class="settings-card">
+      <div class="settings-card-title">Your Profile</div>
+      <div class="settings-field">
+        <label for="settingsName">Name</label>
+        <input type="text" id="settingsName" placeholder="Your name" maxlength="30">
+      </div>
+      <div class="settings-field">
+        <label for="settingsSkill">Skill Level (DUPR)</label>
+        <input type="number" id="settingsSkill" placeholder="2.0 – 8.0" min="2" max="8" step="0.01" onblur="App.fmtDUPR(this)">
+      </div>
+      <div class="settings-toggle">
+        <label><input type="checkbox" id="settingsSingles"> Open to 1v1</label>
+      </div>
+      <div style="margin-top:10px;">
+        <button class="btn-add-player" style="width:100%;" onclick="App.saveSettings()">Save Profile</button>
+      </div>
+    </div>
+
+    <!-- Partners -->
+    <div class="settings-card">
+      <div class="settings-card-title">Partner Preference</div>
+      <p class="section-subtitle" style="margin-bottom:10px;">When both you and a partner are in the queue, you'll be placed on the same side in doubles. If your partner isn't available, you'll be assigned normally.</p>
+      <div id="partnerDisplay"></div>
+      <button class="btn-add-partner" id="btnAddPartner" onclick="App.togglePartnerPicker()">+ Add Partner</button>
+      <div class="partner-picker" id="partnerPicker" style="display:none;">
+        <div class="partner-picker-list" id="partnerPickerList"></div>
+      </div>
+    </div>
+
+
+    <!-- Danger zone -->
+    <div class="settings-card" style="border-color:#fecaca;">
+      <div class="settings-card-title" style="color:var(--danger);">Danger Zone</div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;">
+        <button class="btn-reset-all" onclick="App.clearHistory()">Clear History</button>
+        <button class="btn-reset-all" onclick="App.resetAll()" style="background:#fef2f2;color:var(--danger);">Reset Everything</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════ TAB: HISTORY ══════════════ -->
+  <div id="tabHistory" class="tab-panel" style="display:none;">
+    <div class="history-section">
+      <div class="history-header">
+        <div class="section-title">Match History</div>
+        <button class="btn-clear-history" onclick="App.clearHistory()">Clear History</button>
+      </div>
+      <div class="history-filters">
+        <input type="text" id="historySearch" class="history-search" placeholder="Search player name..." oninput="App.renderHistory()">
+        <select id="historyModeFilter" class="history-filter-select" onchange="App.renderHistory()">
+          <option value="all">All modes</option>
+          <option value="doubles">2v2</option>
+          <option value="singles">1v1</option>
+        </select>
+        <select id="historySortBy" class="history-filter-select" onchange="App.renderHistory()">
+          <option value="newest">Newest first</option>
+          <option value="oldest">Oldest first</option>
+        </select>
+      </div>
+      <div class="history-table-wrap" id="historyRounds"></div>
+    </div>
+  </div>
 
 </div>
 
@@ -1320,20 +1425,48 @@ const App = {
     roundHistory: [],
     nextId: 1,
     nextCourtId: 1,
-    assignMode: 'doubles',
     availableCourts: 2,
   },
 
-  // ─── Init ──────────────────────────────────────
+  _activeTab: 'courts',
+
+  // ─── Tab switching ──────────────────────────
+  switchTab(tab) {
+    this._activeTab = tab;
+    document.querySelectorAll('.tab-btn').forEach(b => {
+      b.classList.toggle('active', b.dataset.tab === tab);
+    });
+    document.querySelectorAll('.tab-panel').forEach(p => {
+      p.classList.toggle('active', p.id === 'tab' + tab.charAt(0).toUpperCase() + tab.slice(1));
+      p.style.display = p.classList.contains('active') ? '' : 'none';
+    });
+    // Refresh settings fields when switching to settings
+    if (tab === 'settings') this._loadSettingsFields();
+  },
+
+  _showTabs() {
+    const bar = document.getElementById('tabBar');
+    if (bar) bar.style.display = 'flex';
+    // Show the active tab panel
+    this.switchTab(this._activeTab);
+  },
+
+  _hideTabs() {
+    const bar = document.getElementById('tabBar');
+    if (bar) bar.style.display = 'none';
+    document.querySelectorAll('.tab-panel').forEach(p => {
+      p.style.display = 'none';
+    });
+  },
+
+  // ─── Init ──────────────────────────────────
   init() {
     this.loadState();
     this.render();
     setInterval(() => this.updateTimers(), 1000);
   },
 
-  // ─── State normalization ───────────────────────
-  // Firebase omits empty objects/arrays (stores as null).
-  // Call this after every Firebase merge to restore required fields.
+  // ─── State normalization ───────────────────
   _normState() {
     const s = this.state;
     if (!Array.isArray(s.players)) s.players = [];
@@ -1346,13 +1479,12 @@ const App = {
     if (!s.options) s.options = { useSkill: false, minimizeRepeats: false };
     if (!s.nextId)      s.nextId      = 1;
     if (!s.nextCourtId) s.nextCourtId = 1;
-    if (!s.assignMode)  s.assignMode  = 'doubles';
     if (s.availableCourts == null) s.availableCourts = 2;
-    // Remove legacy fields that may come back from old Firebase data
+    delete s.assignMode;
     delete s.courts; delete s.pendingGames; delete s.currentSittingOut; delete s.selectedPlayerId;
   },
 
-  // ─── Persistence ───────────────────────────────
+  // ─── Persistence ───────────────────────────
   saveState() {
     this.state.options.useSkill = document.getElementById('optSkill').checked;
     this.state.options.minimizeRepeats = document.getElementById('optRepeats').checked;
@@ -1368,7 +1500,6 @@ const App = {
         const parsed = JSON.parse(saved);
         this.state = { ...this.state, ...parsed };
         this._normState();
-        // Migrate old team data: canSplit -> doNotSplit
         for (const t of this.state.teams) {
           if ('canSplit' in t) {
             t.doNotSplit = !t.canSplit;
@@ -1377,10 +1508,58 @@ const App = {
         }
       } catch(e) { /* ignore */ }
     }
-    } catch(e) { /* ignore localStorage errors (e.g. Safari private mode) */ }
+    } catch(e) { /* ignore localStorage errors */ }
   },
 
-  // ─── Players ───────────────────────────────────
+  // ─── Settings tab: profile ─────────────────
+  _loadSettingsFields() {
+    const user = Onboard._savedUser();
+    if (user) {
+      document.getElementById('settingsName').value = user.name || '';
+      document.getElementById('settingsSkill').value = user.skill || '';
+      document.getElementById('settingsSingles').checked = !!(user.wantsSingles);
+    }
+    // Also sync the 1v1 preference from the player object
+    if (Onboard.selfId) {
+      const p = this.getPlayer(Onboard.selfId);
+      if (p) {
+        document.getElementById('settingsSingles').checked = !!p.wantsSingles;
+      }
+    }
+  },
+
+  saveSettings() {
+    const nameEl = document.getElementById('settingsName');
+    const name = nameEl.value.trim();
+    if (!name) { nameEl.focus(); return; }
+    App.fmtDUPR(document.getElementById('settingsSkill'));
+    const skillRaw = document.getElementById('settingsSkill').value;
+    const skill = skillRaw ? parseFloat(parseFloat(skillRaw).toFixed(2)) : null;
+    const wantsSingles = document.getElementById('settingsSingles').checked;
+
+    try { localStorage.setItem('pickleJarUser', JSON.stringify({ name, skill, wantsSingles })); } catch(e) {}
+
+    if (Onboard.selfId != null) {
+      const p = this.state.players.find(p => p.id === Onboard.selfId);
+      if (p) {
+        p.name = name;
+        p.score = skill;
+        p.wantsSingles = wantsSingles;
+        this.saveState();
+        this.render();
+      }
+    }
+    // Brief visual feedback
+    const btn = document.querySelector('#tabSettings .btn-add-player');
+    if (btn) {
+      const orig = btn.textContent;
+      btn.textContent = 'Saved!';
+      btn.style.background = 'var(--success)';
+      setTimeout(() => { btn.textContent = orig; btn.style.background = ''; }, 1200);
+    }
+  },
+
+  // ─── Players ───────────────────────────────
   toggleAddForm() {
     const form = document.getElementById('addPlayerForm');
     const open = form.style.display !== 'none';
@@ -1395,13 +1574,16 @@ const App = {
     const name = nameEl.value.trim();
     if (!name) return;
     const score = scoreEl.value ? parseFloat(scoreEl.value) : null;
+    const newId = this.state.nextId++;
     this.state.players.push({
-      id: this.state.nextId++,
+      id: newId,
       name,
       score,
       active: true,
       wantsSingles: !!(singlesEl?.checked),
+      isLive: false,
     });
+    this._myGuests.add(newId);
     nameEl.value = '';
     scoreEl.value = '';
     if (singlesEl) singlesEl.checked = false;
@@ -1415,14 +1597,12 @@ const App = {
   removePlayer(id) {
     if (this.isPlayerOnCourt(id)) return;
     if (this._pendingRemove === id) {
-      // Confirmed — actually remove
       this._pendingRemove = null;
       this.state.players = this.state.players.filter(p => p.id !== id);
       this.state.teams = this.state.teams.filter(t => t.p1 !== id && t.p2 !== id);
       this.saveState();
       this.render();
     } else {
-      // First tap — ask for confirmation
       this._pendingRemove = id;
       this.render();
     }
@@ -1430,6 +1610,43 @@ const App = {
 
   cancelRemove() {
     this._pendingRemove = null;
+    this.render();
+  },
+
+  _editingGuest: null,
+  _myGuests: new Set(),
+
+  editGuest(id) {
+    this._editingGuest = id;
+    this.render();
+    const nameEl = document.getElementById(`editGuestName-${id}`);
+    if (nameEl) nameEl.focus();
+  },
+
+  saveGuestEdit(id) {
+    const nameEl = document.getElementById(`editGuestName-${id}`);
+    const name = nameEl ? nameEl.value.trim() : '';
+    if (!name) { if (nameEl) nameEl.focus(); return; }
+    const skillEl = document.getElementById(`editGuestSkill-${id}`);
+    this.fmtDUPR(skillEl);
+    const skillRaw = skillEl ? skillEl.value : '';
+    const skill = skillRaw ? parseFloat(parseFloat(skillRaw).toFixed(2)) : null;
+    const singlesEl = document.getElementById(`editGuestSingles-${id}`);
+    const wantsSingles = singlesEl ? singlesEl.checked : false;
+
+    const p = this.state.players.find(p => p.id === id);
+    if (p) {
+      p.name = name;
+      p.score = skill;
+      p.wantsSingles = wantsSingles;
+    }
+    this._editingGuest = null;
+    this.saveState();
+    this.render();
+  },
+
+  cancelGuestEdit() {
+    this._editingGuest = null;
     this.render();
   },
 
@@ -1452,7 +1669,7 @@ const App = {
     return this.state.players.find(p => p.id === id);
   },
 
-  // ─── Court-lock helpers ────────────────────────
+  // ─── Court-lock helpers ────────────────────
   isPlayerOnCourt(id) {
     for (const game of Object.values(this.state.activeGames)) {
       if (game.side1.includes(id) || game.side2.includes(id)) return true;
@@ -1475,26 +1692,19 @@ const App = {
     return ids;
   },
 
-  getCourtMeta(courtId) {
-    const loc = Session.LOCATIONS.find(l => l.key === Session.id);
-    if (!loc || !loc.courts) return null;
-    return loc.courts.find(c => c.id === courtId) || null;
-  },
 
-  // ─── Teams ─────────────────────────────────────
+  // ─── Teams ─────────────────────────────────
   addTeamWithSelf(playerId) {
     const selfId = Onboard.selfId;
     if (!selfId || selfId === playerId) return;
-    // Toggle: if already paired with this player, remove it
     const existing = this.state.teams.find(t =>
       (t.p1 === selfId && t.p2 === playerId) || (t.p2 === selfId && t.p1 === playerId)
     );
-    if (existing) {
-      this.state.teams = this.state.teams.filter(t => t.id !== existing.id);
-    } else {
-      this.state.teams.push({ id: this.state.nextId++, p1: selfId, p2: playerId, doNotSplit: true });
-    }
+    if (existing) return; // use remove button instead
+    this.state.teams.push({ id: this.state.nextId++, p1: selfId, p2: playerId, doNotSplit: true });
     this._teamsLocalChange = Date.now();
+    const picker = document.getElementById('partnerPicker');
+    if (picker) picker.style.display = 'none';
     this.saveState();
     this.render();
   },
@@ -1506,7 +1716,15 @@ const App = {
     this.render();
   },
 
-  // ─── Courts ────────────────────────────────────
+  // ─── Courts ────────────────────────────────
+  cancelGame(courtId) {
+    if (!confirm(`Cancel Court ${courtId}? Players will be sent back to the queue.`)) return;
+    delete this.state.activeGames[courtId];
+    delete this.state.scoringGames[courtId];
+    this.saveState();
+    this.render();
+  },
+
   endGame(courtId) {
     this.state.scoringGames[courtId] = true;
     this.saveState();
@@ -1576,7 +1794,7 @@ const App = {
     this.render();
   },
 
-  // ─── Timers ─────────────────────────────────────
+  // ─── Timers ────────────────────────────────
   formatTimer(ms) {
     const totalSec = Math.floor(ms / 1000);
     const min = Math.floor(totalSec / 60);
@@ -1594,7 +1812,7 @@ const App = {
     }
   },
 
-  // ─── Utility ───────────────────────────────────
+  // ─── Utility ───────────────────────────────
   shuffle(arr) {
     const a = [...arr];
     for (let i = a.length - 1; i > 0; i--) {
@@ -1625,28 +1843,51 @@ const App = {
     return this.state.sitoutCounts[id] || 0;
   },
 
-  // ─── Assignment Algorithm ──────────────────────
-  setAssignMode(mode) {
-    this.state.assignMode = mode;
-    this.saveState();
-    this.render();
-  },
-
+  // ─── Assignment Algorithm ──────────────────
   setAvailableCourts(n) {
     this.state.availableCourts = parseInt(n) || 2;
     this.saveState();
     this.render();
   },
 
-  // Assign up to availableCourts courts in one batch
-  assignAll() {
-    const mode = this.state.assignMode || 'doubles';
-    const max = this.state.availableCourts || 2;
-    let anyAssigned = false;
-    for (let i = 0; i < max; i++) {
-      if (!this._assignOneCourt(mode)) break;
-      anyAssigned = true;
+  _getNextFreeCourts(count) {
+    const inUse = new Set([
+      ...Object.keys(this.state.activeGames).map(Number),
+      ...Object.keys(this.state.scoringGames).map(Number),
+    ]);
+    const free = [];
+    let id = 1;
+    while (free.length < count) {
+      if (!inUse.has(id)) free.push({ id });
+      id++;
     }
+    return free;
+  },
+
+  assignAll() {
+    const courtsToFill = this.state.availableCourts || 1;
+    const freeCourts = this._getNextFreeCourts(courtsToFill);
+    if (freeCourts.length === 0) return;
+
+    let anyAssigned = false;
+    const usedCourtIds = new Set();
+
+    // Phase 1: Fill as many courts as possible with doubles (4 players)
+    for (const court of freeCourts) {
+      if (this._assignOneCourt('doubles', court.id)) {
+        anyAssigned = true;
+        usedCourtIds.add(court.id);
+      }
+    }
+
+    // Phase 2: Fill remaining free courts with singles (wantsSingles players only)
+    for (const court of freeCourts) {
+      if (usedCourtIds.has(court.id)) continue;
+      if (this._assignOneCourt('singles', court.id)) {
+        anyAssigned = true;
+      }
+    }
+
     if (anyAssigned) {
       this.state.round++;
       this.saveState();
@@ -1654,36 +1895,21 @@ const App = {
     }
   },
 
-  // Returns true if a court was successfully assigned, false otherwise
-  _assignOneCourt(mode) {
-    const maxCourts = this.state.availableCourts || 2;
+  _assignOneCourt(mode, courtId) {
     const onCourt = this.getPlayersOnCourts();
     const allQueue = this.state.players.filter(p => p.active && !onCourt.has(p.id));
 
-    // Partner pairs where BOTH players are active in queue
     const activePairs = this.state.teams.filter(t =>
       allQueue.some(p => p.id === t.p1) && allQueue.some(p => p.id === t.p2)
     );
-    const allTeamIds = new Set(this.state.teams.flatMap(t => [t.p1, t.p2]));
-    const soloPlayers = allQueue.filter(p => !allTeamIds.has(p.id));
-
-    // Find available court (respecting availableCourts limit)
-    let courtId;
-    const loc = Session.LOCATIONS.find(l => l.key === Session.id);
-    if (loc && loc.courts) {
-      const limited = loc.courts.slice(0, maxCourts);
-      const free = limited.find(c => !this.state.activeGames[c.id] && !this.state.scoringGames[c.id]);
-      if (!free) return false;
-      courtId = free.id;
-    } else {
-      courtId = this.state.nextCourtId;
-      this.state.nextCourtId++;
-    }
+    const pairedIds = new Set(activePairs.flatMap(t => [t.p1, t.p2]));
+    const soloPlayers = allQueue.filter(p => !pairedIds.has(p.id));
 
     let side1, side2;
 
     if (mode === 'singles') {
-      let pool = soloPlayers.map(p => p.id);
+      // Only players who opted in to 1v1
+      let pool = soloPlayers.filter(p => p.wantsSingles).map(p => p.id);
       if (pool.length < 2) return false;
       pool = this.shuffle(pool);
       side1 = [pool[0]];
@@ -1692,9 +1918,13 @@ const App = {
       const shuffledPairs = this.shuffle([...activePairs]);
       const shuffledSolos = this.shuffle(soloPlayers.map(p => p.id));
       let pickedPairs = [], pickedSolos = [], total = 0;
+      const usedIds = new Set();
 
       for (const pair of shuffledPairs) {
-        if (total + 2 <= 4) { pickedPairs.push(pair); total += 2; }
+        if (total + 2 > 4) break;
+        if (usedIds.has(pair.p1) || usedIds.has(pair.p2)) continue;
+        pickedPairs.push(pair); total += 2;
+        usedIds.add(pair.p1); usedIds.add(pair.p2);
         if (total === 4) break;
       }
       for (const id of shuffledSolos) {
@@ -1830,7 +2060,7 @@ const App = {
     }
   },
 
-  // ─── History ───────────────────────────────────
+  // ─── History ───────────────────────────────
   clearHistory() {
     if (!confirm('Clear all match history and sit-out counts?')) return;
     this.state.opponentHistory = {};
@@ -1849,23 +2079,36 @@ const App = {
       options: { useSkill: false, minimizeRepeats: false },
       opponentHistory: {}, sitoutCounts: {}, round: 0,
       activeGames: {}, scoringGames: {}, roundHistory: [], nextId: 1, nextCourtId: 1,
-      assignMode: 'doubles', availableCourts: 2,
+      availableCourts: 2,
     };
     this.saveState();
     this.render();
   },
 
-  // ─── Rendering ─────────────────────────────────
+  // ─── Rendering ─────────────────────────────
   render() {
     this.renderPlayers();
-    this.renderTeammateList();
-    this.renderTeams();
+    this.renderPartners();
+    this.renderPartnerPicker();
     this.renderCourts();
     this.renderQueue();
     this.renderHistory();
+    this._updateTabBadges();
 
     document.getElementById('optSkill').checked = this.state.options.useSkill;
     document.getElementById('optRepeats').checked = this.state.options.minimizeRepeats;
+  },
+
+  _updateTabBadges() {
+    const onCourt = this.getPlayersOnCourts();
+    const activeCount = this.state.players.filter(p => p.active && !onCourt.has(p.id)).length;
+    const gamesCount = Object.keys(this.state.activeGames).length;
+    const historyCount = (this.state.roundHistory || []).length;
+
+    const courtsBadge = document.getElementById('tabBadgeCourts');
+    const historyBadge = document.getElementById('tabBadgeHistory');
+    if (courtsBadge) courtsBadge.textContent = gamesCount > 0 ? gamesCount : activeCount;
+    if (historyBadge) historyBadge.textContent = historyCount;
   },
 
   renderPlayers() {
@@ -1887,57 +2130,95 @@ const App = {
           </div>
         </div>`;
       }
+      if (this._editingGuest === p.id) {
+        return `<div class="queue-row-edit">
+          <input type="text" id="editGuestName-${p.id}" value="${this.esc(p.name)}" placeholder="Name" maxlength="30"
+            onkeydown="if(event.key==='Enter')App.saveGuestEdit(${p.id})">
+          <input type="number" id="editGuestSkill-${p.id}" value="${p.score != null ? p.score : ''}" placeholder="Skill" min="2" max="8" step="0.01"
+            onblur="App.fmtDUPR(this)" onkeydown="if(event.key==='Enter')App.saveGuestEdit(${p.id})">
+          <label class="edit-guest-singles"><input type="checkbox" id="editGuestSingles-${p.id}" ${p.wantsSingles ? 'checked' : ''}> 1v1</label>
+          <button class="btn-edit-save" onclick="App.saveGuestEdit(${p.id})">Save</button>
+          <button class="btn-edit-cancel" onclick="App.cancelGuestEdit()">Cancel</button>
+        </div>`;
+      }
       const rowClass = p.active ? 'queue-row' : 'queue-row inactive';
-      const title = p.active ? 'Click to sit out' : 'Click to rejoin queue';
       const singlesBadge = p.wantsSingles ? `<span class="queue-row-badge">1v1</span>` : '';
-      const sittingOut = !p.active ? `<span class="queue-row-badge" style="color:var(--text-muted);">Out</span>` : '';
+      const isYou = Onboard.selfId === p.id;
+      const selfId = Onboard.selfId;
+      const isPartner = selfId && selfId !== p.id && this.state.teams.some(t =>
+        (t.p1 === selfId && t.p2 === p.id) || (t.p2 === selfId && t.p1 === p.id)
+      );
+      const partnerBadge = isPartner ? '<span class="queue-partner-badge">partner</span>' : '';
+      const statusBadge = isYou ? '<span class="queue-row-you">you</span>'
+        : p.isLive ? '<span class="queue-row-status user">user</span>'
+        : '<span class="queue-row-status guest">guest</span>';
+      const pauseBtn = p.active
+        ? `<button class="queue-row-action" onclick="App.togglePlayer(${p.id})" title="Sit out">&#x23F8;</button>`
+        : `<button class="queue-row-action play" onclick="App.togglePlayer(${p.id})" title="Rejoin queue">&#x25B6;</button>`;
+      const canEdit = !p.isLive && !isYou && this._myGuests.has(p.id);
+      const editBtn = canEdit ? `<button class="queue-row-action" onclick="App.editGuest(${p.id})" title="Edit guest">&#x270E;</button>` : '';
       return `<div class="${rowClass}">
-        <span class="queue-row-name" onclick="App.togglePlayer(${p.id})" title="${title}">${this.esc(p.name)}</span>
-        ${singlesBadge}${sittingOut}
+        <span class="queue-row-name">${this.esc(p.name)}${statusBadge}${partnerBadge}</span>
+        ${singlesBadge}
         ${skillStr ? `<span class="queue-row-skill">${skillStr}</span>` : ''}
+        ${editBtn}
+        ${pauseBtn}
         <button class="queue-row-remove" onclick="App.removePlayer(${p.id})" title="Remove">&times;</button>
       </div>`;
     }).join('');
   },
 
-  renderTeammateList() {
-    const el = document.getElementById('teammateList');
+  togglePartnerPicker() {
+    const picker = document.getElementById('partnerPicker');
+    if (!picker) return;
+    const showing = picker.style.display !== 'none';
+    picker.style.display = showing ? 'none' : '';
+    if (!showing) this.renderPartnerPicker();
+  },
+
+  renderPartnerPicker() {
+    const el = document.getElementById('partnerPickerList');
     if (!el) return;
     const selfId = typeof Onboard !== 'undefined' ? Onboard.selfId : null;
     if (!selfId) {
-      el.innerHTML = '<li style="color:var(--text-light);font-size:0.82rem;padding:4px 0;">Join a session to pick a teammate</li>';
-      return;
-    }
-    const others = this.state.players.filter(p => p.id !== selfId && p.active);
-    if (others.length === 0) {
-      el.innerHTML = '<li style="color:var(--text-light);font-size:0.82rem;padding:4px 0;">No other players in session yet</li>';
+      el.innerHTML = '<div style="padding:10px;color:var(--text-light);font-size:0.82rem;">Join a session first</div>';
       return;
     }
     const selfTeams = this.state.teams.filter(t => t.p1 === selfId || t.p2 === selfId);
-    el.innerHTML = others.map(p => {
-      const isPaired = selfTeams.some(t => t.p1 === p.id || t.p2 === p.id);
-      const scoreText = p.score != null ? `<span class="tm-score">${p.score}</span>` : '';
-      const check = isPaired ? '<span class="tm-check">✓</span>' : scoreText;
-      return `<li class="teammate-item${isPaired ? ' paired' : ''}" onclick="App.addTeamWithSelf(${p.id})">
-        ${this.esc(p.name)}${check}
-      </li>`;
-    }).join('');
-  },
-
-  renderTeams() {
-    const el = document.getElementById('teamList');
-    if (this.state.teams.length === 0) {
-      el.innerHTML = '';
+    const pairedIds = new Set(selfTeams.map(t => t.p1 === selfId ? t.p2 : t.p1));
+    const available = this.state.players.filter(p => p.id !== selfId && p.active && !pairedIds.has(p.id));
+    if (available.length === 0) {
+      el.innerHTML = '<div style="padding:10px;color:var(--text-light);font-size:0.82rem;">No available players to add</div>';
       return;
     }
-    el.innerHTML = this.state.teams.map(t => {
-      const p1 = this.getPlayer(t.p1);
-      const p2 = this.getPlayer(t.p2);
-      return `<li class="team-item">
-        <span class="team-names">${this.esc(p1?.name || '?')} &amp; ${this.esc(p2?.name || '?')}</span>
-        <span class="team-lock locked">partners</span>
-        <button class="btn btn-ghost btn-sm" onclick="App.removeTeam(${t.id})">&times;</button>
-      </li>`;
+    el.innerHTML = available.map(p =>
+      `<div class="partner-picker-item" onclick="App.addTeamWithSelf(${p.id})">${this.esc(p.name)}</div>`
+    ).join('');
+  },
+
+  renderPartners() {
+    const display = document.getElementById('partnerDisplay');
+    const btn = document.getElementById('btnAddPartner');
+    if (!display) return;
+    const selfId = typeof Onboard !== 'undefined' ? Onboard.selfId : null;
+    if (!selfId) {
+      display.innerHTML = '';
+      if (btn) btn.style.display = 'none';
+      return;
+    }
+    if (btn) btn.style.display = '';
+    const selfTeams = this.state.teams.filter(t => t.p1 === selfId || t.p2 === selfId);
+    if (selfTeams.length === 0) {
+      display.innerHTML = '<div style="color:var(--text-muted);font-size:0.82rem;margin-bottom:8px;">No partners selected</div>';
+      return;
+    }
+    display.innerHTML = selfTeams.map(t => {
+      const partnerId = t.p1 === selfId ? t.p2 : t.p1;
+      const p = this.getPlayer(partnerId);
+      return `<div class="partner-chip">
+        <span class="partner-chip-name">${this.esc(p?.name || '?')}</span>
+        <button class="partner-chip-remove" onclick="App.removeTeam(${t.id})" title="Remove partner">&times;</button>
+      </div>`;
     }).join('');
   },
 
@@ -1953,10 +2234,8 @@ const App = {
     el.innerHTML = activeIds.map(courtId => {
       const game = this.state.activeGames[courtId];
       const isScoring = !!this.state.scoringGames[courtId];
-      const meta = this.getCourtMeta(courtId);
       const modeBadge = `<span class="court-mode-badge">${game.mode === 'singles' ? '1v1' : '2v2'}</span>`;
       const timerBadge = game.startedAt ? `<span class="court-timer" id="timer-${courtId}">${this.formatTimer(Date.now() - game.startedAt)}</span>` : '';
-      const typeBadge = meta ? `<span class="court-type-badge court-type-${meta.type || ''}" title="${meta.note || ''}">${meta.type === 'lines' ? 'Lines' : 'Net'}</span>` : '';
       const cardClass = isScoring ? 'court-card' : 'court-card game-active';
 
       let bodyHTML;
@@ -1976,18 +2255,18 @@ const App = {
           <div id="score-err-${courtId}" class="score-error"></div>
           <div class="score-buttons">
             <button class="btn btn-assign" style="padding:8px 16px;font-size:0.85rem;" onclick="App.submitScore(${courtId})">Save Score</button>
-            <button class="btn btn-outline" onclick="App.endWithoutScore(${courtId})">No score</button>
+            <button class="btn btn-outline" onclick="App.endWithoutScore(${courtId})">Skip</button>
             <button class="btn btn-ghost" onclick="App.cancelScoring(${courtId})">Cancel</button>
           </div>
         </div>`;
       } else {
         bodyHTML = `<div class="court-assignment">
           <div class="court-side side-1">
-            ${game.side1.map(id => this.renderSidePlayer(id, game.side1)).join('')}
+            ${this.renderSide(game.side1)}
           </div>
           <div class="court-vs">VS</div>
           <div class="court-side side-2">
-            ${game.side2.map(id => this.renderSidePlayer(id, game.side2)).join('')}
+            ${this.renderSide(game.side2)}
           </div>
           <button class="btn btn-end-game" onclick="App.endGame(${courtId})">End Match</button>
         </div>`;
@@ -1997,8 +2276,8 @@ const App = {
         <div class="court-header">
           <span>Court ${courtId} ${modeBadge} ${timerBadge}</span>
           <div class="court-controls" style="gap:8px;">
-            ${typeBadge}
             <span class="court-status">${isScoring ? 'Score entry' : 'Playing'}</span>
+            ${!isScoring ? `<button class="btn-cancel-game" onclick="App.cancelGame(${courtId})">&times;</button>` : ''}
           </div>
         </div>
         <div class="court-body">${bodyHTML}</div>
@@ -2006,21 +2285,21 @@ const App = {
     }).join('');
   },
 
-  renderSidePlayer(id, side) {
-    const p = this.getPlayer(id);
-    if (!p) return '';
-    const teammate = side.find(x => x !== id);
-    let teamBadge = '';
-    if (teammate) {
-      const team = this.state.teams.find(t =>
-        (t.p1 === id && t.p2 === teammate) || (t.p1 === teammate && t.p2 === id)
-      );
-      if (team) teamBadge = `<span class="team-badge">TEAM</span>`;
+  renderSide(side) {
+    const isTeam = side.length === 2 && this.state.teams.some(t =>
+      (t.p1 === side[0] && t.p2 === side[1]) || (t.p1 === side[1] && t.p2 === side[0])
+    );
+    const playerHtml = (id, align) => {
+      const p = this.getPlayer(id);
+      if (!p) return '';
+      const youBadge = id === Onboard.selfId ? ' <span class="queue-row-you">you</span>' : '';
+      return `<span class="side-player-${align}"><span class="side-player-name">${this.esc(p.name)}</span>${youBadge}</span>`;
+    };
+    if (side.length === 1) {
+      return playerHtml(side[0], 'solo');
     }
-    return `<div class="side-player">
-      <span>${this.esc(p.name)} ${teamBadge}</span>
-      ${p.score !== null ? `<span class="score">${p.score}</span>` : ''}
-    </div>`;
+    const partnersBadge = isTeam ? '<div class="side-partners-row"><span class="side-partners-badge">partners</span></div>' : '';
+    return `<div class="side-names-row">${playerHtml(side[0], 'left')}<span class="side-amp">&amp;</span>${playerHtml(side[1], 'right')}</div>${partnersBadge}`;
   },
 
   renderQueue() {
@@ -2029,52 +2308,31 @@ const App = {
     const countEl = document.getElementById('assignCount');
     const controls = document.getElementById('assignControls');
     const btnAssignAll = document.getElementById('btnAssignAll');
-    const btnMode1v1 = document.getElementById('btnMode1v1');
-    const btnMode2v2 = document.getElementById('btnMode2v2');
     const courtSelect = document.getElementById('courtCountSelect');
     if (!countEl) return;
 
-    // Partner pairing awareness
-    const allTeamIds = new Set(this.state.teams.flatMap(t => [t.p1, t.p2]));
     const activePairs = this.state.teams.filter(t =>
       active.some(p => p.id === t.p1) && active.some(p => p.id === t.p2)
     );
-    const activePairedIds = new Set(activePairs.flatMap(t => [t.p1, t.p2]));
-    const soloActive = active.filter(p => !allTeamIds.has(p.id));
-    const doublesEligible = soloActive.length + activePairedIds.size;
-    const waitingForPartner = active.filter(p => allTeamIds.has(p.id) && !activePairedIds.has(p.id));
+    const pairedIds = new Set(activePairs.flatMap(t => [t.p1, t.p2]));
+    const soloActive = active.filter(p => !pairedIds.has(p.id));
+    const doublesEligible = soloActive.length + pairedIds.size;
+    const singlesEligible = soloActive.filter(p => p.wantsSingles).length;
 
     const n = active.length;
-    const mode = this.state.assignMode || 'doubles';
+    const canAssign = doublesEligible >= 4 || singlesEligible >= 2;
 
     if (n === 0) {
       countEl.textContent = 'No players in queue yet';
-    } else if (n === 1) {
-      countEl.textContent = '1 player in queue — need at least 2 to assign';
     } else {
-      let msg = `${n} players in queue`;
-      if (waitingForPartner.length > 0) msg += ` · ${waitingForPartner.length} waiting for partner`;
+      let msg = `${n} player${n !== 1 ? 's' : ''} in queue`;
+      if (!canAssign) msg += ` · not enough players to assign`;
       countEl.textContent = msg;
     }
 
-    if (Session.id && n >= 2) {
+    if (Session.id) {
       controls.style.display = 'flex';
-
-      // Sync dropdown to current state
       if (courtSelect) courtSelect.value = this.state.availableCourts || 2;
-
-      // Mode pill active states
-      if (btnMode1v1) { btnMode1v1.classList.toggle('active', mode === 'singles'); btnMode1v1.disabled = soloActive.length < 2; }
-      if (btnMode2v2) { btnMode2v2.classList.toggle('active', mode === 'doubles'); btnMode2v2.disabled = doublesEligible < 4; }
-
-      // Can we assign at least one court in the current mode?
-      const loc = Session.LOCATIONS.find(l => l.key === Session.id);
-      const maxCourts = this.state.availableCourts || 2;
-      const allCourtsUsed = loc && loc.courts &&
-        loc.courts.slice(0, maxCourts).every(c => !!this.state.activeGames[c.id] || !!this.state.scoringGames[c.id]);
-      const canAssign = !allCourtsUsed && (
-        mode === 'singles' ? soloActive.length >= 2 : doublesEligible >= 4
-      );
       if (btnAssignAll) btnAssignAll.disabled = !canAssign;
     } else {
       controls.style.display = 'none';
@@ -2083,43 +2341,72 @@ const App = {
 
   renderHistory() {
     const el = document.getElementById('historyRounds');
-    const history = this.state.roundHistory || [];
+    let history = [...(this.state.roundHistory || [])];
+
     if (history.length === 0) {
       el.innerHTML = '<div class="history-empty">No completed games yet</div>';
       return;
     }
 
-    // Group by round (descending)
-    const byRound = {};
-    for (const h of history) {
-      if (!byRound[h.round]) byRound[h.round] = [];
-      byRound[h.round].push(h);
-    }
-    const rounds = Object.keys(byRound).map(Number).sort((a, b) => b - a);
+    // Add index for stable ordering
+    history.forEach((m, i) => m._idx = i);
 
-    el.innerHTML = rounds.map(r => {
-      const matches = byRound[r];
-      return `<div class="history-round">
-        <div class="history-round-label">Round ${r}</div>
-        ${matches.map(m => {
-          const s1 = m.side1.map(id => { const p = this.getPlayer(id); return p ? this.esc(p.name) : '?'; });
-          const s2 = m.side2.map(id => { const p = this.getPlayer(id); return p ? this.esc(p.name) : '?'; });
-          const mode = m.mode === 'singles' ? '1v1' : '2v2';
-          const hasScores = m.score1 != null && m.score2 != null;
-          const s1Class = hasScores ? (m.winner === 1 ? 'winner' : m.winner === 2 ? 'loser' : '') : '';
-          const s2Class = hasScores ? (m.winner === 2 ? 'winner' : m.winner === 1 ? 'loser' : '') : '';
-          const scoreText = hasScores ? `<span class="match-score">${m.score1}-${m.score2}</span>` : '';
-          return `<div class="history-match">
-            <span class="court-label">Ct ${m.courtId} (${mode})</span>
-            <span class="${s1Class}">${s1.join(' &amp; ')}</span> vs <span class="${s2Class}">${s2.join(' &amp; ')}</span>${scoreText}
-          </div>`;
-        }).join('')}
-      </div>`;
-    }).join('');
+    // Filter by mode
+    const modeFilter = document.getElementById('historyModeFilter')?.value || 'all';
+    if (modeFilter !== 'all') history = history.filter(m => m.mode === modeFilter);
+
+    // Filter by player name search
+    const search = (document.getElementById('historySearch')?.value || '').toLowerCase().trim();
+    if (search) {
+      history = history.filter(m => {
+        const allIds = [...m.side1, ...m.side2];
+        return allIds.some(id => {
+          const p = this.getPlayer(id);
+          return p && p.name.toLowerCase().includes(search);
+        });
+      });
+    }
+
+    // Sort
+    const sortBy = document.getElementById('historySortBy')?.value || 'newest';
+    if (sortBy === 'newest') history.sort((a, b) => b._idx - a._idx);
+    else if (sortBy === 'oldest') history.sort((a, b) => a._idx - b._idx);
+
+
+    if (history.length === 0) {
+      el.innerHTML = '<div class="history-empty">No matches found</div>';
+      return;
+    }
+
+    el.innerHTML = `<table class="history-table">
+      <thead><tr>
+        <th>Round</th>
+        <th>Mode</th>
+        <th>Team 1</th>
+        <th></th>
+        <th>Team 2</th>
+        <th>Score</th>
+      </tr></thead>
+      <tbody>${history.map(m => {
+        const s1 = m.side1.map(id => { const p = this.getPlayer(id); return p ? this.esc(p.name) : '?'; });
+        const s2 = m.side2.map(id => { const p = this.getPlayer(id); return p ? this.esc(p.name) : '?'; });
+        const hasScores = m.score1 != null && m.score2 != null;
+        const s1Class = hasScores ? (m.winner === 1 ? 'winner' : m.winner === 2 ? 'loser' : '') : '';
+        const s2Class = hasScores ? (m.winner === 2 ? 'winner' : m.winner === 1 ? 'loser' : '') : '';
+        const scoreText = hasScores ? `${m.score1}–${m.score2}` : '–';
+        const mode = m.mode === 'singles' ? '1v1' : '2v2';
+        return `<tr>
+          <td>${m.round}</td>
+          <td><span class="mode-badge">${mode}</span></td>
+          <td class="${s1Class}">${s1.join(' & ')}</td>
+          <td style="color:var(--text-muted);font-size:0.7rem;font-weight:700;">vs</td>
+          <td class="${s2Class}">${s2.join(' & ')}</td>
+          <td class="match-score">${scoreText}</td>
+        </tr>`;
+      }).join('')}</tbody>
+    </table>`;
   },
 
-  // Format a DUPR score input: whole numbers get 1 decimal (3.0),
-  // others trim trailing zeros but keep at least 1 decimal (3.25, 3.5)
   fmtDUPR(el) {
     const n = parseFloat(el.value);
     if (isNaN(n)) return;
@@ -2138,18 +2425,7 @@ const App = {
 const Session = {
   DB: 'https://pickleball-50914-default-rtdb.firebaseio.com',
   LOCATIONS: [
-    {
-      key: 'flpark',
-      label: 'Fred Lindstrom Park',
-      courts: [
-        { id: 1, active: true,  type: 'net',    note: 'Permanent net' },
-        { id: 2, active: true,  type: 'net',    note: 'Permanent net' },
-        { id: 3, active: true,  type: 'net',    note: 'Permanent net' },
-        { id: 4, active: true,  type: 'net',    note: 'Permanent net' },
-        { id: 5, active: true,  type: 'lines',  note: 'Painted (tennis court)' },
-        { id: 6, active: true,  type: 'lines',  note: 'Painted (tennis court)' },
-      ],
-    },
+    { key: 'flpark', label: 'Fred Lindstrom Park' },
     { key: 'lhresort', label: 'Lighthouse Resort' },
   ],
   id: null,
@@ -2167,21 +2443,17 @@ const Session = {
     Onboard.showStep();
   },
 
-  // Debounced push — called from App.saveState()
   push() {
     if (!this.id || this._receiving) return;
     clearTimeout(this._pushTimer);
     this._pushTimer = setTimeout(() => this._put(App.state), 300);
   },
 
-  // ─── Internal ────────────────────────────────
-
-  // isNew=true → overwrite any existing session; user → auto-add to player list
   async _connect(id, label, isNew, user) {
     this.id = id;
     this.label = label;
     this._setURL(id);
-    this._setLoading(true, isNew ? 'Creating session…' : 'Joining session…');
+    this._setLoading(true, isNew ? 'Creating session\u2026' : 'Joining session\u2026');
     try {
       const data = isNew ? null : await this._get();
       if (data) {
@@ -2191,13 +2463,9 @@ const Session = {
         App.render();
         this._receiving = false;
       }
-      // If data is null (session doesn't exist yet OR network error), don't PUT —
-      // the SSE initial 'put' event will deliver the real state. _addSelf via
-      // addSelfOnce will PATCH-create the session minimally so we don't risk
-      // overwriting an existing session with stale local state.
     } catch(e) { /* always continue to show UI */ }
     this._setLoading(false);
-    this._listen(user); // user is added AFTER the initial SSE put to avoid race condition
+    this._listen(user);
     this._updateUI();
   },
 
@@ -2207,7 +2475,6 @@ const Session = {
     if (!el) return;
     el.style.display = on ? 'flex' : 'none';
     if (on && text && txt) txt.textContent = text;
-    // Disable all buttons in the setup section while loading
     const btns = document.querySelectorAll('#sessionSetupSection button');
     btns.forEach(b => b.disabled = on);
   },
@@ -2218,14 +2485,13 @@ const Session = {
     );
     if (already) {
       Onboard.selfId = already.id;
-      // Ensure they're active in the queue when rejoining
+      already.isLive = true;
       if (!already.active) {
         already.active = true;
-        // PATCH only players — don't overwrite activeGames or other fields
         try { localStorage.setItem('pickleJar', JSON.stringify(App.state)); } catch(e) {}
         this._patch({ players: App.state.players });
-        App.render();
       }
+      App.render();
     } else {
       const id = App.state.nextId++;
       Onboard.selfId = id;
@@ -2235,8 +2501,8 @@ const Session = {
         score: user.skill || null,
         active: true,
         wantsSingles: !!(user.wantsSingles),
+        isLive: true,
       });
-      // PATCH only players + nextId — don't overwrite activeGames or other fields
       try { localStorage.setItem('pickleJar', JSON.stringify(App.state)); } catch(e) {}
       this._patch({ players: App.state.players, nextId: App.state.nextId });
       App.render();
@@ -2252,7 +2518,7 @@ const Session = {
       const res = await fetch(this._url(), { signal: ctrl.signal });
       clearTimeout(t);
       const json = await res.json();
-      return (json && json.error) ? null : json; // treat Firebase auth errors as no data
+      return (json && json.error) ? null : json;
     } catch(e) { return null; }
   },
 
@@ -2301,26 +2567,19 @@ const Session = {
       try {
         const msg = JSON.parse(e.data);
         if (!msg || !msg.data) {
-          // Empty/null session — add self immediately
           addSelfOnce();
           return;
         }
         this._receiving = true;
 
-        // Snapshot local state BEFORE merging
         const localGames   = { ...(App.state.activeGames  || {}) };
         const localScoring = { ...(App.state.scoringGames || {}) };
         const localTeams   = [...(App.state.teams || [])];
         const localHistLen = (App.state.roundHistory || []).length;
 
-        // Merge incoming state
         App.state = { ...App.state, ...msg.data };
         App._normState();
 
-        // Per-court stale protection: if a local court disappeared after the merge
-        // but wasn't legitimately ended (no new roundHistory entry for it), restore it.
-        // This handles stale PUTs from old Firebase snapshots, reconnections, or
-        // lingering courts from previous sessions.
         const newHistory = (App.state.roundHistory || []).slice(localHistLen);
         const newlyEndedIds = new Set(newHistory.map(h => String(h.courtId)));
 
@@ -2335,20 +2594,16 @@ const Session = {
           }
         }
 
-        // Team protection: if teams were changed locally within the last 5 seconds,
-        // don't let a stale full-PUT from another device restore the old pairing.
         if (App._teamsLocalChange && Date.now() - App._teamsLocalChange < 5000) {
           App.state.teams = localTeams;
         }
 
         App.render();
         this._receiving = false;
-        // Add self AFTER the initial state is received so we don't get overwritten
         addSelfOnce();
       } catch(err) { /* ignore */ }
     });
 
-    // Handle Firebase PATCH events (partial updates, e.g. from _addSelf on other devices)
     src.addEventListener('patch', (e) => {
       try {
         const msg = JSON.parse(e.data);
@@ -2370,27 +2625,20 @@ const Session = {
   },
 
   _updateUI() {
-    const bar = document.getElementById('sessionBar');
-    const nameEl = document.getElementById('sessionLocationName');
+    const headerRight = document.getElementById('headerRight');
+    const headerLocName = document.getElementById('headerLocName');
     const setup = document.getElementById('sessionSetupSection');
-    const players = document.getElementById('playersSection');
-    const teams = document.getElementById('teamsSection');
-    const main = document.getElementById('mainContent');
+    const tabBar = document.getElementById('tabBar');
+
     if (this.id) {
-      bar.style.display = 'flex';
-      bar.style.alignItems = 'center';
-      nameEl.textContent = this.label || this.id;
+      headerRight.style.display = 'flex';
+      headerLocName.textContent = this.label || this.id;
       if (setup) setup.style.display = 'none';
-      if (players) players.style.display = '';
-      if (teams) teams.style.display = '';
-      if (main) main.style.display = '';
-      Onboard._refreshProfileDisplay();
+      App._showTabs();
     } else {
-      bar.style.display = 'none';
+      headerRight.style.display = 'none';
       if (setup) setup.style.display = '';
-      if (players) players.style.display = 'none';
-      if (teams) teams.style.display = 'none';
-      if (main) main.style.display = 'none';
+      App._hideTabs();
     }
   },
 };
@@ -2404,14 +2652,12 @@ const Onboard = {
     const s = new URLSearchParams(window.location.search).get('s');
 
     if (user && s) {
-      // Has identity + URL session — auto-join, hide setup section
       this._hide();
       const loc = Session.LOCATIONS.find(l => l.key === s.toLowerCase());
       Session._connect(s, loc ? loc.label : s, false, user);
       return;
     }
 
-    // Pre-fill saved identity if returning
     if (user) {
       const nameEl = document.getElementById('onboardName');
       const skillEl = document.getElementById('onboardSkill');
@@ -2420,10 +2666,8 @@ const Onboard = {
       const singlesEl = document.getElementById('onboardSingles');
       if (singlesEl) singlesEl.checked = !!(user.wantsSingles);
     }
-    // Setup section is visible by default in HTML; no action needed
   },
 
-  // Validate name & save identity; returns user object or null
   _saveIdentity() {
     const nameEl = document.getElementById('onboardName');
     const errEl = document.getElementById('onboardNameError');
@@ -2450,9 +2694,9 @@ const Onboard = {
     const user = this._saveIdentity();
     if (!user) return;
     this._pendingKey = key;
-    document.getElementById('confirmLocation').textContent = '📍 ' + loc.label;
+    document.getElementById('confirmLocation').textContent = '\u{1f4cd} ' + loc.label;
     document.getElementById('confirmName').textContent = user.name;
-    document.getElementById('confirmSkill').textContent = user.skill ? '· Skill ' + user.skill : '';
+    document.getElementById('confirmSkill').textContent = user.skill ? '\u00b7 Skill ' + user.skill : '';
     document.getElementById('sessionConfirmPanel').style.display = '';
   },
 
@@ -2472,65 +2716,12 @@ const Onboard = {
     document.getElementById('sessionConfirmPanel').style.display = 'none';
   },
 
-
   showStep() {
-    // Show the sidebar setup section (called by Session.leave())
     const setup = document.getElementById('sessionSetupSection');
     if (setup) setup.style.display = '';
     const confirm = document.getElementById('sessionConfirmPanel');
     if (confirm) confirm.style.display = 'none';
     this._pendingKey = null;
-  },
-
-  // ─── Profile editing ─────────────────────────
-
-  startEditProfile() {
-    const user = this._savedUser();
-    if (user) {
-      document.getElementById('profileEditName').value = user.name;
-      document.getElementById('profileEditScore').value = user.skill || '';
-    }
-    document.getElementById('profileDisplay').style.display = 'none';
-    document.getElementById('profileEdit').style.display = 'flex';
-    document.getElementById('profileEditName').focus();
-  },
-
-  saveProfile() {
-    const nameEl = document.getElementById('profileEditName');
-    const name = nameEl.value.trim();
-    if (!name) { nameEl.focus(); return; }
-    App.fmtDUPR(document.getElementById('profileEditScore'));
-    const skillRaw = document.getElementById('profileEditScore').value;
-    const skill = skillRaw ? parseFloat(parseFloat(skillRaw).toFixed(2)) : null;
-
-    try { localStorage.setItem('pickleJarUser', JSON.stringify({ name, skill })); } catch(e) {}
-
-    if (this.selfId != null) {
-      const p = App.state.players.find(p => p.id === this.selfId);
-      if (p) {
-        p.name = name;
-        p.score = skill;
-        App.saveState();
-        App.render();
-      }
-    }
-
-    this.cancelEditProfile();
-    this._refreshProfileDisplay();
-  },
-
-  cancelEditProfile() {
-    document.getElementById('profileEdit').style.display = 'none';
-    document.getElementById('profileDisplay').style.display = 'flex';
-  },
-
-  _refreshProfileDisplay() {
-    const user = this._savedUser();
-    if (!user) return;
-    const nameEl = document.getElementById('profileName');
-    const scoreEl = document.getElementById('profileScore');
-    if (nameEl) nameEl.textContent = user.name;
-    if (scoreEl) scoreEl.textContent = user.skill ? `· ${user.skill}` : '';
   },
 
   _hide() {
