@@ -2938,7 +2938,7 @@ const Session = {
     try {
       const data = isNew ? null : await this._get();
       // Preserve only fields set before connect (e.g. _passcode, _admins for new private sessions)
-      const preConnect = { _passcode: App.state._passcode, _admins: App.state._admins };
+      const preConnect = { _passcode: App.state._passcode, _admins: App.state._admins, _sessionType: App.state._sessionType };
       const fresh = App._freshState();
       if (data) {
         this._receiving = true;
@@ -2966,21 +2966,36 @@ const Session = {
   },
 
   _addSelf(user) {
-    const already = App.state.players.find(
-      p => p.name.toLowerCase() === user.name.toLowerCase()
-    );
+    // Try to find existing player: first by persisted selfId, then by name
+    const savedId = this._getSavedSelfId();
+    let already = savedId != null ? App.state.players.find(p => p.id === savedId) : null;
+    if (!already) {
+      already = App.state.players.find(
+        p => p.name.toLowerCase() === user.name.toLowerCase() && p.isLive
+      );
+    }
+    if (!already) {
+      already = App.state.players.find(
+        p => p.name.toLowerCase() === user.name.toLowerCase()
+      );
+    }
+
     if (already) {
       Onboard.selfId = already.id;
+      this._saveSelfId(already.id);
       already.isLive = true;
-      if (!already.active) {
-        already.active = true;
-        try { localStorage.setItem('pickleJar', JSON.stringify(App.state)); } catch(e) {}
-        this._patch({ players: App.state.players });
-      }
+      already.active = true;
+      // Update name/skill/preferences if changed
+      already.name = user.name;
+      already.score = user.skill || already.score;
+      if (user.wantsSingles != null) already.wantsSingles = !!user.wantsSingles;
+      try { localStorage.setItem('pickleJar', JSON.stringify(App.state)); } catch(e) {}
+      this._patch({ players: App.state.players });
       App.render();
     } else {
       const id = App.state.nextId++;
       Onboard.selfId = id;
+      this._saveSelfId(id);
       App.state.players.push({
         id,
         name: user.name,
@@ -2993,6 +3008,17 @@ const Session = {
       this._patch({ players: App.state.players, nextId: App.state.nextId });
       App.render();
     }
+  },
+
+  _saveSelfId(id) {
+    try { sessionStorage.setItem('pj_selfId_' + this.id, String(id)); } catch(e) {}
+  },
+
+  _getSavedSelfId() {
+    try {
+      const v = sessionStorage.getItem('pj_selfId_' + this.id);
+      return v != null ? parseInt(v) : null;
+    } catch(e) { return null; }
   },
 
   _url() { return `${this.DB}/sessions/${this.id}.json`; },
