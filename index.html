@@ -1268,12 +1268,15 @@ body {
     <h1>&#x1f952; Pickle Jar</h1>
     <span class="header-tagline">Everyone's in the jar. Shake it up.</span>
   </div>
-  <div class="header-right" id="headerRight" style="display:none;">
-    <div class="header-location">
-      <span class="session-status-dot"></span>
-      <span class="header-loc-name" id="headerLocName"></span>
+  <div style="display:flex;align-items:center;gap:10px;">
+    <span id="adminHeaderBadge" style="display:none;"></span>
+    <div class="header-right" id="headerRight" style="display:none;">
+      <div class="header-location">
+        <span class="session-status-dot"></span>
+        <span class="header-loc-name" id="headerLocName"></span>
+      </div>
+      <button class="btn-header leave" onclick="Session.leave()">Leave Session</button>
     </div>
-    <button class="btn-header leave" onclick="Session.leave()">Leave Session</button>
   </div>
 </header>
 
@@ -2940,18 +2943,15 @@ const Admin = {
     });
     const loginBtn = document.getElementById('btnAdminLogin');
     if (loginBtn) loginBtn.style.display = isAdmin ? 'none' : '';
-    const headerRight = document.getElementById('headerRight');
-    let badge = document.getElementById('adminHeaderBadge');
-    if (isAdmin && headerRight) {
-      if (!badge) {
-        badge = document.createElement('span');
-        badge.id = 'adminHeaderBadge';
-        badge.style.cssText = 'display:flex;align-items:center;gap:6px;';
-        headerRight.insertBefore(badge, headerRight.firstChild);
+    const badge = document.getElementById('adminHeaderBadge');
+    if (badge) {
+      if (isAdmin) {
+        badge.style.display = 'flex';
+        badge.innerHTML = `<button class="btn-admin-logout" onclick="Admin.logout()">admin logout</button>`;
+      } else {
+        badge.style.display = 'none';
+        badge.innerHTML = '';
       }
-      badge.innerHTML = `<button class="btn-admin-logout" onclick="Admin.logout()">admin logout</button>`;
-    } else if (badge) {
-      badge.remove();
     }
   },
 };
