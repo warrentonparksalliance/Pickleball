@@ -174,26 +174,65 @@ body {
   letter-spacing: 0.08em;
   color: var(--text-muted);
 }
-.queue-chip-row {
+.queue-list {
   display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-  min-height: 28px;
+  flex-direction: column;
+  gap: 0;
 }
-.queue-chip {
-  background: var(--primary-light);
-  color: var(--primary);
-  border: 1px solid var(--primary-muted);
-  padding: 4px 10px;
-  border-radius: var(--radius-full);
-  font-size: 0.82rem;
+.queue-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 0;
+  border-bottom: 1px solid var(--border);
+  font-size: 0.9rem;
+}
+.queue-row:last-child { border-bottom: none; }
+.queue-row.inactive { opacity: 0.45; }
+.queue-row-name {
+  flex: 1;
   font-weight: 600;
-  white-space: nowrap;
+  cursor: pointer;
+  user-select: none;
 }
-.queue-chip.inactive {
-  background: var(--hover-bg);
+.queue-row-skill {
+  font-size: 0.8rem;
   color: var(--text-muted);
-  border-color: var(--border);
+  min-width: 28px;
+  text-align: right;
+}
+.queue-row-badge {
+  font-size: 0.7rem;
+  color: var(--text-muted);
+  border: 1px solid var(--border);
+  border-radius: 3px;
+  padding: 1px 4px;
+}
+.queue-row-remove {
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  font-size: 1rem;
+  line-height: 1;
+  padding: 0 2px;
+}
+.queue-row-remove:hover { color: var(--danger); }
+.queue-row-confirm {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.82rem;
+  color: var(--danger);
+  flex: 1;
+}
+.queue-row-confirm button {
+  font-size: 0.75rem;
+  padding: 1px 7px;
+  border-radius: 4px;
+  border: 1px solid;
+  cursor: pointer;
+  background: none;
 }
 
 /* Teams collapsible */
@@ -1150,7 +1189,7 @@ body {
         <button class="btn-add-player" style="flex:0;background:var(--border);color:var(--text);" onclick="App.toggleAddForm()">Cancel</button>
       </div>
     </div>
-    <div id="playerList" class="queue-chip-row"></div>
+    <div id="playerList" class="queue-list"></div>
   </div>
 
   <!-- Teams (collapsible, shown when in session) -->
@@ -1734,20 +1773,26 @@ const App = {
       return;
     }
     el.innerHTML = queuePlayers.map(p => {
+      const skillStr = p.score != null ? parseFloat(p.score).toFixed(1) : '';
       if (this._pendingRemove === p.id) {
-        return `<span class="queue-chip" style="display:inline-flex;align-items:center;gap:6px;background:#fef2f2;border-color:#fecaca;color:var(--danger);">
-          <span>Remove ${this.esc(p.name)}?</span>
-          <button class="btn btn-ghost" style="padding:1px 6px;font-size:0.78rem;font-weight:700;color:var(--danger);border:1px solid #fca5a5;border-radius:4px;" onclick="App.removePlayer(${p.id})">Yes</button>
-          <button class="btn btn-ghost" style="padding:1px 6px;font-size:0.78rem;font-weight:700;color:var(--text-light);border:1px solid var(--border);border-radius:4px;" onclick="App.cancelRemove()">No</button>
-        </span>`;
+        return `<div class="queue-row">
+          <div class="queue-row-confirm">
+            <span>Remove ${this.esc(p.name)}?</span>
+            <button style="color:var(--danger);border-color:#fca5a5;" onclick="App.removePlayer(${p.id})">Yes</button>
+            <button style="color:var(--text-muted);border-color:var(--border);" onclick="App.cancelRemove()">No</button>
+          </div>
+        </div>`;
       }
-      const base = p.active ? 'queue-chip' : 'queue-chip inactive';
-      const scoreStr = p.score != null ? ` · ${p.score}` : '';
-      const singlesStr = p.wantsSingles ? ' <span style="font-size:0.65rem;opacity:0.7;">1v1</span>' : '';
-      return `<span class="${base}" style="display:inline-flex;align-items:center;gap:5px;">
-        <span onclick="App.togglePlayer(${p.id})" style="cursor:pointer;" title="${p.active ? 'Click to sit out' : 'Click to rejoin queue'}">${this.esc(p.name)}${scoreStr}${singlesStr}</span>
-        <button class="btn btn-ghost" style="padding:0 2px;font-size:0.85rem;line-height:1;" onclick="App.removePlayer(${p.id})" title="Remove">&times;</button>
-      </span>`;
+      const rowClass = p.active ? 'queue-row' : 'queue-row inactive';
+      const title = p.active ? 'Click to sit out' : 'Click to rejoin queue';
+      const singlesBadge = p.wantsSingles ? `<span class="queue-row-badge">1v1</span>` : '';
+      const sittingOut = !p.active ? `<span class="queue-row-badge" style="color:var(--text-muted);">Out</span>` : '';
+      return `<div class="${rowClass}">
+        <span class="queue-row-name" onclick="App.togglePlayer(${p.id})" title="${title}">${this.esc(p.name)}</span>
+        ${singlesBadge}${sittingOut}
+        ${skillStr ? `<span class="queue-row-skill">${skillStr}</span>` : ''}
+        <button class="queue-row-remove" onclick="App.removePlayer(${p.id})" title="Remove">&times;</button>
+      </div>`;
     }).join('');
   },
 
