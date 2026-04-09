@@ -2163,7 +2163,7 @@ const App = {
         ${skillStr ? `<span class="queue-row-skill">${skillStr}</span>` : ''}
         ${editBtn}
         ${pauseBtn}
-        <button class="queue-row-remove" onclick="App.removePlayer(${p.id})" title="Remove">&times;</button>
+        <button class="queue-row-remove" onclick="${isYou ? 'Session.leave()' : `App.removePlayer(${p.id})`}" title="${isYou ? 'Leave session' : 'Remove'}">&times;</button>
       </div>`;
     }).join('');
   },
@@ -2435,6 +2435,15 @@ const Session = {
   _pushTimer: null,
 
   leave() {
+    // Deactivate self in the session so others can still manage courts
+    const selfId = Onboard.selfId;
+    if (selfId) {
+      const p = App.getPlayer(selfId);
+      if (p && !App.isPlayerOnCourt(selfId)) {
+        p.active = false;
+        App.saveState();
+      }
+    }
     if (this._sse) { this._sse.close(); this._sse = null; }
     this.id = null;
     this.label = null;
