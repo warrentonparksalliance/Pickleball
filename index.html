@@ -659,10 +659,9 @@ body {
   border: 1px solid var(--primary-muted);
 }
 .queue-row-skill {
-  font-size: 0.8rem;
+  font-size: 0.78rem;
+  font-weight: 400;
   color: var(--text-muted);
-  min-width: 28px;
-  text-align: right;
 }
 .queue-row-badge {
   font-size: 0.7rem;
@@ -1927,8 +1926,10 @@ const App = {
         winner,
       });
     }
+    const rematch = this._checkRematch(courtId, game);
     delete this.state.activeGames[courtId];
     delete this.state.scoringGames[courtId];
+    if (rematch) this._startRematch(courtId, rematch);
     this.saveState();
     this.render();
   },
@@ -1955,10 +1956,28 @@ const App = {
         mode: game.mode,
       });
     }
+    const rematch = this._checkRematch(courtId, game);
     delete this.state.activeGames[courtId];
     delete this.state.scoringGames[courtId];
+    if (rematch) this._startRematch(courtId, rematch);
     this.saveState();
     this.render();
+  },
+
+  _checkRematch(courtId, game) {
+    if (this.isRoundRobin() || !game) return null;
+    const cb = document.getElementById(`rematch-${courtId}`);
+    if (!cb || !cb.checked) return null;
+    return { side1: [...game.side1], side2: [...game.side2], mode: game.mode };
+  },
+
+  _startRematch(courtId, prev) {
+    this.state.activeGames[courtId] = {
+      side1: prev.side1,
+      side2: prev.side2,
+      mode: prev.mode,
+      startTime: Date.now(),
+    };
   },
 
   // ─── Timers ────────────────────────────────
@@ -2481,10 +2500,9 @@ const App = {
       const removeBtn = canRemove
         ? `<button class="queue-row-btn queue-row-remove" onclick="App.confirmRemove(${p.id})" title="${isYou ? 'Leave session' : 'Remove'}">&times;</button>`
         : '';
+      const skillInline = skillStr ? `<span class="queue-row-skill">(${skillStr})</span>` : '';
       return `<div class="${rowClass}">
-        <span class="queue-row-name">${this.esc(p.name)}${editBtn}${statusBadge}${partnerBadge}</span>
-        ${rrLocked ? '' : singlesBadge}
-        ${skillStr ? `<span class="queue-row-skill">${skillStr}</span>` : ''}
+        <span class="queue-row-name">${this.esc(p.name)}${skillInline}${editBtn}${statusBadge}${partnerBadge}${rrLocked ? '' : singlesBadge}</span>
         ${pauseBtn}
         ${removeBtn}
       </div>`;
@@ -2577,6 +2595,9 @@ const App = {
             <input type="number" id="score-s2-${courtId}" min="0" placeholder="–" onkeydown="if(event.key==='Enter')App.submitScore(${courtId})" oninput="document.getElementById('score-err-${courtId}').textContent=''">
           </div>
           <div id="score-err-${courtId}" class="score-error"></div>
+          ${!this.isRoundRobin() ? `<label style="display:flex;align-items:center;gap:6px;font-size:0.82rem;color:var(--text-light);cursor:pointer;margin-top:4px;">
+            <input type="checkbox" id="rematch-${courtId}" style="accent-color:var(--primary);"> Rematch
+          </label>` : ''}
           <div class="score-buttons">
             <button class="btn btn-assign" style="padding:8px 16px;font-size:0.85rem;" onclick="App.submitScore(${courtId})">Save Score</button>
             <button class="btn btn-outline" onclick="App.endWithoutScore(${courtId})">Skip</button>
@@ -2829,9 +2850,9 @@ const App = {
         const mode = m.mode === 'singles' ? '1v1' : '2v2';
         return `<tr>
           <td><span class="mode-badge">${mode}</span></td>
-          <td class="${s1Class}">${s1.join(' & ')}</td>
+          <td class="${s1Class}">${s1.join('<br>')}</td>
           <td style="color:var(--text-muted);font-size:0.7rem;font-weight:700;">vs</td>
-          <td class="${s2Class}">${s2.join(' & ')}</td>
+          <td class="${s2Class}">${s2.join('<br>')}</td>
           <td class="match-score">${scoreText}</td>
         </tr>`;
       }).join('')}</tbody>
