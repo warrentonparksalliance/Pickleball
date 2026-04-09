@@ -1348,19 +1348,21 @@ body {
         <button type="button" class="btn-confirm-join" onclick="Onboard.joinSavedPrivate()" style="white-space:nowrap;padding:8px 14px;font-size:0.82rem;">Join</button>
       </div>
       <div id="privateConfirmInline" style="display:none;margin-bottom:8px;"></div>
-      <button type="button" class="btn-outline" onclick="Onboard.toggleCreatePrivate()" id="btn-create-private" style="width:100%;margin-bottom:8px;padding:9px 14px;">Create New Private Session</button>
-      <div id="privateCreateForm" style="display:none;">
+      <button type="button" class="btn-outline" onclick="Onboard.toggleCreatePrivate()" id="btn-create-private" style="width:100%;padding:9px 14px;">+ Create New</button>
+      <div id="privateCreateForm" style="display:none;margin-top:10px;padding:14px;background:var(--bg);border:1.5px solid var(--border);border-radius:var(--radius);">
+        <div style="font-size:0.78rem;font-weight:600;color:var(--text-light);margin-bottom:10px;">New Private Session</div>
         <input type="text" class="setup-input" id="privateSessionName" placeholder="Session name" maxlength="20" style="margin-bottom:8px;">
-        <div style="display:flex;gap:8px;align-items:center;margin-bottom:8px;">
-          <input type="text" class="setup-input" id="privatePasscode" placeholder="4-character passcode" maxlength="4" style="flex:1;margin-bottom:0;text-transform:uppercase;letter-spacing:0.15em;font-weight:600;">
-          <button type="button" class="btn-outline" onclick="Onboard.randomPasscode()" style="white-space:nowrap;padding:8px 12px;">Random</button>
+        <div style="display:flex;gap:8px;align-items:center;margin-bottom:10px;">
+          <input type="text" class="setup-input" id="privatePasscode" placeholder="Passcode (4 chars)" maxlength="4" style="flex:1;margin-bottom:0;text-transform:uppercase;letter-spacing:0.15em;font-weight:600;">
+          <button type="button" class="btn-outline" onclick="Onboard.randomPasscode()" style="white-space:nowrap;padding:7px 10px;font-size:0.78rem;">Random</button>
         </div>
-        <div style="display:flex;gap:8px;margin-bottom:10px;">
-          <button type="button" class="btn-outline session-type-btn active" id="btnTypeOpen" onclick="Onboard.setSessionType('open')" style="flex:1;padding:8px;font-size:0.82rem;">Open Play</button>
-          <button type="button" class="btn-outline session-type-btn" id="btnTypeRR" onclick="Onboard.setSessionType('roundrobin')" style="flex:1;padding:8px;font-size:0.82rem;">Round Robin</button>
+        <div style="font-size:0.72rem;font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:6px;">Session Type</div>
+        <div style="display:flex;gap:6px;margin-bottom:12px;">
+          <button type="button" class="btn-outline session-type-btn active" id="btnTypeOpen" onclick="Onboard.setSessionType('open')" style="flex:1;padding:7px;font-size:0.8rem;">Open Play</button>
+          <button type="button" class="btn-outline session-type-btn" id="btnTypeRR" onclick="Onboard.setSessionType('roundrobin')" style="flex:1;padding:7px;font-size:0.8rem;">Round Robin</button>
         </div>
         <p id="privateSessionError" class="setup-error" style="display:none;">Enter a session name and 4-character passcode</p>
-        <button type="button" class="btn-confirm-join" onclick="Onboard.createPrivate()" style="width:100%;">Create &amp; Join</button>
+        <button type="button" class="btn-confirm-join" onclick="Onboard.createPrivate()" style="width:100%;padding:10px;">Create &amp; Join</button>
         <div id="createConfirmInline" style="display:none;margin-top:6px;"></div>
       </div>
       <div id="sessionLoading" class="session-loading" style="display:none;">
