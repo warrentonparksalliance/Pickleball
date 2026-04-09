@@ -1497,6 +1497,7 @@ body {
       <div class="settings-card-title" style="color:var(--danger);">Danger Zone</div>
       <div style="display:flex;gap:8px;flex-wrap:wrap;">
         <button class="btn-reset-all" onclick="App.resetAll()" style="background:#fef2f2;color:var(--danger);">Reset Everything</button>
+        <button class="btn-reset-all" id="btnDeleteSession" onclick="App.deleteSession()" style="background:#fef2f2;color:var(--danger);display:none;">Delete Session</button>
       </div>
     </div>
     <!-- Admin log (admin only) -->
@@ -1515,15 +1516,6 @@ body {
       </div>
       <div class="history-filters">
         <input type="text" id="historySearch" class="history-search" placeholder="Search player name..." oninput="App.renderHistory()">
-        <select id="historyModeFilter" class="history-filter-select" onchange="App.renderHistory()">
-          <option value="all">All modes</option>
-          <option value="doubles">2v2</option>
-          <option value="singles">1v1</option>
-        </select>
-        <select id="historySortBy" class="history-filter-select" onchange="App.renderHistory()">
-          <option value="newest">Newest first</option>
-          <option value="oldest">Oldest first</option>
-        </select>
       </div>
       <div class="history-table-wrap" id="historyRounds"></div>
     </div>
@@ -1915,6 +1907,7 @@ const App = {
         if (p) p.roundsPlayed = (p.roundsPlayed || 0) + 1;
       }
       const winner = score1 > score2 ? 1 : score2 > score1 ? 2 : 0;
+      const duration = game.startTime ? Date.now() - game.startTime : null;
       this.state.roundHistory.push({
         round: this.state.round,
         courtId,
@@ -1924,6 +1917,7 @@ const App = {
         score1,
         score2,
         winner,
+        duration,
       });
     }
     const rematch = this._checkRematch(courtId, game);
@@ -1948,12 +1942,14 @@ const App = {
         const p = this.getPlayer(id);
         if (p) p.roundsPlayed = (p.roundsPlayed || 0) + 1;
       }
+      const duration = game.startTime ? Date.now() - game.startTime : null;
       this.state.roundHistory.push({
         round: this.state.round,
         courtId,
         side1: [...game.side1],
         side2: [...game.side2],
         mode: game.mode,
+        duration,
       });
     }
     const rematch = this._checkRematch(courtId, game);
@@ -2396,6 +2392,23 @@ const App = {
     this.render();
   },
 
+  async deleteSession() {
+    if (!Session.id || !Session.id.startsWith('pvt-')) return;
+    if (!confirm('Permanently delete this private session? This cannot be undone.')) return;
+    if (!confirm('Are you sure? All data will be lost and all users will be disconnected.')) return;
+    try {
+      await fetch(`${Session.DB}/sessions/${Session.id}.json`, { method: 'DELETE' });
+    } catch(e) { /* silent */ }
+    // Remove from saved private sessions
+    const saved = Onboard._getSavedPrivateSessions().filter(s => s.id !== Session.id);
+    try { localStorage.setItem('pj_privateSessions', JSON.stringify(saved)); } catch(e) {}
+    localStorage.removeItem('pickleJar');
+    this._myGuests = new Set();
+    this._saveMyGuests();
+    this.state = this._freshState();
+    Session.leave();
+  },
+
   // ─── Rendering ─────────────────────────────
   render() {
     const rr = this.isRoundRobin();
@@ -2432,6 +2445,10 @@ const App = {
     // Show unlock button for admin in round robin
     const unlockBtn = document.getElementById('rrUnlockBtn');
     if (unlockBtn) unlockBtn.style.display = (rr && rrLocked && Admin.isAdmin()) ? '' : 'none';
+
+    // Show delete session button for private sessions
+    const deleteBtn = document.getElementById('btnDeleteSession');
+    if (deleteBtn) deleteBtn.style.display = (Session.id && Session.id.startsWith('pvt-')) ? '' : 'none';
   },
 
   _updateTabBadges() {
@@ -2802,12 +2819,8 @@ const App = {
       return;
     }
 
-    // Add index for stable ordering
-    history.forEach((m, i) => m._idx = i);
-
-    // Filter by mode
-    const modeFilter = document.getElementById('historyModeFilter')?.value || 'all';
-    if (modeFilter !== 'all') history = history.filter(m => m.mode === modeFilter);
+    // Newest first
+    history.reverse();
 
     // Filter by player name search
     const search = (document.getElementById('historySearch')?.value || '').toLowerCase().trim();
@@ -2821,11 +2834,6 @@ const App = {
       });
     }
 
-    // Sort
-    const sortBy = document.getElementById('historySortBy')?.value || 'newest';
-    if (sortBy === 'newest') history.sort((a, b) => b._idx - a._idx);
-    else if (sortBy === 'oldest') history.sort((a, b) => a._idx - b._idx);
-
 
     if (history.length === 0) {
       el.innerHTML = '<div class="history-empty">No matches found</div>';
@@ -2834,11 +2842,11 @@ const App = {
 
     el.innerHTML = `<table class="history-table">
       <thead><tr>
-        <th>Mode</th>
         <th>Team 1</th>
         <th></th>
         <th>Team 2</th>
         <th>Score</th>
+        <th>Time</th>
       </tr></thead>
       <tbody>${history.map(m => {
         const s1 = m.side1.map(id => { const p = this.getPlayer(id); return p ? this.esc(p.name) : '?'; });
@@ -2847,13 +2855,13 @@ const App = {
         const s1Class = hasScores ? (m.winner === 1 ? 'winner' : m.winner === 2 ? 'loser' : '') : '';
         const s2Class = hasScores ? (m.winner === 2 ? 'winner' : m.winner === 1 ? 'loser' : '') : '';
         const scoreText = hasScores ? `${m.score1}–${m.score2}` : '–';
-        const mode = m.mode === 'singles' ? '1v1' : '2v2';
+        const dur = m.duration ? this.formatTimer(m.duration) : '–';
         return `<tr>
-          <td><span class="mode-badge">${mode}</span></td>
           <td class="${s1Class}">${s1.join('<br>')}</td>
           <td style="color:var(--text-muted);font-size:0.7rem;font-weight:700;">vs</td>
           <td class="${s2Class}">${s2.join('<br>')}</td>
           <td class="match-score">${scoreText}</td>
+          <td style="color:var(--text-muted);font-size:0.78rem;white-space:nowrap;">${dur}</td>
         </tr>`;
       }).join('')}</tbody>
     </table>`;
