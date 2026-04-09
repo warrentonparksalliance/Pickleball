@@ -1421,9 +1421,13 @@ body {
     <div class="settings-card admin-only" id="dangerZone" style="border-color:#fecaca;display:none;">
       <div class="settings-card-title" style="color:var(--danger);">Danger Zone</div>
       <div style="display:flex;gap:8px;flex-wrap:wrap;">
-        <button class="btn-reset-all" onclick="App.clearHistory()">Clear History</button>
         <button class="btn-reset-all" onclick="App.resetAll()" style="background:#fef2f2;color:var(--danger);">Reset Everything</button>
       </div>
+    </div>
+    <!-- Admin log (admin only) -->
+    <div class="settings-card admin-only" id="adminLogSection" style="display:none;">
+      <div class="settings-card-title">Admin History</div>
+      <div id="adminLogList" style="font-size:0.82rem;color:var(--text-light);"></div>
     </div>
   </div>
 
@@ -1532,6 +1536,7 @@ const App = {
     if (!s.nextId)      s.nextId      = 1;
     if (!s.nextCourtId) s.nextCourtId = 1;
     if (s.availableCourts == null) s.availableCourts = 2;
+    if (!Array.isArray(s.adminLog)) s.adminLog = [];
     delete s.assignMode;
     delete s.courts; delete s.pendingGames; delete s.currentSittingOut; delete s.selectedPlayerId;
   },
@@ -2128,8 +2133,26 @@ const App = {
   },
 
   // ─── History ───────────────────────────────
+  _freshState() {
+    return {
+      players: [], teams: [],
+      options: { useSkill: false, minimizeRepeats: false },
+      opponentHistory: {}, sitoutCounts: {}, round: 0,
+      activeGames: {}, scoringGames: {}, roundHistory: [], nextId: 1, nextCourtId: 1,
+      availableCourts: 2, adminLog: [],
+    };
+  },
+
+  _logAdmin(action) {
+    const user = Admin._user;
+    const name = user ? (user.displayName || user.email || 'Unknown') : 'Unknown';
+    if (!Array.isArray(this.state.adminLog)) this.state.adminLog = [];
+    this.state.adminLog.push({ action, admin: name, time: Date.now() });
+  },
+
   clearHistory() {
-    if (!confirm('Clear all match history and sit-out counts?')) return;
+    if (!confirm('Clear all match history and sit-out counts for all users?')) return;
+    this._logAdmin('Clear History');
     this.state.opponentHistory = {};
     this.state.sitoutCounts = {};
     this.state.roundHistory = [];
@@ -2139,15 +2162,16 @@ const App = {
   },
 
   resetAll() {
-    if (!confirm('Reset everything? This removes all players, teams, and history.')) return;
+    if (!confirm('Reset everything? All players, teams, courts, and history will be cleared. All users will be logged out of the session.')) return;
+    this._logAdmin('Reset Everything');
+    const prevLog = [...this.state.adminLog];
+    const fresh = this._freshState();
+    fresh._resetAt = Date.now();
+    fresh.adminLog = prevLog;
     localStorage.removeItem('pickleJar');
-    this.state = {
-      players: [], teams: [],
-      options: { useSkill: false, minimizeRepeats: false },
-      opponentHistory: {}, sitoutCounts: {}, round: 0,
-      activeGames: {}, scoringGames: {}, roundHistory: [], nextId: 1, nextCourtId: 1,
-      availableCourts: 2,
-    };
+    this._myGuests = new Set();
+    this._saveMyGuests();
+    this.state = fresh;
     this.saveState();
     this.render();
   },
@@ -2160,6 +2184,7 @@ const App = {
     this.renderCourts();
     this.renderQueue();
     this.renderHistory();
+    this.renderAdminLog();
     this._updateTabBadges();
 
     document.getElementById('optSkill').checked = this.state.options.useSkill;
@@ -2450,7 +2475,6 @@ const App = {
 
     el.innerHTML = `<table class="history-table">
       <thead><tr>
-        <th>Round</th>
         <th>Mode</th>
         <th>Team 1</th>
         <th></th>
@@ -2466,7 +2490,6 @@ const App = {
         const scoreText = hasScores ? `${m.score1}–${m.score2}` : '–';
         const mode = m.mode === 'singles' ? '1v1' : '2v2';
         return `<tr>
-          <td>${m.round}</td>
           <td><span class="mode-badge">${mode}</span></td>
           <td class="${s1Class}">${s1.join(' & ')}</td>
           <td style="color:var(--text-muted);font-size:0.7rem;font-weight:700;">vs</td>
@@ -2475,6 +2498,25 @@ const App = {
         </tr>`;
       }).join('')}</tbody>
     </table>`;
+  },
+
+  renderAdminLog() {
+    const el = document.getElementById('adminLogList');
+    if (!el) return;
+    const log = this.state.adminLog || [];
+    if (log.length === 0) {
+      el.innerHTML = '<div style="font-style:italic;">No admin actions yet</div>';
+      return;
+    }
+    el.innerHTML = [...log].reverse().map(entry => {
+      const d = new Date(entry.time);
+      const date = d.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+      const time = d.toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' });
+      return `<div style="display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px solid var(--border);">
+        <span><strong>${this.esc(entry.action)}</strong> by ${this.esc(entry.admin)}</span>
+        <span style="color:var(--text-muted);white-space:nowrap;">${date}, ${time}</span>
+      </div>`;
+    }).join('');
   },
 
   fmtDUPR(el) {
@@ -2642,6 +2684,7 @@ const Session = {
         this._addSelf(pendingUser);
       }
     };
+    let _lastResetAt = App.state._resetAt || 0;
     src.addEventListener('put', (e) => {
       try {
         const msg = JSON.parse(e.data);
@@ -2649,6 +2692,22 @@ const Session = {
           addSelfOnce();
           return;
         }
+
+        // Detect admin reset — kick non-admin users back to join screen
+        const incomingReset = msg.data._resetAt || 0;
+        if (incomingReset > _lastResetAt && !Admin.isAdmin()) {
+          _lastResetAt = incomingReset;
+          localStorage.removeItem('pickleJar');
+          App._myGuests = new Set();
+          App._saveMyGuests();
+          App.state = App._freshState();
+          App.render();
+          alert('The session has been reset by an admin. You can rejoin right away.');
+          Session.leave();
+          return;
+        }
+        _lastResetAt = incomingReset;
+
         this._receiving = true;
 
         const localGames   = { ...(App.state.activeGames  || {}) };
@@ -2687,6 +2746,19 @@ const Session = {
       try {
         const msg = JSON.parse(e.data);
         if (!msg || !msg.data || msg.path !== '/') return;
+        const incomingReset = msg.data._resetAt || 0;
+        if (incomingReset > _lastResetAt && !Admin.isAdmin()) {
+          _lastResetAt = incomingReset;
+          localStorage.removeItem('pickleJar');
+          App._myGuests = new Set();
+          App._saveMyGuests();
+          App.state = App._freshState();
+          App.render();
+          alert('The session has been reset by an admin. You can rejoin right away.');
+          Session.leave();
+          return;
+        }
+        if (incomingReset) _lastResetAt = incomingReset;
         this._receiving = true;
         App.state = { ...App.state, ...msg.data };
         App._normState();
