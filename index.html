@@ -1333,19 +1333,21 @@ body {
       </label>
       <p id="onboardNameError" class="setup-error">Enter your name first</p>
       <div class="setup-section-label">Public Session</div>
-      <div style="display:flex;gap:8px;margin-bottom:14px;">
+      <div style="display:flex;gap:8px;margin-bottom:4px;">
         <select class="setup-input" id="publicLocationSelect" style="flex:1;margin-bottom:0;cursor:pointer;">
           <option value="">Select a location...</option>
         </select>
         <button type="button" class="btn-confirm-join" onclick="Onboard.joinPublic()" style="white-space:nowrap;padding:8px 14px;font-size:0.82rem;">Join</button>
       </div>
+      <div id="publicConfirmInline" style="display:none;margin-bottom:14px;"></div>
       <div class="setup-section-label">Private Session</div>
-      <div style="display:flex;gap:8px;margin-bottom:8px;">
+      <div style="display:flex;gap:8px;margin-bottom:4px;">
         <select class="setup-input" id="privateSessionSelect" style="flex:1;margin-bottom:0;cursor:pointer;">
           <option value="">Select a session...</option>
         </select>
         <button type="button" class="btn-confirm-join" onclick="Onboard.joinSavedPrivate()" style="white-space:nowrap;padding:8px 14px;font-size:0.82rem;">Join</button>
       </div>
+      <div id="privateConfirmInline" style="display:none;margin-bottom:8px;"></div>
       <button type="button" class="btn-outline" onclick="Onboard.toggleCreatePrivate()" id="btn-create-private" style="width:100%;margin-bottom:8px;padding:9px 14px;">Create New Private Session</button>
       <div id="privateCreateForm" style="display:none;">
         <input type="text" class="setup-input" id="privateSessionName" placeholder="Session name" maxlength="20" style="margin-bottom:8px;">
@@ -1359,19 +1361,7 @@ body {
         </div>
         <p id="privateSessionError" class="setup-error" style="display:none;">Enter a session name and 4-character passcode</p>
         <button type="button" class="btn-confirm-join" onclick="Onboard.createPrivate()" style="width:100%;">Create &amp; Join</button>
-      </div>
-      <div id="sessionConfirmPanel" style="display:none;">
-        <div class="confirm-card">
-          <p class="confirm-location" id="confirmLocation"></p>
-          <div class="confirm-identity">
-            <span class="confirm-name" id="confirmName"></span>
-            <span class="confirm-skill" id="confirmSkill"></span>
-          </div>
-          <div style="display:flex;gap:8px;margin-top:12px;">
-            <button type="button" class="btn-confirm-join" id="btn-confirmJoin">Join Session</button>
-            <button type="button" class="btn-confirm-back" id="btn-confirmBack">Back</button>
-          </div>
-        </div>
+        <div id="createConfirmInline" style="display:none;margin-top:6px;"></div>
       </div>
       <div id="sessionLoading" class="session-loading" style="display:none;">
         <span class="session-spinner"></span>
@@ -1491,6 +1481,15 @@ body {
       </div>
     </div>
 
+
+    <!-- Session Type (admin only, private sessions) -->
+    <div class="settings-card admin-only" id="sessionTypeSection" style="display:none;">
+      <div class="settings-card-title">Session Type</div>
+      <div style="display:flex;gap:8px;">
+        <button type="button" class="btn-outline session-type-btn" id="settingsBtnOpen" onclick="App.setSessionType('open')" style="flex:1;padding:8px;font-size:0.82rem;">Open Play</button>
+        <button type="button" class="btn-outline session-type-btn" id="settingsBtnRR" onclick="App.setSessionType('roundrobin')" style="flex:1;padding:8px;font-size:0.82rem;">Round Robin</button>
+      </div>
+    </div>
 
     <!-- Danger zone (admin only) -->
     <div class="settings-card admin-only" id="dangerZone" style="border-color:#fecaca;display:none;">
@@ -2049,6 +2048,22 @@ const App = {
   // ─── Round Robin ────────────────────────────
   isRoundRobin() { return this.state._sessionType === 'roundrobin'; },
 
+  setSessionType(type) {
+    if (!Admin.isAdmin()) return;
+    if (type === this.state._sessionType) return;
+    const label = type === 'roundrobin' ? 'Round Robin' : 'Open Play';
+    if (!confirm(`Switch to ${label}? This will clear active courts and schedules.`)) return;
+    this.state._sessionType = type || 'open';
+    this.state.activeGames = {};
+    this.state.scoringGames = {};
+    this.state._rrSchedule = [];
+    this.state._rrCurrentRound = 0;
+    this.state._rrLocked = false;
+    this._logAdmin('Changed session type to ' + label);
+    this.saveState();
+    this.render();
+  },
+
   rrLockPlayers() {
     if (this.state.players.length < 4) {
       alert('Need at least 4 players for round robin.');
@@ -2363,6 +2378,7 @@ const App = {
   },
 
   clearHistory() {
+    if (!Admin.isAdmin()) return;
     if (!confirm('Clear all match history and sit-out counts for all users?')) return;
     this._logAdmin('Clear History');
     this.state.opponentHistory = {};
@@ -2374,6 +2390,7 @@ const App = {
   },
 
   resetAll() {
+    if (!Admin.isAdmin()) return;
     if (!confirm('Reset everything? All players, teams, courts, and history will be cleared. All users will be logged out of the session.')) return;
     this._logAdmin('Reset Everything');
     const prevLog = [...this.state.adminLog];
@@ -2393,6 +2410,7 @@ const App = {
   },
 
   async deleteSession() {
+    if (!Admin.isAdmin()) return;
     if (!Session.id || !Session.id.startsWith('pvt-')) return;
     if (!confirm('Permanently delete this private session? This cannot be undone.')) return;
     if (!confirm('Are you sure? All data will be lost and all users will be disconnected.')) return;
@@ -2445,6 +2463,16 @@ const App = {
     // Show unlock button for admin in round robin
     const unlockBtn = document.getElementById('rrUnlockBtn');
     if (unlockBtn) unlockBtn.style.display = (rr && rrLocked && Admin.isAdmin()) ? '' : 'none';
+
+    // Session type toggle (admin, private sessions)
+    const sessionTypeSection = document.getElementById('sessionTypeSection');
+    if (sessionTypeSection) {
+      sessionTypeSection.style.display = (Session.id && Session.id.startsWith('pvt-') && Admin.isAdmin()) ? '' : 'none';
+      const btnOpen = document.getElementById('settingsBtnOpen');
+      const btnRR = document.getElementById('settingsBtnRR');
+      if (btnOpen) btnOpen.classList.toggle('active', !rr);
+      if (btnRR) btnRR.classList.toggle('active', rr);
+    }
 
     // Show delete session button for private sessions
     const deleteBtn = document.getElementById('btnDeleteSession');
@@ -2509,8 +2537,9 @@ const App = {
       const statusBadge = isYou ? '<span class="queue-row-you">you</span>'
         : p.isLive ? '<span class="queue-row-status user">user</span>'
         : '<span class="queue-row-status guest">guest</span>';
-      const rrLocked = this.isRoundRobin() && this.state._rrLocked;
-      const pauseBtn = rrLocked ? '' : (p.active
+      const rr = this.isRoundRobin();
+      const rrLocked = rr && this.state._rrLocked;
+      const pauseBtn = rr ? '' : (p.active
         ? `<button class="queue-row-btn queue-row-action" onclick="App.togglePlayer(${p.id})" title="Sit out">&#x23F8;</button>`
         : `<button class="queue-row-btn queue-row-action play" onclick="App.togglePlayer(${p.id})" title="Rejoin queue">&#x25B6;</button>`);
       const canRemove = !rrLocked && (isYou || isMyGuest || Admin.isAdmin());
@@ -3215,7 +3244,7 @@ const Onboard = {
         this._hide();
         (async () => {
           const data = await Session._get(s);
-          if (data && data._passcode) {
+          if (data && data._passcode && !Admin.isSuperAdmin()) {
             const entered = prompt('Enter the 4-character passcode for "' + label + '":');
             if (!entered || entered.trim().toUpperCase() !== data._passcode) {
               alert('Incorrect passcode.');
@@ -3264,6 +3293,38 @@ const Onboard = {
   _pendingKey: null,
   _pendingLabel: null,
 
+  _showInlineConfirm(elId, label, onYes) {
+    // Hide all other inline confirms
+    ['publicConfirmInline', 'privateConfirmInline', 'createConfirmInline'].forEach(id => {
+      const el = document.getElementById(id);
+      if (el) { el.style.display = 'none'; el.innerHTML = ''; }
+    });
+    const el = document.getElementById(elId);
+    if (!el) return;
+    el.style.display = '';
+    el.innerHTML = `<div class="queue-row-confirm" style="padding:8px 0;">
+      <span style="font-size:0.85rem;">Join <strong>${App.esc(label)}</strong>?</span>
+      <button style="color:var(--primary);border-color:var(--primary-muted);font-size:0.82rem;padding:4px 12px;border:1.5px solid;border-radius:6px;background:var(--primary-light);cursor:pointer;font-family:inherit;font-weight:600;" onclick="Onboard._inlineYes()">Yes</button>
+      <button style="color:var(--text-muted);border-color:var(--border);font-size:0.82rem;padding:4px 12px;border:1.5px solid;border-radius:6px;background:transparent;cursor:pointer;font-family:inherit;" onclick="Onboard._inlineNo()">No</button>
+    </div>`;
+    this._inlineYesAction = onYes;
+  },
+
+  _inlineYes() {
+    if (this._inlineYesAction) this._inlineYesAction();
+    this._inlineYesAction = null;
+  },
+
+  _inlineNo() {
+    ['publicConfirmInline', 'privateConfirmInline', 'createConfirmInline'].forEach(id => {
+      const el = document.getElementById(id);
+      if (el) { el.style.display = 'none'; el.innerHTML = ''; }
+    });
+    this._pendingKey = null;
+    this._pendingLabel = null;
+    this._inlineYesAction = null;
+  },
+
   // ─── Public sessions ───────────────────────
   _populatePublicDropdown() {
     const sel = document.getElementById('publicLocationSelect');
@@ -3286,10 +3347,7 @@ const Onboard = {
     if (!user) return;
     this._pendingKey = key;
     this._pendingLabel = loc.label;
-    document.getElementById('confirmLocation').textContent = '\u{1f4cd} ' + loc.label;
-    document.getElementById('confirmName').textContent = user.name;
-    document.getElementById('confirmSkill').textContent = user.skill ? '\u00b7 Skill ' + user.skill : '';
-    document.getElementById('sessionConfirmPanel').style.display = '';
+    this._showInlineConfirm('publicConfirmInline', loc.label, () => this.confirmJoin());
   },
 
   // ─── Private sessions ──────────────────────
@@ -3335,10 +3393,7 @@ const Onboard = {
     if (!user) return;
     this._pendingKey = id;
     this._pendingLabel = saved.name;
-    document.getElementById('confirmLocation').textContent = '\u{1f512} ' + saved.name;
-    document.getElementById('confirmName').textContent = user.name;
-    document.getElementById('confirmSkill').textContent = user.skill ? '\u00b7 Skill ' + user.skill : '';
-    document.getElementById('sessionConfirmPanel').style.display = '';
+    this._showInlineConfirm('privateConfirmInline', saved.name, () => this.confirmJoin());
   },
 
   _newSessionType: 'open',
@@ -3386,10 +3441,7 @@ const Onboard = {
     this._pendingIsCreate = true;
     this._pendingSessionType = this._newSessionType;
     const typeLabel = this._newSessionType === 'roundrobin' ? ' (Round Robin)' : '';
-    document.getElementById('confirmLocation').textContent = '\u{1f512} ' + sessionName + typeLabel;
-    document.getElementById('confirmName').textContent = user.name;
-    document.getElementById('confirmSkill').textContent = user.skill ? '\u00b7 Skill ' + user.skill : '';
-    document.getElementById('sessionConfirmPanel').style.display = '';
+    this._showInlineConfirm('createConfirmInline', sessionName + typeLabel, () => this.confirmJoin());
   },
 
   // ─── Confirm / Cancel / Navigation ─────────
@@ -3400,32 +3452,38 @@ const Onboard = {
     const user = this._savedUser();
     if (!user) return;
 
+    // Super admin: ask if joining as player or admin only
+    let adminOnly = false;
+    if (Admin.isSuperAdmin() && !this._pendingIsCreate) {
+      const choice = prompt('Join as:\n1 — Player (added to queue)\n2 — Admin only (observe & manage)\n\nEnter 1 or 2:');
+      if (!choice) return;
+      adminOnly = choice.trim() === '2';
+    }
+    const connectUser = adminOnly ? null : user;
+
     if (key.startsWith('pvt-')) {
       if (this._pendingIsCreate) {
         // Creating new — set passcode and creator as session admin
-        document.getElementById('sessionConfirmPanel').style.display = 'none';
         this._savePrivateSession(key, label);
         App.state._passcode = this._pendingPasscode;
         App.state._admins = Admin._user ? [Admin._user.uid] : [];
         if (this._pendingSessionType) App.state._sessionType = this._pendingSessionType;
-        Session._connect(key, label, true, user);
+        Session._connect(key, label, true, connectUser);
       } else {
         // Joining existing — verify passcode
         const data = await Session._get(key);
-        if (data && data._passcode) {
+        if (data && data._passcode && !Admin.isSuperAdmin()) {
           const entered = prompt('Enter the 4-character passcode for "' + label + '":');
           if (!entered || entered.trim().toUpperCase() !== data._passcode) {
             alert('Incorrect passcode.');
             return;
           }
         }
-        document.getElementById('sessionConfirmPanel').style.display = 'none';
         this._savePrivateSession(key, label);
-        Session._connect(key, label, false, user);
+        Session._connect(key, label, false, connectUser);
       }
     } else {
-      document.getElementById('sessionConfirmPanel').style.display = 'none';
-      Session._connect(key, label, false, user);
+      Session._connect(key, label, false, connectUser);
     }
     this._pendingPasscode = null;
     this._pendingIsCreate = false;
@@ -3437,14 +3495,11 @@ const Onboard = {
     this._pendingLabel = null;
     this._pendingPasscode = null;
     this._pendingIsCreate = false;
-    document.getElementById('sessionConfirmPanel').style.display = 'none';
   },
 
   showStep() {
     const setup = document.getElementById('sessionSetupSection');
     if (setup) setup.style.display = '';
-    const confirm = document.getElementById('sessionConfirmPanel');
-    if (confirm) confirm.style.display = 'none';
     const pvtForm = document.getElementById('privateCreateForm');
     if (pvtForm) pvtForm.style.display = 'none';
     this._pendingKey = null;
@@ -3655,8 +3710,6 @@ const Admin = {
 App.init();
 Admin.init();
 Onboard.init();
-document.getElementById('btn-confirmJoin').addEventListener('click', function() { Onboard.confirmJoin(); });
-document.getElementById('btn-confirmBack').addEventListener('click', function() { Onboard.cancelJoin(); });
 </script>
 </body>
 </html>

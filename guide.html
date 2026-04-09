@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Pickle Jar — Quick Start Guide</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  background: #f4f6fb;
+  color: #111827;
+  line-height: 1.6;
+  padding: 20px 16px 60px;
+  max-width: 720px;
+  margin: 0 auto;
+  -webkit-font-smoothing: antialiased;
+}
+h1 { font-size: 1.6rem; font-weight: 700; margin-bottom: 4px; }
+.subtitle { font-size: 0.9rem; color: #6b7280; margin-bottom: 28px; }
+h2 {
+  font-size: 1.05rem; font-weight: 700; color: #4f46e5;
+  margin-top: 28px; margin-bottom: 10px;
+  padding-bottom: 4px; border-bottom: 2px solid #eef2ff;
+}
+h3 { font-size: 0.92rem; font-weight: 600; margin-top: 16px; margin-bottom: 6px; }
+p, li { font-size: 0.88rem; margin-bottom: 8px; }
+ul { padding-left: 20px; }
+li { margin-bottom: 6px; }
+.card {
+  background: #fff; border: 1px solid #e4e7ef; border-radius: 12px;
+  padding: 16px 18px; margin-bottom: 14px; box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+}
+.card-title {
+  font-size: 0.72rem; font-weight: 700; text-transform: uppercase;
+  letter-spacing: 0.08em; color: #9ca3af; margin-bottom: 8px;
+}
+.badge {
+  display: inline-block; font-size: 0.7rem; font-weight: 700;
+  padding: 2px 8px; border-radius: 9999px; vertical-align: middle;
+}
+.badge-you { color: #059669; background: #ecfdf5; }
+.badge-guest { color: #9ca3af; background: #f1f4fb; border: 1px solid #e4e7ef; }
+.badge-user { color: #4f46e5; background: #eef2ff; border: 1px solid #c7d2fe; }
+.badge-partner { color: #92400e; background: #fef3c7; }
+.tip {
+  background: #fffbeb; border-left: 3px solid #fbbf24;
+  padding: 10px 14px; border-radius: 0 8px 8px 0;
+  font-size: 0.84rem; margin: 12px 0;
+}
+.steps { counter-reset: step; list-style: none; padding-left: 0; }
+.steps li {
+  counter-increment: step; padding-left: 32px; position: relative; margin-bottom: 12px;
+}
+.steps li::before {
+  content: counter(step);
+  position: absolute; left: 0; top: 0;
+  width: 22px; height: 22px; border-radius: 50%;
+  background: #4f46e5; color: white; font-size: 0.72rem; font-weight: 700;
+  display: flex; align-items: center; justify-content: center;
+}
+footer {
+  text-align: center; margin-top: 36px; padding-top: 20px;
+  border-top: 1px solid #e4e7ef; font-size: 0.78rem; color: #9ca3af;
+}
+footer a { color: #4f46e5; text-decoration: none; }
+footer a:hover { text-decoration: underline; }
+</style>
+</head>
+<body>
+
+<h1>Pickle Jar</h1>
+<p class="subtitle">Everyone's in the jar. Shake it up. — A quick guide to getting started.</p>
+
+<h2>Getting Started</h2>
+<ol class="steps">
+  <li><strong>Open the app</strong> on your phone's browser — no download needed.</li>
+  <li><strong>Enter your name</strong> and optionally your skill level (DUPR rating, 2.0–8.0).</li>
+  <li><strong>Check "Open to 1v1"</strong> if you're willing to play singles matches.</li>
+  <li><strong>Select a location</strong> from the Public Session dropdown and tap <strong>Join</strong>. Everyone at the same location joins the same session automatically.</li>
+</ol>
+
+<div class="tip">
+  <strong>Tip:</strong> Your name and settings are saved on your device. Next time you visit, just pick a location and go.
+</div>
+
+<h2>The Queue</h2>
+<div class="card">
+  <div class="card-title">Player Badges</div>
+  <p><span class="badge badge-you">you</span> — That's you in the list</p>
+  <p><span class="badge badge-user">user</span> — A player using the app on their own device</p>
+  <p><span class="badge badge-guest">guest</span> — Added by someone else (for players without the app)</p>
+  <p><span class="badge badge-partner">partner</span> — Your selected partner preference</p>
+</div>
+
+<ul>
+  <li><strong>Add Guest</strong> — Add players who don't have the app. You can edit or remove guests you added.</li>
+  <li><strong>Pause</strong> (&#x23F8;) — Sit out temporarily. You stay in the session but won't be assigned to courts. Anyone can pause anyone.</li>
+  <li><strong>Play</strong> (&#x25B6;) — Rejoin the queue after being paused.</li>
+  <li><strong>Remove</strong> (&times;) — Remove yourself (leaves the session) or your guests. Admins can remove anyone.</li>
+</ul>
+
+<h2>Court Assignments</h2>
+
+<h3>Open Play (default)</h3>
+<p>The app automatically assigns players to courts — <strong>doubles (2v2) first</strong>, then singles (1v1) if courts remain and players opted in.</p>
+<ol class="steps">
+  <li>Set <strong>"Courts available now"</strong> — how many courts to fill this press.</li>
+  <li>Tap <strong>Assign Courts</strong>. Players are randomly paired and assigned.</li>
+  <li>When a game ends, tap <strong>End Match</strong>, enter scores (or skip), and those players return to the queue.</li>
+  <li>Tap Assign Courts again to fill open courts with waiting players.</li>
+</ol>
+
+<div class="tip">
+  <strong>Rematch:</strong> When ending a match, check the "Rematch" box before saving/skipping to immediately start the same matchup again.
+</div>
+
+<h3>Match Options</h3>
+<ul>
+  <li><strong>Match by skill</strong> — Pairs players with similar skill levels.</li>
+  <li><strong>Minimize repeats</strong> — Avoids matching players who've already played each other.</li>
+</ul>
+
+<h2>Partner Preferences</h2>
+<p>In the <strong>Settings</strong> tab, you can add partner preferences:</p>
+<ul>
+  <li>Tap <strong>+ Add Partner</strong> and select a player.</li>
+  <li>When both you and your partner are in the queue, you'll be placed on the <strong>same side</strong> in doubles.</li>
+  <li>If your partner is on a court or paused, you'll be assigned normally with other players.</li>
+  <li>You can add multiple partners — the app will pair you with whichever one is available.</li>
+</ul>
+
+<h2>Private Sessions</h2>
+<p>For games at home, tournaments, or groups that want their own space:</p>
+<ol class="steps">
+  <li><strong>Sign in with Google</strong> on the landing page (required to create).</li>
+  <li>Tap <strong>Create New Private Session</strong>.</li>
+  <li>Enter a <strong>session name</strong> and a <strong>4-character passcode</strong> (or generate a random one).</li>
+  <li>Choose <strong>Open Play</strong> or <strong>Round Robin</strong>.</li>
+  <li>Share the link with friends — they'll need the passcode to join.</li>
+</ol>
+
+<div class="tip">
+  <strong>Round Robin mode:</strong> Add all players first, then lock the roster. Set the number of courts and generate the full schedule. The app creates every round automatically — just play through them in order.
+</div>
+
+<h2>Match History</h2>
+<p>The <strong>History</strong> tab shows all completed matches with scores and match duration. Use the search bar to filter by player name.</p>
+
+<h2>Sharing &amp; Multi-Device</h2>
+<ul>
+  <li>All session data <strong>syncs in real-time</strong> across everyone's devices.</li>
+  <li>Court assignments, scores, and queue changes appear instantly for all users.</li>
+  <li>If you leave a session, your court assignments stay active for others to manage.</li>
+  <li>Share the URL to invite others — public sessions don't need a code, private ones do.</li>
+</ul>
+
+<h2>Admin Features</h2>
+<p>Admins (session creators for private, super admins for public) can:</p>
+<ul>
+  <li><strong>Reset Everything</strong> — Clears all data. All users get kicked back to the join screen.</li>
+  <li><strong>Clear History</strong> — Wipes match history and sit-out counts, keeps players and courts.</li>
+  <li><strong>Delete Session</strong> — Permanently removes a private session (with double confirmation).</li>
+  <li><strong>Remove any player</strong> from the queue.</li>
+  <li>View the <strong>Admin History</strong> log of all admin actions.</li>
+</ul>
+
+<footer>
+  <p>Pickle Jar is provided by <a href="https://www.warrentonparksalliance.com" target="_blank">Warrenton Parks Alliance</a></p>
+  <p>Questions or feedback? <a href="mailto:brooke@warrentonparksalliance.com">brooke@warrentonparksalliance.com</a></p>
+</footer>
+
+</body>
+</html>
