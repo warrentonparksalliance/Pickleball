@@ -1300,7 +1300,7 @@ body {
 <!-- ── Header ──────────────────────────────────── -->
 <header class="header">
   <div class="header-brand">
-    <h1>&#x1f952; Pickle Jar</h1>
+    <h1>Pickle Jar</h1>
     <span class="header-tagline">Everyone's in the jar. Shake it up.</span>
   </div>
   <div style="display:flex;align-items:center;gap:10px;">
@@ -1339,14 +1339,14 @@ body {
         <select class="setup-input" id="publicLocationSelect" style="flex:1;margin-bottom:0;cursor:pointer;">
           <option value="">Select a location...</option>
         </select>
-        <button type="button" class="btn-confirm-join" onclick="Onboard.joinPublic()" style="white-space:nowrap;">Join</button>
+        <button type="button" class="btn-confirm-join" onclick="Onboard.joinPublic()" style="white-space:nowrap;padding:8px 14px;font-size:0.82rem;">Join</button>
       </div>
       <div class="setup-section-label">Private Session</div>
       <div style="display:flex;gap:8px;margin-bottom:8px;">
         <select class="setup-input" id="privateSessionSelect" style="flex:1;margin-bottom:0;cursor:pointer;">
           <option value="">Select a session...</option>
         </select>
-        <button type="button" class="btn-confirm-join" onclick="Onboard.joinSavedPrivate()" style="white-space:nowrap;">Join</button>
+        <button type="button" class="btn-confirm-join" onclick="Onboard.joinSavedPrivate()" style="white-space:nowrap;padding:8px 14px;font-size:0.82rem;">Join</button>
       </div>
       <button type="button" class="btn-outline" onclick="Onboard.toggleCreatePrivate()" id="btn-create-private" style="width:100%;margin-bottom:8px;padding:9px 14px;">Create New Private Session</button>
       <div id="privateCreateForm" style="display:none;">
@@ -2490,12 +2490,16 @@ const App = {
     const singlesEligible = soloActive.filter(p => p.wantsSingles).length;
 
     const n = active.length;
+    const paused = this.state.players.filter(p => !p.active && !onCourt.has(p.id)).length;
     const canAssign = doublesEligible >= 4 || singlesEligible >= 2;
 
-    if (n === 0) {
+    if (n === 0 && paused === 0) {
       countEl.textContent = 'No players in queue yet';
+    } else if (n === 0 && paused > 0) {
+      countEl.textContent = `${paused} player${paused !== 1 ? 's' : ''} paused`;
     } else {
       let msg = `${n} player${n !== 1 ? 's' : ''} in queue`;
+      if (paused > 0) msg += ` · ${paused} paused`;
       if (!canAssign) msg += ` · not enough players to assign`;
       countEl.textContent = msg;
     }
@@ -2612,6 +2616,7 @@ const App = {
 const Session = {
   DB: 'https://pickleball-50914-default-rtdb.firebaseio.com',
   LOCATIONS: [
+    { key: 'test', label: 'Test (try it first)' },
     { key: 'flpark', label: 'Fred Lindstrom Park' },
     { key: 'lhresort', label: 'Lighthouse Resort' },
   ],
