@@ -1932,6 +1932,7 @@ const App = {
         score2,
         winner,
         duration,
+        startTime: game.startTime || null,
       });
     }
     const rematch = this._checkRematch(courtId, game);
@@ -1964,6 +1965,7 @@ const App = {
         side2: [...game.side2],
         mode: game.mode,
         duration,
+        startTime: game.startTime || null,
       });
     }
     const rematch = this._checkRematch(courtId, game);
@@ -2922,12 +2924,19 @@ const App = {
         const s2Class = hasScores ? (m.winner === 2 ? 'winner' : m.winner === 1 ? 'loser' : '') : '';
         const scoreText = hasScores ? `${m.score1}–${m.score2}` : '–';
         const dur = m.duration ? this.formatTimer(m.duration) : '–';
+        let timeDetail = '';
+        if (m.startTime) {
+          const d = new Date(m.startTime);
+          const date = d.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+          const time = d.toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' });
+          timeDetail = `<div style="font-size:0.68rem;color:var(--text-muted);margin-top:2px;">${date}, ${time}</div>`;
+        }
         return `<tr>
           <td class="${s1Class}">${s1.join('<br>')}</td>
           <td style="color:var(--text-muted);font-size:0.7rem;font-weight:700;">vs</td>
           <td class="${s2Class}">${s2.join('<br>')}</td>
           <td class="match-score">${scoreText}</td>
-          <td style="color:var(--text-muted);font-size:0.78rem;white-space:nowrap;">${dur}</td>
+          <td style="color:var(--text-muted);font-size:0.78rem;white-space:nowrap;cursor:pointer;" onclick="this.querySelector('.time-detail').style.display=this.querySelector('.time-detail').style.display==='none'?'':'none'">${dur}<div class="time-detail" style="display:none;">${timeDetail}</div></td>
         </tr>`;
       }).join('')}</tbody>
     </table>`;
