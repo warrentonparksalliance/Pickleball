@@ -1328,27 +1328,31 @@ body {
       <h2 style="font-size:1.1rem;font-weight:700;margin-bottom:16px;color:var(--text);">Join a Session</h2>
       <input type="text" class="setup-input" id="onboardName" placeholder="Your name" autocomplete="given-name">
       <input type="number" class="setup-input" id="onboardSkill" placeholder="Skill level (optional)" min="2" max="8" step="0.01" onblur="App.fmtDUPR(this)">
-      <label class="singles-label" style="margin-bottom:12px;display:flex;align-items:center;gap:6px;font-size:0.85rem;font-weight:500;color:var(--text-light);cursor:pointer;">
+      <label class="singles-label" style="margin-bottom:18px;display:flex;align-items:center;gap:6px;font-size:0.85rem;font-weight:500;color:var(--text-light);cursor:pointer;">
         <input type="checkbox" id="onboardSingles" style="accent-color:var(--primary);width:15px;height:15px;"> Open to 1v1
       </label>
       <p id="onboardNameError" class="setup-error">Enter your name first</p>
-      <div class="setup-section-label">Public Session</div>
-      <div style="display:flex;gap:8px;margin-bottom:4px;">
-        <select class="setup-input" id="publicLocationSelect" style="flex:1;margin-bottom:0;cursor:pointer;">
-          <option value="">Select a location...</option>
-        </select>
-        <button type="button" class="btn-confirm-join" onclick="Onboard.joinPublic()" style="white-space:nowrap;padding:8px 14px;font-size:0.82rem;">Join</button>
+      <div style="border-top:1px solid var(--border);padding-top:16px;margin-top:4px;">
+        <div class="setup-section-label">Public Session</div>
+        <div style="display:flex;gap:8px;margin-bottom:4px;">
+          <select class="setup-input" id="publicLocationSelect" style="flex:1;margin-bottom:0;cursor:pointer;">
+            <option value="">Select a location...</option>
+          </select>
+          <button type="button" class="btn-confirm-join" onclick="Onboard.joinPublic()" style="white-space:nowrap;padding:8px 14px;font-size:0.82rem;">Join</button>
+        </div>
+        <div id="publicConfirmInline" style="display:none;margin-bottom:14px;"></div>
       </div>
-      <div id="publicConfirmInline" style="display:none;margin-bottom:14px;"></div>
-      <div class="setup-section-label">Private Session</div>
-      <div style="display:flex;gap:8px;margin-bottom:4px;">
-        <select class="setup-input" id="privateSessionSelect" style="flex:1;margin-bottom:0;cursor:pointer;">
-          <option value="">Select a session...</option>
-        </select>
-        <button type="button" class="btn-confirm-join" onclick="Onboard.joinSavedPrivate()" style="white-space:nowrap;padding:8px 14px;font-size:0.82rem;">Join</button>
+      <div style="border-top:1px solid var(--border);padding-top:16px;margin-top:12px;">
+        <div class="setup-section-label">Private Session</div>
+        <div style="display:flex;gap:8px;margin-bottom:4px;">
+          <select class="setup-input" id="privateSessionSelect" style="flex:1;margin-bottom:0;cursor:pointer;">
+            <option value="">Select a session...</option>
+          </select>
+          <button type="button" class="btn-confirm-join" onclick="Onboard.joinSavedPrivate()" style="white-space:nowrap;padding:8px 14px;font-size:0.82rem;">Join</button>
+        </div>
+        <div id="privateConfirmInline" style="display:none;margin-bottom:8px;"></div>
+        <button type="button" class="btn-outline" onclick="Onboard.toggleCreatePrivate()" id="btn-create-private" style="width:100%;padding:9px 14px;margin-top:8px;">+ Create New</button>
       </div>
-      <div id="privateConfirmInline" style="display:none;margin-bottom:8px;"></div>
-      <button type="button" class="btn-outline" onclick="Onboard.toggleCreatePrivate()" id="btn-create-private" style="width:100%;padding:9px 14px;">+ Create New</button>
       <div id="privateCreateForm" style="display:none;margin-top:10px;padding:14px;background:var(--bg);border:1.5px solid var(--border);border-radius:var(--radius);">
         <div style="font-size:0.78rem;font-weight:600;color:var(--text-light);margin-bottom:10px;">New Private Session</div>
         <input type="text" class="setup-input" id="privateSessionName" placeholder="Session name" maxlength="20" style="margin-bottom:8px;">
@@ -1490,6 +1494,15 @@ body {
       <div style="display:flex;gap:8px;">
         <button type="button" class="btn-outline session-type-btn" id="settingsBtnOpen" onclick="App.setSessionType('open')" style="flex:1;padding:8px;font-size:0.82rem;">Open Play</button>
         <button type="button" class="btn-outline session-type-btn" id="settingsBtnRR" onclick="App.setSessionType('roundrobin')" style="flex:1;padding:8px;font-size:0.82rem;">Round Robin</button>
+      </div>
+    </div>
+
+    <!-- Session passcode (admin only, private sessions) -->
+    <div class="settings-card admin-only" id="passcodeSection" style="display:none;">
+      <div class="settings-card-title">Session Passcode</div>
+      <div style="display:flex;align-items:center;gap:8px;">
+        <span id="passcodeDisplay" style="font-size:0.95rem;font-weight:700;letter-spacing:0.15em;">****</span>
+        <button type="button" class="btn-outline" onclick="App.togglePasscode()" id="btnTogglePasscode" style="padding:4px 10px;font-size:0.78rem;">Show</button>
       </div>
     </div>
 
@@ -2050,6 +2063,16 @@ const App = {
   // ─── Round Robin ────────────────────────────
   isRoundRobin() { return this.state._sessionType === 'roundrobin'; },
 
+  _passcodeVisible: false,
+
+  togglePasscode() {
+    this._passcodeVisible = !this._passcodeVisible;
+    const display = document.getElementById('passcodeDisplay');
+    const btn = document.getElementById('btnTogglePasscode');
+    if (display) display.textContent = this._passcodeVisible ? (this.state._passcode || '—') : '****';
+    if (btn) btn.textContent = this._passcodeVisible ? 'Hide' : 'Show';
+  },
+
   setSessionType(type) {
     if (!Admin.isAdmin()) return;
     if (type === this.state._sessionType) return;
@@ -2431,6 +2454,9 @@ const App = {
 
   // ─── Rendering ─────────────────────────────
   render() {
+    // Re-evaluate admin visibility (session admin depends on state._admins)
+    if (typeof Admin !== 'undefined') Admin._updateUI();
+
     const rr = this.isRoundRobin();
     const rrLocked = rr && this.state._rrLocked;
 
@@ -2474,6 +2500,15 @@ const App = {
       const btnRR = document.getElementById('settingsBtnRR');
       if (btnOpen) btnOpen.classList.toggle('active', !rr);
       if (btnRR) btnRR.classList.toggle('active', rr);
+    }
+
+    // Show passcode section for private sessions (admin only)
+    const passcodeSection = document.getElementById('passcodeSection');
+    if (passcodeSection) {
+      const isPvt = Session.id && Session.id.startsWith('pvt-');
+      passcodeSection.style.display = (isPvt && Admin.isAdmin()) ? '' : 'none';
+      // Reset visibility when switching sessions
+      if (!isPvt) { this._passcodeVisible = false; }
     }
 
     // Show delete session button for private sessions
@@ -3246,7 +3281,8 @@ const Onboard = {
         this._hide();
         (async () => {
           const data = await Session._get(s);
-          if (data && data._passcode && !Admin.isSuperAdmin()) {
+          const isAdminOfSession = Admin._user && data && Array.isArray(data._admins) && data._admins.includes(Admin._user.uid);
+          if (data && data._passcode && !Admin.isSuperAdmin() && !isAdminOfSession) {
             const entered = prompt('Enter the 4-character passcode for "' + label + '":');
             if (!entered || entered.trim().toUpperCase() !== data._passcode) {
               alert('Incorrect passcode.');
@@ -3474,7 +3510,8 @@ const Onboard = {
       } else {
         // Joining existing — verify passcode
         const data = await Session._get(key);
-        if (data && data._passcode && !Admin.isSuperAdmin()) {
+        const isAdminOfSession = Admin._user && data && Array.isArray(data._admins) && data._admins.includes(Admin._user.uid);
+        if (data && data._passcode && !Admin.isSuperAdmin() && !isAdminOfSession) {
           const entered = prompt('Enter the 4-character passcode for "' + label + '":');
           if (!entered || entered.trim().toUpperCase() !== data._passcode) {
             alert('Incorrect passcode.');
@@ -3504,6 +3541,7 @@ const Onboard = {
     if (setup) setup.style.display = '';
     const pvtForm = document.getElementById('privateCreateForm');
     if (pvtForm) pvtForm.style.display = 'none';
+    this._inlineNo();
     this._pendingKey = null;
     this._pendingLabel = null;
     this._pendingPasscode = null;
@@ -3700,7 +3738,7 @@ const Admin = {
     if (badge) {
       if (isAdmin) {
         badge.style.display = 'flex';
-        badge.innerHTML = `<button class="btn-admin-logout" onclick="Admin.logout()">admin logout</button>`;
+        badge.innerHTML = `<button class="btn-admin-logout" onclick="Admin.logout()">logout</button>`;
       } else {
         badge.style.display = 'none';
         badge.innerHTML = '';
