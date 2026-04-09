@@ -2305,29 +2305,33 @@ const Session = {
         }
         this._receiving = true;
 
-        // Stale-PUT protection: a full PUT snapshot that arrived AFTER we locally
-        // assigned a court (e.g. _addSelf from old code, or a joiner whose PUT was
-        // in-flight) would wipe activeGames.  Detect by checking whether we have
-        // local active courts that the incoming snapshot doesn't know about, with
-        // no additional round history to justify their removal.
-        const localGames   = App.state.activeGames  || {};
-        const localScoring = App.state.scoringGames || {};
-        const hasLocalGames    = Object.keys(localGames).length > 0 || Object.keys(localScoring).length > 0;
-        const incomingGames    = msg.data.activeGames;
-        const hasIncomingGames = incomingGames && Object.keys(incomingGames).length > 0;
-        const incomingHistLen  = (msg.data.roundHistory || []).length;
-        const localHistLen     = (App.state.roundHistory || []).length;
-        const isStale = hasLocalGames && !hasIncomingGames && incomingHistLen <= localHistLen;
+        // Snapshot local courts and history BEFORE merging
+        const localGames   = { ...(App.state.activeGames  || {}) };
+        const localScoring = { ...(App.state.scoringGames || {}) };
+        const localHistLen = (App.state.roundHistory || []).length;
 
+        // Merge incoming state
         App.state = { ...App.state, ...msg.data };
+        App._normState();
 
-        if (isStale) {
-          // Restore courts the stale PUT wiped — players/options still update
-          App.state.activeGames  = localGames;
-          App.state.scoringGames = localScoring;
+        // Per-court stale protection: if a local court disappeared after the merge
+        // but wasn't legitimately ended (no new roundHistory entry for it), restore it.
+        // This handles stale PUTs from old Firebase snapshots, reconnections, or
+        // lingering courts from previous sessions.
+        const newHistory = (App.state.roundHistory || []).slice(localHistLen);
+        const newlyEndedIds = new Set(newHistory.map(h => String(h.courtId)));
+
+        for (const [id, game] of Object.entries(localGames)) {
+          if (!App.state.activeGames[id] && !App.state.scoringGames[id] && !newlyEndedIds.has(String(id))) {
+            App.state.activeGames[id] = game;
+          }
+        }
+        for (const [id, scoring] of Object.entries(localScoring)) {
+          if (!App.state.scoringGames[id] && !newlyEndedIds.has(String(id))) {
+            App.state.scoringGames[id] = scoring;
+          }
         }
 
-        App._normState();
         App.render();
         this._receiving = false;
         // Add self AFTER the initial state is received so we don't get overwritten
