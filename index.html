@@ -241,9 +241,47 @@ body {
 /* ── Session setup centered card ────────────── */
 .setup-center {
   display: flex;
-  justify-content: center;
+  flex-direction: column;
+  align-items: center;
   padding: 20px 0;
 }
+.admin-login-section {
+  margin-top: 16px;
+  text-align: center;
+}
+.btn-admin-login {
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  font-size: 0.78rem;
+  font-weight: 500;
+  font-family: inherit;
+  cursor: pointer;
+  padding: 4px 8px;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+.btn-admin-login:hover { color: var(--text-light); }
+.admin-badge {
+  font-size: 0.68rem;
+  font-weight: 700;
+  color: #b45309;
+  background: #fef3c7;
+  padding: 2px 8px;
+  border-radius: var(--radius-full);
+  letter-spacing: 0.02em;
+}
+.btn-admin-logout {
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  font-size: 0.72rem;
+  font-family: inherit;
+  cursor: pointer;
+  text-decoration: underline;
+  padding: 0 4px;
+}
+.btn-admin-logout:hover { color: var(--danger); }
 .setup-card {
   width: 100%;
   max-width: 420px;
@@ -1280,6 +1318,9 @@ body {
         <span id="sessionLoadingText">Connecting&#x2026;</span>
       </div>
     </div>
+    <div class="admin-login-section">
+      <button class="btn-admin-login" id="btnAdminLogin" onclick="Admin.signIn()">Admin Login</button>
+    </div>
   </div>
 
   <!-- ═══════════════ TAB: COURTS ═══════════════ -->
@@ -1376,8 +1417,8 @@ body {
     </div>
 
 
-    <!-- Danger zone -->
-    <div class="settings-card" style="border-color:#fecaca;">
+    <!-- Danger zone (admin only) -->
+    <div class="settings-card admin-only" id="dangerZone" style="border-color:#fecaca;display:none;">
       <div class="settings-card-title" style="color:var(--danger);">Danger Zone</div>
       <div style="display:flex;gap:8px;flex-wrap:wrap;">
         <button class="btn-reset-all" onclick="App.clearHistory()">Clear History</button>
@@ -1391,7 +1432,7 @@ body {
     <div class="history-section">
       <div class="history-header">
         <div class="section-title">Match History</div>
-        <button class="btn-clear-history" onclick="App.clearHistory()">Clear History</button>
+        <button class="btn-clear-history admin-only" id="btnClearHistory" onclick="App.clearHistory()" style="display:none;">Clear History</button>
       </div>
       <div class="history-filters">
         <input type="text" id="historySearch" class="history-search" placeholder="Search player name..." oninput="App.renderHistory()">
@@ -2753,7 +2794,79 @@ const Onboard = {
   },
 };
 
+// ─── Admin Auth (Firebase Google Sign-In) ───────────────────────────────────
+const Admin = {
+  _user: null,
+  _fb: null,
+
+  init() {
+    const script = document.createElement('script');
+    script.type = 'module';
+    script.textContent = `
+      import { initializeApp } from 'https://www.gstatic.com/firebasejs/11.6.0/firebase-app.js';
+      import { getAuth, signInWithPopup, GoogleAuthProvider, onAuthStateChanged, signOut }
+        from 'https://www.gstatic.com/firebasejs/11.6.0/firebase-auth.js';
+      const app = initializeApp({
+        apiKey: 'AIzaSyD085Fx0s2xzejjvekc1MGhePm_-zM9nCw',
+        authDomain: 'pickleball-50914.firebaseapp.com',
+        projectId: 'pickleball-50914',
+      });
+      const auth = getAuth(app);
+      Admin._fb = { auth, GoogleAuthProvider, signInWithPopup, signOut };
+      onAuthStateChanged(auth, (user) => {
+        Admin._user = user;
+        Admin._updateUI();
+      });
+    `;
+    document.head.appendChild(script);
+  },
+
+  isAdmin() {
+    return !!this._user;
+  },
+
+  async signIn() {
+    if (!this._fb) return;
+    try {
+      const provider = new this._fb.GoogleAuthProvider();
+      await this._fb.signInWithPopup(this._fb.auth, provider);
+    } catch(e) {
+      if (e.code !== 'auth/popup-closed-by-user') {
+        console.error('Admin sign-in failed:', e);
+      }
+    }
+  },
+
+  async logout() {
+    if (!this._fb) return;
+    await this._fb.signOut(this._fb.auth);
+  },
+
+  _updateUI() {
+    const isAdmin = this.isAdmin();
+    document.querySelectorAll('.admin-only').forEach(el => {
+      el.style.display = isAdmin ? '' : 'none';
+    });
+    const loginBtn = document.getElementById('btnAdminLogin');
+    if (loginBtn) loginBtn.style.display = isAdmin ? 'none' : '';
+    const headerRight = document.getElementById('headerRight');
+    let badge = document.getElementById('adminHeaderBadge');
+    if (isAdmin && headerRight) {
+      if (!badge) {
+        badge = document.createElement('span');
+        badge.id = 'adminHeaderBadge';
+        badge.style.cssText = 'display:flex;align-items:center;gap:6px;';
+        headerRight.insertBefore(badge, headerRight.firstChild);
+      }
+      badge.innerHTML = `<span class="admin-badge">admin</span> <button class="btn-admin-logout" onclick="Admin.logout()">logout</button>`;
+    } else if (badge) {
+      badge.remove();
+    }
+  },
+};
+
 App.init();
+Admin.init();
 Onboard.init();
 document.getElementById('btn-flpark').addEventListener('click', function() { Onboard.joinLocation('flpark'); });
 document.getElementById('btn-lhresort').addEventListener('click', function() { Onboard.joinLocation('lhresort'); });
