@@ -174,6 +174,18 @@ body {
   letter-spacing: 0.08em;
   color: var(--text-muted);
 }
+.section-title {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--text);
+  line-height: 1.2;
+}
+.section-subtitle {
+  font-size: 0.76rem;
+  color: var(--text-muted);
+  line-height: 1.35;
+  margin-top: 2px;
+}
 .queue-list {
   display: flex;
   flex-direction: column;
@@ -1175,8 +1187,11 @@ body {
   <!-- Queue bar (shown when in session) -->
   <div id="playersSection" class="queue-bar-wrap" style="display:none;">
     <div class="queue-bar-top">
-      <span class="queue-bar-label">Queue</span>
-      <button class="btn-add-another" id="addAnotherBtn" onclick="App.toggleAddForm()">+ Add Player</button>
+      <div>
+        <div class="section-title">Queue</div>
+        <div class="section-subtitle">Players waiting to play — tap a name to sit out</div>
+      </div>
+      <button class="btn-add-another" id="addAnotherBtn" onclick="App.toggleAddForm()" style="width:auto;white-space:nowrap;flex-shrink:0;margin-bottom:0;">+ Add Player</button>
     </div>
     <div class="add-form" id="addPlayerForm" style="display:none;">
       <input class="input-name" type="text" id="playerName" placeholder="Player name" onkeydown="if(event.key==='Enter')App.addPlayer()">
@@ -1194,9 +1209,12 @@ body {
 
   <!-- Teams (collapsible, shown when in session) -->
   <details id="teamsSection" class="teams-details" style="display:none;">
-    <summary>Teams <span style="font-weight:400;color:var(--text-muted);font-size:0.85rem;">(optional)</span></summary>
+    <summary>
+      <span style="font-size:0.95rem;font-weight:700;color:var(--text);">Partner Preference</span>
+      <span style="font-weight:400;color:var(--text-muted);font-size:0.76rem;margin-left:6px;">optional</span>
+    </summary>
     <div class="teams-details-body">
-      <p class="teammate-hint">Tap a player to pair as your teammate</p>
+      <p class="section-subtitle" style="margin-bottom:10px;">Select your partner if you don't want to be split up — you'll only be assigned to doubles together. Resets automatically if they leave the session.</p>
       <ul class="teammate-list" id="teammateList"></ul>
       <ul class="team-list" id="teamList"></ul>
     </div>
@@ -1206,6 +1224,10 @@ body {
   <main class="main-content" id="mainContent" style="display:none;">
     <!-- Options -->
     <div class="options-bar">
+      <div style="flex-basis:100%;margin-bottom:6px;">
+        <div class="section-title" style="font-size:0.88rem;">Match Settings</div>
+        <div class="section-subtitle">Customize how courts are assigned</div>
+      </div>
       <div class="option-group">
         <label><input type="checkbox" id="optSkill" onchange="App.saveState()"> Match by skill</label>
         <span class="tooltip-wrap">
@@ -1224,7 +1246,10 @@ body {
 
     <!-- Assign -->
     <div class="assign-header" id="assignHeader">
-      <span class="assign-count-label" id="assignCount"></span>
+      <div>
+        <div class="section-title">Assign Courts</div>
+        <div class="section-subtitle" id="assignCount"></div>
+      </div>
       <div class="assign-bar" id="assignBar" style="display:none;">
         <button type="button" class="btn-assign-mode mode-singles" id="btnAssign1v1" onclick="App.assignCourt('singles')">
           <span class="assign-mode-label">1v1</span>
@@ -1431,15 +1456,8 @@ const App = {
     if (existing) {
       this.state.teams = this.state.teams.filter(t => t.id !== existing.id);
     } else {
-      this.state.teams.push({ id: this.state.nextId++, p1: selfId, p2: playerId, doNotSplit: false });
+      this.state.teams.push({ id: this.state.nextId++, p1: selfId, p2: playerId, doNotSplit: true });
     }
-    this.saveState();
-    this.render();
-  },
-
-  toggleDoNotSplit(teamId) {
-    const t = this.state.teams.find(t => t.id === teamId);
-    if (t) t.doNotSplit = !t.doNotSplit;
     this.saveState();
     this.render();
   },
@@ -1571,12 +1589,20 @@ const App = {
 
   // ─── Assignment Algorithm ──────────────────────
   assignCourt(mode) {
-    const needed = mode === 'singles' ? 2 : 4;
     const onCourt = this.getPlayersOnCourts();
-    const queue = this.state.players.filter(p => p.active && !onCourt.has(p.id));
-    if (queue.length < needed) return;
+    const allQueue = this.state.players.filter(p => p.active && !onCourt.has(p.id));
 
-    // Find next available court ID
+    // Partner pairs where BOTH players are active in queue
+    const activePairs = this.state.teams.filter(t =>
+      allQueue.some(p => p.id === t.p1) && allQueue.some(p => p.id === t.p2)
+    );
+    const activePairedIds = new Set(activePairs.flatMap(t => [t.p1, t.p2]));
+    // All players who have any partner preference (even if partner is sitting out)
+    const allTeamIds = new Set(this.state.teams.flatMap(t => [t.p1, t.p2]));
+    // Solo: active in queue with no partner pairing set
+    const soloPlayers = allQueue.filter(p => !allTeamIds.has(p.id));
+
+    // Find available court
     let courtId;
     const loc = Session.LOCATIONS.find(l => l.key === Session.id);
     if (loc && loc.courts) {
@@ -1588,32 +1614,54 @@ const App = {
       this.state.nextCourtId++;
     }
 
-    // Build pool with priority ordering
-    let pool = queue.map(p => p.id);
-    if (this.state.options.minimizeRepeats) {
-      pool.sort((a, b) => this.getSitoutCount(b) - this.getSitoutCount(a));
-    } else {
-      pool = this.shuffle(pool);
-    }
-    if (this.state.options.useSkill && mode !== 'singles') {
-      pool.sort((a, b) => (this.getPlayer(a).score || 4) - (this.getPlayer(b).score || 4));
-    }
-
-    const picked = pool.slice(0, needed);
     let side1, side2;
+
     if (mode === 'singles') {
-      side1 = [picked[0]];
-      side2 = [picked[1]];
+      // Paired players skip singles — they wait for doubles with their partner
+      let pool = soloPlayers.map(p => p.id);
+      if (pool.length < 2) return;
+      pool = this.shuffle(pool);
+      side1 = [pool[0]];
+      side2 = [pool[1]];
     } else {
-      side1 = [picked[0], picked[1]];
-      side2 = [picked[2], picked[3]];
-      if (this.state.options.useSkill) [side1, side2] = this.balanceDoublesSkill(side1, side2);
-      if (this.state.options.minimizeRepeats) [side1, side2] = this.optimizeDoublesRepeats(side1, side2);
+      // Doubles: partner pairs go on the same side; fill remaining slots with solos
+      const shuffledPairs = this.shuffle([...activePairs]);
+      const shuffledSolos = this.shuffle(soloPlayers.map(p => p.id));
+
+      let pickedPairs = [];
+      let pickedSolos = [];
+      let total = 0;
+
+      for (const pair of shuffledPairs) {
+        if (total + 2 <= 4) { pickedPairs.push(pair); total += 2; }
+        if (total === 4) break;
+      }
+      for (const id of shuffledSolos) {
+        if (total >= 4) break;
+        pickedSolos.push(id);
+        total++;
+      }
+      if (total < 4) return;
+
+      if (pickedPairs.length === 2) {
+        // Two partner pairs face each other
+        side1 = [pickedPairs[0].p1, pickedPairs[0].p2];
+        side2 = [pickedPairs[1].p1, pickedPairs[1].p2];
+      } else if (pickedPairs.length === 1) {
+        // One partner pair vs two solos
+        side1 = [pickedPairs[0].p1, pickedPairs[0].p2];
+        side2 = pickedSolos;
+      } else {
+        // No pairs — standard algorithm applies
+        side1 = [pickedSolos[0], pickedSolos[1]];
+        side2 = [pickedSolos[2], pickedSolos[3]];
+        if (this.state.options.useSkill) [side1, side2] = this.balanceDoublesSkill(side1, side2);
+        if (this.state.options.minimizeRepeats) [side1, side2] = this.optimizeDoublesRepeats(side1, side2);
+      }
     }
 
     this.state.activeGames[courtId] = {
-      side1,
-      side2,
+      side1, side2,
       mode: mode === 'singles' ? 'singles' : 'doubles',
       startedAt: Date.now(),
     };
@@ -1823,17 +1871,15 @@ const App = {
   renderTeams() {
     const el = document.getElementById('teamList');
     if (this.state.teams.length === 0) {
-      el.innerHTML = '<li style="color:var(--text-light);font-size:0.85rem;padding:4px 8px;">No teams yet</li>';
+      el.innerHTML = '';
       return;
     }
     el.innerHTML = this.state.teams.map(t => {
       const p1 = this.getPlayer(t.p1);
       const p2 = this.getPlayer(t.p2);
-      const lockClass = t.doNotSplit ? 'locked' : 'flexible';
-      const lockLabel = t.doNotSplit ? 'do not split' : 'flexible';
       return `<li class="team-item">
         <span class="team-names">${this.esc(p1?.name || '?')} &amp; ${this.esc(p2?.name || '?')}</span>
-        <span class="team-lock ${lockClass}" onclick="App.toggleDoNotSplit(${t.id})" title="Click to toggle">${lockLabel}</span>
+        <span class="team-lock locked">partners</span>
         <button class="btn btn-ghost btn-sm" onclick="App.removeTeam(${t.id})">&times;</button>
       </li>`;
     }).join('');
@@ -1930,13 +1976,28 @@ const App = {
     const btn2v2 = document.getElementById('btnAssign2v2');
     if (!countEl) return;
 
+    // Partner pairing awareness
+    const allTeamIds = new Set(this.state.teams.flatMap(t => [t.p1, t.p2]));
+    const activePairs = this.state.teams.filter(t =>
+      active.some(p => p.id === t.p1) && active.some(p => p.id === t.p2)
+    );
+    const activePairedIds = new Set(activePairs.flatMap(t => [t.p1, t.p2]));
+    const soloActive = active.filter(p => !allTeamIds.has(p.id));
+    const doublesEligible = soloActive.length + activePairedIds.size;
+    // Players who have a partner set but partner isn't in queue
+    const waitingForPartner = active.filter(p => allTeamIds.has(p.id) && !activePairedIds.has(p.id));
+
     const n = active.length;
     if (n === 0) {
-      countEl.innerHTML = 'No players in queue &nbsp;<span style="font-weight:400;color:var(--text-light);font-size:0.85rem;">— add a player above or have someone join the session to assign courts</span>';
+      countEl.textContent = 'No players in queue yet';
     } else if (n === 1) {
-      countEl.innerHTML = '1 player in queue &nbsp;<span style="font-weight:400;color:var(--text-light);font-size:0.85rem;">— need at least 2 to assign a court</span>';
+      countEl.textContent = '1 player in queue — need at least 2 to assign';
     } else {
-      countEl.textContent = `${n} players in queue`;
+      let msg = `${n} players in queue`;
+      if (waitingForPartner.length > 0) {
+        msg += ` · ${waitingForPartner.length} waiting for partner`;
+      }
+      countEl.textContent = msg;
     }
 
     if (Session.id && n >= 2) {
@@ -1944,8 +2005,10 @@ const App = {
       const loc = Session.LOCATIONS.find(l => l.key === Session.id);
       const allCourtsUsed = loc && loc.courts &&
         loc.courts.every(c => !!this.state.activeGames[c.id] || !!this.state.scoringGames[c.id]);
-      btn1v1.disabled = n < 2 || !!allCourtsUsed;
-      btn2v2.disabled = n < 4 || !!allCourtsUsed;
+      // Singles: need ≥2 solo (unpaired) players
+      btn1v1.disabled = soloActive.length < 2 || !!allCourtsUsed;
+      // Doubles: need ≥4 players eligible (active pairs + solos)
+      btn2v2.disabled = doublesEligible < 4 || !!allCourtsUsed;
     } else {
       assignBar.style.display = 'none';
     }
