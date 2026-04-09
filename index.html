@@ -322,6 +322,7 @@ body {
   color: var(--text-muted);
   margin-bottom: 8px;
 }
+.session-type-btn.active { background: var(--primary); color: white; border-color: var(--primary); }
 .setup-locations { display: flex; flex-direction: column; gap: 8px; margin-bottom: 14px; }
 .btn-loc-setup {
   display: flex;
@@ -618,7 +619,7 @@ body {
   font-size: 0.9rem;
 }
 .queue-row:last-child { border-bottom: none; }
-.queue-row.inactive { opacity: 0.45; }
+.queue-row.inactive { opacity: 0.45; background: #f0f1f4; border-radius: var(--radius-sm); margin: 0 -4px; padding-left: 4px; padding-right: 4px; }
 .queue-row-name {
   flex: 1;
   min-width: 0;
@@ -731,30 +732,28 @@ body {
 }
 .btn-edit-cancel:hover { background: var(--hover-bg); }
 
-.queue-row-action {
+.queue-row-btn {
   background: none;
   border: none;
   color: var(--text-muted);
   cursor: pointer;
-  font-size: 0.75rem;
+  font-size: 0.82rem;
   line-height: 1;
-  padding: 2px 4px;
+  padding: 4px 6px;
   border-radius: 4px;
   transition: color 0.15s, background 0.15s;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 26px;
+  min-height: 26px;
 }
+.queue-row-action { }
 .queue-row-action:hover { color: var(--warning); background: var(--warning-light); }
 .queue-row-action.play { color: var(--success); }
 .queue-row-action.play:hover { background: var(--success-light); }
-.queue-row-remove {
-  background: none;
-  border: none;
-  color: var(--text-muted);
-  cursor: pointer;
-  font-size: 1rem;
-  line-height: 1;
-  padding: 0 2px;
-}
-.queue-row-remove:hover { color: var(--danger); }
+.queue-row-remove { }
+.queue-row-remove:hover { color: var(--danger); background: var(--danger-light); }
 .queue-row-confirm {
   display: flex;
   align-items: center;
@@ -1355,6 +1354,10 @@ body {
           <input type="text" class="setup-input" id="privatePasscode" placeholder="4-character passcode" maxlength="4" style="flex:1;margin-bottom:0;text-transform:uppercase;letter-spacing:0.15em;font-weight:600;">
           <button type="button" class="btn-outline" onclick="Onboard.randomPasscode()" style="white-space:nowrap;padding:8px 12px;">Random</button>
         </div>
+        <div style="display:flex;gap:8px;margin-bottom:10px;">
+          <button type="button" class="btn-outline session-type-btn active" id="btnTypeOpen" onclick="Onboard.setSessionType('open')" style="flex:1;padding:8px;font-size:0.82rem;">Open Play</button>
+          <button type="button" class="btn-outline session-type-btn" id="btnTypeRR" onclick="Onboard.setSessionType('roundrobin')" style="flex:1;padding:8px;font-size:0.82rem;">Round Robin</button>
+        </div>
         <p id="privateSessionError" class="setup-error" style="display:none;">Enter a session name and 4-character passcode</p>
         <button type="button" class="btn-confirm-join" onclick="Onboard.createPrivate()" style="width:100%;">Create &amp; Join</button>
       </div>
@@ -1394,8 +1397,8 @@ body {
     <div id="playersSection" class="queue-bar-wrap" style="margin-bottom:14px;">
       <div class="queue-bar-top">
         <div>
-          <div class="section-title">Queue</div>
-          <div class="section-subtitle">Players waiting to be assigned to a court. Use &#x23F8; to sit out temporarily or &times; to remove from the session.</div>
+          <div class="section-title" id="queueTitle">Queue</div>
+          <div class="section-subtitle" id="queueSubtitle">Players waiting to be assigned to a court. Use &#x23F8; to sit out temporarily or &times; to remove from the session.</div>
         </div>
         <button class="btn-add-another" id="addAnotherBtn" onclick="App.toggleAddForm()" style="width:auto;white-space:nowrap;flex-shrink:0;margin-bottom:0;">+ Add Guest</button>
       </div>
@@ -1411,6 +1414,7 @@ body {
         </div>
       </div>
       <div id="playerList" class="queue-list"></div>
+      <button id="rrUnlockBtn" class="btn-outline" onclick="App.rrUnlockPlayers()" style="display:none;margin-top:8px;width:100%;color:var(--warning);border-color:var(--warning);font-size:0.82rem;">Unlock Players &amp; Reset Schedule</button>
     </div>
 
     <!-- Assign -->
@@ -1445,6 +1449,14 @@ body {
 
     <!-- Courts grid (active games) -->
     <div class="courts-grid" id="courtsGrid"></div>
+
+    <!-- Round Robin: upcoming rounds -->
+    <div id="rrUpcomingSection" style="display:none;margin-top:14px;">
+      <div class="queue-bar-wrap">
+        <div class="section-title" style="margin-bottom:8px;">Upcoming Rounds</div>
+        <div id="rrUpcomingList"></div>
+      </div>
+    </div>
   </div>
 
   <!-- ═══════════════ TAB: SETTINGS ═════════════ -->
@@ -1470,7 +1482,7 @@ body {
     </div>
 
     <!-- Partners -->
-    <div class="settings-card">
+    <div class="settings-card" id="partnerSection">
       <div class="settings-card-title">Partner Preference</div>
       <p class="section-subtitle" style="margin-bottom:10px;">When both you and a partner are in the queue, you'll be placed on the same side in doubles. If your partner isn't available, you'll be assigned normally.</p>
       <div id="partnerDisplay"></div>
@@ -1608,6 +1620,17 @@ const App = {
     if (s.availableCourts == null) s.availableCourts = 2;
     if (!Array.isArray(s.adminLog)) s.adminLog = [];
     if (!Array.isArray(s._admins)) s._admins = s._admins ? Object.values(s._admins) : [];
+    if (!Array.isArray(s._rrSchedule)) s._rrSchedule = s._rrSchedule ? Object.values(s._rrSchedule) : [];
+    // Fix Firebase array conversion on schedule game arrays
+    for (const round of s._rrSchedule) {
+      if (round && round.games && !Array.isArray(round.games)) round.games = Object.values(round.games);
+      if (round && Array.isArray(round.games)) {
+        for (const g of round.games) {
+          if (g && !Array.isArray(g.side1)) g.side1 = g.side1 ? Object.values(g.side1) : [];
+          if (g && !Array.isArray(g.side2)) g.side2 = g.side2 ? Object.values(g.side2) : [];
+        }
+      }
+    }
     delete s.assignMode;
     delete s.courts; delete s.pendingGames; delete s.currentSittingOut; delete s.selectedPlayerId;
   },
@@ -1710,6 +1733,7 @@ const App = {
       active: true,
       wantsSingles: !!(singlesEl?.checked),
       isLive: false,
+      addedBy: Onboard.selfId,
     });
     this._myGuests.add(newId);
     this._saveMyGuests();
@@ -1723,27 +1747,27 @@ const App = {
 
   _pendingRemove: null,
 
-  removePlayer(id) {
-    if (this.isPlayerOnCourt(id)) return;
-    const isSelf = id === Onboard.selfId;
-    const isMyGuest = this._myGuests.has(id);
-    if (!isSelf && !isMyGuest && !Admin.isAdmin()) return;
-    if (this._pendingRemove === id) {
-      this._pendingRemove = null;
-      this.state.players = this.state.players.filter(p => p.id !== id);
-      this.state.teams = this.state.teams.filter(t => t.p1 !== id && t.p2 !== id);
-      this._myGuests.delete(id);
-      this._saveMyGuests();
-      this.saveState();
-      this.render();
-    } else {
-      this._pendingRemove = id;
-      this.render();
-    }
+  confirmRemove(id) {
+    this._pendingRemove = id;
+    this.render();
   },
 
   cancelRemove() {
     this._pendingRemove = null;
+    this.render();
+  },
+
+  removePlayer(id) {
+    if (this.isPlayerOnCourt(id)) return;
+    const isSelf = id === Onboard.selfId;
+    const player = this.getPlayer(id);
+    const isMyGuest = player && !player.isLive && player.addedBy === Onboard.selfId;
+    if (!isSelf && !isMyGuest && !Admin.isAdmin()) return;
+    this._pendingRemove = null;
+    if (isSelf) { Session.leave(); return; }
+    this.state.players = this.state.players.filter(p => p.id !== id);
+    this.state.teams = this.state.teams.filter(t => t.p1 !== id && t.p2 !== id);
+    this.saveState();
     this.render();
   },
 
@@ -2007,6 +2031,108 @@ const App = {
     return free;
   },
 
+  // ─── Round Robin ────────────────────────────
+  isRoundRobin() { return this.state._sessionType === 'roundrobin'; },
+
+  rrLockPlayers() {
+    if (this.state.players.length < 4) {
+      alert('Need at least 4 players for round robin.');
+      return;
+    }
+    this.state._rrLocked = true;
+    this.saveState();
+    this.render();
+  },
+
+  rrUnlockPlayers() {
+    this.state._rrLocked = false;
+    this.state._rrSchedule = [];
+    this.state._rrCurrentRound = 0;
+    this.state.activeGames = {};
+    this.state.scoringGames = {};
+    this.saveState();
+    this.render();
+  },
+
+  rrGenerateSchedule() {
+    const playerIds = this.state.players.map(p => p.id);
+    const numCourts = this.state.availableCourts || 1;
+    const n = playerIds.length;
+    if (n < 4) return;
+
+    // Circle method for round robin
+    const list = [...playerIds];
+    if (list.length % 2 === 1) list.push(null); // bye
+    const total = list.length;
+    const numRounds = total - 1;
+    const rounds = [];
+
+    for (let r = 0; r < numRounds; r++) {
+      // Build rotation: fix first, rotate rest
+      const rotated = [list[0]];
+      for (let i = 1; i < total; i++) {
+        rotated.push(list[1 + (i - 1 + r) % (total - 1)]);
+      }
+
+      // Create pairings: (0, n-1), (1, n-2), etc.
+      const pairs = [];
+      for (let i = 0; i < total / 2; i++) {
+        const a = rotated[i];
+        const b = rotated[total - 1 - i];
+        if (a != null && b != null) pairs.push([a, b]);
+      }
+
+      // Group pairs into games (2 pairs = 1 game, up to numCourts)
+      const games = [];
+      for (let i = 0; i + 1 < pairs.length && games.length < numCourts; i += 2) {
+        games.push({ side1: pairs[i], side2: pairs[i + 1], court: games.length + 1 });
+      }
+
+      // Handle leftover pair as singles if only 1 pair remains
+      if (games.length < numCourts && pairs.length % 2 === 1) {
+        const lastPair = pairs[pairs.length - 1];
+        games.push({ side1: [lastPair[0]], side2: [lastPair[1]], court: games.length + 1, mode: 'singles' });
+      }
+
+      if (games.length > 0) rounds.push({ round: r + 1, games });
+    }
+
+    this.state._rrSchedule = rounds;
+    this.state._rrCurrentRound = 1;
+    this._rrStartRound(1);
+    this.saveState();
+    this.render();
+  },
+
+  _rrStartRound(roundNum) {
+    const schedule = this.state._rrSchedule || [];
+    const round = schedule.find(r => r.round === roundNum);
+    if (!round) return;
+    this.state.activeGames = {};
+    round.games.forEach(g => {
+      this.state.activeGames[g.court] = {
+        side1: g.side1,
+        side2: g.side2,
+        mode: g.mode || 'doubles',
+        startTime: Date.now(),
+      };
+    });
+  },
+
+  rrAdvanceRound() {
+    const current = this.state._rrCurrentRound || 1;
+    const schedule = this.state._rrSchedule || [];
+    if (current >= schedule.length) return;
+    this.state._rrCurrentRound = current + 1;
+    this._rrStartRound(current + 1);
+    this.saveState();
+    this.render();
+  },
+
+  rrHasActiveGames() {
+    return Object.keys(this.state.activeGames || {}).length > 0 || Object.keys(this.state.scoringGames || {}).length > 0;
+  },
+
   assignAll() {
     const courtsToFill = this.state.availableCourts || 1;
     const freeCourts = this._getNextFreeCourts(courtsToFill);
@@ -2253,9 +2379,24 @@ const App = {
 
   // ─── Rendering ─────────────────────────────
   render() {
+    const rr = this.isRoundRobin();
+    const rrLocked = rr && this.state._rrLocked;
+
+    // Update queue section labels for round robin
+    const qTitle = document.getElementById('queueTitle');
+    const qSub = document.getElementById('queueSubtitle');
+    const addBtn = document.getElementById('addAnotherBtn');
+    if (qTitle) qTitle.textContent = rr ? 'Players' : 'Queue';
+    if (qSub) qSub.textContent = rr
+      ? (rrLocked ? 'Players are locked for this round robin.' : 'Add all players, then lock the roster to generate the schedule.')
+      : 'Players waiting to be assigned to a court. Use \u23F8 to sit out temporarily or \u00D7 to remove from the session.';
+    if (addBtn) addBtn.style.display = rrLocked ? 'none' : '';
+
     this.renderPlayers();
-    this.renderPartners();
-    this.renderPartnerPicker();
+    if (!rr) {
+      this.renderPartners();
+      this.renderPartnerPicker();
+    }
     this.renderCourts();
     this.renderQueue();
     this.renderHistory();
@@ -2264,6 +2405,14 @@ const App = {
 
     document.getElementById('optSkill').checked = this.state.options.useSkill;
     document.getElementById('optRepeats').checked = this.state.options.minimizeRepeats;
+
+    // Hide partner section in round robin
+    const partnerSection = document.getElementById('partnerSection');
+    if (partnerSection) partnerSection.style.display = rr ? 'none' : '';
+
+    // Show unlock button for admin in round robin
+    const unlockBtn = document.getElementById('rrUnlockBtn');
+    if (unlockBtn) unlockBtn.style.display = (rr && rrLocked && Admin.isAdmin()) ? '' : 'none';
   },
 
   _updateTabBadges() {
@@ -2288,11 +2437,14 @@ const App = {
     }
     el.innerHTML = queuePlayers.map(p => {
       const skillStr = p.score != null ? parseFloat(p.score).toFixed(1) : '';
+      const isYou = Onboard.selfId === p.id;
       if (this._pendingRemove === p.id) {
+        const confirmLabel = isYou ? 'Leave session?' : `Remove ${this.esc(p.name)}?`;
+        const confirmAction = isYou ? `App.removePlayer(${p.id})` : `App.removePlayer(${p.id})`;
         return `<div class="queue-row">
           <div class="queue-row-confirm">
-            <span>Remove ${this.esc(p.name)}?</span>
-            <button style="color:var(--danger);border-color:#fca5a5;" onclick="App.removePlayer(${p.id})">Yes</button>
+            <span>${confirmLabel}</span>
+            <button style="color:var(--danger);border-color:#fca5a5;" onclick="${confirmAction}">Yes</button>
             <button style="color:var(--text-muted);border-color:var(--border);" onclick="App.cancelRemove()">No</button>
           </div>
         </div>`;
@@ -2310,27 +2462,28 @@ const App = {
       }
       const rowClass = p.active ? 'queue-row' : 'queue-row inactive';
       const singlesBadge = p.wantsSingles ? `<span class="queue-row-badge">1v1</span>` : '';
-      const isYou = Onboard.selfId === p.id;
       const selfId = Onboard.selfId;
       const isPartner = selfId && selfId !== p.id && this.state.teams.some(t =>
         (t.p1 === selfId && t.p2 === p.id) || (t.p2 === selfId && t.p1 === p.id)
       );
       const partnerBadge = isPartner ? '<span class="queue-partner-badge">partner</span>' : '';
-      const canEdit = !p.isLive && !isYou && this._myGuests.has(p.id);
-      const editBtn = canEdit ? `<button class="queue-row-action" onclick="App.editGuest(${p.id})" title="Edit guest">&#x270E;</button>` : '';
+      const isMyGuest = !p.isLive && p.addedBy === selfId;
+      const canEdit = isMyGuest && !isYou;
+      const editBtn = canEdit ? `<button class="queue-row-btn queue-row-action" onclick="App.editGuest(${p.id})" title="Edit guest">&#x270E;</button>` : '';
       const statusBadge = isYou ? '<span class="queue-row-you">you</span>'
         : p.isLive ? '<span class="queue-row-status user">user</span>'
         : '<span class="queue-row-status guest">guest</span>';
-      const pauseBtn = p.active
-        ? `<button class="queue-row-action" onclick="App.togglePlayer(${p.id})" title="Sit out">&#x23F8;</button>`
-        : `<button class="queue-row-action play" onclick="App.togglePlayer(${p.id})" title="Rejoin queue">&#x25B6;</button>`;
-      const canRemove = isYou || this._myGuests.has(p.id) || Admin.isAdmin();
+      const rrLocked = this.isRoundRobin() && this.state._rrLocked;
+      const pauseBtn = rrLocked ? '' : (p.active
+        ? `<button class="queue-row-btn queue-row-action" onclick="App.togglePlayer(${p.id})" title="Sit out">&#x23F8;</button>`
+        : `<button class="queue-row-btn queue-row-action play" onclick="App.togglePlayer(${p.id})" title="Rejoin queue">&#x25B6;</button>`);
+      const canRemove = !rrLocked && (isYou || isMyGuest || Admin.isAdmin());
       const removeBtn = canRemove
-        ? `<button class="queue-row-remove" onclick="${isYou ? 'Session.leave()' : `App.removePlayer(${p.id})`}" title="${isYou ? 'Leave session' : 'Remove'}">&times;</button>`
+        ? `<button class="queue-row-btn queue-row-remove" onclick="App.confirmRemove(${p.id})" title="${isYou ? 'Leave session' : 'Remove'}">&times;</button>`
         : '';
       return `<div class="${rowClass}">
         <span class="queue-row-name">${this.esc(p.name)}${editBtn}${statusBadge}${partnerBadge}</span>
-        ${singlesBadge}
+        ${rrLocked ? '' : singlesBadge}
         ${skillStr ? `<span class="queue-row-skill">${skillStr}</span>` : ''}
         ${pauseBtn}
         ${removeBtn}
@@ -2356,7 +2509,7 @@ const App = {
     }
     const selfTeams = this.state.teams.filter(t => t.p1 === selfId || t.p2 === selfId);
     const pairedIds = new Set(selfTeams.map(t => t.p1 === selfId ? t.p2 : t.p1));
-    const available = this.state.players.filter(p => p.id !== selfId && p.active && !pairedIds.has(p.id));
+    const available = this.state.players.filter(p => p.id !== selfId && !pairedIds.has(p.id));
     if (available.length === 0) {
       el.innerHTML = '<div style="padding:10px;color:var(--text-light);font-size:0.82rem;">No available players to add</div>';
       return;
@@ -2378,6 +2531,7 @@ const App = {
     }
     if (btn) btn.style.display = '';
     const selfTeams = this.state.teams.filter(t => t.p1 === selfId || t.p2 === selfId);
+    if (btn) btn.textContent = selfTeams.length > 0 ? '+ Add Another Partner' : '+ Add Partner';
     if (selfTeams.length === 0) {
       display.innerHTML = '<div style="color:var(--text-muted);font-size:0.82rem;margin-bottom:8px;">No partners selected</div>';
       return;
@@ -2474,13 +2628,28 @@ const App = {
 
   renderQueue() {
     const onCourt = this.getPlayersOnCourts();
-    const active = this.state.players.filter(p => p.active && !onCourt.has(p.id));
     const countEl = document.getElementById('assignCount');
     const controls = document.getElementById('assignControls');
     const btnAssignAll = document.getElementById('btnAssignAll');
     const courtSelect = document.getElementById('courtCountSelect');
+    const matchOpts = document.querySelector('.assign-match-options');
+    const courtLabel = document.querySelector('.assign-option-label');
     if (!countEl) return;
 
+    if (this.isRoundRobin()) {
+      this._renderQueueRR(countEl, controls, btnAssignAll, courtSelect, matchOpts, courtLabel);
+    } else {
+      this._renderQueueOpen(countEl, controls, btnAssignAll, courtSelect, matchOpts, courtLabel, onCourt);
+    }
+  },
+
+  _renderQueueOpen(countEl, controls, btnAssignAll, courtSelect, matchOpts, courtLabel, onCourt) {
+    if (matchOpts) matchOpts.style.display = '';
+    if (courtLabel) courtLabel.textContent = 'Courts available now';
+    const rrSection = document.getElementById('rrUpcomingSection');
+    if (rrSection) rrSection.style.display = 'none';
+
+    const active = this.state.players.filter(p => p.active && !onCourt.has(p.id));
     const activePairs = this.state.teams.filter(t =>
       active.some(p => p.id === t.p1) && active.some(p => p.id === t.p2)
     );
@@ -2506,11 +2675,101 @@ const App = {
 
     if (Session.id) {
       controls.style.display = 'flex';
-      if (courtSelect) courtSelect.value = this.state.availableCourts || 2;
-      if (btnAssignAll) btnAssignAll.disabled = !canAssign;
+      if (courtSelect) {
+        courtSelect.parentElement.style.display = '';
+        courtSelect.value = this.state.availableCourts || 2;
+      }
+      if (btnAssignAll) {
+        btnAssignAll.disabled = !canAssign;
+        btnAssignAll.textContent = 'Assign Courts';
+        btnAssignAll.onclick = () => this.assignAll();
+      }
     } else {
       controls.style.display = 'none';
     }
+  },
+
+  _renderQueueRR(countEl, controls, btnAssignAll, courtSelect, matchOpts, courtLabel) {
+    if (matchOpts) matchOpts.style.display = 'none';
+    if (courtLabel) courtLabel.textContent = 'Number of courts';
+
+    const n = this.state.players.length;
+    const locked = this.state._rrLocked;
+    const schedule = this.state._rrSchedule || [];
+    const currentRound = this.state._rrCurrentRound || 0;
+
+    if (!locked) {
+      countEl.innerHTML = n < 4
+        ? `${n} player${n !== 1 ? 's' : ''} · need at least 4 to start`
+        : `${n} player${n !== 1 ? 's' : ''} · <a href="#" onclick="App.rrLockPlayers();return false;" style="color:var(--primary);font-weight:600;">Lock Players to Generate Schedule</a>`;
+      if (controls) controls.style.display = 'none';
+    } else if (schedule.length === 0) {
+      countEl.textContent = `${n} players locked`;
+      if (Session.id && controls) {
+        controls.style.display = 'flex';
+        if (courtSelect) {
+          courtSelect.parentElement.style.display = '';
+          courtSelect.value = this.state.availableCourts || 2;
+        }
+        if (btnAssignAll) {
+          btnAssignAll.disabled = n < 4;
+          btnAssignAll.textContent = 'Generate Schedule';
+          btnAssignAll.onclick = () => this.rrGenerateSchedule();
+        }
+      }
+    } else {
+      const totalRounds = schedule.length;
+      const hasActive = this.rrHasActiveGames();
+      if (currentRound > 0 && currentRound <= totalRounds) {
+        countEl.textContent = `Round ${currentRound} of ${totalRounds}`;
+      } else {
+        countEl.textContent = `All ${totalRounds} rounds complete`;
+      }
+      if (controls) controls.style.display = 'flex';
+      if (btnAssignAll) {
+        const canAdvance = !hasActive && currentRound < totalRounds;
+        btnAssignAll.disabled = !canAdvance;
+        btnAssignAll.textContent = currentRound >= totalRounds ? 'Tournament Complete' : 'Start Next Round';
+        btnAssignAll.onclick = () => this.rrAdvanceRound();
+      }
+      if (courtSelect) courtSelect.parentElement.style.display = 'none';
+    }
+
+    // Render upcoming rounds
+    this._renderRRUpcoming();
+  },
+
+  _renderRRUpcoming() {
+    const section = document.getElementById('rrUpcomingSection');
+    const list = document.getElementById('rrUpcomingList');
+    if (!section || !list) return;
+
+    const schedule = this.state._rrSchedule || [];
+    const currentRound = this.state._rrCurrentRound || 0;
+    const upcoming = schedule.filter(r => r.round > currentRound);
+
+    if (upcoming.length === 0) {
+      section.style.display = 'none';
+      return;
+    }
+
+    section.style.display = '';
+    list.innerHTML = upcoming.map(round => {
+      const gamesHtml = round.games.map(g => {
+        const s1 = g.side1.map(id => { const p = this.getPlayer(id); return p ? this.esc(p.name) : '?'; }).join(' & ');
+        const s2 = g.side2.map(id => { const p = this.getPlayer(id); return p ? this.esc(p.name) : '?'; }).join(' & ');
+        return `<div style="display:flex;align-items:center;gap:6px;padding:4px 0;font-size:0.82rem;">
+          <span style="color:var(--text-muted);font-size:0.7rem;min-width:18px;">C${g.court}</span>
+          <span>${s1}</span>
+          <span style="color:var(--text-muted);font-size:0.7rem;font-weight:700;">vs</span>
+          <span>${s2}</span>
+        </div>`;
+      }).join('');
+      return `<div style="margin-bottom:12px;">
+        <div style="font-size:0.78rem;font-weight:700;color:var(--text-light);margin-bottom:4px;">Round ${round.round}</div>
+        ${gamesHtml}
+      </div>`;
+    }).join('');
   },
 
   renderHistory() {
@@ -2657,13 +2916,18 @@ const Session = {
     this._setLoading(true, isNew ? 'Creating session\u2026' : 'Joining session\u2026');
     try {
       const data = isNew ? null : await this._get();
+      // Preserve only fields set before connect (e.g. _passcode, _admins for new private sessions)
+      const preConnect = { _passcode: App.state._passcode, _admins: App.state._admins };
+      const fresh = App._freshState();
       if (data) {
         this._receiving = true;
-        App.state = { ...App.state, ...data };
-        App._normState();
-        App.render();
-        this._receiving = false;
+        App.state = { ...fresh, ...data };
+      } else {
+        App.state = { ...fresh, ...preConnect };
       }
+      App._normState();
+      App.render();
+      this._receiving = false;
     } catch(e) { /* always continue to show UI */ }
     this._setLoading(false);
     this._listen(user);
@@ -3022,7 +3286,19 @@ const Onboard = {
     document.getElementById('sessionConfirmPanel').style.display = '';
   },
 
+  _newSessionType: 'open',
+
+  setSessionType(type) {
+    this._newSessionType = type;
+    document.getElementById('btnTypeOpen').classList.toggle('active', type === 'open');
+    document.getElementById('btnTypeRR').classList.toggle('active', type === 'roundrobin');
+  },
+
   toggleCreatePrivate() {
+    if (!Admin.isSignedIn()) {
+      alert('Please sign in with Google before creating a private session.');
+      return;
+    }
     const form = document.getElementById('privateCreateForm');
     if (form) form.style.display = form.style.display === 'none' ? '' : 'none';
   },
@@ -3035,10 +3311,6 @@ const Onboard = {
   },
 
   createPrivate() {
-    if (!Admin.isSignedIn()) {
-      alert('Please sign in with Google before creating a private session.');
-      return;
-    }
     const user = this._saveIdentity();
     if (!user) return;
     const nameEl = document.getElementById('privateSessionName');
@@ -3057,7 +3329,9 @@ const Onboard = {
     this._pendingLabel = sessionName;
     this._pendingPasscode = passcode;
     this._pendingIsCreate = true;
-    document.getElementById('confirmLocation').textContent = '\u{1f512} ' + sessionName;
+    this._pendingSessionType = this._newSessionType;
+    const typeLabel = this._newSessionType === 'roundrobin' ? ' (Round Robin)' : '';
+    document.getElementById('confirmLocation').textContent = '\u{1f512} ' + sessionName + typeLabel;
     document.getElementById('confirmName').textContent = user.name;
     document.getElementById('confirmSkill').textContent = user.skill ? '\u00b7 Skill ' + user.skill : '';
     document.getElementById('sessionConfirmPanel').style.display = '';
@@ -3078,6 +3352,7 @@ const Onboard = {
         this._savePrivateSession(key, label);
         App.state._passcode = this._pendingPasscode;
         App.state._admins = Admin._user ? [Admin._user.uid] : [];
+        if (this._pendingSessionType) App.state._sessionType = this._pendingSessionType;
         Session._connect(key, label, true, user);
       } else {
         // Joining existing — verify passcode
@@ -3099,6 +3374,7 @@ const Onboard = {
     }
     this._pendingPasscode = null;
     this._pendingIsCreate = false;
+    this._pendingSessionType = null;
   },
 
   cancelJoin() {
