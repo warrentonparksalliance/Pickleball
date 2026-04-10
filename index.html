@@ -1504,10 +1504,6 @@ body {
             <option value="4">4</option>
             <option value="5">5</option>
             <option value="6">6</option>
-            <option value="7">7</option>
-            <option value="8">8</option>
-            <option value="9">9</option>
-            <option value="10">10</option>
           </select>
         </div>
         <div class="assign-match-options">
@@ -2152,7 +2148,7 @@ const App = {
     // Get admin info from players (exclude super admins — they don't need to be listed)
     const adminPlayers = admins.map(uid => {
       const p = App.state.players.find(pl => pl.firebaseUid === uid);
-      return { uid, name: p ? p.name : uid };
+      return { uid, name: p ? p.name : 'Unknown user' };
     });
     if (adminPlayers.length === 0) {
       list.innerHTML = '<div style="color:var(--text-muted);font-size:0.82rem;margin-bottom:8px;font-style:italic;">No session admins</div>';
@@ -2716,6 +2712,11 @@ const App = {
       this.renderPartnerPicker();
     }
     this.renderAdmins();
+    // Refresh admin-only visibility (session admin depends on _admins in state)
+    const isAdmin = Admin.isAdmin();
+    document.querySelectorAll('.admin-only').forEach(el => {
+      el.style.display = isAdmin ? '' : 'none';
+    });
     this.renderCourts();
     this.renderQueue();
     this.renderHistory();
@@ -3294,6 +3295,8 @@ const Session = {
         App.state = { ...fresh, ...preConnect };
       }
       App._normState();
+      // For new sessions, write the full state to Firebase immediately
+      if (isNew) await this._put(App.state);
       App.render();
       this._receiving = false;
     } catch(e) { /* always continue to show UI */ }

@@ -77,10 +77,12 @@ footer a:hover { text-decoration: underline; }
 <p>When you first open Pickle Jar, you'll see two options:</p>
 <ul>
   <li><strong>Sign in with Google</strong> — Unlocks full features: create and manage private sessions, save your preferences across devices, and keep a personal match history.</li>
-  <li><strong>Join a Session Now</strong> — Jump straight in as a guest. You can join and play but can't create sessions, and your match history won't be saved.</li>
+  <li><strong>Continue without signing in</strong> — Jump straight in as a guest. You can join and play but can't create sessions, and your match history won't be saved.</li>
 </ul>
 
 <h3>Joining a Session</h3>
+<p>If you sign in with Google, you'll see your <strong>profile card</strong> with your display name, skill level, and 1v1 preference — all editable with a Save button. Below that, choose a session to join.</p>
+<p>If you continue without signing in, you'll enter your info before selecting a session.</p>
 <ol class="steps">
   <li><strong>Enter your name</strong> and optionally your skill level (2.0–8.0).</li>
   <li><strong>Check "Open to 1v1"</strong> if you're willing to play singles matches.</li>
@@ -175,7 +177,10 @@ footer a:hover { text-decoration: underline; }
 <p>The <strong>History</strong> tab shows all completed matches in the current session with teams, scores, and match duration. Use the search bar to filter by player name, or tap <strong>My Matches</strong> to see only games you played in. Session history persists until an admin clears it.</p>
 
 <h3>Personal Match History</h3>
-<p>If you're signed in with Google, your matches are also saved to your <strong>personal match history</strong>. This history stays even if an admin clears the session history or deletes the session. Access it from the <strong>My Match History</strong> button on the landing page (visible when signed in but not in a session).</p>
+<p>If you're signed in with Google, your matches are also saved to your <strong>personal match history</strong>. This history stays even if an admin clears the session history or deletes the session. Access it from the <strong>My Match History</strong> button in your profile card on the landing page. You can search by player name and swipe left on any match to delete it.</p>
+
+<h3>Match Time Limit</h3>
+<p>Matches automatically expire after <strong>100 minutes</strong>. Expired matches are saved to history with a score of "N/A" and players are returned to the queue.</p>
 
 <h2>Sharing &amp; Multi-Device</h2>
 <ul>
@@ -189,14 +194,24 @@ footer a:hover { text-decoration: underline; }
 <h2>Admin Features</h2>
 <p>There are two types of admins:</p>
 <ul>
-  <li><strong>Session Admin</strong> — The person who created a private session. Automatically gets admin for that session.</li>
-  <li><strong>Super Admin</strong> — Can manage any session (public or private), see all private sessions, and add/remove other super admins.</li>
+  <li><strong>Session Admin</strong> — The person who created a session. Automatically gets admin for that session. Other signed-in users can be promoted to session admin from Settings.</li>
+  <li><strong>Super Admin</strong> — Can manage any session (public or private), see all private sessions, create public locations, delete any session, and add/remove other super admins.</li>
 </ul>
+
+<h3>Managing Session Admins</h3>
+<p>In the <strong>Settings</strong> tab, admins can manage who else has admin access via the <strong>Session Admins</strong> card:</p>
+<ul>
+  <li>Tap <strong>+ Add Admin</strong> to see a list of signed-in users in the session.</li>
+  <li>Select a user and confirm to grant them admin access.</li>
+  <li>Remove an admin by tapping "remove" next to their name.</li>
+</ul>
+
+<h3>Admin Actions</h3>
 <p>Admins can:</p>
 <ul>
   <li><strong>Reset Everything</strong> — Clears all data. All users get kicked back to the join screen.</li>
   <li><strong>Clear History</strong> — Wipes match history and sit-out counts, keeps players and courts.</li>
-  <li><strong>Delete Session</strong> — Permanently removes a private session (with double confirmation).</li>
+  <li><strong>Delete Session</strong> — Permanently removes a session (with double confirmation). Available for private sessions and for super admins on public sessions.</li>
   <li><strong>Remove any player</strong> from the queue.</li>
   <li><strong>Change session type</strong> — Switch between Open Play and Round Robin (private sessions).</li>
   <li>View the <strong>Admin History</strong> log of all admin actions.</li>
