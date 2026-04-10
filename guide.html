@@ -74,15 +74,21 @@ footer a:hover { text-decoration: underline; }
 <p class="subtitle">Everyone's in the jar. Shake it up. — A quick guide to getting started.</p>
 
 <h2>Getting Started</h2>
+<p>When you first open Pickle Jar, you'll see two options:</p>
+<ul>
+  <li><strong>Sign in with Google</strong> — Unlocks full features: create and manage private sessions, save your preferences across devices, and keep a personal match history.</li>
+  <li><strong>Join a Session Now</strong> — Jump straight in as a guest. You can join and play but can't create sessions, and your match history won't be saved.</li>
+</ul>
+
+<h3>Joining a Session</h3>
 <ol class="steps">
-  <li><strong>Open the app</strong> on your phone's browser — no download needed.</li>
-  <li><strong>Enter your name</strong> and optionally your skill level (DUPR rating, 2.0–8.0).</li>
+  <li><strong>Enter your name</strong> and optionally your skill level (2.0–8.0).</li>
   <li><strong>Check "Open to 1v1"</strong> if you're willing to play singles matches.</li>
-  <li><strong>Select a location</strong> from the Public Session dropdown and tap <strong>Join</strong>. Everyone at the same location joins the same session automatically.</li>
+  <li><strong>Select a location</strong> from the Public Session dropdown and tap <strong>Join</strong>, or select a private session you've previously joined.</li>
 </ol>
 
 <div class="tip">
-  <strong>Tip:</strong> Your name and settings are saved on your device. Next time you visit, just pick a location and go.
+  <strong>Tip:</strong> If you sign in with Google, your name, skill level, and preferences are saved automatically. Next time you visit, just pick a session and go.
 </div>
 
 <h2>The Queue</h2>
@@ -96,8 +102,8 @@ footer a:hover { text-decoration: underline; }
 
 <ul>
   <li><strong>Add Guest</strong> — Add players who don't have the app. You can edit or remove guests you added.</li>
-  <li><strong>Pause</strong> (&#x23F8;) — Sit out temporarily. You stay in the session but won't be assigned to courts. Anyone can pause anyone.</li>
-  <li><strong>Play</strong> (&#x25B6;) — Rejoin the queue after being paused.</li>
+  <li><strong>Sit Out</strong> (&#x23F8;) — Sit out temporarily. You stay in the session but won't be assigned to courts. Anyone can sit out anyone.</li>
+  <li><strong>Play</strong> (&#x25B6;) — Rejoin the queue after sitting out.</li>
   <li><strong>Remove</strong> (&times;) — Remove yourself (leaves the session) or your guests. Admins can remove anyone.</li>
 </ul>
 
@@ -118,17 +124,24 @@ footer a:hover { text-decoration: underline; }
 
 <h3>Match Options</h3>
 <ul>
-  <li><strong>Match by skill</strong> — Pairs players with similar skill levels.</li>
-  <li><strong>Minimize repeats</strong> — Avoids matching players who've already played each other.</li>
+  <li><strong>Match by skill</strong> (on by default) — Pairs players with similar skill levels.</li>
+  <li><strong>Minimize repeats</strong> (on by default) — Avoids matching players who've already played each other.</li>
 </ul>
 
 <h2>Partner Preferences</h2>
-<p>In the <strong>Settings</strong> tab, you can add partner preferences:</p>
+<p>In the <strong>Settings</strong> tab under <strong>Your Partner(s)</strong>:</p>
 <ul>
   <li>Tap <strong>+ Add Partner</strong> and select a player.</li>
-  <li>When both you and your partner are in the queue, you'll be placed on the <strong>same side</strong> in doubles.</li>
-  <li>If your partner is on a court or paused, you'll be assigned normally with other players.</li>
+  <li>When both you and a partner are in the queue, you'll be placed on the <strong>same side</strong> in doubles.</li>
+  <li>If a partner is on a court or sitting out, you'll be assigned normally with other players.</li>
   <li>You can add multiple partners — the app will pair you with whichever one is available.</li>
+</ul>
+
+<h2>Share Link</h2>
+<p>Every session has a <strong>Share Link</strong> in the Settings tab. Copy it and send to friends to invite them to your session. When someone opens a share link:</p>
+<ul>
+  <li>For private sessions, they'll be asked for the <strong>passcode</strong> first.</li>
+  <li>They can then sign in with Google or join as a guest, enter their info, and they're in.</li>
 </ul>
 
 <h2>Private Sessions</h2>
@@ -137,7 +150,7 @@ footer a:hover { text-decoration: underline; }
   <li><strong>Sign in with Google</strong> on the landing page (required to create).</li>
   <li>Tap <strong>+ Create New</strong> under Private Session.</li>
   <li>Enter a <strong>session name</strong> and a <strong>4-character passcode</strong> (or tap Random to generate one).</li>
-  <li>Choose <strong>Open Play</strong> or <strong>Round Robin</strong>.</li>
+  <li>Choose <strong>Open Play</strong> or <strong>Round Robin</strong> from the session type dropdown.</li>
   <li>Tap <strong>Create &amp; Join</strong> and confirm.</li>
   <li>Share the link with friends — they'll need the passcode to join. The session creator and super admins skip the passcode.</li>
 </ol>
@@ -158,14 +171,18 @@ footer a:hover { text-decoration: underline; }
 <p>Admins can switch between Open Play and Round Robin in the Settings tab, and can unlock players to modify the roster.</p>
 
 <h2>Match History</h2>
-<p>The <strong>History</strong> tab shows all completed matches with teams, scores, and match duration. Use the search bar to filter by player name. History persists until an admin clears it.</p>
+<h3>Session History</h3>
+<p>The <strong>History</strong> tab shows all completed matches in the current session with teams, scores, and match duration. Use the search bar to filter by player name, or tap <strong>My Matches</strong> to see only games you played in. Session history persists until an admin clears it.</p>
+
+<h3>Personal Match History</h3>
+<p>If you're signed in with Google, your matches are also saved to your <strong>personal match history</strong>. This history stays even if an admin clears the session history or deletes the session. Access it from the <strong>My Match History</strong> button on the landing page (visible when signed in but not in a session).</p>
 
 <h2>Sharing &amp; Multi-Device</h2>
 <ul>
   <li>All session data <strong>syncs in real-time</strong> across everyone's devices.</li>
   <li>Court assignments, scores, and queue changes appear instantly for all users.</li>
   <li>If you leave a session, your court assignments stay active for others to manage.</li>
-  <li>Share the URL to invite others — public sessions don't need a code, private ones do.</li>
+  <li>Share the URL or use the <strong>Share Link</strong> in Settings to invite others — public sessions don't need a code, private ones do.</li>
   <li>Session data <strong>persists</strong> until an admin resets or deletes it — it won't disappear on its own.</li>
 </ul>
 
@@ -173,7 +190,7 @@ footer a:hover { text-decoration: underline; }
 <p>There are two types of admins:</p>
 <ul>
   <li><strong>Session Admin</strong> — The person who created a private session. Automatically gets admin for that session.</li>
-  <li><strong>Super Admin</strong> — Can manage any session (public or private) and add/remove other super admins.</li>
+  <li><strong>Super Admin</strong> — Can manage any session (public or private), see all private sessions, and add/remove other super admins.</li>
 </ul>
 <p>Admins can:</p>
 <ul>
@@ -192,7 +209,7 @@ footer a:hover { text-decoration: underline; }
 
 <footer>
   <p>Pickle Jar is provided by <a href="https://www.warrentonparksalliance.com" target="_blank">Warrenton Parks Alliance</a></p>
-  <p>Questions or feedback? <a href="mailto:brooke@warrentonparksalliance.com">brooke@warrentonparksalliance.com</a></p>
+  <p>Questions or feedback? <a href="mailto:brooke@warrentonparksalliance.com?subject=Pickle%20Jar%20Feedback">brooke@warrentonparksalliance.com</a></p>
 </footer>
 
 </body>

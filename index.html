@@ -1322,7 +1322,7 @@ body {
       <!-- Entry options: sign in or join as guest -->
       <div id="setupEntryOptions">
         <h2 style="font-size:1.1rem;font-weight:700;margin-bottom:6px;color:var(--text);">Welcome to Pickle Jar</h2>
-        <p style="font-size:0.82rem;color:var(--text-muted);margin-bottom:18px;line-height:1.4;">Sign in to create sessions and save your preferences, or jump straight in as a guest.</p>
+        <p style="font-size:0.82rem;color:var(--text-muted);margin-bottom:18px;line-height:1.4;">Sign in to create sessions, save your preferences, and keep your match history — or jump straight in as a guest.</p>
         <button class="btn-confirm-join" id="btnEntryGoogle" onclick="Admin.signIn()" style="width:100%;padding:10px;margin-bottom:10px;display:flex;align-items:center;justify-content:center;gap:8px;">
           <svg width="16" height="16" viewBox="0 0 48 48" style="flex-shrink:0;"><path fill="#4285F4" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#34A853" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59a14.5 14.5 0 0 1 0-9.18l-7.98-6.19a24.0 24.0 0 0 0 0 21.56l7.98-6.19z"/><path fill="#EA4335" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg>
           Sign in with Google
@@ -1403,11 +1403,27 @@ body {
         <span id="sessionLoadingText">Connecting&#x2026;</span>
       </div>
       </div><!-- /setupJoinForm -->
+      <!-- My Match History button (signed-in users only) -->
+      <div id="myHistoryBtnWrap" style="display:none;margin-top:14px;text-align:center;">
+        <button type="button" class="btn-outline" onclick="MyHistory.show()" style="width:100%;padding:9px 14px;font-size:0.85rem;">My Match History</button>
+      </div>
     </div>
     <!-- Super admin panel -->
     <div id="superAdminSection" class="settings-card" style="display:none;margin-top:14px;">
-      <div class="settings-card-title">Super Admin Management</div>
-      <div id="superAdminPanel"></div>
+      <div class="settings-card-title" onclick="document.getElementById('superAdminPanel').style.display=document.getElementById('superAdminPanel').style.display==='none'?'':'none';this.querySelector('.sa-toggle').textContent=document.getElementById('superAdminPanel').style.display==='none'?'▸':'▾'" style="cursor:pointer;display:flex;justify-content:space-between;align-items:center;">Super Admin Management <span class="sa-toggle" style="font-size:0.8rem;color:var(--text-muted);">▸</span></div>
+      <div id="superAdminPanel" style="display:none;"></div>
+    </div>
+  </div>
+
+  <!-- My Match History view (outside sessionSetupSection so it can be shown independently) -->
+  <div id="myHistoryView" class="setup-center" style="display:none;">
+    <div class="setup-card">
+      <div style="display:flex;align-items:center;margin-bottom:14px;">
+        <button type="button" class="btn-back-entry" onclick="MyHistory.hide()" title="Back">&larr;</button>
+        <h2 style="font-size:1.1rem;font-weight:700;margin:0;color:var(--text);flex:1;text-align:center;">My Match History</h2>
+        <div style="width:28px;"></div>
+      </div>
+      <div id="myHistoryList"></div>
     </div>
   </div>
 
@@ -1576,7 +1592,7 @@ body {
   <footer class="app-footer">
     <div>Provided by <a href="https://www.warrentonparksalliance.com" target="_blank" rel="noopener">Warrenton Parks Alliance</a></div>
     <div>Love Pickle Jar? <a href="https://www.warrentonparksalliance.com" target="_blank" rel="noopener">Donate</a> to support our mission.</div>
-    <div><a href="mailto:brooke@warrentonparksalliance.com">Send feedback</a></div>
+    <div><a href="guide.html" target="_blank">Quick Start Guide</a> · <a href="mailto:brooke@warrentonparksalliance.com?subject=Pickle%20Jar%20Feedback">Send feedback</a></div>
   </footer>
 
 </div>
@@ -1960,7 +1976,7 @@ const App = {
       }
       const winner = score1 > score2 ? 1 : score2 > score1 ? 2 : 0;
       const duration = game.startTime ? Date.now() - game.startTime : null;
-      this.state.roundHistory.push({
+      const histEntry = {
         round: this.state.round,
         courtId,
         side1: [...game.side1],
@@ -1971,7 +1987,9 @@ const App = {
         winner,
         duration,
         startTime: game.startTime || null,
-      });
+      };
+      this.state.roundHistory.push(histEntry);
+      MyHistory.saveMatch(histEntry);
     }
     const rematch = this._checkRematch(courtId, game);
     delete this.state.activeGames[courtId];
@@ -1996,7 +2014,7 @@ const App = {
         if (p) p.roundsPlayed = (p.roundsPlayed || 0) + 1;
       }
       const duration = game.startTime ? Date.now() - game.startTime : null;
-      this.state.roundHistory.push({
+      const histEntry = {
         round: this.state.round,
         courtId,
         side1: [...game.side1],
@@ -2004,7 +2022,9 @@ const App = {
         mode: game.mode,
         duration,
         startTime: game.startTime || null,
-      });
+      };
+      this.state.roundHistory.push(histEntry);
+      MyHistory.saveMatch(histEntry);
     }
     const rematch = this._checkRematch(courtId, game);
     delete this.state.activeGames[courtId];
@@ -3338,6 +3358,8 @@ const Session = {
       headerRight.style.display = 'flex';
       headerLocName.textContent = this.label || this.id;
       if (setup) setup.style.display = 'none';
+      const histView = document.getElementById('myHistoryView');
+      if (histView) histView.style.display = 'none';
       App._showTabs();
       App.updateShareLink();
     } else {
@@ -3354,6 +3376,8 @@ const Onboard = {
 
   // Pending share-link join (set after passcode verified, waiting for user profile)
   _shareLink: null,
+  _sharePending: null,
+  _shareLinkLoading: false,
 
   init() {
     const user = this._savedUser();
@@ -3364,6 +3388,11 @@ const Onboard = {
     this._populatePrivateDropdown();
 
     if (s) {
+      // Set loading flag immediately to prevent _updateUI from showing entry options
+      this._shareLinkLoading = true;
+      // Hide entry options while we fetch session data
+      const entryOpts = document.getElementById('setupEntryOptions');
+      if (entryOpts) entryOpts.style.display = 'none';
       this._handleShareLink(s, user);
       return;
     }
@@ -3390,6 +3419,7 @@ const Onboard = {
     // For private sessions, verify passcode first
     if (s.startsWith('pvt-')) {
       const data = await Session._get(s);
+      this._shareLinkLoading = false;
       const isAdminOfSession = Admin._user && data && Array.isArray(data._admins) && data._admins.includes(Admin._user.uid);
       const needsPasscode = data && data._passcode && !Admin.isSuperAdmin() && !isAdminOfSession;
       if (needsPasscode) {
@@ -3397,6 +3427,8 @@ const Onboard = {
         this._showSharePasscode(s, label, data._passcode, user);
         return;
       }
+    } else {
+      this._shareLinkLoading = false;
     }
 
     // Passcode not needed or public session — proceed
@@ -3535,6 +3567,9 @@ const Onboard = {
         if (firstSection) { firstSection.style.borderTop = ''; firstSection.style.paddingTop = ''; firstSection.style.marginTop = ''; }
       }
     }
+    // Show "My Match History" button for signed-in users (not during share-link flow)
+    const histBtn = document.getElementById('myHistoryBtnWrap');
+    if (histBtn) histBtn.style.display = (Admin.isSignedIn() && !isShareLink) ? '' : 'none';
   },
 
   _saveIdentity() {
@@ -3649,10 +3684,8 @@ const Onboard = {
 
     let sessions;
     if (Admin.isSuperAdmin()) {
-      // Super admins see all private sessions from the database
       sessions = await this._fetchAllPrivateSessions();
     } else {
-      // Regular users only see sessions they've created or joined
       sessions = this._getSavedPrivateSessions();
     }
 
@@ -3679,15 +3712,14 @@ const Onboard = {
 
   async _fetchAllPrivateSessions() {
     try {
-      const res = await fetch(`${Session.DB}/sessions.json?shallow=true`);
-      const keys = await res.json();
-      if (!keys) return [];
-      // Merge with locally saved names for better display labels
+      const res = await fetch(`${Session.DB}/sessions.json`);
+      const all = await res.json();
+      if (!all) return [];
       const savedMap = {};
       this._getSavedPrivateSessions().forEach(s => { savedMap[s.id] = s.name; });
-      return Object.keys(keys)
-        .filter(k => k.startsWith('pvt-'))
-        .map(k => ({ id: k, name: savedMap[k] || k.replace(/^pvt-/, '') }));
+      return Object.entries(all)
+        .filter(([k, v]) => k.startsWith('pvt-') && v && typeof v === 'object' && v._passcode)
+        .map(([k, v]) => ({ id: k, name: savedMap[k] || k.replace(/^pvt-/, '') }));
     } catch(e) { return []; }
   },
 
@@ -3695,13 +3727,14 @@ const Onboard = {
     const sel = document.getElementById('privateSessionSelect');
     const id = sel?.value;
     if (!id) return;
+    // Look up from localStorage first, fall back to the dropdown's display text
     const saved = this._getSavedPrivateSessions().find(s => s.id === id);
-    if (!saved) return;
+    const label = saved ? saved.name : sel.options[sel.selectedIndex]?.textContent || id;
     const user = this._saveIdentity();
     if (!user) return;
     this._pendingKey = id;
-    this._pendingLabel = saved.name;
-    this._showInlineConfirm('privateConfirmInline', saved.name, () => this.confirmJoin());
+    this._pendingLabel = label;
+    this._showInlineConfirm('privateConfirmInline', label, () => this.confirmJoin());
   },
 
   _newSessionType: 'open',
@@ -3818,6 +3851,7 @@ const Onboard = {
     this._pendingIsCreate = false;
     this._shareLink = null;
     this._sharePending = null;
+    this._shareLinkLoading = false;
     this._populatePrivateDropdown();
     // Show join form if signed in, otherwise show entry options
     if (Admin.isSignedIn()) {
@@ -3833,6 +3867,8 @@ const Onboard = {
   _hide() {
     const setup = document.getElementById('sessionSetupSection');
     if (setup) setup.style.display = 'none';
+    const histView = document.getElementById('myHistoryView');
+    if (histView) histView.style.display = 'none';
   },
 
   _savedUser() {
@@ -3996,34 +4032,37 @@ const Admin = {
       el.style.display = isAdmin ? '' : 'none';
     });
     // Landing page sign-in — show join form and signed-in status
-    const entryOpts = document.getElementById('setupEntryOptions');
-    const joinForm = document.getElementById('setupJoinForm');
-    const signedInWrap = document.getElementById('setupSignedIn');
-    const signedInAs = document.getElementById('signedInAs');
-    if (isSignedIn) {
-      if (entryOpts) entryOpts.style.display = 'none';
-      if (joinForm) joinForm.style.display = '';
-      if (signedInWrap) signedInWrap.style.display = '';
-      if (signedInAs) {
-        const label = isSuperAdmin ? 'Super Admin' : 'Signed in';
-        signedInAs.innerHTML = `<span style="font-size:0.78rem;color:var(--text-muted);">${label}: ${App.esc(this._user.email)}</span> <button class="btn-admin-logout" onclick="Admin.logout()">sign out</button>`;
+    // Don't touch the setup UI if a share-link passcode prompt is active or loading
+    if (!Onboard._sharePending && !Onboard._shareLinkLoading) {
+      const entryOpts = document.getElementById('setupEntryOptions');
+      const joinForm = document.getElementById('setupJoinForm');
+      const signedInWrap = document.getElementById('setupSignedIn');
+      const signedInAs = document.getElementById('signedInAs');
+      if (isSignedIn) {
+        if (entryOpts) entryOpts.style.display = 'none';
+        if (joinForm) joinForm.style.display = '';
+        if (signedInWrap) signedInWrap.style.display = '';
+        if (signedInAs) {
+          const label = isSuperAdmin ? 'Super Admin' : 'Signed in';
+          signedInAs.innerHTML = `<span style="font-size:0.78rem;color:var(--text-muted);">${label}: ${App.esc(this._user.email)}</span>`;
+        }
+        // Share-link + signed in + saved profile → connect directly
+        const savedUser = Onboard._savedUser();
+        if (Onboard._shareLink && savedUser?.name) {
+          const { sessionId, label } = Onboard._shareLink;
+          Onboard._shareLink = null;
+          Onboard._hide();
+          if (sessionId.startsWith('pvt-')) Onboard._savePrivateSession(sessionId, label);
+          Session._connect(sessionId, label, false, savedUser);
+          return;
+        }
+        Onboard._showJoinForm();
+      } else {
+        if (entryOpts) entryOpts.style.display = '';
+        if (joinForm && !joinForm.dataset.guestMode) joinForm.style.display = 'none';
+        if (signedInWrap) signedInWrap.style.display = 'none';
+        if (signedInAs) signedInAs.innerHTML = '';
       }
-      // Share-link + signed in + saved profile → connect directly
-      const savedUser = Onboard._savedUser();
-      if (Onboard._shareLink && savedUser?.name) {
-        const { sessionId, label } = Onboard._shareLink;
-        Onboard._shareLink = null;
-        Onboard._hide();
-        if (sessionId.startsWith('pvt-')) Onboard._savePrivateSession(sessionId, label);
-        Session._connect(sessionId, label, false, savedUser);
-        return;
-      }
-      Onboard._showJoinForm();
-    } else {
-      if (entryOpts) entryOpts.style.display = '';
-      if (joinForm && !joinForm.dataset.guestMode) joinForm.style.display = 'none';
-      if (signedInWrap) signedInWrap.style.display = 'none';
-      if (signedInAs) signedInAs.innerHTML = '';
     }
     // Refresh private dropdown (super admin may see all sessions)
     Onboard._populatePrivateDropdown();
@@ -4044,6 +4083,113 @@ const Admin = {
         badge.innerHTML = '';
       }
     }
+  },
+};
+
+// ─── My Match History (personal, persisted per Google user) ──────────────────
+const MyHistory = {
+  DB: 'https://pickleball-50914-default-rtdb.firebaseio.com',
+
+  // Save a completed match to the signed-in user's personal history
+  async saveMatch(match) {
+    if (!Admin.isSignedIn() || !Admin._user?.uid) return;
+    // Only save if this user was a player in the match
+    const selfId = Onboard.selfId;
+    if (!selfId) return;
+    const allIds = [...(match.side1 || []), ...(match.side2 || [])];
+    if (!allIds.includes(selfId)) return;
+
+    // Resolve player names so history is readable outside session context
+    const resolveSide = (ids) => ids.map(id => {
+      const p = App.getPlayer(id);
+      return p ? p.name : '?';
+    });
+
+    const entry = {
+      side1Names: resolveSide(match.side1),
+      side2Names: resolveSide(match.side2),
+      score1: match.score1 ?? null,
+      score2: match.score2 ?? null,
+      winner: match.winner ?? 0,
+      duration: match.duration || null,
+      startTime: match.startTime || null,
+      mode: match.mode || 'doubles',
+      sessionId: Session.id || null,
+      sessionLabel: Session.label || null,
+      savedAt: Date.now(),
+    };
+
+    try {
+      await fetch(`${this.DB}/userHistory/${Admin._user.uid}/matches.json`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(entry),
+      });
+    } catch(e) { console.error('Failed to save personal match history:', e); }
+  },
+
+  async show() {
+    if (!Admin.isSignedIn() || !Admin._user?.uid) return;
+    const setup = document.getElementById('sessionSetupSection');
+    const view = document.getElementById('myHistoryView');
+    if (setup) setup.style.display = 'none';
+    if (view) view.style.display = '';
+
+    const list = document.getElementById('myHistoryList');
+    if (list) list.innerHTML = '<div class="history-empty">Loading...</div>';
+
+    try {
+      const res = await fetch(`${this.DB}/userHistory/${Admin._user.uid}/matches.json`);
+      const data = await res.json();
+      if (!data) {
+        if (list) list.innerHTML = '<div class="history-empty">No matches yet</div>';
+        return;
+      }
+      // Convert object to array, newest first
+      const matches = Object.values(data).sort((a, b) => (b.startTime || b.savedAt || 0) - (a.startTime || a.savedAt || 0));
+      if (matches.length === 0) {
+        if (list) list.innerHTML = '<div class="history-empty">No matches yet</div>';
+        return;
+      }
+      list.innerHTML = '<div class="history-table-wrap">' + matches.map(m => {
+        const s1 = (m.side1Names || []).map(n => App.esc(n));
+        const s2 = (m.side2Names || []).map(n => App.esc(n));
+        const hasScores = m.score1 != null && m.score2 != null;
+        const s1Class = hasScores ? (m.winner === 1 ? 'winner' : m.winner === 2 ? 'loser' : '') : '';
+        const s2Class = hasScores ? (m.winner === 2 ? 'winner' : m.winner === 1 ? 'loser' : '') : '';
+        const scoreText = hasScores ? `${m.score1}\u2013${m.score2}` : '\u2013';
+        const dur = m.duration ? App.formatTimer(m.duration) : '';
+        let dateTime = '';
+        if (m.startTime) {
+          const d = new Date(m.startTime);
+          dateTime = d.toLocaleDateString(undefined, { month: 'short', day: 'numeric' }) + ', ' +
+            d.toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' });
+        }
+        const sessionTag = m.sessionLabel ? `<span style="font-size:0.68rem;background:var(--bg);padding:1px 6px;border-radius:var(--radius-full);color:var(--text-light);">${App.esc(m.sessionLabel)}</span>` : '';
+        return `<div class="match-card">
+          <div class="match-card-header">
+            <span>${dateTime} ${sessionTag}</span>
+            <span>${dur}</span>
+          </div>
+          <div class="match-card-body">
+            <div class="match-card-team ${s1Class}">${s1.join(' & ')}</div>
+            <span class="match-card-vs">vs</span>
+            <div class="match-card-team ${s2Class}" style="text-align:right;">${s2.join(' & ')}</div>
+            <div class="match-card-score">${scoreText}</div>
+          </div>
+        </div>`;
+      }).join('') + '</div>';
+    } catch(e) {
+      console.error('Failed to load personal match history:', e);
+      if (list) list.innerHTML = '<div class="history-empty">Failed to load history</div>';
+    }
+  },
+
+  hide() {
+    const setup = document.getElementById('sessionSetupSection');
+    const view = document.getElementById('myHistoryView');
+    if (view) view.style.display = 'none';
+    if (setup) setup.style.display = '';
   },
 };
 
