@@ -1352,7 +1352,10 @@ body {
           </div>
           <div style="flex:1;min-width:0;">
             <div id="signedInName" style="font-size:0.92rem;font-weight:600;color:var(--text);"></div>
-            <div id="signedInAs" style="font-size:0.75rem;color:var(--text-muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;"></div>
+            <div style="display:flex;align-items:center;gap:6px;">
+              <span id="signedInAs" style="font-size:0.75rem;color:var(--text-muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;"></span>
+              <button class="btn-admin-logout" onclick="Admin.logout()" style="font-size:0.72rem;flex-shrink:0;">sign out</button>
+            </div>
           </div>
         </div>
         <div style="display:flex;gap:8px;margin-bottom:8px;">
@@ -1609,7 +1612,7 @@ body {
 
   <footer class="app-footer">
     <div>Provided by <a href="https://www.warrentonparksalliance.com" target="_blank" rel="noopener">Warrenton Parks Alliance</a></div>
-    <div>Love Pickle Jar? <a href="https://www.warrentonparksalliance.com" target="_blank" rel="noopener">Donate</a> to support our mission.</div>
+    <div>Love Pickle Jar? <a href="https://www.warrentonparksalliance.com/donate" target="_blank" rel="noopener">Donate</a> to support our mission.</div>
     <div><a href="guide.html" target="_blank">User guide</a> · <a href="mailto:brooke@warrentonparksalliance.com?subject=Pickle%20Jar%20Feedback">Send feedback</a></div>
   </footer>
 
@@ -4151,6 +4154,7 @@ const Admin = {
         const signedInName = document.getElementById('signedInName');
         const savedUser = Onboard._savedUser();
         if (signedInName) signedInName.textContent = savedUser?.name || this._user.displayName || '';
+        if (savedUser) Onboard._prefillProfile(savedUser);
         // Share-link + signed in + saved profile → connect directly
         if (Onboard._shareLink && savedUser?.name) {
           const { sessionId, label } = Onboard._shareLink;
