@@ -1380,11 +1380,11 @@ body {
         <div style="font-size:0.78rem;font-weight:600;color:var(--text-light);margin-bottom:10px;">New Private Session</div>
         <input type="text" class="setup-input" id="privateSessionName" placeholder="Session name" maxlength="20" style="margin-bottom:8px;">
         <div style="display:flex;gap:8px;align-items:center;margin-bottom:10px;">
-          <input type="text" class="setup-input" id="privatePasscode" placeholder="Passcode (4 chars)" maxlength="4" style="flex:1;margin-bottom:0;text-transform:uppercase;letter-spacing:0.15em;font-weight:600;">
+          <input type="text" class="setup-input" id="privatePasscode" placeholder="Passcode (4 chars)" maxlength="4" style="flex:1;margin-bottom:0;text-transform:uppercase;">
           <button type="button" class="btn-outline" onclick="Onboard.randomPasscode()" style="white-space:nowrap;padding:7px 10px;font-size:0.78rem;">Random</button>
         </div>
-        <div style="font-size:0.72rem;font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:6px;">Session Type</div>
         <select class="setup-input" id="selectSessionType" onchange="Onboard.setSessionType(this.value)" style="margin-bottom:12px;cursor:pointer;">
+          <option value="" disabled selected>Select session type...</option>
           <option value="open">Open Play</option>
           <option value="roundrobin">Round Robin</option>
         </select>
@@ -3119,11 +3119,15 @@ const Session = {
     try {
       const data = isNew ? null : await this._get();
       // Preserve only fields set before connect (e.g. _passcode, _admins for new private sessions)
-      const preConnect = { _passcode: App.state._passcode, _admins: App.state._admins, _sessionType: App.state._sessionType };
+      const preConnect = { _passcode: App.state._passcode, _admins: App.state._admins, _sessionType: App.state._sessionType, _sessionName: App.state._sessionName };
       const fresh = App._freshState();
       if (data) {
         this._receiving = true;
         App.state = { ...fresh, ...data };
+        // Backfill session name for older sessions that don't have it
+        if (!App.state._sessionName && label && id.startsWith('pvt-')) {
+          App.state._sessionName = label;
+        }
       } else {
         App.state = { ...fresh, ...preConnect };
       }
@@ -3414,12 +3418,14 @@ const Onboard = {
   async _handleShareLink(s, user) {
     const loc = Session.LOCATIONS.find(l => l.key === s.toLowerCase());
     const pvt = this._getSavedPrivateSessions().find(p => p.id === s);
-    const label = loc ? loc.label : (pvt ? pvt.name : s.replace(/^pvt-/, ''));
+    let label = loc ? loc.label : (pvt ? pvt.name : s.replace(/^pvt-/, ''));
 
     // For private sessions, verify passcode first
     if (s.startsWith('pvt-')) {
       const data = await Session._get(s);
       this._shareLinkLoading = false;
+      // Use stored session name if available
+      if (data && data._sessionName) label = data._sessionName;
       const isAdminOfSession = Admin._user && data && Array.isArray(data._admins) && data._admins.includes(Admin._user.uid);
       const needsPasscode = data && data._passcode && !Admin.isSuperAdmin() && !isAdminOfSession;
       if (needsPasscode) {
@@ -3459,7 +3465,7 @@ const Onboard = {
       <h2 style="font-size:1.1rem;font-weight:700;margin-bottom:6px;color:var(--text);">Join "${App.esc(label)}"</h2>
       <p style="font-size:0.82rem;color:var(--text-muted);margin-bottom:16px;">Enter the session passcode to continue.</p>
       <input type="text" class="setup-input" id="sharePasscodeInput" placeholder="4-character passcode" maxlength="4"
-        style="text-transform:uppercase;letter-spacing:0.15em;font-weight:600;text-align:center;"
+        style="text-transform:uppercase;text-align:center;"
         onkeydown="if(event.key==='Enter')Onboard._verifySharePasscode()">
       <p id="sharePasscodeError" class="setup-error" style="display:none;">Incorrect passcode</p>
       <button type="button" class="btn-confirm-join" onclick="Onboard._verifySharePasscode()" style="width:100%;padding:10px;margin-top:4px;">Continue</button>
@@ -3719,7 +3725,7 @@ const Onboard = {
       this._getSavedPrivateSessions().forEach(s => { savedMap[s.id] = s.name; });
       return Object.entries(all)
         .filter(([k, v]) => k.startsWith('pvt-') && v && typeof v === 'object' && v._passcode)
-        .map(([k, v]) => ({ id: k, name: savedMap[k] || k.replace(/^pvt-/, '') }));
+        .map(([k, v]) => ({ id: k, name: savedMap[k] || v._sessionName || k.replace(/^pvt-/, '') }));
     } catch(e) { return []; }
   },
 
@@ -3737,7 +3743,7 @@ const Onboard = {
     this._showInlineConfirm('privateConfirmInline', label, () => this.confirmJoin());
   },
 
-  _newSessionType: 'open',
+  _newSessionType: '',
 
   setSessionType(type) {
     this._newSessionType = type;
@@ -3749,7 +3755,15 @@ const Onboard = {
       return;
     }
     const form = document.getElementById('privateCreateForm');
-    if (form) form.style.display = form.style.display === 'none' ? '' : 'none';
+    if (form) {
+      const opening = form.style.display === 'none';
+      form.style.display = opening ? '' : 'none';
+      if (opening) {
+        this._newSessionType = '';
+        const sel = document.getElementById('selectSessionType');
+        if (sel) sel.selectedIndex = 0;
+      }
+    }
   },
 
   randomPasscode() {
@@ -3767,8 +3781,8 @@ const Onboard = {
     const errEl = document.getElementById('privateSessionError');
     const sessionName = (nameEl?.value || '').trim();
     const passcode = (codeEl?.value || '').trim().toUpperCase();
-    if (!sessionName || passcode.length !== 4) {
-      if (errEl) { errEl.textContent = 'Enter a session name and 4-character passcode'; errEl.style.display = 'block'; }
+    if (!sessionName || passcode.length !== 4 || !this._newSessionType) {
+      if (errEl) { errEl.textContent = 'Enter a session name, 4-character passcode, and select a session type'; errEl.style.display = 'block'; }
       return;
     }
     if (errEl) errEl.style.display = 'none';
@@ -3779,7 +3793,7 @@ const Onboard = {
     this._pendingPasscode = passcode;
     this._pendingIsCreate = true;
     this._pendingSessionType = this._newSessionType;
-    const typeLabel = this._newSessionType === 'roundrobin' ? ' (Round Robin)' : '';
+    const typeLabel = this._newSessionType === 'roundrobin' ? ' (Round Robin)' : ' (Open Play)';
     this._showInlineConfirm('createConfirmInline', sessionName + typeLabel, () => this.confirmJoin());
   },
 
@@ -3802,9 +3816,10 @@ const Onboard = {
 
     if (key.startsWith('pvt-')) {
       if (this._pendingIsCreate) {
-        // Creating new — set passcode and creator as session admin
+        // Creating new — set passcode, name, and creator as session admin
         this._savePrivateSession(key, label);
         App.state._passcode = this._pendingPasscode;
+        App.state._sessionName = label;
         App.state._admins = Admin._user ? [Admin._user.uid] : [];
         if (this._pendingSessionType) App.state._sessionType = this._pendingSessionType;
         Session._connect(key, label, true, connectUser);
