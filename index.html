@@ -1398,6 +1398,14 @@ body {
           <button type="button" class="btn-confirm-join" id="btnJoinPublic" onclick="Onboard.joinPublic()" disabled style="white-space:nowrap;padding:8px 14px;font-size:0.82rem;">Join</button>
         </div>
         <div id="publicConfirmInline" style="display:none;margin-bottom:14px;"></div>
+        <button type="button" class="btn-outline" onclick="Onboard.toggleCreatePublic()" id="btn-create-public" style="display:none;width:100%;padding:9px 14px;margin-top:8px;font-size:0.82rem;font-weight:600;font-family:inherit;">+ Create New</button>
+        <div id="publicCreateForm" style="display:none;margin-top:10px;padding:14px;background:var(--bg);border:1.5px solid var(--border);border-radius:var(--radius);">
+          <div style="font-size:0.78rem;font-weight:600;color:var(--text-light);margin-bottom:10px;">New Public Location</div>
+          <input type="text" class="setup-input" id="publicLocationName" placeholder="Location name" maxlength="30" style="margin-bottom:8px;">
+          <p id="publicLocationError" class="setup-error" style="display:none;">Enter a location name</p>
+          <button type="button" class="btn-confirm-join" onclick="Onboard.createPublicLocation()" style="width:100%;padding:10px;">Create &amp; Join</button>
+          <div id="publicCreateConfirmInline" style="display:none;margin-top:6px;"></div>
+        </div>
       </div>
       <div style="border-top:1px solid var(--border);padding-top:16px;margin-top:12px;">
         <div class="setup-section-label">Private Session</div>
@@ -2572,8 +2580,11 @@ const App = {
 
   async deleteSession() {
     if (!Admin.isAdmin()) return;
-    if (!Session.id || !Session.id.startsWith('pvt-')) return;
-    if (!confirm('Permanently delete this private session? This cannot be undone.')) return;
+    if (!Session.id) return;
+    // Public session deletion requires super admin
+    if (!Session.id.startsWith('pvt-') && !Admin.isSuperAdmin()) return;
+    const label = Session.id.startsWith('pvt-') ? 'private session' : 'public session';
+    if (!confirm(`Permanently delete this ${label}? This cannot be undone.`)) return;
     if (!confirm('Are you sure? All data will be lost and all users will be disconnected.')) return;
     try {
       await fetch(`${Session.DB}/sessions/${Session.id}.json`, { method: 'DELETE' });
@@ -2649,7 +2660,8 @@ const App = {
 
     // Show delete session button for private sessions
     const deleteBtn = document.getElementById('btnDeleteSession');
-    if (deleteBtn) deleteBtn.style.display = (Session.id && Session.id.startsWith('pvt-')) ? '' : 'none';
+    const isPvt = Session.id && Session.id.startsWith('pvt-');
+    if (deleteBtn) deleteBtn.style.display = (isPvt || Admin.isSuperAdmin()) ? '' : 'none';
   },
 
   _updateTabBadges() {
@@ -3646,6 +3658,9 @@ const Onboard = {
         if (firstSection) { firstSection.style.borderTop = ''; firstSection.style.paddingTop = ''; firstSection.style.marginTop = ''; }
       }
     }
+    // Show "Create New" for public sessions (super admin only)
+    const createPublicBtn = document.getElementById('btn-create-public');
+    if (createPublicBtn) createPublicBtn.style.display = Admin.isSuperAdmin() && !isShareLink ? '' : 'none';
   },
 
   _saveIdentity() {
@@ -3689,7 +3704,7 @@ const Onboard = {
 
   _showInlineConfirm(elId, label, onYes) {
     // Hide all other inline confirms
-    ['publicConfirmInline', 'privateConfirmInline', 'createConfirmInline'].forEach(id => {
+    ['publicConfirmInline', 'privateConfirmInline', 'createConfirmInline', 'publicCreateConfirmInline'].forEach(id => {
       const el = document.getElementById(id);
       if (el) { el.style.display = 'none'; el.innerHTML = ''; }
     });
@@ -3710,7 +3725,7 @@ const Onboard = {
   },
 
   _inlineNo() {
-    ['publicConfirmInline', 'privateConfirmInline', 'createConfirmInline'].forEach(id => {
+    ['publicConfirmInline', 'privateConfirmInline', 'createConfirmInline', 'publicCreateConfirmInline'].forEach(id => {
       const el = document.getElementById(id);
       if (el) { el.style.display = 'none'; el.innerHTML = ''; }
     });
@@ -3743,6 +3758,42 @@ const Onboard = {
       sel.style.backgroundImage = 'none';
     }
     this._updateJoinBtn('publicLocationSelect', 'btnJoinPublic');
+  },
+
+  toggleCreatePublic() {
+    const form = document.getElementById('publicCreateForm');
+    if (form) form.style.display = form.style.display === 'none' ? '' : 'none';
+  },
+
+  createPublicLocation() {
+    const nameEl = document.getElementById('publicLocationName');
+    const errEl = document.getElementById('publicLocationError');
+    const name = (nameEl?.value || '').trim();
+    if (!name) {
+      if (errEl) { errEl.textContent = 'Enter a location name'; errEl.style.display = 'block'; }
+      return;
+    }
+    if (errEl) errEl.style.display = 'none';
+    const key = name.toLowerCase().replace(/[^a-z0-9]/g, '');
+    // Add to LOCATIONS so it appears in the dropdown
+    if (!Session.LOCATIONS.find(l => l.key === key)) {
+      Session.LOCATIONS.push({ key, label: name });
+      // Refresh dropdown
+      const sel = document.getElementById('publicLocationSelect');
+      if (sel) {
+        const opt = document.createElement('option');
+        opt.value = key;
+        opt.textContent = name;
+        sel.appendChild(opt);
+        sel.disabled = false;
+        sel.style.appearance = '';
+        sel.style.backgroundImage = '';
+        sel.options[0].textContent = 'Select a location...';
+      }
+    }
+    this._pendingKey = key;
+    this._pendingLabel = name;
+    this._showInlineConfirm('publicCreateConfirmInline', name, () => this.confirmJoin());
   },
 
   joinPublic() {
