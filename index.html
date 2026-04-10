@@ -1093,7 +1093,21 @@ body {
   background: rgba(0,0,0,0.15);
   padding: 2px 7px;
   border-radius: var(--radius-full);
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
 }
+.timer-toggle {
+  background: none;
+  border: none;
+  color: inherit;
+  cursor: pointer;
+  padding: 0;
+  font-size: 0.62rem;
+  line-height: 1;
+  opacity: 0.8;
+}
+.timer-toggle:hover { opacity: 1; }
 
 /* ── Sitting out ────────────────────────────── */
 .sitting-out {
@@ -2139,6 +2153,12 @@ const App = {
   },
 
   endGame(courtId) {
+    const game = this.state.activeGames[courtId];
+    if (game && !game.timerPaused) {
+      game.timerElapsed = (game.timerElapsed || 0) + (Date.now() - (game.timerResumedAt || Date.now()));
+      game.timerPaused = true;
+      game.timerResumedAt = null;
+    }
     this.state.scoringGames[courtId] = true;
     this.saveState();
     this.render();
@@ -2168,7 +2188,7 @@ const App = {
         if (p) p.roundsPlayed = (p.roundsPlayed || 0) + 1;
       }
       const winner = score1 > score2 ? 1 : score2 > score1 ? 2 : 0;
-      const duration = game.startTime ? Date.now() - game.startTime : null;
+      const duration = this.getTimerElapsed(game) || null;
       const histEntry = {
         round: this.state.round,
         courtId,
@@ -2213,7 +2233,7 @@ const App = {
         const p = this.getPlayer(id);
         if (p) p.roundsPlayed = (p.roundsPlayed || 0) + 1;
       }
-      const duration = game.startTime ? Date.now() - game.startTime : null;
+      const duration = this.getTimerElapsed(game) || null;
       const histEntry = {
         round: this.state.round,
         courtId,
@@ -2247,6 +2267,9 @@ const App = {
       side2: prev.side2,
       mode: prev.mode,
       startTime: Date.now(),
+      timerPaused: true,
+      timerElapsed: 0,
+      timerResumedAt: null,
     };
   },
 
@@ -2258,19 +2281,43 @@ const App = {
     return `${min}:${sec.toString().padStart(2, '0')}`;
   },
 
+  getTimerElapsed(game) {
+    if (game.timerElapsed != null) {
+      if (game.timerPaused) return game.timerElapsed;
+      return game.timerElapsed + (Date.now() - (game.timerResumedAt || Date.now()));
+    }
+    return game.startTime ? Date.now() - game.startTime : 0;
+  },
+
+  toggleTimer(courtId) {
+    const game = this.state.activeGames[courtId];
+    if (!game) return;
+    if (game.timerPaused) {
+      game.timerPaused = false;
+      game.timerResumedAt = Date.now();
+    } else {
+      game.timerElapsed = (game.timerElapsed || 0) + (Date.now() - (game.timerResumedAt || Date.now()));
+      game.timerPaused = true;
+      game.timerResumedAt = null;
+    }
+    this.saveState();
+    this.render();
+  },
+
   MAX_MATCH_MS: 100 * 60 * 1000, // 100 minutes
 
   updateTimers() {
-    const now = Date.now();
     const expired = [];
     for (const [courtId, game] of Object.entries(this.state.activeGames)) {
-      if (game.startTime && (now - game.startTime) >= this.MAX_MATCH_MS) {
+      const elapsed = this.getTimerElapsed(game);
+      if (game.startTime && elapsed >= this.MAX_MATCH_MS) {
         expired.push(courtId);
         continue;
       }
+      if (game.timerPaused) continue;
       const el = document.getElementById(`timer-${courtId}`);
-      if (el && game.startTime) {
-        el.textContent = this.formatTimer(now - game.startTime);
+      if (el) {
+        el.textContent = this.formatTimer(elapsed);
       }
     }
     if (expired.length > 0) {
@@ -2290,7 +2337,7 @@ const App = {
       const p = this.getPlayer(id);
       if (p) p.roundsPlayed = (p.roundsPlayed || 0) + 1;
     }
-    const duration = game.startTime ? Date.now() - game.startTime : null;
+    const duration = this.getTimerElapsed(game) || null;
     const histEntry = {
       round: this.state.round,
       courtId,
@@ -2571,6 +2618,9 @@ const App = {
         side2: g.side2,
         mode: g.mode || 'doubles',
         startTime: Date.now(),
+        timerPaused: true,
+        timerElapsed: 0,
+        timerResumedAt: null,
       };
     });
   },
@@ -2794,6 +2844,9 @@ const App = {
         side2: [...match.side2],
         mode: match.side1.length > 1 ? 'doubles' : 'singles',
         startTime: Date.now(),
+        timerPaused: true,
+        timerElapsed: 0,
+        timerResumedAt: null,
         bracketMatchId: match.id,
       };
       courtNum++;
@@ -2892,6 +2945,9 @@ const App = {
         side2: [...match.side2],
         mode: match.side1.length > 1 ? 'doubles' : 'singles',
         startTime: Date.now(),
+        timerPaused: true,
+        timerElapsed: 0,
+        timerResumedAt: null,
         bracketMatchId: match.id,
       };
       usedCourts.add(nextCourt);
@@ -3147,6 +3203,9 @@ const App = {
       side1, side2,
       mode: mode === 'singles' ? 'singles' : 'doubles',
       startTime: Date.now(),
+      timerPaused: true,
+      timerElapsed: 0,
+      timerResumedAt: null,
     };
     return true;
   },
@@ -3550,13 +3609,15 @@ const App = {
       const game = this.state.activeGames[courtId];
       const isScoring = !!this.state.scoringGames[courtId];
       const modeBadge = '';
-      const timerBadge = game.startTime ? `<span class="court-timer" id="timer-${courtId}">${this.formatTimer(Date.now() - game.startTime)}</span>` : '';
+      const timerMs = this.getTimerElapsed(game);
+      const timerToggle = !isScoring ? `<button class="timer-toggle" onclick="event.stopPropagation();App.toggleTimer(${courtId})" title="${game.timerPaused ? 'Start timer' : 'Pause timer'}">${game.timerPaused ? '&#9654;' : '&#9208;'}</button>` : '';
+      const timerBadge = game.startTime != null ? `<span class="court-timer">${timerToggle}<span id="timer-${courtId}">${this.formatTimer(timerMs)}</span></span>` : '';
       const cardClass = isScoring ? 'court-card' : 'court-card game-active';
 
       let bodyHTML;
       if (isScoring) {
-        const s1Names = game.side1.map(id => { const p = this.getPlayer(id); return p ? this.esc(p.name) : '?'; }).join(' & ');
-        const s2Names = game.side2.map(id => { const p = this.getPlayer(id); return p ? this.esc(p.name) : '?'; }).join(' & ');
+        const s1Names = game.side1.map(id => { const p = this.getPlayer(id); return p ? this.esc(p.name) + (p.score != null ? ` <span style="font-weight:400;opacity:0.7;">(${this.fmtSkill(p.score)})</span>` : '') : '?'; }).join(' & ');
+        const s2Names = game.side2.map(id => { const p = this.getPlayer(id); return p ? this.esc(p.name) + (p.score != null ? ` <span style="font-weight:400;opacity:0.7;">(${this.fmtSkill(p.score)})</span>` : '') : '?'; }).join(' & ');
         bodyHTML = `<div class="score-entry">
           <div class="score-side side-1">
             <span class="side-names">${s1Names}</span>
@@ -3612,7 +3673,8 @@ const App = {
       const p = this.getPlayer(id);
       if (!p) return '';
       const youBadge = id === Onboard.selfId ? ' <span class="queue-row-you">you</span>' : '';
-      return `<span class="side-player-${align}"><span class="side-player-name">${this.esc(p.name)}</span>${youBadge}</span>`;
+      const skillTag = p.score != null ? ` <span style="font-weight:400;opacity:0.7;">(${this.fmtSkill(p.score)})</span>` : '';
+      return `<span class="side-player-${align}"><span class="side-player-name">${this.esc(p.name)}${skillTag}</span>${youBadge}</span>`;
     };
     if (side.length === 1) {
       return playerHtml(side[0], 'solo');
@@ -3820,8 +3882,8 @@ const App = {
     }
 
     el.innerHTML = history.map(m => {
-      const s1 = m.side1.map(id => { const p = this.getPlayer(id); return p ? this.esc(p.name) : '?'; });
-      const s2 = m.side2.map(id => { const p = this.getPlayer(id); return p ? this.esc(p.name) : '?'; });
+      const s1 = m.side1.map(id => { const p = this.getPlayer(id); return p ? this.esc(p.name) + (p.score != null ? ` <span style="font-weight:400;opacity:0.7;">(${this.fmtSkill(p.score)})</span>` : '') : '?'; });
+      const s2 = m.side2.map(id => { const p = this.getPlayer(id); return p ? this.esc(p.name) + (p.score != null ? ` <span style="font-weight:400;opacity:0.7;">(${this.fmtSkill(p.score)})</span>` : '') : '?'; });
       const hasScores = m.score1 != null && m.score2 != null;
       const s1Class = hasScores ? (m.winner === 1 ? 'winner' : m.winner === 2 ? 'loser' : '') : '';
       const s2Class = hasScores ? (m.winner === 2 ? 'winner' : m.winner === 1 ? 'loser' : '') : '';
