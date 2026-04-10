@@ -1334,24 +1334,45 @@ body {
         </div>
         <button class="btn-outline" onclick="Onboard.showGuestJoin()" style="width:100%;padding:10px;font-size:0.88rem;font-weight:600;">Join a Session Now</button>
       </div>
-      <!-- Signed-in status (shown after Google sign-in) -->
-      <div id="setupSignedIn" style="display:none;margin-bottom:14px;text-align:center;">
-        <div id="signedInAs" style="margin-bottom:4px;"></div>
+      <!-- Signed-in profile card (shown for Google-signed-in users) -->
+      <div id="setupSignedIn" style="display:none;margin-bottom:14px;">
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;">
+          <div style="width:38px;height:38px;border-radius:50%;background:var(--primary-light);display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--primary)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+          </div>
+          <div style="flex:1;min-width:0;">
+            <div id="signedInName" style="font-size:0.92rem;font-weight:600;color:var(--text);"></div>
+            <div id="signedInAs" style="font-size:0.75rem;color:var(--text-muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;"></div>
+          </div>
+        </div>
+        <div style="display:flex;gap:8px;margin-bottom:8px;">
+          <input type="text" class="setup-input" id="onboardName" placeholder="Display name" autocomplete="given-name" style="flex:1;margin-bottom:0;">
+          <input type="number" class="setup-input" id="onboardSkill" placeholder="Skill (optional)" min="2" max="8" step="0.01" onblur="App.fmtSkillInput(this)" style="width:110px;margin-bottom:0;">
+        </div>
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;">
+          <label class="singles-label" style="display:flex;align-items:center;gap:6px;font-size:0.85rem;font-weight:500;color:var(--text-light);cursor:pointer;margin:0;">
+            <input type="checkbox" id="onboardSingles" style="accent-color:var(--primary);width:15px;height:15px;"> Open to 1v1
+          </label>
+          <button type="button" class="btn-outline" onclick="Onboard.saveProfile()" style="padding:4px 12px;font-size:0.78rem;">Save</button>
+        </div>
+        <p id="onboardNameError" class="setup-error">Enter your name first</p>
+        <button type="button" class="btn-outline" onclick="MyHistory.show()" id="btnMyHistoryProfile" style="width:100%;padding:8px;font-size:0.82rem;margin-top:8px;">My Match History</button>
       </div>
       <!-- Join form (hidden until guest click or signed in) -->
       <div id="setupJoinForm" style="display:none;">
-      <div style="display:flex;align-items:center;margin-bottom:16px;">
+      <div id="joinFormHeader" style="display:flex;align-items:center;margin-bottom:16px;">
         <button type="button" id="btnBackToEntry" class="btn-back-entry" onclick="Onboard.backToEntry()" title="Back">&larr;</button>
-        <h2 style="font-size:1.1rem;font-weight:700;margin:0;color:var(--text);flex:1;text-align:center;">Join a Session</h2>
+        <h2 id="joinFormHeading" style="font-size:1.1rem;font-weight:700;margin:0;color:var(--text);flex:1;text-align:center;">Join a Session</h2>
         <div style="width:28px;"></div>
       </div>
+      <!-- Guest profile fields (hidden for signed-in users who have profile card above) -->
       <div id="onboardProfileFields">
-      <input type="text" class="setup-input" id="onboardName" placeholder="Your name" autocomplete="given-name">
-      <input type="number" class="setup-input" id="onboardSkill" placeholder="Skill level (optional)" min="2" max="8" step="0.01" onblur="App.fmtSkillInput(this)">
+      <input type="text" class="setup-input" id="guestOnboardName" placeholder="Your name" autocomplete="given-name">
+      <input type="number" class="setup-input" id="guestOnboardSkill" placeholder="Skill level (optional)" min="2" max="8" step="0.01" onblur="App.fmtSkillInput(this)">
       <label class="singles-label" style="margin-bottom:18px;display:flex;align-items:center;gap:6px;font-size:0.85rem;font-weight:500;color:var(--text-light);cursor:pointer;">
-        <input type="checkbox" id="onboardSingles" style="accent-color:var(--primary);width:15px;height:15px;"> Open to 1v1
+        <input type="checkbox" id="guestOnboardSingles" style="accent-color:var(--primary);width:15px;height:15px;"> Open to 1v1
       </label>
-      <p id="onboardNameError" class="setup-error">Enter your name first</p>
+      <p id="guestOnboardNameError" class="setup-error">Enter your name first</p>
       </div>
       <!-- Session selection (hidden during share-link flow) -->
       <div id="sessionSelectionBlock">
@@ -1403,10 +1424,6 @@ body {
         <span id="sessionLoadingText">Connecting&#x2026;</span>
       </div>
       </div><!-- /setupJoinForm -->
-      <!-- My Match History button (signed-in users only) -->
-      <div id="myHistoryBtnWrap" style="display:none;margin-top:14px;text-align:center;">
-        <button type="button" class="btn-outline" onclick="MyHistory.show()" style="width:100%;padding:9px 14px;font-size:0.85rem;">My Match History</button>
-      </div>
     </div>
     <!-- Super admin panel -->
     <div id="superAdminSection" class="settings-card" style="display:none;margin-top:14px;">
@@ -3407,12 +3424,23 @@ const Onboard = {
   },
 
   _prefillProfile(user) {
+    // Fill signed-in profile card fields
     const nameEl = document.getElementById('onboardName');
     const skillEl = document.getElementById('onboardSkill');
     if (nameEl) nameEl.value = user.name || '';
     if (skillEl && user.skill != null) skillEl.value = App.fmtSkill(user.skill);
     const singlesEl = document.getElementById('onboardSingles');
     if (singlesEl) singlesEl.checked = !!(user.wantsSingles);
+    // Fill guest fields too
+    const guestName = document.getElementById('guestOnboardName');
+    const guestSkill = document.getElementById('guestOnboardSkill');
+    if (guestName) guestName.value = user.name || '';
+    if (guestSkill && user.skill != null) guestSkill.value = App.fmtSkill(user.skill);
+    const guestSingles = document.getElementById('guestOnboardSingles');
+    if (guestSingles) guestSingles.checked = !!(user.wantsSingles);
+    // Update profile card display name
+    const nameDisplay = document.getElementById('signedInName');
+    if (nameDisplay) nameDisplay.textContent = user.name || '';
   },
 
   async _handleShareLink(s, user) {
@@ -3540,32 +3568,36 @@ const Onboard = {
     const sessionBlock = document.getElementById('sessionSelectionBlock');
     const shareBlock = document.getElementById('shareLinkJoinBlock');
     const shareLabel = document.getElementById('shareLinkLabel');
+    const heading = document.getElementById('joinFormHeading');
+    const signedInCard = document.getElementById('setupSignedIn');
     if (entry) entry.style.display = 'none';
     if (form) form.style.display = '';
-    // Hide back button when signed in — they don't need it
-    if (backBtn) backBtn.style.display = Admin.isSignedIn() ? 'none' : '';
 
+    const isSignedIn = Admin.isSignedIn();
     const isShareLink = !!this._shareLink;
 
+    const joinHeader = document.getElementById('joinFormHeader');
+    // Hide back button and heading when signed in
+    if (backBtn) backBtn.style.display = isSignedIn ? 'none' : '';
+    if (joinHeader) joinHeader.style.display = (isSignedIn && !isShareLink) ? 'none' : '';
+    // Profile card visible for signed-in users (not during share-link guest flow)
+    if (signedInCard) signedInCard.style.display = (isSignedIn && !isShareLink) ? '' : 'none';
+
     if (isShareLink) {
-      // Share-link mode: show profile fields + join button, hide session selection
+      // Share-link mode: show guest profile fields + join button, hide session selection
       if (sessionBlock) sessionBlock.style.display = 'none';
       if (shareBlock) shareBlock.style.display = '';
       if (shareLabel) shareLabel.innerHTML = `Joining <strong>${App.esc(this._shareLink.label)}</strong>`;
-      if (profileFields) profileFields.style.display = '';
-      // Adjust heading
-      const heading = form.querySelector('h2');
+      if (profileFields) profileFields.style.display = isSignedIn ? 'none' : '';
       if (heading) heading.textContent = 'Join ' + this._shareLink.label;
     } else {
       // Normal mode
       if (sessionBlock) sessionBlock.style.display = '';
       if (shareBlock) shareBlock.style.display = 'none';
-      const heading = form.querySelector('h2');
       if (heading) heading.textContent = 'Join a Session';
-      // Signed-in users with saved profile skip straight to session selection
-      const savedUser = this._savedUser();
+      // Signed-in users: profile is in the card above, hide guest fields
       const firstSection = sessionBlock?.firstElementChild;
-      if (Admin.isSignedIn() && savedUser?.name) {
+      if (isSignedIn) {
         if (profileFields) profileFields.style.display = 'none';
         if (firstSection) { firstSection.style.borderTop = 'none'; firstSection.style.paddingTop = '0'; firstSection.style.marginTop = '0'; }
       } else {
@@ -3573,14 +3605,13 @@ const Onboard = {
         if (firstSection) { firstSection.style.borderTop = ''; firstSection.style.paddingTop = ''; firstSection.style.marginTop = ''; }
       }
     }
-    // Show "My Match History" button for signed-in users (not during share-link flow)
-    const histBtn = document.getElementById('myHistoryBtnWrap');
-    if (histBtn) histBtn.style.display = (Admin.isSignedIn() && !isShareLink) ? '' : 'none';
   },
 
   _saveIdentity() {
-    const nameEl = document.getElementById('onboardName');
-    const errEl = document.getElementById('onboardNameError');
+    // Signed-in users use profile card fields, guests use the guest fields
+    const isSignedIn = Admin.isSignedIn();
+    const nameEl = document.getElementById(isSignedIn ? 'onboardName' : 'guestOnboardName');
+    const errEl = document.getElementById(isSignedIn ? 'onboardNameError' : 'guestOnboardNameError');
     const name = nameEl ? nameEl.value.trim() : '';
     if (!name) {
       if (errEl) errEl.style.display = 'block';
@@ -3588,12 +3619,28 @@ const Onboard = {
       return null;
     }
     if (errEl) errEl.style.display = 'none';
-    const skillRaw = document.getElementById('onboardSkill')?.value || '';
+    const skillEl = document.getElementById(isSignedIn ? 'onboardSkill' : 'guestOnboardSkill');
+    const skillRaw = skillEl?.value || '';
     const skill = skillRaw ? parseFloat(parseFloat(skillRaw).toFixed(2)) : null;
-    const wantsSingles = !!(document.getElementById('onboardSingles')?.checked);
+    const singlesEl = document.getElementById(isSignedIn ? 'onboardSingles' : 'guestOnboardSingles');
+    const wantsSingles = !!(singlesEl?.checked);
     const user = { name, skill, wantsSingles };
     try { localStorage.setItem('pickleJarUser', JSON.stringify(user)); } catch(e) {}
     return user;
+  },
+
+  saveProfile() {
+    const user = this._saveIdentity();
+    if (user) {
+      const btn = document.querySelector('#setupSignedIn .btn-outline');
+      if (btn && btn.textContent === 'Save') {
+        btn.textContent = 'Saved!';
+        setTimeout(() => { btn.textContent = 'Save'; }, 1500);
+      }
+      // Update the display name in the profile card
+      const nameDisplay = document.getElementById('signedInName');
+      if (nameDisplay) nameDisplay.textContent = user.name;
+    }
   },
 
   _pendingKey: null,
@@ -3870,6 +3917,8 @@ const Onboard = {
     this._populatePrivateDropdown();
     // Show join form if signed in, otherwise show entry options
     if (Admin.isSignedIn()) {
+      const user = this._savedUser();
+      if (user) this._prefillProfile(user);
       this._showJoinForm();
     } else {
       const entry = document.getElementById('setupEntryOptions');
@@ -4058,11 +4107,13 @@ const Admin = {
         if (joinForm) joinForm.style.display = '';
         if (signedInWrap) signedInWrap.style.display = '';
         if (signedInAs) {
-          const label = isSuperAdmin ? 'Super Admin' : 'Signed in';
-          signedInAs.innerHTML = `<span style="font-size:0.78rem;color:var(--text-muted);">${label}: ${App.esc(this._user.email)}</span>`;
+          const badge = isSuperAdmin ? ' · Super Admin' : '';
+          signedInAs.textContent = this._user.email + badge;
         }
-        // Share-link + signed in + saved profile → connect directly
+        const signedInName = document.getElementById('signedInName');
         const savedUser = Onboard._savedUser();
+        if (signedInName) signedInName.textContent = savedUser?.name || this._user.displayName || '';
+        // Share-link + signed in + saved profile → connect directly
         if (Onboard._shareLink && savedUser?.name) {
           const { sessionId, label } = Onboard._shareLink;
           Onboard._shareLink = null;
