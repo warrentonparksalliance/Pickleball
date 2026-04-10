@@ -1395,7 +1395,7 @@ body {
           <button type="button" class="btn-confirm-join" id="btnJoinPrivate" onclick="Onboard.joinSavedPrivate()" disabled style="white-space:nowrap;padding:8px 14px;font-size:0.82rem;">Join</button>
         </div>
         <div id="privateConfirmInline" style="display:none;margin-bottom:8px;"></div>
-        <button type="button" class="btn-outline" onclick="Onboard.toggleCreatePrivate()" id="btn-create-private" style="width:100%;padding:9px 14px;margin-top:8px;">+ Create New</button>
+        <button type="button" class="btn-outline" onclick="Onboard.toggleCreatePrivate()" id="btn-create-private" style="width:100%;padding:9px 14px;margin-top:8px;font-size:0.82rem;font-weight:600;font-family:inherit;">+ Create New</button>
       </div>
       <div id="privateCreateForm" style="display:none;margin-top:10px;padding:14px;background:var(--bg);border:1.5px solid var(--border);border-radius:var(--radius);">
         <div style="font-size:0.78rem;font-weight:600;color:var(--text-light);margin-bottom:10px;">New Private Session</div>
@@ -1440,6 +1440,7 @@ body {
         <h2 style="font-size:1.1rem;font-weight:700;margin:0;color:var(--text);flex:1;text-align:center;">My Match History</h2>
         <div style="width:28px;"></div>
       </div>
+      <input type="text" id="myHistorySearch" class="history-search" placeholder="Search player name..." oninput="MyHistory.filter()" style="margin-bottom:10px;">
       <div id="myHistoryList"></div>
     </div>
   </div>
@@ -1468,7 +1469,7 @@ body {
         </div>
       </div>
       <div id="playerList" class="queue-list"></div>
-      <div id="queueHint" class="section-subtitle" style="margin-top:8px;">Use &#x23F8; to sit out temporarily or &times; to remove from the session.</div>
+      <div id="queueHint" class="section-subtitle" style="margin-top:8px;">Use &#x23F8; to sit out temporarily or &times; to remove.</div>
       <button id="rrUnlockBtn" class="btn-outline" onclick="App.rrUnlockPlayers()" style="display:none;margin-top:8px;width:100%;color:var(--warning);border-color:var(--warning);font-size:0.82rem;">Unlock Players &amp; Reset Schedule</button>
     </div>
 
@@ -1520,19 +1521,15 @@ body {
     <!-- Profile -->
     <div class="settings-card">
       <div class="settings-card-title">Your Profile</div>
-      <div class="settings-field">
-        <label for="settingsName">Name</label>
-        <input type="text" id="settingsName" placeholder="Your name" maxlength="30">
+      <div style="display:flex;gap:8px;margin-bottom:8px;">
+        <input type="text" class="setup-input" id="settingsName" placeholder="Display name" maxlength="30" style="flex:1;margin-bottom:0;">
+        <input type="number" class="setup-input" id="settingsSkill" placeholder="Skill (optional)" min="2" max="8" step="0.01" onblur="App.fmtSkillInput(this)" style="width:110px;margin-bottom:0;">
       </div>
-      <div class="settings-field">
-        <label for="settingsSkill">Skill Level</label>
-        <input type="number" id="settingsSkill" placeholder="Skill level (optional)" min="2" max="8" step="0.01" onblur="App.fmtSkillInput(this)">
-      </div>
-      <div class="settings-toggle">
-        <label><input type="checkbox" id="settingsSingles"> Open to 1v1</label>
-      </div>
-      <div style="margin-top:10px;">
-        <button class="btn-add-player" style="width:100%;" onclick="App.saveSettings()">Save Profile</button>
+      <div style="display:flex;align-items:center;justify-content:space-between;">
+        <label style="display:flex;align-items:center;gap:6px;font-size:0.85rem;font-weight:500;color:var(--text-light);cursor:pointer;margin:0;">
+          <input type="checkbox" id="settingsSingles" style="accent-color:var(--primary);width:15px;height:15px;"> Open to 1v1
+        </label>
+        <button type="button" class="btn-outline" onclick="App.saveSettings()" style="padding:4px 12px;font-size:0.78rem;">Save</button>
       </div>
     </div>
 
@@ -1777,12 +1774,10 @@ const App = {
       }
     }
     // Brief visual feedback
-    const btn = document.querySelector('#tabSettings .btn-add-player');
+    const btn = document.querySelector('#tabSettings .btn-outline[onclick*="saveSettings"]');
     if (btn) {
-      const orig = btn.textContent;
       btn.textContent = 'Saved!';
-      btn.style.background = 'var(--success)';
-      setTimeout(() => { btn.textContent = orig; btn.style.background = ''; }, 1200);
+      setTimeout(() => { btn.textContent = 'Save'; }, 1500);
     }
   },
 
@@ -2075,14 +2070,53 @@ const App = {
     return `${min}:${sec.toString().padStart(2, '0')}`;
   },
 
+  MAX_MATCH_MS: 100 * 60 * 1000, // 100 minutes
+
   updateTimers() {
     const now = Date.now();
+    const expired = [];
     for (const [courtId, game] of Object.entries(this.state.activeGames)) {
+      if (game.startTime && (now - game.startTime) >= this.MAX_MATCH_MS) {
+        expired.push(courtId);
+        continue;
+      }
       const el = document.getElementById(`timer-${courtId}`);
       if (el && game.startTime) {
         el.textContent = this.formatTimer(now - game.startTime);
       }
     }
+    if (expired.length > 0) {
+      for (const courtId of expired) {
+        this._expireMatch(courtId);
+      }
+      this.saveState();
+      this.render();
+    }
+  },
+
+  _expireMatch(courtId) {
+    const game = this.state.activeGames[courtId];
+    if (!game) return;
+    this.recordOpponents(game.side1, game.side2);
+    for (const id of [...game.side1, ...game.side2]) {
+      const p = this.getPlayer(id);
+      if (p) p.roundsPlayed = (p.roundsPlayed || 0) + 1;
+    }
+    const duration = game.startTime ? Date.now() - game.startTime : null;
+    const histEntry = {
+      round: this.state.round,
+      courtId,
+      side1: [...game.side1],
+      side2: [...game.side2],
+      mode: game.mode,
+      duration,
+      startTime: game.startTime || null,
+      expired: true,
+    };
+    this.state.roundHistory.push(histEntry);
+    MyHistory.saveMatch(histEntry);
+    delete this.state.activeGames[courtId];
+    delete this.state.scoringGames[courtId];
   },
 
   // ─── Utility ───────────────────────────────
@@ -2754,7 +2788,7 @@ const App = {
     el.innerHTML = activeIds.map(courtId => {
       const game = this.state.activeGames[courtId];
       const isScoring = !!this.state.scoringGames[courtId];
-      const modeBadge = `<span class="court-mode-badge">${game.mode === 'singles' ? '1v1' : '2v2'}</span>`;
+      const modeBadge = '';
       const timerBadge = game.startTime ? `<span class="court-timer" id="timer-${courtId}">${this.formatTimer(Date.now() - game.startTime)}</span>` : '';
       const cardClass = isScoring ? 'court-card' : 'court-card game-active';
 
@@ -2799,7 +2833,7 @@ const App = {
         <div class="court-header">
           <span>Court ${courtId} ${modeBadge} ${timerBadge}</span>
           <div class="court-controls" style="gap:8px;">
-            <span class="court-status">${isScoring ? 'Score entry' : 'Playing'}</span>
+            <span class="court-status">${isScoring ? 'Score entry' : ''}</span>
             ${!isScoring ? `<button class="btn-cancel-game" onclick="App.cancelGame(${courtId})">&times;</button>` : ''}
           </div>
         </div>
@@ -3023,7 +3057,7 @@ const App = {
       const hasScores = m.score1 != null && m.score2 != null;
       const s1Class = hasScores ? (m.winner === 1 ? 'winner' : m.winner === 2 ? 'loser' : '') : '';
       const s2Class = hasScores ? (m.winner === 2 ? 'winner' : m.winner === 1 ? 'loser' : '') : '';
-      const scoreText = hasScores ? `${m.score1}–${m.score2}` : '–';
+      const scoreText = hasScores ? `${m.score1}\u2013${m.score2}` : (m.expired ? 'N/A' : '\u2013');
       const dur = m.duration ? this.formatTimer(m.duration) : '';
       let dateTime = '';
       if (m.startTime) {
@@ -4182,6 +4216,7 @@ const MyHistory = {
       mode: match.mode || 'doubles',
       sessionId: Session.id || null,
       sessionLabel: Session.label || null,
+      expired: match.expired || false,
       savedAt: Date.now(),
     };
 
@@ -4194,12 +4229,16 @@ const MyHistory = {
     } catch(e) { console.error('Failed to save personal match history:', e); }
   },
 
+  _matches: [],
+
   async show() {
     if (!Admin.isSignedIn() || !Admin._user?.uid) return;
     const setup = document.getElementById('sessionSetupSection');
     const view = document.getElementById('myHistoryView');
     if (setup) setup.style.display = 'none';
     if (view) view.style.display = '';
+    const searchEl = document.getElementById('myHistorySearch');
+    if (searchEl) searchEl.value = '';
 
     const list = document.getElementById('myHistoryList');
     if (list) list.innerHTML = '<div class="history-empty">Loading...</div>';
@@ -4207,48 +4246,62 @@ const MyHistory = {
     try {
       const res = await fetch(`${this.DB}/userHistory/${Admin._user.uid}/matches.json`);
       const data = await res.json();
-      if (!data) {
-        if (list) list.innerHTML = '<div class="history-empty">No matches yet</div>';
-        return;
-      }
-      // Convert object to array, newest first
-      const matches = Object.values(data).sort((a, b) => (b.startTime || b.savedAt || 0) - (a.startTime || a.savedAt || 0));
-      if (matches.length === 0) {
-        if (list) list.innerHTML = '<div class="history-empty">No matches yet</div>';
-        return;
-      }
-      list.innerHTML = '<div class="history-table-wrap">' + matches.map(m => {
-        const s1 = (m.side1Names || []).map(n => App.esc(n));
-        const s2 = (m.side2Names || []).map(n => App.esc(n));
-        const hasScores = m.score1 != null && m.score2 != null;
-        const s1Class = hasScores ? (m.winner === 1 ? 'winner' : m.winner === 2 ? 'loser' : '') : '';
-        const s2Class = hasScores ? (m.winner === 2 ? 'winner' : m.winner === 1 ? 'loser' : '') : '';
-        const scoreText = hasScores ? `${m.score1}\u2013${m.score2}` : '\u2013';
-        const dur = m.duration ? App.formatTimer(m.duration) : '';
-        let dateTime = '';
-        if (m.startTime) {
-          const d = new Date(m.startTime);
-          dateTime = d.toLocaleDateString(undefined, { month: 'short', day: 'numeric' }) + ', ' +
-            d.toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' });
-        }
-        const sessionTag = m.sessionLabel ? `<span style="font-size:0.68rem;background:var(--bg);padding:1px 6px;border-radius:var(--radius-full);color:var(--text-light);">${App.esc(m.sessionLabel)}</span>` : '';
-        return `<div class="match-card">
-          <div class="match-card-header">
-            <span>${dateTime} ${sessionTag}</span>
-            <span>${dur}</span>
-          </div>
-          <div class="match-card-body">
-            <div class="match-card-team ${s1Class}">${s1.join(' & ')}</div>
-            <span class="match-card-vs">vs</span>
-            <div class="match-card-team ${s2Class}" style="text-align:right;">${s2.join(' & ')}</div>
-            <div class="match-card-score">${scoreText}</div>
-          </div>
-        </div>`;
-      }).join('') + '</div>';
+      this._matches = data ? Object.values(data).sort((a, b) => (b.startTime || b.savedAt || 0) - (a.startTime || a.savedAt || 0)) : [];
+      this._render();
     } catch(e) {
       console.error('Failed to load personal match history:', e);
+      this._matches = [];
       if (list) list.innerHTML = '<div class="history-empty">Failed to load history</div>';
     }
+  },
+
+  filter() {
+    this._render();
+  },
+
+  _render() {
+    const list = document.getElementById('myHistoryList');
+    if (!list) return;
+    const search = (document.getElementById('myHistorySearch')?.value || '').toLowerCase().trim();
+    let matches = this._matches;
+    if (search) {
+      matches = matches.filter(m => {
+        const allNames = [...(m.side1Names || []), ...(m.side2Names || [])];
+        return allNames.some(n => n.toLowerCase().includes(search));
+      });
+    }
+    if (matches.length === 0) {
+      list.innerHTML = `<div class="history-empty">${search ? 'No matches found' : 'No matches yet'}</div>`;
+      return;
+    }
+    list.innerHTML = '<div class="history-table-wrap">' + matches.map(m => {
+      const s1 = (m.side1Names || []).map(n => App.esc(n));
+      const s2 = (m.side2Names || []).map(n => App.esc(n));
+      const hasScores = m.score1 != null && m.score2 != null;
+      const s1Class = hasScores ? (m.winner === 1 ? 'winner' : m.winner === 2 ? 'loser' : '') : '';
+      const s2Class = hasScores ? (m.winner === 2 ? 'winner' : m.winner === 1 ? 'loser' : '') : '';
+      const scoreText = hasScores ? `${m.score1}\u2013${m.score2}` : (m.expired ? 'N/A' : '\u2013');
+      const dur = m.duration ? App.formatTimer(m.duration) : '';
+      let dateTime = '';
+      if (m.startTime) {
+        const d = new Date(m.startTime);
+        dateTime = d.toLocaleDateString(undefined, { month: 'short', day: 'numeric' }) + ', ' +
+          d.toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' });
+      }
+      const sessionTag = m.sessionLabel ? `<span style="font-size:0.68rem;background:var(--bg);padding:1px 6px;border-radius:var(--radius-full);color:var(--text-light);">${App.esc(m.sessionLabel)}</span>` : '';
+      return `<div class="match-card">
+        <div class="match-card-header">
+          <span>${dateTime} ${sessionTag}</span>
+          <span>${dur}</span>
+        </div>
+        <div class="match-card-body">
+          <div class="match-card-team ${s1Class}">${s1.join(' & ')}</div>
+          <span class="match-card-vs">vs</span>
+          <div class="match-card-team ${s2Class}" style="text-align:right;">${s2.join(' & ')}</div>
+          <div class="match-card-score">${scoreText}</div>
+        </div>
+      </div>`;
+    }).join('') + '</div>';
   },
 
   hide() {
