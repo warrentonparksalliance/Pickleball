@@ -1279,6 +1279,139 @@ body {
 }
 .app-footer a:hover { text-decoration: underline; }
 
+/* ── Tournament Bracket ────────────────────── */
+.bracket-container {
+  display: flex;
+  overflow-x: auto;
+  gap: 0;
+  padding: 8px 0 12px;
+  -webkit-overflow-scrolling: touch;
+}
+.bracket-round {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-around;
+  min-width: 130px;
+  flex-shrink: 0;
+  position: relative;
+}
+.bracket-round-title {
+  text-align: center;
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: var(--text-light);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  margin-bottom: 8px;
+  white-space: nowrap;
+}
+.bracket-match {
+  display: flex;
+  flex-direction: column;
+  margin: 6px 4px;
+  border: 1.5px solid var(--border);
+  border-radius: 6px;
+  overflow: hidden;
+  font-size: 0.78rem;
+  background: var(--card);
+}
+.bracket-match.active {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 1px var(--primary);
+}
+.bracket-match.completed {
+  opacity: 0.7;
+}
+.bracket-slot {
+  padding: 5px 8px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 4px;
+  min-height: 26px;
+}
+.bracket-slot + .bracket-slot {
+  border-top: 1px solid var(--border);
+}
+.bracket-slot-name {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  flex: 1;
+}
+.bracket-slot-score {
+  font-weight: 700;
+  font-size: 0.8rem;
+  min-width: 16px;
+  text-align: right;
+}
+.bracket-slot.winner {
+  background: #059669;
+  color: #fff;
+  font-weight: 600;
+}
+.bracket-slot.loser {
+  color: var(--text-muted);
+}
+.bracket-slot.bye {
+  color: var(--text-muted);
+  font-style: italic;
+}
+.bracket-slot.tbd {
+  color: var(--text-muted);
+}
+.bracket-connector {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-around;
+  width: 16px;
+  flex-shrink: 0;
+  position: relative;
+}
+.bracket-connector-pair {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  justify-content: center;
+  position: relative;
+}
+.bracket-connector-pair::before {
+  content: '';
+  position: absolute;
+  right: 0;
+  top: 25%;
+  bottom: 25%;
+  width: 10px;
+  border: 1.5px solid var(--border);
+  border-left: none;
+  border-radius: 0 6px 6px 0;
+}
+.bracket-champion {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  gap: 4px;
+  padding: 12px;
+  min-width: 100px;
+}
+.bracket-champion-icon {
+  font-size: 1.6rem;
+}
+.bracket-champion-name {
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: var(--text);
+  text-align: center;
+}
+.bracket-champion-label {
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: #059669;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
 /* ── Responsive ─────────────────────────────── */
 @media (max-width: 600px) {
   .page-wrap { padding: 12px 8px; }
@@ -1429,6 +1562,7 @@ body {
           <option value="" disabled selected>Select session type...</option>
           <option value="open">Open Play</option>
           <option value="roundrobin">Round Robin</option>
+          <option value="tournament">Tournament</option>
         </select>
         <p id="privateSessionError" class="setup-error" style="display:none;">Enter a session name and 4-character passcode</p>
         <button type="button" class="btn-confirm-join" onclick="Onboard.createPrivate()" style="width:100%;padding:10px;">Create &amp; Join</button>
@@ -1485,7 +1619,7 @@ body {
       </div>
       <div id="playerList" class="queue-list"></div>
       <div id="queueHint" class="section-subtitle" style="margin-top:8px;">Use &#x23F8; to sit out temporarily or &times; to remove.</div>
-      <button id="rrUnlockBtn" class="btn-outline" onclick="App.rrUnlockPlayers()" style="display:none;margin-top:8px;width:100%;color:var(--warning);border-color:var(--warning);font-size:0.82rem;">Unlock Players &amp; Reset Schedule</button>
+      <button id="rrUnlockBtn" class="btn-outline" onclick="App.isRoundRobin()?App.rrUnlockPlayers():App.bracketUnlockPlayers()" style="display:none;margin-top:8px;width:100%;color:var(--warning);border-color:var(--warning);font-size:0.82rem;">Unlock Players &amp; Reset</button>
     </div>
 
     <!-- Assign -->
@@ -1522,6 +1656,14 @@ body {
       <div class="queue-bar-wrap">
         <div class="section-title" style="margin-bottom:8px;">Upcoming Rounds</div>
         <div id="rrUpcomingList"></div>
+      </div>
+    </div>
+
+    <!-- Tournament: bracket view -->
+    <div id="bracketSection" style="display:none;margin-top:14px;">
+      <div class="queue-bar-wrap">
+        <div class="section-title" style="margin-bottom:8px;">Bracket</div>
+        <div id="bracketView"></div>
       </div>
     </div>
   </div>
@@ -1572,6 +1714,7 @@ body {
       <select class="setup-input" id="settingsSessionType" onchange="App.setSessionType(this.value)" style="margin-bottom:0;cursor:pointer;">
         <option value="open">Open Play</option>
         <option value="roundrobin">Round Robin</option>
+        <option value="tournament">Tournament</option>
       </select>
     </div>
 
@@ -1978,6 +2121,17 @@ const App = {
   // ─── Courts ────────────────────────────────
   cancelGame(courtId) {
     if (!confirm(`Cancel Court ${courtId}? Players will be sent back to the queue.`)) return;
+    // Clear bracket match court reference so it can be restarted
+    if (this.isTournament()) {
+      const game = this.state.activeGames[courtId];
+      if (game && game.bracketMatchId) {
+        for (const round of (this.state._bracket || [])) {
+          for (const match of round) {
+            if (match.id === game.bracketMatchId) match.court = null;
+          }
+        }
+      }
+    }
     delete this.state.activeGames[courtId];
     delete this.state.scoringGames[courtId];
     this.saveState();
@@ -1998,6 +2152,12 @@ const App = {
     if (isNaN(score1) || isNaN(score2)) {
       const errEl = document.getElementById(`score-err-${courtId}`);
       if (errEl) errEl.textContent = 'Enter a score for both sides.';
+      return;
+    }
+    // Tournament requires a clear winner (no ties)
+    if (this.isTournament() && score1 === score2) {
+      const errEl = document.getElementById(`score-err-${courtId}`);
+      if (errEl) errEl.textContent = 'Tournament matches cannot end in a tie.';
       return;
     }
     const game = this.state.activeGames[courtId];
@@ -2023,6 +2183,13 @@ const App = {
       };
       this.state.roundHistory.push(histEntry);
       MyHistory.saveMatch(histEntry);
+
+      // Advance bracket winner in tournament mode
+      if (this.isTournament() && winner) {
+        game._submittedScore1 = score1;
+        game._submittedScore2 = score2;
+        this.bracketRecordWinner(courtId, winner);
+      }
     }
     const rematch = this._checkRematch(courtId, game);
     delete this.state.activeGames[courtId];
@@ -2068,7 +2235,7 @@ const App = {
   },
 
   _checkRematch(courtId, game) {
-    if (this.isRoundRobin() || !game) return null;
+    if (this.isRoundRobin() || this.isTournament() || !game) return null;
     const cb = document.getElementById(`rematch-${courtId}`);
     if (!cb || !cb.checked) return null;
     return { side1: [...game.side1], side2: [...game.side2], mode: game.mode };
@@ -2307,7 +2474,7 @@ const App = {
   setSessionType(type) {
     if (!Admin.isAdmin()) return;
     if (type === this.state._sessionType) return;
-    const label = type === 'roundrobin' ? 'Round Robin' : 'Open Play';
+    const label = type === 'roundrobin' ? 'Round Robin' : type === 'tournament' ? 'Tournament' : 'Open Play';
     if (!confirm(`Switch to ${label}? This will clear active courts and schedules.`)) return;
     this.state._sessionType = type || 'open';
     this.state.activeGames = {};
@@ -2315,6 +2482,9 @@ const App = {
     this.state._rrSchedule = [];
     this.state._rrCurrentRound = 0;
     this.state._rrLocked = false;
+    this.state._bracket = [];
+    this.state._bracketCurrentRound = 0;
+    this.state._bracketLocked = false;
     this._logAdmin('Changed session type to ' + label);
     this.saveState();
     this.render();
@@ -2417,6 +2587,477 @@ const App = {
 
   rrHasActiveGames() {
     return Object.keys(this.state.activeGames || {}).length > 0 || Object.keys(this.state.scoringGames || {}).length > 0;
+  },
+
+  // ─── Tournament Bracket ─────────────────────
+  isTournament() { return this.state._sessionType === 'tournament'; },
+
+  _bracketRoundName(roundIndex, totalRounds) {
+    const remaining = totalRounds - roundIndex;
+    if (remaining === 1) return 'Final';
+    if (remaining === 2) return 'Semifinals';
+    if (remaining === 3) return 'Quarterfinals';
+    return 'Round ' + (roundIndex + 1);
+  },
+
+  bracketLockPlayers() {
+    if (this.state.players.length < 2) {
+      alert('Need at least 2 players for a tournament.');
+      return;
+    }
+    this.state._bracketLocked = true;
+    this.saveState();
+    this.render();
+  },
+
+  bracketUnlockPlayers() {
+    this.state._bracketLocked = false;
+    this.state._bracket = [];
+    this.state._bracketCurrentRound = 0;
+    this.state.activeGames = {};
+    this.state.scoringGames = {};
+    this.saveState();
+    this.render();
+  },
+
+  bracketGenerate() {
+    const playerIds = this.state.players.map(p => p.id);
+    const n = playerIds.length;
+    if (n < 2) return;
+
+    // Seed by skill descending (if available), else by ID order
+    const seeded = [...playerIds].sort((a, b) => {
+      const pa = this.getPlayer(a), pb = this.getPlayer(b);
+      const sa = pa && pa.score != null ? pa.score : 0;
+      const sb = pb && pb.score != null ? pb.score : 0;
+      return sb - sa || a - b;
+    });
+
+    // Find bracket size (next power of 2)
+    let bracketSize = 2;
+    while (bracketSize < n) bracketSize *= 2;
+    const numByes = bracketSize - n;
+    const totalRounds = Math.log2(bracketSize);
+
+    // Standard bracket seeding placement
+    // Seeds 1..n fill positions, byes fill the rest
+    // Top seeds get byes (placed against null in round 1)
+    const slots = new Array(bracketSize).fill(null);
+    // Use standard tournament seeding order for fair bracket placement
+    const seedOrder = this._bracketSeedOrder(bracketSize);
+    for (let i = 0; i < n; i++) {
+      slots[seedOrder[i]] = seeded[i];
+    }
+    // Remaining slots stay null (byes)
+
+    // Build round 1 matches
+    let matchId = 1;
+    const round1 = [];
+    for (let i = 0; i < bracketSize; i += 2) {
+      const s1 = slots[i] !== null ? [slots[i]] : null;
+      const s2 = slots[i + 1] !== null ? [slots[i + 1]] : null;
+      const isBye = !s1 || !s2;
+      round1.push({
+        id: matchId++,
+        side1: s1,
+        side2: s2,
+        score1: null,
+        score2: null,
+        winner: isBye ? (s1 ? 1 : s2 ? 2 : 0) : null,
+        bye: isBye,
+      });
+    }
+
+    // Build subsequent empty rounds
+    const rounds = [round1];
+    let prevRound = round1;
+    for (let r = 1; r < totalRounds; r++) {
+      const round = [];
+      for (let i = 0; i < prevRound.length; i += 2) {
+        round.push({
+          id: matchId++,
+          side1: null,
+          side2: null,
+          score1: null,
+          score2: null,
+          winner: null,
+          bye: false,
+        });
+      }
+      rounds.push(round);
+      prevRound = round;
+    }
+
+    // Auto-advance bye winners into round 2
+    for (let i = 0; i < round1.length; i++) {
+      if (round1[i].bye && round1[i].winner) {
+        const winnerSide = round1[i].winner === 1 ? round1[i].side1 : round1[i].side2;
+        if (winnerSide && rounds.length > 1) {
+          const nextMatch = rounds[1][Math.floor(i / 2)];
+          if (i % 2 === 0) {
+            nextMatch.side1 = [...winnerSide];
+          } else {
+            nextMatch.side2 = [...winnerSide];
+          }
+          // If both sides of next match are filled by byes, auto-advance that too
+          // (edge case: very few players relative to bracket size)
+        }
+      }
+    }
+
+    // Check for round 2 matches where both sides came from byes
+    if (rounds.length > 1) {
+      for (let i = 0; i < rounds[1].length; i++) {
+        const m = rounds[1][i];
+        if (m.side1 && m.side2 && !m.winner) {
+          // Both from byes — shouldn't happen with proper seeding, but handle it
+        } else if (m.side1 && !m.side2) {
+          // Only one side filled — check if the other feeder was a double-bye
+          const feeder1 = round1[i * 2], feeder2 = round1[i * 2 + 1];
+          if (feeder2.bye && !feeder2.side1 && !feeder2.side2) {
+            // Double bye: both slots empty in feeder — auto-advance
+            m.winner = 1;
+            m.bye = true;
+            this._bracketAutoAdvance(rounds, 1, i);
+          }
+        } else if (!m.side1 && m.side2) {
+          const feeder1 = round1[i * 2], feeder2 = round1[i * 2 + 1];
+          if (feeder1.bye && !feeder1.side1 && !feeder1.side2) {
+            m.winner = 2;
+            m.bye = true;
+            this._bracketAutoAdvance(rounds, 1, i);
+          }
+        }
+      }
+    }
+
+    this.state._bracket = rounds;
+    this.state._bracketCurrentRound = 0;
+    this._bracketStartRound(0);
+    this.saveState();
+    this.render();
+  },
+
+  _bracketSeedOrder(size) {
+    // Standard tournament bracket seeding.
+    // Returns array where index = seed rank (0-based), value = slot position.
+    // Ensures seed 1 vs seed N, seed 2 vs seed N-1, etc.
+    // and that top seeds are on opposite halves of the bracket.
+    let positions = [1, 2]; // seed numbers at each slot
+    while (positions.length < size) {
+      const next = [];
+      const sum = positions.length * 2 + 1;
+      for (const seed of positions) {
+        next.push(seed);
+        next.push(sum - seed);
+      }
+      positions = next;
+    }
+    // Convert: positions[slot] = seedNumber (1-based)
+    // To: result[seedRank] = slot (seedRank is 0-based)
+    const result = new Array(size);
+    for (let slot = 0; slot < size; slot++) {
+      result[positions[slot] - 1] = slot;
+    }
+    return result;
+  },
+
+  _bracketAutoAdvance(rounds, roundIdx, matchIdx) {
+    if (roundIdx + 1 >= rounds.length) return;
+    const match = rounds[roundIdx][matchIdx];
+    if (!match.winner) return;
+    const winnerSide = match.winner === 1 ? match.side1 : match.side2;
+    if (!winnerSide) return;
+    const nextMatch = rounds[roundIdx + 1][Math.floor(matchIdx / 2)];
+    if (matchIdx % 2 === 0) {
+      nextMatch.side1 = [...winnerSide];
+    } else {
+      nextMatch.side2 = [...winnerSide];
+    }
+  },
+
+  _bracketStartRound(roundIdx) {
+    const rounds = this.state._bracket || [];
+    const round = rounds[roundIdx];
+    if (!round) return;
+    const numCourts = this.state.availableCourts || 1;
+    this.state.activeGames = {};
+    this.state.scoringGames = {};
+    let courtNum = 1;
+    for (const match of round) {
+      if (match.bye || match.winner) continue; // skip byes and already-decided matches
+      if (!match.side1 || !match.side2) continue; // both sides must be filled
+      if (courtNum > numCourts) break; // no more courts available
+      match.court = courtNum;
+      this.state.activeGames[courtNum] = {
+        side1: [...match.side1],
+        side2: [...match.side2],
+        mode: match.side1.length > 1 ? 'doubles' : 'singles',
+        startTime: Date.now(),
+        bracketMatchId: match.id,
+      };
+      courtNum++;
+    }
+  },
+
+  bracketAdvanceRound() {
+    const rounds = this.state._bracket || [];
+    const current = this.state._bracketCurrentRound || 0;
+    if (current + 1 >= rounds.length) return;
+    this.state._bracketCurrentRound = current + 1;
+    this._bracketStartRound(current + 1);
+    this.saveState();
+    this.render();
+  },
+
+  bracketRecordWinner(courtId, winnerSide) {
+    const rounds = this.state._bracket || [];
+    const game = this.state.activeGames[courtId];
+    if (!game || !game.bracketMatchId) return;
+
+    // Find the match in the bracket
+    for (let r = 0; r < rounds.length; r++) {
+      for (let m = 0; m < rounds[r].length; m++) {
+        const match = rounds[r][m];
+        if (match.id === game.bracketMatchId) {
+          match.winner = winnerSide;
+          match.score1 = game._submittedScore1 ?? null;
+          match.score2 = game._submittedScore2 ?? null;
+          // Advance winner to next round
+          if (r + 1 < rounds.length) {
+            const winnerPlayers = winnerSide === 1 ? match.side1 : match.side2;
+            const nextMatch = rounds[r + 1][Math.floor(m / 2)];
+            if (m % 2 === 0) {
+              nextMatch.side1 = winnerPlayers ? [...winnerPlayers] : null;
+            } else {
+              nextMatch.side2 = winnerPlayers ? [...winnerPlayers] : null;
+            }
+          }
+          return;
+        }
+      }
+    }
+  },
+
+  bracketIsRoundComplete() {
+    const rounds = this.state._bracket || [];
+    const current = this.state._bracketCurrentRound || 0;
+    const round = rounds[current];
+    if (!round) return false;
+    return round.every(m => m.winner || m.bye || (!m.side1 && !m.side2));
+  },
+
+  bracketIsComplete() {
+    const rounds = this.state._bracket || [];
+    if (rounds.length === 0) return false;
+    const finalRound = rounds[rounds.length - 1];
+    return finalRound.length === 1 && finalRound[0].winner;
+  },
+
+  bracketGetChampion() {
+    const rounds = this.state._bracket || [];
+    if (rounds.length === 0) return null;
+    const finalMatch = rounds[rounds.length - 1][0];
+    if (!finalMatch || !finalMatch.winner) return null;
+    const winnerIds = finalMatch.winner === 1 ? finalMatch.side1 : finalMatch.side2;
+    if (!winnerIds) return null;
+    return winnerIds.map(id => this.getPlayer(id)).filter(Boolean);
+  },
+
+  bracketHasUnstartedMatches() {
+    const rounds = this.state._bracket || [];
+    const current = this.state._bracketCurrentRound || 0;
+    const round = rounds[current];
+    if (!round) return false;
+    return round.some(m => !m.bye && !m.winner && m.side1 && m.side2 && !m.court);
+  },
+
+  bracketStartWaiting() {
+    // Start unstarted matches in current round on free courts
+    const rounds = this.state._bracket || [];
+    const current = this.state._bracketCurrentRound || 0;
+    const round = rounds[current];
+    if (!round) return;
+    const numCourts = this.state.availableCourts || 1;
+    const usedCourts = new Set(Object.keys(this.state.activeGames).map(Number));
+    let nextCourt = 1;
+    for (const match of round) {
+      if (match.bye || match.winner || !match.side1 || !match.side2 || match.court) continue;
+      // Find next free court
+      while (nextCourt <= numCourts && usedCourts.has(nextCourt)) nextCourt++;
+      if (nextCourt > numCourts) break;
+      match.court = nextCourt;
+      this.state.activeGames[nextCourt] = {
+        side1: [...match.side1],
+        side2: [...match.side2],
+        mode: match.side1.length > 1 ? 'doubles' : 'singles',
+        startTime: Date.now(),
+        bracketMatchId: match.id,
+      };
+      usedCourts.add(nextCourt);
+      nextCourt++;
+    }
+    this.saveState();
+    this.render();
+  },
+
+  _renderQueueTournament(countEl, controls, btnAssignAll, courtSelect, matchOpts, courtLabel) {
+    if (matchOpts) matchOpts.style.display = 'none';
+    if (courtLabel) courtLabel.textContent = 'Number of courts';
+    const rrSection = document.getElementById('rrUpcomingSection');
+    if (rrSection) rrSection.style.display = 'none';
+
+    const n = this.state.players.length;
+    const locked = this.state._bracketLocked;
+    const bracket = this.state._bracket || [];
+    const currentRound = this.state._bracketCurrentRound || 0;
+
+    if (!locked) {
+      countEl.innerHTML = n < 2
+        ? `${n} player${n !== 1 ? 's' : ''} &middot; need at least 2 to start`
+        : `${n} player${n !== 1 ? 's' : ''} &middot; <a href="#" onclick="App.bracketLockPlayers();return false;" style="color:var(--primary);font-weight:600;">Lock Players to Generate Bracket</a>`;
+      if (controls) controls.style.display = 'none';
+    } else if (bracket.length === 0) {
+      countEl.textContent = `${n} players locked`;
+      if (Session.id && controls) {
+        controls.style.display = 'flex';
+        if (courtSelect) {
+          courtSelect.parentElement.style.display = '';
+          courtSelect.value = this.state.availableCourts || 2;
+        }
+        if (btnAssignAll) {
+          btnAssignAll.disabled = n < 2;
+          btnAssignAll.textContent = 'Generate Bracket';
+          btnAssignAll.onclick = () => this.bracketGenerate();
+        }
+      }
+    } else {
+      const totalRounds = bracket.length;
+      const hasActive = this.rrHasActiveGames();
+      const roundComplete = this.bracketIsRoundComplete();
+      const tournamentDone = this.bracketIsComplete();
+      const hasWaiting = this.bracketHasUnstartedMatches();
+
+      if (tournamentDone) {
+        const champ = this.bracketGetChampion();
+        countEl.textContent = `Tournament Complete!`;
+      } else {
+        countEl.textContent = `${this._bracketRoundName(currentRound, totalRounds)} · ${hasActive ? 'In Progress' : roundComplete ? 'Complete' : 'Ready'}`;
+      }
+
+      if (controls) controls.style.display = 'flex';
+      if (btnAssignAll) {
+        if (tournamentDone) {
+          btnAssignAll.disabled = true;
+          btnAssignAll.textContent = 'Tournament Complete';
+          btnAssignAll.onclick = () => {};
+        } else if (hasWaiting && !hasActive) {
+          btnAssignAll.disabled = false;
+          btnAssignAll.textContent = 'Start Remaining Matches';
+          btnAssignAll.onclick = () => this.bracketStartWaiting();
+        } else if (hasWaiting && hasActive) {
+          btnAssignAll.disabled = false;
+          btnAssignAll.textContent = 'Start Waiting Matches';
+          btnAssignAll.onclick = () => this.bracketStartWaiting();
+        } else if (roundComplete && !hasActive && currentRound + 1 < totalRounds) {
+          btnAssignAll.disabled = false;
+          btnAssignAll.textContent = `Start ${this._bracketRoundName(currentRound + 1, totalRounds)}`;
+          btnAssignAll.onclick = () => this.bracketAdvanceRound();
+        } else {
+          btnAssignAll.disabled = true;
+          btnAssignAll.textContent = hasActive ? 'Matches In Progress' : 'Waiting...';
+          btnAssignAll.onclick = () => {};
+        }
+      }
+      if (courtSelect) courtSelect.parentElement.style.display = bracket.length === 0 ? '' : 'none';
+    }
+
+    this._renderBracket();
+  },
+
+  _renderBracket() {
+    const section = document.getElementById('bracketSection');
+    const view = document.getElementById('bracketView');
+    if (!section || !view) return;
+
+    const rounds = this.state._bracket || [];
+    if (rounds.length === 0) {
+      section.style.display = 'none';
+      return;
+    }
+
+    section.style.display = '';
+    const totalRounds = rounds.length;
+    const currentRound = this.state._bracketCurrentRound || 0;
+
+    let html = '<div class="bracket-container">';
+
+    for (let r = 0; r < totalRounds; r++) {
+      const round = rounds[r];
+      const roundName = this._bracketRoundName(r, totalRounds);
+
+      html += `<div class="bracket-round">`;
+      html += `<div class="bracket-round-title">${this.esc(roundName)}</div>`;
+
+      for (const match of round) {
+        const isActive = !match.bye && !match.winner && match.side1 && match.side2;
+        const isOnCourt = match.court && this.state.activeGames[match.court];
+        const isDone = !!match.winner && !match.bye;
+        const matchClass = isOnCourt ? 'bracket-match active' : isDone ? 'bracket-match completed' : 'bracket-match';
+
+        html += `<div class="${matchClass}">`;
+
+        // Side 1
+        html += this._renderBracketSlot(match.side1, match.winner === 1, match.winner === 2, match.score1, match.bye && !match.side1);
+
+        // Side 2
+        html += this._renderBracketSlot(match.side2, match.winner === 2, match.winner === 1, match.score2, match.bye && !match.side2);
+
+        html += `</div>`;
+      }
+
+      html += `</div>`;
+
+      // Add connector between rounds (except after last round)
+      if (r < totalRounds - 1) {
+        html += `<div class="bracket-connector">`;
+        for (let i = 0; i < round.length; i += 2) {
+          html += `<div class="bracket-connector-pair"></div>`;
+        }
+        html += `</div>`;
+      }
+    }
+
+    // Champion display
+    if (this.bracketIsComplete()) {
+      const champ = this.bracketGetChampion();
+      if (champ && champ.length > 0) {
+        html += `<div class="bracket-champion">
+          <div class="bracket-champion-icon">&#127942;</div>
+          <div class="bracket-champion-name">${champ.map(p => this.esc(p.name)).join(' & ')}</div>
+          <div class="bracket-champion-label">Champion</div>
+        </div>`;
+      }
+    }
+
+    html += '</div>';
+    view.innerHTML = html;
+  },
+
+  _renderBracketSlot(side, isWinner, isLoser, score, isBye) {
+    if (isBye) {
+      return `<div class="bracket-slot bye"><span class="bracket-slot-name">BYE</span></div>`;
+    }
+    if (!side) {
+      return `<div class="bracket-slot tbd"><span class="bracket-slot-name">TBD</span></div>`;
+    }
+    const names = side.map(id => {
+      const p = this.getPlayer(id);
+      return p ? this.esc(p.name) : '?';
+    }).join(' & ');
+    const slotClass = isWinner ? 'bracket-slot winner' : isLoser ? 'bracket-slot loser' : 'bracket-slot';
+    const scoreHtml = score != null ? `<span class="bracket-slot-score">${score}</span>` : '';
+    return `<div class="${slotClass}"><span class="bracket-slot-name">${names}</span>${scoreHtml}</div>`;
   },
 
   assignAll() {
@@ -2692,22 +3333,28 @@ const App = {
     if (typeof Admin !== 'undefined') Admin._updateUI();
 
     const rr = this.isRoundRobin();
+    const tourn = this.isTournament();
+    const structured = rr || tourn;
     const rrLocked = rr && this.state._rrLocked;
+    const tournLocked = tourn && this.state._bracketLocked;
+    const isLocked = rrLocked || tournLocked;
 
-    // Update queue section labels for round robin
+    // Update queue section labels for structured modes
     const qTitle = document.getElementById('queueTitle');
     const qSub = document.getElementById('queueSubtitle');
     const addBtn = document.getElementById('addAnotherBtn');
-    if (qTitle) qTitle.textContent = rr ? 'Players' : 'Queue';
+    if (qTitle) qTitle.textContent = structured ? 'Players' : 'Queue';
     if (qSub) qSub.textContent = rr
       ? (rrLocked ? 'Players are locked for this round robin.' : 'Add all players, then lock the roster to generate the schedule.')
+      : tourn
+      ? (tournLocked ? 'Players are locked for this tournament.' : 'Add all players, then lock the roster to generate the bracket.')
       : 'Players waiting to be assigned to a court.';
     const qHint = document.getElementById('queueHint');
-    if (qHint) qHint.style.display = rr ? 'none' : '';
-    if (addBtn) addBtn.style.display = rrLocked ? 'none' : '';
+    if (qHint) qHint.style.display = structured ? 'none' : '';
+    if (addBtn) addBtn.style.display = isLocked ? 'none' : '';
 
     this.renderPlayers();
-    if (!rr) {
+    if (!structured) {
       this.renderPartners();
       this.renderPartnerPicker();
     }
@@ -2726,20 +3373,20 @@ const App = {
     document.getElementById('optSkill').checked = this.state.options.useSkill;
     document.getElementById('optRepeats').checked = this.state.options.minimizeRepeats;
 
-    // Hide partner section in round robin
+    // Hide partner section in structured modes
     const partnerSection = document.getElementById('partnerSection');
-    if (partnerSection) partnerSection.style.display = rr ? 'none' : '';
+    if (partnerSection) partnerSection.style.display = structured ? 'none' : '';
 
-    // Show unlock button for admin in round robin
+    // Show unlock button for admin in round robin or tournament
     const unlockBtn = document.getElementById('rrUnlockBtn');
-    if (unlockBtn) unlockBtn.style.display = (rr && rrLocked && Admin.isAdmin()) ? '' : 'none';
+    if (unlockBtn) unlockBtn.style.display = ((rr && rrLocked) || (tourn && tournLocked)) && Admin.isAdmin() ? '' : 'none';
 
     // Session type toggle (admin, private sessions)
     const sessionTypeSection = document.getElementById('sessionTypeSection');
     if (sessionTypeSection) {
       sessionTypeSection.style.display = (Session.id && Session.id.startsWith('pvt-') && Admin.isAdmin()) ? '' : 'none';
       const selType = document.getElementById('settingsSessionType');
-      if (selType) selType.value = rr ? 'roundrobin' : 'open';
+      if (selType) selType.value = rr ? 'roundrobin' : tourn ? 'tournament' : 'open';
     }
 
     // Show passcode section for private sessions (admin only)
@@ -2816,17 +3463,19 @@ const App = {
         : p.isLive ? '<span class="queue-row-status user">user</span>'
         : '<span class="queue-row-status guest">guest</span>';
       const rr = this.isRoundRobin();
-      const rrLocked = rr && this.state._rrLocked;
-      const pauseBtn = rr ? '' : (p.active
+      const tourn = this.isTournament();
+      const structured = rr || tourn;
+      const isLocked = (rr && this.state._rrLocked) || (tourn && this.state._bracketLocked);
+      const pauseBtn = structured ? '' : (p.active
         ? `<button class="queue-row-btn queue-row-action" onclick="App.togglePlayer(${p.id})" title="Sit out">&#x23F8;</button>`
         : `<button class="queue-row-btn queue-row-action play" onclick="App.togglePlayer(${p.id})" title="Rejoin queue">&#x25B6;</button>`);
-      const canRemove = !rrLocked && (isYou || isMyGuest || Admin.isAdmin());
+      const canRemove = !isLocked && (isYou || isMyGuest || Admin.isAdmin());
       const removeBtn = canRemove
         ? `<button class="queue-row-btn queue-row-remove" onclick="App.confirmRemove(${p.id})" title="${isYou ? 'Leave session' : 'Remove'}">&times;</button>`
         : '';
       const skillInline = skillStr ? `<span class="queue-row-skill">(${skillStr})</span>` : '';
       return `<div class="${rowClass}">
-        <span class="queue-row-name">${this.esc(p.name)}${skillInline}${editBtn}${statusBadge}${partnerBadge}${rrLocked ? '' : singlesBadge}</span>
+        <span class="queue-row-name">${this.esc(p.name)}${skillInline}${editBtn}${statusBadge}${partnerBadge}${isLocked ? '' : singlesBadge}</span>
         ${pauseBtn}
         ${removeBtn}
       </div>`;
@@ -2919,12 +3568,13 @@ const App = {
             <input type="number" id="score-s2-${courtId}" min="0" placeholder="–" onkeydown="if(event.key==='Enter')App.submitScore(${courtId})" oninput="document.getElementById('score-err-${courtId}').textContent=''">
           </div>
           <div id="score-err-${courtId}" class="score-error"></div>
-          ${!this.isRoundRobin() ? `<label style="display:flex;align-items:center;gap:6px;font-size:0.82rem;color:var(--text-light);cursor:pointer;margin-top:4px;">
+          ${!this.isRoundRobin() && !this.isTournament() ? `<label style="display:flex;align-items:center;gap:6px;font-size:0.82rem;color:var(--text-light);cursor:pointer;margin-top:4px;">
             <input type="checkbox" id="rematch-${courtId}" style="accent-color:var(--primary);"> Rematch
           </label>` : ''}
+          ${this.isTournament() ? `<div style="font-size:0.75rem;color:var(--text-muted);margin-top:4px;">Bracket match &mdash; winner advances</div>` : ''}
           <div class="score-buttons">
             <button class="btn btn-assign" style="padding:8px 16px;font-size:0.85rem;" onclick="App.submitScore(${courtId})">Save Score</button>
-            <button class="btn btn-outline" onclick="App.endWithoutScore(${courtId})">Skip</button>
+            ${this.isTournament() ? '' : `<button class="btn btn-outline" onclick="App.endWithoutScore(${courtId})">Skip</button>`}
             <button class="btn btn-ghost" onclick="App.cancelScoring(${courtId})">Cancel</button>
           </div>
         </div>`;
@@ -2983,6 +3633,8 @@ const App = {
 
     if (this.isRoundRobin()) {
       this._renderQueueRR(countEl, controls, btnAssignAll, courtSelect, matchOpts, courtLabel);
+    } else if (this.isTournament()) {
+      this._renderQueueTournament(countEl, controls, btnAssignAll, courtSelect, matchOpts, courtLabel);
     } else {
       this._renderQueueOpen(countEl, controls, btnAssignAll, courtSelect, matchOpts, courtLabel, onCourt);
     }
@@ -2993,6 +3645,8 @@ const App = {
     if (courtLabel) courtLabel.textContent = 'Courts available now';
     const rrSection = document.getElementById('rrUpcomingSection');
     if (rrSection) rrSection.style.display = 'none';
+    const bracketSec = document.getElementById('bracketSection');
+    if (bracketSec) bracketSec.style.display = 'none';
 
     const active = this.state.players.filter(p => p.active && !onCourt.has(p.id));
     const activePairs = this.state.teams.filter(t =>
@@ -3037,6 +3691,8 @@ const App = {
   _renderQueueRR(countEl, controls, btnAssignAll, courtSelect, matchOpts, courtLabel) {
     if (matchOpts) matchOpts.style.display = 'none';
     if (courtLabel) courtLabel.textContent = 'Number of courts';
+    const bracketSec = document.getElementById('bracketSection');
+    if (bracketSec) bracketSec.style.display = 'none';
 
     const n = this.state.players.length;
     const locked = this.state._rrLocked;
@@ -4030,7 +4686,7 @@ const Onboard = {
     this._pendingPasscode = passcode;
     this._pendingIsCreate = true;
     this._pendingSessionType = this._newSessionType;
-    const typeLabel = this._newSessionType === 'roundrobin' ? ' (Round Robin)' : ' (Open Play)';
+    const typeLabel = this._newSessionType === 'roundrobin' ? ' (Round Robin)' : this._newSessionType === 'tournament' ? ' (Tournament)' : ' (Open Play)';
     this._showInlineConfirm('createConfirmInline', sessionName + typeLabel, () => this.confirmJoin());
   },
 

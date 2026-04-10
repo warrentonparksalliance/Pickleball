@@ -152,7 +152,7 @@ footer a:hover { text-decoration: underline; }
   <li><strong>Sign in with Google</strong> on the landing page (required to create).</li>
   <li>Tap <strong>+ Create New</strong> under Private Session.</li>
   <li>Enter a <strong>session name</strong> and a <strong>4-character passcode</strong> (or tap Random to generate one).</li>
-  <li>Choose <strong>Open Play</strong> or <strong>Round Robin</strong> from the session type dropdown.</li>
+  <li>Choose <strong>Open Play</strong>, <strong>Round Robin</strong>, or <strong>Tournament</strong> from the session type dropdown.</li>
   <li>Tap <strong>Create &amp; Join</strong> and confirm.</li>
   <li>Share the link with friends — they'll need the passcode to join. The session creator and super admins skip the passcode.</li>
 </ol>
@@ -170,7 +170,23 @@ footer a:hover { text-decoration: underline; }
   <li>Round 1 is assigned to courts. All upcoming rounds are shown below.</li>
   <li>When all Round 1 games finish, tap <strong>Start Next Round</strong> to advance.</li>
 </ol>
-<p>Admins can switch between Open Play and Round Robin in the Settings tab, and can unlock players to modify the roster.</p>
+<p>Admins can switch between Open Play, Round Robin, and Tournament in the Settings tab, and can unlock players to modify the roster.</p>
+
+<h3>Tournament Mode</h3>
+<p>Tournament mode creates a <strong>single-elimination bracket</strong> for private sessions:</p>
+<ol class="steps">
+  <li>Add all players to the session.</li>
+  <li>Tap <strong>Lock Players to Generate Bracket</strong> in the assign section.</li>
+  <li>Set the <strong>number of courts</strong> and tap <strong>Generate Bracket</strong>.</li>
+  <li>The bracket is displayed with all rounds. First-round matches are assigned to courts.</li>
+  <li>When a match ends, enter scores — <strong>ties are not allowed</strong> in tournament matches. The winner automatically advances in the bracket.</li>
+  <li>When all matches in a round are complete, tap to start the next round (Semifinals, Final, etc.).</li>
+  <li>If there are more matches than courts, remaining matches can be started as courts free up.</li>
+</ol>
+
+<div class="tip">
+  <strong>Seeding:</strong> Players are seeded by skill level (if set) so top seeds face lower seeds in early rounds. If fewer players than a power of 2, top seeds receive first-round byes.
+</div>
 
 <h2>Match History</h2>
 <h3>Session History</h3>
@@ -213,7 +229,7 @@ footer a:hover { text-decoration: underline; }
   <li><strong>Clear History</strong> — Wipes match history and sit-out counts, keeps players and courts.</li>
   <li><strong>Delete Session</strong> — Permanently removes a session (with double confirmation). Available for private sessions and for super admins on public sessions.</li>
   <li><strong>Remove any player</strong> from the queue.</li>
-  <li><strong>Change session type</strong> — Switch between Open Play and Round Robin (private sessions).</li>
+  <li><strong>Change session type</strong> — Switch between Open Play, Round Robin, and Tournament (private sessions).</li>
   <li>View the <strong>Admin History</strong> log of all admin actions.</li>
   <li>View and share the <strong>session passcode</strong> from Settings.</li>
 </ul>
