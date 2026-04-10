@@ -1588,6 +1588,16 @@ body {
       </div>
     </div>
 
+    <!-- Manage Admins (admin only) -->
+    <div class="settings-card admin-only" id="manageAdminsSection" style="display:none;">
+      <div class="settings-card-title">Session Admins</div>
+      <div id="adminList"></div>
+      <button class="btn-add-partner" id="btnAddAdmin" onclick="App.toggleAdminPicker()">+ Add Admin</button>
+      <div id="adminPicker" style="display:none;margin-top:8px;border:1.5px solid var(--border);border-radius:var(--radius);padding:8px;background:var(--bg);">
+        <div id="adminPickerList"></div>
+      </div>
+    </div>
+
     <!-- Danger zone (admin only) -->
     <div class="settings-card admin-only" id="dangerZone" style="border-color:#fecaca;display:none;">
       <div class="settings-card-title" style="color:var(--danger);">Danger Zone</div>
@@ -2134,6 +2144,87 @@ const App = {
     delete this.state.scoringGames[courtId];
   },
 
+  // ─── Manage Session Admins ─────────────────
+  renderAdmins() {
+    const list = document.getElementById('adminList');
+    if (!list) return;
+    const admins = App.state._admins || [];
+    // Get admin info from players (exclude super admins — they don't need to be listed)
+    const adminPlayers = admins.map(uid => {
+      const p = App.state.players.find(pl => pl.firebaseUid === uid);
+      return { uid, name: p ? p.name : uid };
+    });
+    if (adminPlayers.length === 0) {
+      list.innerHTML = '<div style="color:var(--text-muted);font-size:0.82rem;margin-bottom:8px;font-style:italic;">No session admins</div>';
+      return;
+    }
+    list.innerHTML = adminPlayers.map(a => {
+      const isSelf = Admin._user && a.uid === Admin._user.uid;
+      const removeBtn = isSelf ? '' : `<button class="btn-admin-logout" onclick="App.removeAdmin('${App.esc(a.uid)}')" style="color:var(--danger);font-size:0.75rem;">remove</button>`;
+      return `<div style="display:flex;justify-content:space-between;align-items:center;padding:5px 0;border-bottom:1px solid var(--border);">
+        <span style="font-size:0.82rem;">${this.esc(a.name)}${isSelf ? ' <span style="color:var(--text-muted);font-size:0.72rem;">(you)</span>' : ''}</span>
+        ${removeBtn}
+      </div>`;
+    }).join('');
+  },
+
+  toggleAdminPicker() {
+    const picker = document.getElementById('adminPicker');
+    if (!picker) return;
+    const opening = picker.style.display === 'none';
+    picker.style.display = opening ? '' : 'none';
+    if (opening) this.renderAdminPicker();
+  },
+
+  renderAdminPicker() {
+    const list = document.getElementById('adminPickerList');
+    if (!list) return;
+    const admins = App.state._admins || [];
+    // Show signed-in players who are not already admins and not super admins
+    const candidates = App.state.players.filter(p =>
+      p.firebaseUid && !admins.includes(p.firebaseUid) && p.isLive
+    ).filter(p => {
+      // Exclude super admins (they already have full access)
+      return !Admin._superAdmins || !Admin._superAdmins[Admin._emailKey ? Admin._emailKey(p.firebaseUid) : ''];
+    });
+    if (candidates.length === 0) {
+      list.innerHTML = '<div style="color:var(--text-muted);font-size:0.82rem;font-style:italic;">No eligible users in session</div>';
+      return;
+    }
+    list.innerHTML = candidates.map(p =>
+      `<div style="display:flex;justify-content:space-between;align-items:center;padding:5px 0;border-bottom:1px solid var(--border);">
+        <span style="font-size:0.82rem;">${this.esc(p.name)}</span>
+        <button class="btn-outline" onclick="App.confirmAddAdmin(${p.id})" style="padding:2px 10px;font-size:0.75rem;">Add</button>
+      </div>`
+    ).join('');
+  },
+
+  confirmAddAdmin(playerId) {
+    const p = this.getPlayer(playerId);
+    if (!p || !p.firebaseUid) return;
+    if (!confirm(`Make ${p.name} a session admin?`)) return;
+    if (!App.state._admins) App.state._admins = [];
+    if (!App.state._admins.includes(p.firebaseUid)) {
+      App.state._admins.push(p.firebaseUid);
+      this._logAdmin(`Added ${p.name} as session admin`);
+      this.saveState();
+      this.render();
+    }
+    const picker = document.getElementById('adminPicker');
+    if (picker) picker.style.display = 'none';
+  },
+
+  removeAdmin(uid) {
+    if (!Admin.isAdmin()) return;
+    const p = App.state.players.find(pl => pl.firebaseUid === uid);
+    const name = p ? p.name : 'admin';
+    if (!confirm(`Remove ${name} as session admin?`)) return;
+    App.state._admins = (App.state._admins || []).filter(a => a !== uid);
+    this._logAdmin(`Removed ${name} as session admin`);
+    this.saveState();
+    this.render();
+  },
+
   // ─── Utility ───────────────────────────────
   shuffle(arr) {
     const a = [...arr];
@@ -2624,6 +2715,7 @@ const App = {
       this.renderPartners();
       this.renderPartnerPicker();
     }
+    this.renderAdmins();
     this.renderCourts();
     this.renderQueue();
     this.renderHistory();
@@ -3244,6 +3336,7 @@ const Session = {
       already.name = user.name;
       already.score = user.skill || already.score;
       if (user.wantsSingles != null) already.wantsSingles = !!user.wantsSingles;
+      if (Admin._user?.uid) already.firebaseUid = Admin._user.uid;
       try { localStorage.setItem('pickleJar', JSON.stringify(App.state)); } catch(e) {}
       this._patch({ players: App.state.players });
       App.render();
@@ -3251,14 +3344,16 @@ const Session = {
       const id = App.state.nextId++;
       Onboard.selfId = id;
       this._saveSelfId(id);
-      App.state.players.push({
+      const newPlayer = {
         id,
         name: user.name,
         score: user.skill || null,
         active: true,
         wantsSingles: !!(user.wantsSingles),
         isLive: true,
-      });
+      };
+      if (Admin._user?.uid) newPlayer.firebaseUid = Admin._user.uid;
+      App.state.players.push(newPlayer);
       try { localStorage.setItem('pickleJar', JSON.stringify(App.state)); } catch(e) {}
       this._patch({ players: App.state.players, nextId: App.state.nextId });
       App.render();
@@ -4133,6 +4228,10 @@ const Admin = {
 
   async logout() {
     if (!this._fb) return;
+    if (Session.id) {
+      if (!confirm('Sign out? You will leave the current session.')) return;
+      Session.leave();
+    }
     await this._fb.signOut(this._fb.auth);
   },
 
