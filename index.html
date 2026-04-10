@@ -1238,6 +1238,11 @@ body {
 }
 .history-empty { padding: 8px 0; font-size: 0.82rem; color: var(--text-muted); font-style: italic; }
 .btn-my-matches-active { background: var(--primary) !important; color: white !important; border-color: var(--primary) !important; }
+.swipe-wrap { position: relative; overflow: hidden; border-radius: var(--radius); }
+.swipe-wrap .match-card { position: relative; z-index: 1; transition: transform 0.2s ease; touch-action: pan-y; }
+.swipe-delete-bg { position: absolute; top: 0; right: 0; bottom: 0; width: 80px; background: var(--danger); display: flex; align-items: center; justify-content: center; color: white; font-size: 0.78rem; font-weight: 700; border-radius: var(--radius); }
+.swipe-wrap.confirming .match-card { transform: translateX(-80px); }
+.swipe-wrap.removing { transition: max-height 0.25s ease, opacity 0.25s ease; max-height: 0; opacity: 0; overflow: hidden; margin: 0; padding: 0; }
 .player-rounds {
   font-size: 0.68rem;
   color: var(--primary);
@@ -1337,7 +1342,7 @@ body {
           <span style="font-size:0.75rem;font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.05em;">or</span>
           <div style="flex:1;height:1px;background:var(--border);"></div>
         </div>
-        <button class="btn-outline" onclick="Onboard.showGuestJoin()" style="width:100%;padding:10px;font-size:0.88rem;font-weight:600;">Just Let Me Play</button>
+        <button class="btn-outline" onclick="Onboard.showGuestJoin()" style="width:100%;padding:10px;font-size:0.88rem;font-weight:600;">Continue without signing in</button>
       </div>
       <!-- Signed-in profile card (shown for Google-signed-in users) -->
       <div id="setupSignedIn" style="display:none;margin-bottom:14px;">
@@ -4245,7 +4250,7 @@ const MyHistory = {
     try {
       const res = await fetch(`${this.DB}/userHistory/${Admin._user.uid}/matches.json`);
       const data = await res.json();
-      this._matches = data ? Object.values(data).sort((a, b) => (b.startTime || b.savedAt || 0) - (a.startTime || a.savedAt || 0)) : [];
+      this._matches = data ? Object.entries(data).map(([key, val]) => ({ ...val, _key: key })).sort((a, b) => (b.startTime || b.savedAt || 0) - (a.startTime || a.savedAt || 0)) : [];
       this._render();
     } catch(e) {
       console.error('Failed to load personal match history:', e);
@@ -4273,7 +4278,7 @@ const MyHistory = {
       list.innerHTML = `<div class="history-empty">${search ? 'No matches found' : 'No matches yet'}</div>`;
       return;
     }
-    list.innerHTML = '<div class="history-table-wrap">' + matches.map(m => {
+    list.innerHTML = '<div class="history-table-wrap">' + matches.map((m, i) => {
       const s1 = (m.side1Names || []).map(n => App.esc(n));
       const s2 = (m.side2Names || []).map(n => App.esc(n));
       const hasScores = m.score1 != null && m.score2 != null;
@@ -4288,19 +4293,88 @@ const MyHistory = {
           d.toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' });
       }
       const sessionTag = m.sessionLabel ? `<span style="font-size:0.68rem;background:var(--bg);padding:1px 6px;border-radius:var(--radius-full);color:var(--text-light);">${App.esc(m.sessionLabel)}</span>` : '';
-      return `<div class="match-card">
-        <div class="match-card-header">
-          <span>${dateTime} ${sessionTag}</span>
-          <span>${dur}</span>
-        </div>
-        <div class="match-card-body">
-          <div class="match-card-team ${s1Class}">${s1.join(' & ')}</div>
-          <span class="match-card-vs">vs</span>
-          <div class="match-card-team ${s2Class}" style="text-align:right;">${s2.join(' & ')}</div>
-          <div class="match-card-score">${scoreText}</div>
+      const key = m._key ? App.esc(m._key) : '';
+      return `<div class="swipe-wrap" id="swipe-${i}" data-key="${key}">
+        <div class="swipe-delete-bg" onclick="MyHistory.deleteMatch('${key}', ${i})">Delete</div>
+        <div class="match-card" ontouchstart="MyHistory._touchStart(event,${i})" ontouchmove="MyHistory._touchMove(event,${i})" ontouchend="MyHistory._touchEnd(event,${i})">
+          <div class="match-card-header">
+            <span>${dateTime} ${sessionTag}</span>
+            <span>${dur}</span>
+          </div>
+          <div class="match-card-body">
+            <div class="match-card-team ${s1Class}">${s1.join(' & ')}</div>
+            <span class="match-card-vs">vs</span>
+            <div class="match-card-team ${s2Class}" style="text-align:right;">${s2.join(' & ')}</div>
+            <div class="match-card-score">${scoreText}</div>
+          </div>
         </div>
       </div>`;
     }).join('') + '</div>';
+    this._activeSwipe = null;
+  },
+
+  // Swipe-to-delete touch handling
+  _swipeState: {},
+  _activeSwipe: null,
+
+  _touchStart(e, idx) {
+    // Close any other open swipe
+    if (this._activeSwipe !== null && this._activeSwipe !== idx) {
+      const prev = document.getElementById(`swipe-${this._activeSwipe}`);
+      if (prev) prev.classList.remove('confirming');
+    }
+    const touch = e.touches[0];
+    this._swipeState = { startX: touch.clientX, startY: touch.clientY, idx, moved: false };
+  },
+
+  _touchMove(e, idx) {
+    if (!this._swipeState || this._swipeState.idx !== idx) return;
+    const touch = e.touches[0];
+    const dx = this._swipeState.startX - touch.clientX;
+    const dy = Math.abs(touch.clientY - this._swipeState.startY);
+    if (dy > 30 && !this._swipeState.moved) { this._swipeState = {}; return; }
+    if (dx > 20) {
+      this._swipeState.moved = true;
+      const card = document.getElementById(`swipe-${idx}`)?.querySelector('.match-card');
+      if (card) card.style.transform = `translateX(${Math.max(-80, -dx)}px)`;
+    }
+  },
+
+  _touchEnd(e, idx) {
+    if (!this._swipeState || this._swipeState.idx !== idx) return;
+    const wrap = document.getElementById(`swipe-${idx}`);
+    const card = wrap?.querySelector('.match-card');
+    if (this._swipeState.moved) {
+      const touch = e.changedTouches[0];
+      const dx = this._swipeState.startX - touch.clientX;
+      if (dx > 50) {
+        wrap?.classList.add('confirming');
+        if (card) card.style.transform = '';
+        this._activeSwipe = idx;
+      } else {
+        wrap?.classList.remove('confirming');
+        if (card) card.style.transform = '';
+        this._activeSwipe = null;
+      }
+    } else {
+      // Tap on an open swipe — close it
+      if (this._activeSwipe === idx) {
+        wrap?.classList.remove('confirming');
+        this._activeSwipe = null;
+      }
+    }
+    this._swipeState = {};
+  },
+
+  async deleteMatch(key, idx) {
+    if (!key || !Admin.isSignedIn() || !Admin._user?.uid) return;
+    const wrap = document.getElementById(`swipe-${idx}`);
+    if (wrap) { wrap.classList.add('removing'); }
+    try {
+      await fetch(`${this.DB}/userHistory/${Admin._user.uid}/matches/${key}.json`, { method: 'DELETE' });
+    } catch(e) { console.error('Failed to delete match:', e); }
+    this._matches = this._matches.filter(m => m._key !== key);
+    setTimeout(() => this._render(), 300);
   },
 
   hide() {
