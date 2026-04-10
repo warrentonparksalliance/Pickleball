@@ -1316,6 +1316,11 @@ body {
 
 <div class="page-wrap">
 
+  <!-- Super admin panel -->
+  <div id="superAdminSection" class="settings-card" style="display:none;margin-bottom:14px;">
+    <div class="settings-card-title" onclick="document.getElementById('superAdminPanel').style.display=document.getElementById('superAdminPanel').style.display==='none'?'':'none';this.querySelector('.sa-toggle').textContent=document.getElementById('superAdminPanel').style.display==='none'?'▸':'▾'" style="cursor:pointer;display:flex;justify-content:space-between;align-items:center;">Super Admin Management <span class="sa-toggle" style="font-size:0.8rem;color:var(--text-muted);">▸</span></div>
+    <div id="superAdminPanel" style="display:none;"></div>
+  </div>
   <!-- ── Session setup (shown before joining) ─── -->
   <div id="sessionSetupSection" class="setup-center">
     <div class="setup-card">
@@ -1424,11 +1429,6 @@ body {
         <span id="sessionLoadingText">Connecting&#x2026;</span>
       </div>
       </div><!-- /setupJoinForm -->
-    </div>
-    <!-- Super admin panel -->
-    <div id="superAdminSection" class="settings-card" style="display:none;margin-top:14px;">
-      <div class="settings-card-title" onclick="document.getElementById('superAdminPanel').style.display=document.getElementById('superAdminPanel').style.display==='none'?'':'none';this.querySelector('.sa-toggle').textContent=document.getElementById('superAdminPanel').style.display==='none'?'▸':'▾'" style="cursor:pointer;display:flex;justify-content:space-between;align-items:center;">Super Admin Management <span class="sa-toggle" style="font-size:0.8rem;color:var(--text-muted);">▸</span></div>
-      <div id="superAdminPanel" style="display:none;"></div>
     </div>
   </div>
 
