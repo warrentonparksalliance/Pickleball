@@ -1359,8 +1359,8 @@ body {
           </div>
         </div>
         <div style="display:flex;gap:8px;margin-bottom:8px;">
-          <input type="text" class="setup-input" id="onboardName" placeholder="Display name" autocomplete="given-name" style="flex:1;margin-bottom:0;">
-          <input type="number" class="setup-input" id="onboardSkill" placeholder="Skill (optional)" min="2" max="8" step="0.01" onblur="App.fmtSkillInput(this)" style="width:110px;margin-bottom:0;">
+          <input type="text" class="setup-input" id="onboardName" placeholder="Display name" autocomplete="given-name" style="flex:1;min-width:0;margin-bottom:0;">
+          <input type="number" class="setup-input" id="onboardSkill" placeholder="Skill (optional)" min="2" max="8" step="0.01" onblur="App.fmtSkillInput(this)" style="width:130px;flex-shrink:0;margin-bottom:0;">
         </div>
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;">
           <label class="singles-label" style="display:flex;align-items:center;gap:6px;font-size:0.85rem;font-weight:500;color:var(--text-light);cursor:pointer;margin:0;">
@@ -1533,8 +1533,8 @@ body {
     <div class="settings-card">
       <div class="settings-card-title">Your Profile</div>
       <div style="display:flex;gap:8px;margin-bottom:8px;">
-        <input type="text" class="setup-input" id="settingsName" placeholder="Display name" maxlength="30" style="flex:1;margin-bottom:0;">
-        <input type="number" class="setup-input" id="settingsSkill" placeholder="Skill (optional)" min="2" max="8" step="0.01" onblur="App.fmtSkillInput(this)" style="width:110px;margin-bottom:0;">
+        <input type="text" class="setup-input" id="settingsName" placeholder="Display name" maxlength="30" style="flex:1;min-width:0;margin-bottom:0;">
+        <input type="number" class="setup-input" id="settingsSkill" placeholder="Skill (optional)" min="2" max="8" step="0.01" onblur="App.fmtSkillInput(this)" style="width:130px;flex-shrink:0;margin-bottom:0;">
       </div>
       <div style="display:flex;align-items:center;justify-content:space-between;">
         <label style="display:flex;align-items:center;gap:6px;font-size:0.85rem;font-weight:500;color:var(--text-light);cursor:pointer;margin:0;">
