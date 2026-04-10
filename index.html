@@ -249,23 +249,6 @@ body {
   align-items: center;
   padding: 20px 0;
 }
-.admin-login-section {
-  margin-top: 16px;
-  text-align: center;
-}
-.btn-admin-login {
-  background: none;
-  border: none;
-  color: var(--text-muted);
-  font-size: 0.78rem;
-  font-weight: 500;
-  font-family: inherit;
-  cursor: pointer;
-  padding: 4px 8px;
-  text-decoration: underline;
-  text-underline-offset: 2px;
-}
-.btn-admin-login:hover { color: var(--text-light); }
 .admin-badge {
   font-size: 0.68rem;
   font-weight: 700;
@@ -322,7 +305,6 @@ body {
   color: var(--text-muted);
   margin-bottom: 8px;
 }
-.session-type-btn.active { background: var(--primary); color: white; border-color: var(--primary); }
 .setup-locations { display: flex; flex-direction: column; gap: 8px; margin-bottom: 14px; }
 .btn-loc-setup {
   display: flex;
@@ -379,6 +361,9 @@ body {
   transition: background 0.15s;
 }
 .btn-confirm-join:hover { background: var(--primary-hover); }
+.btn-confirm-join:disabled { background: var(--border); color: var(--text-muted); cursor: default; }
+.btn-back-entry { background:none;border:none;font-size:1.1rem;color:var(--text-muted);cursor:pointer;padding:2px 6px;font-family:inherit;line-height:1; }
+.btn-back-entry:hover { color:var(--text); }
 .btn-confirm-back {
   flex: 1;
   padding: 10px;
@@ -1210,41 +1195,49 @@ body {
   color: var(--text);
   cursor: pointer;
 }
-.history-table-wrap { overflow-x: auto; }
-.history-table {
-  width: 100%;
-  border-collapse: collapse;
-  font-size: 0.82rem;
+.history-table-wrap { display: flex; flex-direction: column; gap: 6px; max-width: 540px; margin: 0 auto; }
+.match-card {
+  background: var(--card);
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius);
+  padding: 8px 12px;
 }
-.history-table th {
-  text-align: left;
+.match-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+  font-size: 0.72rem;
+  color: var(--text-muted);
+}
+.match-card-body {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.match-card-team {
+  flex: 1;
+  font-size: 0.85rem;
+  line-height: 1.4;
+}
+.match-card-team.winner { font-weight: 700; }
+.match-card-team.loser { color: var(--text-muted); }
+.match-card-vs {
+  color: var(--text-muted);
   font-size: 0.7rem;
   font-weight: 700;
-  color: var(--text-muted);
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
-  padding: 6px 8px;
-  border-bottom: 2px solid var(--border);
-  white-space: nowrap;
+  flex-shrink: 0;
 }
-.history-table td {
-  padding: 7px 8px;
-  border-bottom: 1px solid var(--border);
-  vertical-align: middle;
-}
-.history-table tr:last-child td { border-bottom: none; }
-.history-table .winner { font-weight: 700; }
-.history-table .loser { color: var(--text-muted); }
-.history-table .match-score { font-weight: 600; color: var(--primary); }
-.history-table .mode-badge {
-  font-size: 0.68rem;
-  font-weight: 600;
-  padding: 1px 6px;
-  border-radius: var(--radius-full);
-  background: var(--bg);
-  color: var(--text-light);
+.match-card-score {
+  font-weight: 700;
+  font-size: 0.9rem;
+  color: var(--primary);
+  flex-shrink: 0;
+  text-align: right;
+  min-width: 40px;
 }
 .history-empty { padding: 8px 0; font-size: 0.82rem; color: var(--text-muted); font-style: italic; }
+.btn-my-matches-active { background: var(--primary) !important; color: white !important; border-color: var(--primary) !important; }
 .player-rounds {
   font-size: 0.68rem;
   color: var(--primary);
@@ -1288,7 +1281,8 @@ body {
   .header-loc-name { font-size: 0.8rem; }
   .queue-bar-wrap { padding: 12px 10px; }
   .settings-card { padding: 12px 10px; }
-  .history-table th, .history-table td { padding: 5px 4px; font-size: 0.78rem; }
+  .match-card { padding: 8px 10px; }
+  .match-card-team { font-size: 0.8rem; }
   .court-card { margin: 0 -2px; }
 }
 </style>
@@ -1325,30 +1319,59 @@ body {
   <!-- ── Session setup (shown before joining) ─── -->
   <div id="sessionSetupSection" class="setup-center">
     <div class="setup-card">
-      <h2 style="font-size:1.1rem;font-weight:700;margin-bottom:16px;color:var(--text);">Join a Session</h2>
+      <!-- Entry options: sign in or join as guest -->
+      <div id="setupEntryOptions">
+        <h2 style="font-size:1.1rem;font-weight:700;margin-bottom:6px;color:var(--text);">Welcome to Pickle Jar</h2>
+        <p style="font-size:0.82rem;color:var(--text-muted);margin-bottom:18px;line-height:1.4;">Sign in to create sessions and save your preferences, or jump straight in as a guest.</p>
+        <button class="btn-confirm-join" id="btnEntryGoogle" onclick="Admin.signIn()" style="width:100%;padding:10px;margin-bottom:10px;display:flex;align-items:center;justify-content:center;gap:8px;">
+          <svg width="16" height="16" viewBox="0 0 48 48" style="flex-shrink:0;"><path fill="#4285F4" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#34A853" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59a14.5 14.5 0 0 1 0-9.18l-7.98-6.19a24.0 24.0 0 0 0 0 21.56l7.98-6.19z"/><path fill="#EA4335" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg>
+          Sign in with Google
+        </button>
+        <div style="display:flex;align-items:center;gap:12px;margin-bottom:10px;">
+          <div style="flex:1;height:1px;background:var(--border);"></div>
+          <span style="font-size:0.75rem;font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.05em;">or</span>
+          <div style="flex:1;height:1px;background:var(--border);"></div>
+        </div>
+        <button class="btn-outline" onclick="Onboard.showGuestJoin()" style="width:100%;padding:10px;font-size:0.88rem;font-weight:600;">Join a Session Now</button>
+      </div>
+      <!-- Signed-in status (shown after Google sign-in) -->
+      <div id="setupSignedIn" style="display:none;margin-bottom:14px;text-align:center;">
+        <div id="signedInAs" style="margin-bottom:4px;"></div>
+      </div>
+      <!-- Join form (hidden until guest click or signed in) -->
+      <div id="setupJoinForm" style="display:none;">
+      <div style="display:flex;align-items:center;margin-bottom:16px;">
+        <button type="button" id="btnBackToEntry" class="btn-back-entry" onclick="Onboard.backToEntry()" title="Back">&larr;</button>
+        <h2 style="font-size:1.1rem;font-weight:700;margin:0;color:var(--text);flex:1;text-align:center;">Join a Session</h2>
+        <div style="width:28px;"></div>
+      </div>
+      <div id="onboardProfileFields">
       <input type="text" class="setup-input" id="onboardName" placeholder="Your name" autocomplete="given-name">
-      <input type="number" class="setup-input" id="onboardSkill" placeholder="Skill level (optional)" min="2" max="8" step="0.01" onblur="App.fmtDUPR(this)">
+      <input type="number" class="setup-input" id="onboardSkill" placeholder="Skill level (optional)" min="2" max="8" step="0.01" onblur="App.fmtSkillInput(this)">
       <label class="singles-label" style="margin-bottom:18px;display:flex;align-items:center;gap:6px;font-size:0.85rem;font-weight:500;color:var(--text-light);cursor:pointer;">
         <input type="checkbox" id="onboardSingles" style="accent-color:var(--primary);width:15px;height:15px;"> Open to 1v1
       </label>
       <p id="onboardNameError" class="setup-error">Enter your name first</p>
+      </div>
+      <!-- Session selection (hidden during share-link flow) -->
+      <div id="sessionSelectionBlock">
       <div style="border-top:1px solid var(--border);padding-top:16px;margin-top:4px;">
         <div class="setup-section-label">Public Session</div>
         <div style="display:flex;gap:8px;margin-bottom:4px;">
-          <select class="setup-input" id="publicLocationSelect" style="flex:1;margin-bottom:0;cursor:pointer;">
+          <select class="setup-input" id="publicLocationSelect" onchange="Onboard._updateJoinBtn('publicLocationSelect','btnJoinPublic')" style="flex:1;margin-bottom:0;cursor:pointer;">
             <option value="">Select a location...</option>
           </select>
-          <button type="button" class="btn-confirm-join" onclick="Onboard.joinPublic()" style="white-space:nowrap;padding:8px 14px;font-size:0.82rem;">Join</button>
+          <button type="button" class="btn-confirm-join" id="btnJoinPublic" onclick="Onboard.joinPublic()" disabled style="white-space:nowrap;padding:8px 14px;font-size:0.82rem;">Join</button>
         </div>
         <div id="publicConfirmInline" style="display:none;margin-bottom:14px;"></div>
       </div>
       <div style="border-top:1px solid var(--border);padding-top:16px;margin-top:12px;">
         <div class="setup-section-label">Private Session</div>
         <div style="display:flex;gap:8px;margin-bottom:4px;">
-          <select class="setup-input" id="privateSessionSelect" style="flex:1;margin-bottom:0;cursor:pointer;">
+          <select class="setup-input" id="privateSessionSelect" onchange="Onboard._updateJoinBtn('privateSessionSelect','btnJoinPrivate')" style="flex:1;margin-bottom:0;cursor:pointer;">
             <option value="">Select a session...</option>
           </select>
-          <button type="button" class="btn-confirm-join" onclick="Onboard.joinSavedPrivate()" style="white-space:nowrap;padding:8px 14px;font-size:0.82rem;">Join</button>
+          <button type="button" class="btn-confirm-join" id="btnJoinPrivate" onclick="Onboard.joinSavedPrivate()" disabled style="white-space:nowrap;padding:8px 14px;font-size:0.82rem;">Join</button>
         </div>
         <div id="privateConfirmInline" style="display:none;margin-bottom:8px;"></div>
         <button type="button" class="btn-outline" onclick="Onboard.toggleCreatePrivate()" id="btn-create-private" style="width:100%;padding:9px 14px;margin-top:8px;">+ Create New</button>
@@ -1361,22 +1384,25 @@ body {
           <button type="button" class="btn-outline" onclick="Onboard.randomPasscode()" style="white-space:nowrap;padding:7px 10px;font-size:0.78rem;">Random</button>
         </div>
         <div style="font-size:0.72rem;font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:6px;">Session Type</div>
-        <div style="display:flex;gap:6px;margin-bottom:12px;">
-          <button type="button" class="btn-outline session-type-btn active" id="btnTypeOpen" onclick="Onboard.setSessionType('open')" style="flex:1;padding:7px;font-size:0.8rem;">Open Play</button>
-          <button type="button" class="btn-outline session-type-btn" id="btnTypeRR" onclick="Onboard.setSessionType('roundrobin')" style="flex:1;padding:7px;font-size:0.8rem;">Round Robin</button>
-        </div>
+        <select class="setup-input" id="selectSessionType" onchange="Onboard.setSessionType(this.value)" style="margin-bottom:12px;cursor:pointer;">
+          <option value="open">Open Play</option>
+          <option value="roundrobin">Round Robin</option>
+        </select>
         <p id="privateSessionError" class="setup-error" style="display:none;">Enter a session name and 4-character passcode</p>
         <button type="button" class="btn-confirm-join" onclick="Onboard.createPrivate()" style="width:100%;padding:10px;">Create &amp; Join</button>
         <div id="createConfirmInline" style="display:none;margin-top:6px;"></div>
+      </div>
+      </div><!-- /sessionSelectionBlock -->
+      <!-- Share-link join button (shown when joining via share link) -->
+      <div id="shareLinkJoinBlock" style="display:none;margin-top:16px;">
+        <p id="shareLinkLabel" style="font-size:0.85rem;color:var(--text-light);margin-bottom:12px;text-align:center;"></p>
+        <button type="button" class="btn-confirm-join" onclick="Onboard._completeShareJoin()" style="width:100%;padding:10px;">Join Session</button>
       </div>
       <div id="sessionLoading" class="session-loading" style="display:none;">
         <span class="session-spinner"></span>
         <span id="sessionLoadingText">Connecting&#x2026;</span>
       </div>
-    </div>
-    <div class="admin-login-section">
-      <button class="btn-admin-login" id="btnAdminLogin" onclick="Admin.signIn()">Sign in with Google</button>
-      <div id="signedInAs" style="display:none;margin-top:6px;"></div>
+      </div><!-- /setupJoinForm -->
     </div>
     <!-- Super admin panel -->
     <div id="superAdminSection" class="settings-card" style="display:none;margin-top:14px;">
@@ -1393,14 +1419,14 @@ body {
       <div class="queue-bar-top">
         <div>
           <div class="section-title" id="queueTitle">Queue</div>
-          <div class="section-subtitle" id="queueSubtitle">Players waiting to be assigned to a court. Use &#x23F8; to sit out temporarily or &times; to remove from the session.</div>
+          <div class="section-subtitle" id="queueSubtitle">Players waiting to be assigned to a court.</div>
         </div>
         <button class="btn-add-another" id="addAnotherBtn" onclick="App.toggleAddForm()" style="width:auto;white-space:nowrap;flex-shrink:0;margin-bottom:0;">+ Add Guest</button>
       </div>
       <div class="add-form" id="addPlayerForm" style="display:none;">
         <input class="input-name" type="text" id="playerName" placeholder="Player name" onkeydown="if(event.key==='Enter')App.addPlayer()">
         <div class="add-form-row2">
-          <input class="input-score" type="number" id="playerScore" placeholder="2.5" min="2" max="8" step="0.01" onkeydown="if(event.key==='Enter')App.addPlayer()" onblur="App.fmtDUPR(this)">
+          <input class="input-score" type="number" id="playerScore" placeholder="Skill (optional)" min="2" max="8" step="0.01" onkeydown="if(event.key==='Enter')App.addPlayer()" onblur="App.fmtSkillInput(this)">
         </div>
         <label class="singles-label"><input type="checkbox" id="playerSingles"> Open to 1v1</label>
         <div style="display:flex;gap:8px;">
@@ -1409,6 +1435,7 @@ body {
         </div>
       </div>
       <div id="playerList" class="queue-list"></div>
+      <div id="queueHint" class="section-subtitle" style="margin-top:8px;">Use &#x23F8; to sit out temporarily or &times; to remove from the session.</div>
       <button id="rrUnlockBtn" class="btn-outline" onclick="App.rrUnlockPlayers()" style="display:none;margin-top:8px;width:100%;color:var(--warning);border-color:var(--warning);font-size:0.82rem;">Unlock Players &amp; Reset Schedule</button>
     </div>
 
@@ -1465,8 +1492,8 @@ body {
         <input type="text" id="settingsName" placeholder="Your name" maxlength="30">
       </div>
       <div class="settings-field">
-        <label for="settingsSkill">Skill Level (DUPR)</label>
-        <input type="number" id="settingsSkill" placeholder="2.0 – 8.0" min="2" max="8" step="0.01" onblur="App.fmtDUPR(this)">
+        <label for="settingsSkill">Skill Level</label>
+        <input type="number" id="settingsSkill" placeholder="Skill level (optional)" min="2" max="8" step="0.01" onblur="App.fmtSkillInput(this)">
       </div>
       <div class="settings-toggle">
         <label><input type="checkbox" id="settingsSingles"> Open to 1v1</label>
@@ -1478,8 +1505,8 @@ body {
 
     <!-- Partners -->
     <div class="settings-card" id="partnerSection">
-      <div class="settings-card-title">Partner Preference</div>
-      <p class="section-subtitle" style="margin-bottom:10px;">When both you and a partner are in the queue, you'll be placed on the same side in doubles. If your partner isn't available, you'll be assigned normally.</p>
+      <div class="settings-card-title">Your Partner(s)</div>
+      <p class="section-subtitle" style="margin-bottom:10px;">When both you and a partner are in the queue, you'll be placed on the same side in doubles. If a partner isn't available, you'll be assigned normally.</p>
       <div id="partnerDisplay"></div>
       <button class="btn-add-partner" id="btnAddPartner" onclick="App.togglePartnerPicker()">+ Add Partner</button>
       <div class="partner-picker" id="partnerPicker" style="display:none;">
@@ -1488,13 +1515,23 @@ body {
     </div>
 
 
+    <!-- Share Link -->
+    <div class="settings-card" id="shareLinkSection">
+      <div class="settings-card-title">Share Link</div>
+      <p class="section-subtitle" style="margin-bottom:10px;">Invite others to join this session.</p>
+      <div style="display:flex;gap:8px;align-items:center;">
+        <input type="text" class="setup-input" id="shareLinkInput" readonly style="flex:1;margin-bottom:0;font-size:0.82rem;cursor:text;">
+        <button type="button" class="btn-outline" id="btnCopyShareLink" onclick="App.copyShareLink()" style="white-space:nowrap;padding:7px 12px;font-size:0.8rem;">Copy</button>
+      </div>
+    </div>
+
     <!-- Session Type (admin only, private sessions) -->
     <div class="settings-card admin-only" id="sessionTypeSection" style="display:none;">
       <div class="settings-card-title">Session Type</div>
-      <div style="display:flex;gap:8px;">
-        <button type="button" class="btn-outline session-type-btn" id="settingsBtnOpen" onclick="App.setSessionType('open')" style="flex:1;padding:8px;font-size:0.82rem;">Open Play</button>
-        <button type="button" class="btn-outline session-type-btn" id="settingsBtnRR" onclick="App.setSessionType('roundrobin')" style="flex:1;padding:8px;font-size:0.82rem;">Round Robin</button>
-      </div>
+      <select class="setup-input" id="settingsSessionType" onchange="App.setSessionType(this.value)" style="margin-bottom:0;cursor:pointer;">
+        <option value="open">Open Play</option>
+        <option value="roundrobin">Round Robin</option>
+      </select>
     </div>
 
     <!-- Session passcode (admin only, private sessions) -->
@@ -1528,8 +1565,9 @@ body {
         <div class="section-title">Match History</div>
         <button class="btn-clear-history admin-only" id="btnClearHistory" onclick="App.clearHistory()" style="display:none;">Clear History</button>
       </div>
-      <div class="history-filters">
-        <input type="text" id="historySearch" class="history-search" placeholder="Search player name..." oninput="App.renderHistory()">
+      <div class="history-filters" style="display:flex;gap:8px;align-items:center;">
+        <input type="text" id="historySearch" class="history-search" placeholder="Search player name..." oninput="App.renderHistory()" style="flex:1;">
+        <button type="button" class="btn-outline" id="btnFilterMyMatches" onclick="App.toggleMyMatches()" style="white-space:nowrap;padding:6px 12px;font-size:0.8rem;">My Matches</button>
       </div>
       <div class="history-table-wrap" id="historyRounds"></div>
     </div>
@@ -1548,7 +1586,7 @@ const App = {
   state: {
     players: [],
     teams: [],
-    options: { useSkill: false, minimizeRepeats: false },
+    options: { useSkill: true, minimizeRepeats: true },
     opponentHistory: {},
     sitoutCounts: {},
     round: 0,
@@ -1672,7 +1710,7 @@ const App = {
     const user = Onboard._savedUser();
     if (user) {
       document.getElementById('settingsName').value = user.name || '';
-      document.getElementById('settingsSkill').value = user.skill || '';
+      document.getElementById('settingsSkill').value = user.skill != null ? App.fmtSkill(user.skill) : '';
       document.getElementById('settingsSingles').checked = !!(user.wantsSingles);
     }
     // Also sync the 1v1 preference from the player object
@@ -1688,7 +1726,7 @@ const App = {
     const nameEl = document.getElementById('settingsName');
     const name = nameEl.value.trim();
     if (!name) { nameEl.focus(); return; }
-    App.fmtDUPR(document.getElementById('settingsSkill'));
+    App.fmtSkillInput(document.getElementById('settingsSkill'));
     const skillRaw = document.getElementById('settingsSkill').value;
     const skill = skillRaw ? parseFloat(parseFloat(skillRaw).toFixed(2)) : null;
     const wantsSingles = document.getElementById('settingsSingles').checked;
@@ -1800,7 +1838,7 @@ const App = {
     const name = nameEl ? nameEl.value.trim() : '';
     if (!name) { if (nameEl) nameEl.focus(); return; }
     const skillEl = document.getElementById(`editGuestSkill-${id}`);
-    this.fmtDUPR(skillEl);
+    this.fmtSkillInput(skillEl);
     const skillRaw = skillEl ? skillEl.value : '';
     const skill = skillRaw ? parseFloat(parseFloat(skillRaw).toFixed(2)) : null;
     const singlesEl = document.getElementById(`editGuestSingles-${id}`);
@@ -2073,6 +2111,24 @@ const App = {
     const btn = document.getElementById('btnTogglePasscode');
     if (display) display.textContent = this._passcodeVisible ? (this.state._passcode || '—') : '****';
     if (btn) btn.textContent = this._passcodeVisible ? 'Hide' : 'Show';
+  },
+
+  updateShareLink() {
+    const input = document.getElementById('shareLinkInput');
+    if (!input || !Session.id) return;
+    const url = new URL(window.location.href);
+    url.search = '';
+    url.searchParams.set('s', Session.id);
+    input.value = url.toString();
+  },
+
+  copyShareLink() {
+    const input = document.getElementById('shareLinkInput');
+    if (!input) return;
+    navigator.clipboard.writeText(input.value).then(() => {
+      const btn = document.getElementById('btnCopyShareLink');
+      if (btn) { btn.textContent = 'Copied!'; setTimeout(() => { btn.textContent = 'Copy'; }, 1500); }
+    });
   },
 
   setSessionType(type) {
@@ -2390,7 +2446,7 @@ const App = {
   _freshState() {
     return {
       players: [], teams: [],
-      options: { useSkill: false, minimizeRepeats: false },
+      options: { useSkill: true, minimizeRepeats: true },
       opponentHistory: {}, sitoutCounts: {}, round: 0,
       activeGames: {}, scoringGames: {}, roundHistory: [], nextId: 1, nextCourtId: 1,
       availableCourts: 2, adminLog: [],
@@ -2469,7 +2525,9 @@ const App = {
     if (qTitle) qTitle.textContent = rr ? 'Players' : 'Queue';
     if (qSub) qSub.textContent = rr
       ? (rrLocked ? 'Players are locked for this round robin.' : 'Add all players, then lock the roster to generate the schedule.')
-      : 'Players waiting to be assigned to a court. Use \u23F8 to sit out temporarily or \u00D7 to remove from the session.';
+      : 'Players waiting to be assigned to a court.';
+    const qHint = document.getElementById('queueHint');
+    if (qHint) qHint.style.display = rr ? 'none' : '';
     if (addBtn) addBtn.style.display = rrLocked ? 'none' : '';
 
     this.renderPlayers();
@@ -2498,10 +2556,8 @@ const App = {
     const sessionTypeSection = document.getElementById('sessionTypeSection');
     if (sessionTypeSection) {
       sessionTypeSection.style.display = (Session.id && Session.id.startsWith('pvt-') && Admin.isAdmin()) ? '' : 'none';
-      const btnOpen = document.getElementById('settingsBtnOpen');
-      const btnRR = document.getElementById('settingsBtnRR');
-      if (btnOpen) btnOpen.classList.toggle('active', !rr);
-      if (btnRR) btnRR.classList.toggle('active', rr);
+      const selType = document.getElementById('settingsSessionType');
+      if (selType) selType.value = rr ? 'roundrobin' : 'open';
     }
 
     // Show passcode section for private sessions (admin only)
@@ -2539,7 +2595,7 @@ const App = {
       return;
     }
     el.innerHTML = queuePlayers.map(p => {
-      const skillStr = p.score != null ? parseFloat(p.score).toFixed(1) : '';
+      const skillStr = p.score != null ? App.fmtSkill(p.score) : '';
       const isYou = Onboard.selfId === p.id;
       if (this._pendingRemove === p.id) {
         const confirmLabel = isYou ? 'Leave session?' : `Remove ${this.esc(p.name)}?`;
@@ -2556,8 +2612,8 @@ const App = {
         return `<div class="queue-row-edit">
           <input type="text" id="editGuestName-${p.id}" value="${this.esc(p.name)}" placeholder="Name" maxlength="30"
             onkeydown="if(event.key==='Enter')App.saveGuestEdit(${p.id})">
-          <input type="number" id="editGuestSkill-${p.id}" value="${p.score != null ? p.score : ''}" placeholder="Skill" min="2" max="8" step="0.01"
-            onblur="App.fmtDUPR(this)" onkeydown="if(event.key==='Enter')App.saveGuestEdit(${p.id})">
+          <input type="number" id="editGuestSkill-${p.id}" value="${p.score != null ? App.fmtSkill(p.score) : ''}" placeholder="Skill (optional)" min="2" max="8" step="0.01"
+            onblur="App.fmtSkillInput(this)" onkeydown="if(event.key==='Enter')App.saveGuestEdit(${p.id})">
           <label class="edit-guest-singles"><input type="checkbox" id="editGuestSingles-${p.id}" ${p.wantsSingles ? 'checked' : ''}> 1v1</label>
           <button class="btn-edit-save" onclick="App.saveGuestEdit(${p.id})">Save</button>
           <button class="btn-edit-cancel" onclick="App.cancelGuestEdit()">Cancel</button>
@@ -2771,10 +2827,10 @@ const App = {
     if (n === 0 && paused === 0) {
       countEl.textContent = 'No players in queue yet';
     } else if (n === 0 && paused > 0) {
-      countEl.textContent = `${paused} player${paused !== 1 ? 's' : ''} paused`;
+      countEl.textContent = `${paused} player${paused !== 1 ? 's' : ''} sitting out`;
     } else {
       let msg = `${n} player${n !== 1 ? 's' : ''} in queue`;
-      if (paused > 0) msg += ` · ${paused} paused`;
+      if (paused > 0) msg += ` · ${paused} sitting out`;
       if (!canAssign) msg += ` · not enough players to assign`;
       countEl.textContent = msg;
     }
@@ -2878,6 +2934,18 @@ const App = {
     }).join('');
   },
 
+  _historyFilterMine: false,
+
+  toggleMyMatches() {
+    this._historyFilterMine = !this._historyFilterMine;
+    const btn = document.getElementById('btnFilterMyMatches');
+    if (btn) {
+      btn.textContent = this._historyFilterMine ? 'All Matches' : 'My Matches';
+      btn.classList.toggle('btn-my-matches-active', this._historyFilterMine);
+    }
+    this.renderHistory();
+  },
+
   renderHistory() {
     const el = document.getElementById('historyRounds');
     let history = [...(this.state.roundHistory || [])];
@@ -2889,6 +2957,11 @@ const App = {
 
     // Newest first
     history.reverse();
+
+    // Filter by "My Matches"
+    if (this._historyFilterMine && Onboard.selfId) {
+      history = history.filter(m => [...m.side1, ...m.side2].includes(Onboard.selfId));
+    }
 
     // Filter by player name search
     const search = (document.getElementById('historySearch')?.value || '').toLowerCase().trim();
@@ -2902,44 +2975,41 @@ const App = {
       });
     }
 
-
     if (history.length === 0) {
       el.innerHTML = '<div class="history-empty">No matches found</div>';
       return;
     }
 
-    el.innerHTML = `<table class="history-table">
-      <thead><tr>
-        <th>Team 1</th>
-        <th></th>
-        <th>Team 2</th>
-        <th>Score</th>
-        <th>Time</th>
-      </tr></thead>
-      <tbody>${history.map(m => {
-        const s1 = m.side1.map(id => { const p = this.getPlayer(id); return p ? this.esc(p.name) : '?'; });
-        const s2 = m.side2.map(id => { const p = this.getPlayer(id); return p ? this.esc(p.name) : '?'; });
-        const hasScores = m.score1 != null && m.score2 != null;
-        const s1Class = hasScores ? (m.winner === 1 ? 'winner' : m.winner === 2 ? 'loser' : '') : '';
-        const s2Class = hasScores ? (m.winner === 2 ? 'winner' : m.winner === 1 ? 'loser' : '') : '';
-        const scoreText = hasScores ? `${m.score1}–${m.score2}` : '–';
-        const dur = m.duration ? this.formatTimer(m.duration) : '–';
-        let timeDetail = '';
-        if (m.startTime) {
-          const d = new Date(m.startTime);
-          const date = d.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
-          const time = d.toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' });
-          timeDetail = `<div style="font-size:0.68rem;color:var(--text-muted);margin-top:2px;">${date}, ${time}</div>`;
-        }
-        return `<tr>
-          <td class="${s1Class}">${s1.join('<br>')}</td>
-          <td style="color:var(--text-muted);font-size:0.7rem;font-weight:700;">vs</td>
-          <td class="${s2Class}">${s2.join('<br>')}</td>
-          <td class="match-score">${scoreText}</td>
-          <td style="color:var(--text-muted);font-size:0.78rem;white-space:nowrap;cursor:pointer;" onclick="this.querySelector('.time-detail').style.display=this.querySelector('.time-detail').style.display==='none'?'':'none'">${dur}<div class="time-detail" style="display:none;">${timeDetail}</div></td>
-        </tr>`;
-      }).join('')}</tbody>
-    </table>`;
+    el.innerHTML = history.map(m => {
+      const s1 = m.side1.map(id => { const p = this.getPlayer(id); return p ? this.esc(p.name) : '?'; });
+      const s2 = m.side2.map(id => { const p = this.getPlayer(id); return p ? this.esc(p.name) : '?'; });
+      const hasScores = m.score1 != null && m.score2 != null;
+      const s1Class = hasScores ? (m.winner === 1 ? 'winner' : m.winner === 2 ? 'loser' : '') : '';
+      const s2Class = hasScores ? (m.winner === 2 ? 'winner' : m.winner === 1 ? 'loser' : '') : '';
+      const scoreText = hasScores ? `${m.score1}–${m.score2}` : '–';
+      const dur = m.duration ? this.formatTimer(m.duration) : '';
+      let dateTime = '';
+      if (m.startTime) {
+        const d = new Date(m.startTime);
+        const date = d.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+        const time = d.toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' });
+        dateTime = `${date}, ${time}`;
+      }
+      const headerLeft = dateTime || '';
+      const headerRight = dur ? `${dur}` : '';
+      return `<div class="match-card">
+        <div class="match-card-header">
+          <span>${headerLeft}</span>
+          <span>${headerRight}</span>
+        </div>
+        <div class="match-card-body">
+          <div class="match-card-team ${s1Class}">${s1.join(' & ')}</div>
+          <span class="match-card-vs">vs</span>
+          <div class="match-card-team ${s2Class}" style="text-align:right;">${s2.join(' & ')}</div>
+          <div class="match-card-score">${scoreText}</div>
+        </div>
+      </div>`;
+    }).join('');
   },
 
   renderAdminLog() {
@@ -2961,11 +3031,19 @@ const App = {
     }).join('');
   },
 
-  fmtDUPR(el) {
+  fmtSkillInput(el) {
+    if (!el) return;
     const n = parseFloat(el.value);
     if (isNaN(n)) return;
     const s = n.toFixed(2).replace(/0+$/, '');
     el.value = s.endsWith('.') ? s + '0' : s;
+  },
+
+  fmtSkill(val) {
+    const n = parseFloat(val);
+    if (isNaN(n)) return '';
+    const s = n.toFixed(2).replace(/0+$/, '');
+    return s.endsWith('.') ? s + '0' : s;
   },
 
   esc(str) {
@@ -3261,6 +3339,7 @@ const Session = {
       headerLocName.textContent = this.label || this.id;
       if (setup) setup.style.display = 'none';
       App._showTabs();
+      App.updateShareLink();
     } else {
       headerRight.style.display = 'none';
       if (setup) setup.style.display = '';
@@ -3273,6 +3352,9 @@ const Session = {
 const Onboard = {
   selfId: null,
 
+  // Pending share-link join (set after passcode verified, waiting for user profile)
+  _shareLink: null,
+
   init() {
     const user = this._savedUser();
     const s = new URLSearchParams(window.location.search).get('s');
@@ -3281,41 +3363,177 @@ const Onboard = {
     this._populatePublicDropdown();
     this._populatePrivateDropdown();
 
-    if (user && s) {
-      const loc = Session.LOCATIONS.find(l => l.key === s.toLowerCase());
-      const pvt = this._getSavedPrivateSessions().find(p => p.id === s);
-      const label = loc ? loc.label : (pvt ? pvt.name : s);
-      if (s.startsWith('pvt-')) {
-        // Private session via URL — verify passcode
-        this._hide();
-        (async () => {
-          const data = await Session._get(s);
-          const isAdminOfSession = Admin._user && data && Array.isArray(data._admins) && data._admins.includes(Admin._user.uid);
-          if (data && data._passcode && !Admin.isSuperAdmin() && !isAdminOfSession) {
-            const entered = prompt('Enter the 4-character passcode for "' + label + '":');
-            if (!entered || entered.trim().toUpperCase() !== data._passcode) {
-              alert('Incorrect passcode.');
-              this.showStep();
-              return;
-            }
-          }
-          this._savePrivateSession(s, label);
-          Session._connect(s, label, false, user);
-        })();
-      } else {
-        this._hide();
-        Session._connect(s, label, false, user);
-      }
+    if (s) {
+      this._handleShareLink(s, user);
       return;
     }
 
     if (user) {
-      const nameEl = document.getElementById('onboardName');
-      const skillEl = document.getElementById('onboardSkill');
-      if (nameEl) nameEl.value = user.name || '';
-      if (skillEl && user.skill) skillEl.value = user.skill;
-      const singlesEl = document.getElementById('onboardSingles');
-      if (singlesEl) singlesEl.checked = !!(user.wantsSingles);
+      this._prefillProfile(user);
+    }
+  },
+
+  _prefillProfile(user) {
+    const nameEl = document.getElementById('onboardName');
+    const skillEl = document.getElementById('onboardSkill');
+    if (nameEl) nameEl.value = user.name || '';
+    if (skillEl && user.skill != null) skillEl.value = App.fmtSkill(user.skill);
+    const singlesEl = document.getElementById('onboardSingles');
+    if (singlesEl) singlesEl.checked = !!(user.wantsSingles);
+  },
+
+  async _handleShareLink(s, user) {
+    const loc = Session.LOCATIONS.find(l => l.key === s.toLowerCase());
+    const pvt = this._getSavedPrivateSessions().find(p => p.id === s);
+    const label = loc ? loc.label : (pvt ? pvt.name : s.replace(/^pvt-/, ''));
+
+    // For private sessions, verify passcode first
+    if (s.startsWith('pvt-')) {
+      const data = await Session._get(s);
+      const isAdminOfSession = Admin._user && data && Array.isArray(data._admins) && data._admins.includes(Admin._user.uid);
+      const needsPasscode = data && data._passcode && !Admin.isSuperAdmin() && !isAdminOfSession;
+      if (needsPasscode) {
+        // Show inline passcode prompt
+        this._showSharePasscode(s, label, data._passcode, user);
+        return;
+      }
+    }
+
+    // Passcode not needed or public session — proceed
+    this._shareJoinOrPrompt(s, label, user);
+  },
+
+  _showSharePasscode(sessionId, label, correctPasscode, user) {
+    const setup = document.getElementById('sessionSetupSection');
+    const card = setup?.querySelector('.setup-card');
+    if (!card) return;
+    // Hide everything in the card, show passcode prompt
+    const entryOpts = document.getElementById('setupEntryOptions');
+    const joinForm = document.getElementById('setupJoinForm');
+    const signedIn = document.getElementById('setupSignedIn');
+    if (entryOpts) entryOpts.style.display = 'none';
+    if (joinForm) joinForm.style.display = 'none';
+    if (signedIn) signedIn.style.display = 'none';
+
+    // Create passcode prompt
+    let passcodeDiv = document.getElementById('sharePasscodePrompt');
+    if (!passcodeDiv) {
+      passcodeDiv = document.createElement('div');
+      passcodeDiv.id = 'sharePasscodePrompt';
+      card.insertBefore(passcodeDiv, card.firstChild);
+    }
+    passcodeDiv.style.display = '';
+    passcodeDiv.innerHTML = `
+      <h2 style="font-size:1.1rem;font-weight:700;margin-bottom:6px;color:var(--text);">Join "${App.esc(label)}"</h2>
+      <p style="font-size:0.82rem;color:var(--text-muted);margin-bottom:16px;">Enter the session passcode to continue.</p>
+      <input type="text" class="setup-input" id="sharePasscodeInput" placeholder="4-character passcode" maxlength="4"
+        style="text-transform:uppercase;letter-spacing:0.15em;font-weight:600;text-align:center;"
+        onkeydown="if(event.key==='Enter')Onboard._verifySharePasscode()">
+      <p id="sharePasscodeError" class="setup-error" style="display:none;">Incorrect passcode</p>
+      <button type="button" class="btn-confirm-join" onclick="Onboard._verifySharePasscode()" style="width:100%;padding:10px;margin-top:4px;">Continue</button>
+    `;
+    document.getElementById('sharePasscodeInput')?.focus();
+
+    this._sharePending = { sessionId, label, correctPasscode, user };
+  },
+
+  _verifySharePasscode() {
+    const input = document.getElementById('sharePasscodeInput');
+    const err = document.getElementById('sharePasscodeError');
+    const entered = (input?.value || '').trim().toUpperCase();
+    if (entered !== this._sharePending.correctPasscode) {
+      if (err) err.style.display = 'block';
+      if (input) { input.value = ''; input.focus(); }
+      return;
+    }
+    if (err) err.style.display = 'none';
+    const { sessionId, label, user } = this._sharePending;
+    this._sharePending = null;
+    const passcodeDiv = document.getElementById('sharePasscodePrompt');
+    if (passcodeDiv) passcodeDiv.style.display = 'none';
+    this._shareJoinOrPrompt(sessionId, label, user);
+  },
+
+  _shareJoinOrPrompt(sessionId, label, user) {
+    if (user) {
+      // Has saved profile — connect directly
+      this._hide();
+      if (sessionId.startsWith('pvt-')) this._savePrivateSession(sessionId, label);
+      Session._connect(sessionId, label, false, user);
+    } else {
+      // No profile — store pending share link, show entry options for sign-in or guest join
+      this._shareLink = { sessionId, label };
+      this._prefillProfile(user || {});
+      // Show join form with profile fields (they need to enter info)
+      const entryOpts = document.getElementById('setupEntryOptions');
+      if (entryOpts) entryOpts.style.display = '';
+    }
+  },
+
+  // Called when user submits profile from the join form during a share-link flow
+  _completeShareJoin() {
+    const user = this._saveIdentity();
+    if (!user) return;
+    const { sessionId, label } = this._shareLink;
+    this._shareLink = null;
+    this._hide();
+    if (sessionId.startsWith('pvt-')) this._savePrivateSession(sessionId, label);
+    Session._connect(sessionId, label, false, user);
+  },
+
+  showGuestJoin() {
+    const form = document.getElementById('setupJoinForm');
+    if (form) form.dataset.guestMode = '1';
+    this._showJoinForm();
+  },
+
+  backToEntry() {
+    const entry = document.getElementById('setupEntryOptions');
+    const form = document.getElementById('setupJoinForm');
+    if (entry) entry.style.display = '';
+    if (form) { form.style.display = 'none'; delete form.dataset.guestMode; }
+  },
+
+  _showJoinForm() {
+    const entry = document.getElementById('setupEntryOptions');
+    const form = document.getElementById('setupJoinForm');
+    const backBtn = document.getElementById('btnBackToEntry');
+    const profileFields = document.getElementById('onboardProfileFields');
+    const sessionBlock = document.getElementById('sessionSelectionBlock');
+    const shareBlock = document.getElementById('shareLinkJoinBlock');
+    const shareLabel = document.getElementById('shareLinkLabel');
+    if (entry) entry.style.display = 'none';
+    if (form) form.style.display = '';
+    // Hide back button when signed in — they don't need it
+    if (backBtn) backBtn.style.display = Admin.isSignedIn() ? 'none' : '';
+
+    const isShareLink = !!this._shareLink;
+
+    if (isShareLink) {
+      // Share-link mode: show profile fields + join button, hide session selection
+      if (sessionBlock) sessionBlock.style.display = 'none';
+      if (shareBlock) shareBlock.style.display = '';
+      if (shareLabel) shareLabel.innerHTML = `Joining <strong>${App.esc(this._shareLink.label)}</strong>`;
+      if (profileFields) profileFields.style.display = '';
+      // Adjust heading
+      const heading = form.querySelector('h2');
+      if (heading) heading.textContent = 'Join ' + this._shareLink.label;
+    } else {
+      // Normal mode
+      if (sessionBlock) sessionBlock.style.display = '';
+      if (shareBlock) shareBlock.style.display = 'none';
+      const heading = form.querySelector('h2');
+      if (heading) heading.textContent = 'Join a Session';
+      // Signed-in users with saved profile skip straight to session selection
+      const savedUser = this._savedUser();
+      const firstSection = sessionBlock?.firstElementChild;
+      if (Admin.isSignedIn() && savedUser?.name) {
+        if (profileFields) profileFields.style.display = 'none';
+        if (firstSection) { firstSection.style.borderTop = 'none'; firstSection.style.paddingTop = '0'; firstSection.style.marginTop = '0'; }
+      } else {
+        if (profileFields) profileFields.style.display = '';
+        if (firstSection) { firstSection.style.borderTop = ''; firstSection.style.paddingTop = ''; firstSection.style.marginTop = ''; }
+      }
     }
   },
 
@@ -3349,7 +3567,7 @@ const Onboard = {
     const el = document.getElementById(elId);
     if (!el) return;
     el.style.display = '';
-    el.innerHTML = `<div class="queue-row-confirm" style="padding:8px 0;">
+    el.innerHTML = `<div class="queue-row-confirm" style="padding:8px 0;color:var(--primary);">
       <span style="font-size:0.85rem;">Join <strong>${App.esc(label)}</strong>?</span>
       <button style="color:var(--primary);border-color:var(--primary-muted);font-size:0.82rem;padding:4px 12px;border:1.5px solid;border-radius:6px;background:var(--primary-light);cursor:pointer;font-family:inherit;font-weight:600;" onclick="Onboard._inlineYes()">Yes</button>
       <button style="color:var(--text-muted);border-color:var(--border);font-size:0.82rem;padding:4px 12px;border:1.5px solid;border-radius:6px;background:transparent;cursor:pointer;font-family:inherit;" onclick="Onboard._inlineNo()">No</button>
@@ -3373,15 +3591,29 @@ const Onboard = {
   },
 
   // ─── Public sessions ───────────────────────
+  _updateJoinBtn(selId, btnId) {
+    const sel = document.getElementById(selId);
+    const btn = document.getElementById(btnId);
+    if (btn) btn.disabled = !sel?.value;
+  },
+
   _populatePublicDropdown() {
     const sel = document.getElementById('publicLocationSelect');
     if (!sel) return;
+    const hasOptions = Session.LOCATIONS.length > 0;
     Session.LOCATIONS.forEach(loc => {
       const opt = document.createElement('option');
       opt.value = loc.key;
       opt.textContent = loc.label;
       sel.appendChild(opt);
     });
+    if (!hasOptions) {
+      sel.options[0].textContent = 'No locations available';
+      sel.disabled = true;
+      sel.style.appearance = 'none';
+      sel.style.backgroundImage = 'none';
+    }
+    this._updateJoinBtn('publicLocationSelect', 'btnJoinPublic');
   },
 
   joinPublic() {
@@ -3409,25 +3641,54 @@ const Onboard = {
     this._populatePrivateDropdown();
   },
 
-  _populatePrivateDropdown() {
+  async _populatePrivateDropdown() {
     const sel = document.getElementById('privateSessionSelect');
     if (!sel) return;
-    const saved = this._getSavedPrivateSessions();
     // Keep the placeholder, clear the rest
     while (sel.options.length > 1) sel.remove(1);
-    if (saved.length === 0) {
+
+    let sessions;
+    if (Admin.isSuperAdmin()) {
+      // Super admins see all private sessions from the database
+      sessions = await this._fetchAllPrivateSessions();
+    } else {
+      // Regular users only see sessions they've created or joined
+      sessions = this._getSavedPrivateSessions();
+    }
+
+    if (sessions.length === 0) {
       sel.options[0].textContent = 'No saved sessions';
       sel.disabled = true;
+      sel.style.appearance = 'none';
+      sel.style.backgroundImage = 'none';
     } else {
       sel.options[0].textContent = 'Select a session...';
       sel.disabled = false;
-      saved.forEach(s => {
+      sel.style.appearance = '';
+      sel.style.backgroundImage = '';
+      sessions.forEach(s => {
         const opt = document.createElement('option');
         opt.value = s.id;
         opt.textContent = s.name;
         sel.appendChild(opt);
       });
     }
+    sel.value = '';
+    this._updateJoinBtn('privateSessionSelect', 'btnJoinPrivate');
+  },
+
+  async _fetchAllPrivateSessions() {
+    try {
+      const res = await fetch(`${Session.DB}/sessions.json?shallow=true`);
+      const keys = await res.json();
+      if (!keys) return [];
+      // Merge with locally saved names for better display labels
+      const savedMap = {};
+      this._getSavedPrivateSessions().forEach(s => { savedMap[s.id] = s.name; });
+      return Object.keys(keys)
+        .filter(k => k.startsWith('pvt-'))
+        .map(k => ({ id: k, name: savedMap[k] || k.replace(/^pvt-/, '') }));
+    } catch(e) { return []; }
   },
 
   joinSavedPrivate() {
@@ -3447,13 +3708,11 @@ const Onboard = {
 
   setSessionType(type) {
     this._newSessionType = type;
-    document.getElementById('btnTypeOpen').classList.toggle('active', type === 'open');
-    document.getElementById('btnTypeRR').classList.toggle('active', type === 'roundrobin');
   },
 
   toggleCreatePrivate() {
     if (!Admin.isSignedIn()) {
-      alert('Please sign in with Google before creating a private session.');
+      alert('Sign in with Google to create private sessions and to save your preferences. Use the back arrow and choose "Sign in with Google".');
       return;
     }
     const form = document.getElementById('privateCreateForm');
@@ -3550,12 +3809,25 @@ const Onboard = {
     if (setup) setup.style.display = '';
     const pvtForm = document.getElementById('privateCreateForm');
     if (pvtForm) pvtForm.style.display = 'none';
+    const sharePasscode = document.getElementById('sharePasscodePrompt');
+    if (sharePasscode) sharePasscode.style.display = 'none';
     this._inlineNo();
     this._pendingKey = null;
     this._pendingLabel = null;
     this._pendingPasscode = null;
     this._pendingIsCreate = false;
+    this._shareLink = null;
+    this._sharePending = null;
     this._populatePrivateDropdown();
+    // Show join form if signed in, otherwise show entry options
+    if (Admin.isSignedIn()) {
+      this._showJoinForm();
+    } else {
+      const entry = document.getElementById('setupEntryOptions');
+      const form = document.getElementById('setupJoinForm');
+      if (entry) entry.style.display = '';
+      if (form) { form.style.display = 'none'; delete form.dataset.guestMode; }
+    }
   },
 
   _hide() {
@@ -3723,19 +3995,38 @@ const Admin = {
     document.querySelectorAll('.admin-only').forEach(el => {
       el.style.display = isAdmin ? '' : 'none';
     });
-    // Landing page sign-in
-    const loginBtn = document.getElementById('btnAdminLogin');
-    if (loginBtn) loginBtn.style.display = isSignedIn ? 'none' : '';
+    // Landing page sign-in — show join form and signed-in status
+    const entryOpts = document.getElementById('setupEntryOptions');
+    const joinForm = document.getElementById('setupJoinForm');
+    const signedInWrap = document.getElementById('setupSignedIn');
     const signedInAs = document.getElementById('signedInAs');
-    if (signedInAs) {
-      if (isSignedIn) {
+    if (isSignedIn) {
+      if (entryOpts) entryOpts.style.display = 'none';
+      if (joinForm) joinForm.style.display = '';
+      if (signedInWrap) signedInWrap.style.display = '';
+      if (signedInAs) {
         const label = isSuperAdmin ? 'Super Admin' : 'Signed in';
-        signedInAs.style.display = '';
         signedInAs.innerHTML = `<span style="font-size:0.78rem;color:var(--text-muted);">${label}: ${App.esc(this._user.email)}</span> <button class="btn-admin-logout" onclick="Admin.logout()">sign out</button>`;
-      } else {
-        signedInAs.style.display = 'none';
       }
+      // Share-link + signed in + saved profile → connect directly
+      const savedUser = Onboard._savedUser();
+      if (Onboard._shareLink && savedUser?.name) {
+        const { sessionId, label } = Onboard._shareLink;
+        Onboard._shareLink = null;
+        Onboard._hide();
+        if (sessionId.startsWith('pvt-')) Onboard._savePrivateSession(sessionId, label);
+        Session._connect(sessionId, label, false, savedUser);
+        return;
+      }
+      Onboard._showJoinForm();
+    } else {
+      if (entryOpts) entryOpts.style.display = '';
+      if (joinForm && !joinForm.dataset.guestMode) joinForm.style.display = 'none';
+      if (signedInWrap) signedInWrap.style.display = 'none';
+      if (signedInAs) signedInAs.innerHTML = '';
     }
+    // Refresh private dropdown (super admin may see all sessions)
+    Onboard._populatePrivateDropdown();
     // Super admin panel
     const superSection = document.getElementById('superAdminSection');
     if (superSection) {
