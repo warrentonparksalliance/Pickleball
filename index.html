@@ -2122,12 +2122,11 @@ const App = {
 
   // ─── Host auth guard ───────────────────────────
   // Call at the top of every host-level write operation.
-  // When no session is active the app works fully offline — no auth needed.
-  // When a session IS active, the Firebase rules require authentication for all
-  // host writes; we enforce the same rule client-side so the modal fires
-  // immediately instead of only after a round-trip to Firebase.
+  // Two roles exist: authenticated host (Google sign-in) and unauthenticated
+  // guest (can see the session and manage only their own player record).
+  // Guests may NOT perform host operations — any attempt surfaces the modal.
   requireHostAuth() {
-    if (_sessionId && !_currentUser) {
+    if (!_currentUser) {
       this.showPermissionModal();
       return false;
     }
