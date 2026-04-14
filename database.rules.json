@@ -1,0 +1,36 @@
+{
+  "rules": {
+    "sessions": {
+      "$sessionId": {
+        ".read": "
+          data.child('isPrivate').val() === false ||
+          auth != null ||
+          data.child('passcode').val() === root.child('sessionAccess').child($sessionId).child('passcode').val()
+        ",
+        "players": {
+          "$playerId": {
+            ".write": "
+              auth != null ||
+              (!data.exists() && newData.exists()) ||
+              (data.exists() && newData.exists() && $playerId === data.child('guestId').val()) ||
+              (data.exists() && !newData.exists() && $playerId === data.child('guestId').val())
+            "
+          }
+        },
+        ".write": "auth != null"
+      }
+    },
+    "sessionAccess": {
+      "$sessionId": {
+        ".write": true,
+        ".read": false
+      }
+    },
+    "users": {
+      "$uid": {
+        ".read": "$uid === auth.uid",
+        ".write": "$uid === auth.uid"
+      }
+    }
+  }
+}

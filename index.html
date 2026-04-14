@@ -691,6 +691,186 @@ body {
 @media (max-width: 550px) {
   .courts-grid { grid-template-columns: 1fr; }
 }
+
+/* ─── Auth & Session Bar ──────────────────────── */
+.btn-google {
+  background: #fff;
+  color: #374151;
+  border: 1px solid rgba(255,255,255,0.4);
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+.btn-google:hover { background: #f3f4f6; }
+.btn-signout {
+  background: rgba(255,255,255,0.15);
+  color: white;
+  border: 1px solid rgba(255,255,255,0.3);
+}
+.btn-signout:hover { background: rgba(255,255,255,0.25); }
+.auth-user {
+  align-items: center;
+  gap: 8px;
+  color: white;
+  font-size: 0.82rem;
+}
+.auth-user img {
+  width: 22px; height: 22px;
+  border-radius: 50%;
+  border: 2px solid rgba(255,255,255,0.5);
+}
+.session-bar {
+  background: var(--card);
+  border-bottom: 1px solid var(--border);
+  padding: 7px 20px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 0.82rem;
+  flex-wrap: wrap;
+}
+.session-bar .sb-label { color: var(--text-light); }
+.session-id-code {
+  font-family: 'Courier New', monospace;
+  font-size: 0.78rem;
+  background: var(--hover-bg);
+  padding: 2px 7px;
+  border-radius: 4px;
+  user-select: all;
+  border: 1px solid var(--border);
+  cursor: copy;
+  max-width: 260px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.sb-gap { flex: 1; }
+
+/* ─── Modal System ────────────────────────────── */
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.55);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 16px;
+}
+.modal-backdrop.hidden { display: none; }
+.modal-box {
+  background: var(--card);
+  border-radius: 12px;
+  padding: 24px;
+  max-width: 420px;
+  width: 100%;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+}
+.modal-box h2 { font-size: 1.1rem; font-weight: 700; margin-bottom: 8px; }
+.modal-box .modal-sub {
+  color: var(--text-light);
+  font-size: 0.88rem;
+  margin-bottom: 16px;
+  line-height: 1.5;
+}
+.modal-form-row {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+.modal-form-label {
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--text-light);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+.modal-box input[type="text"],
+.modal-box input[type="password"],
+.modal-box input[type="number"],
+.modal-box select {
+  width: 100%;
+  padding: 8px 10px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  font-size: 0.9rem;
+  background: var(--card);
+  color: var(--text);
+}
+.modal-box input[type="text"]:focus,
+.modal-box input[type="password"]:focus,
+.modal-box input[type="number"]:focus,
+.modal-box select:focus {
+  outline: none;
+  border-color: var(--primary);
+  box-shadow: 0 0 0 2px var(--primary-light);
+}
+.modal-check-row {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 0.88rem;
+  cursor: pointer;
+}
+.modal-check-row input { accent-color: var(--primary); }
+.modal-actions {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+  margin-top: 16px;
+  flex-wrap: wrap;
+}
+.modal-divider { height: 1px; background: var(--border); margin: 14px 0; }
+.modal-tabs {
+  display: flex;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  overflow: hidden;
+  margin-bottom: 16px;
+}
+.modal-tab-btn {
+  flex: 1;
+  padding: 7px 8px;
+  font-size: 0.82rem;
+  font-weight: 600;
+  background: var(--hover-bg);
+  color: var(--text-light);
+  border: none;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+.modal-tab-btn.active { background: var(--primary); color: white; }
+
+/* Guest self-indicator */
+.player-item.is-me {
+  background: #f0fdf4;
+  border: 1px solid #86efac;
+  border-radius: 6px;
+}
+[data-theme="dark"] .player-item.is-me {
+  background: #052e16;
+  border-color: #166534;
+}
+.me-badge {
+  font-size: 0.62rem;
+  font-weight: 700;
+  background: #22c55e;
+  color: white;
+  padding: 1px 5px;
+  border-radius: 3px;
+  text-transform: uppercase;
+}
+.btn-edit-me {
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--text-light);
+  font-size: 0.72rem;
+  padding: 2px 7px;
+  border-radius: 4px;
+  cursor: pointer;
+}
+.btn-edit-me:hover { border-color: var(--primary); color: var(--primary); }
 </style>
 </head>
 <body>
@@ -698,12 +878,123 @@ body {
 <header class="header">
   <div><h1>Pickle Jar</h1><span style="font-size:0.8rem;opacity:0.85;">Everyone's in the jar. Shake it up.</span></div>
   <div class="header-actions">
+    <div id="authSection" style="display:flex;align-items:center;">
+      <button class="btn btn-google btn-sm" onclick="App.signInWithGoogle()">Sign in with Google</button>
+    </div>
+    <div id="userSection" style="display:none;" class="auth-user">
+      <img id="userAvatar" src="" alt="" style="display:none;">
+      <span id="userName"></span>
+      <button class="btn btn-signout btn-sm" onclick="App.signOut()">Sign out</button>
+    </div>
+    <button class="btn btn-primary btn-sm" onclick="App.showSessionModal()">Session</button>
     <button class="theme-toggle" onclick="App.toggleTheme()" id="themeToggle" title="Toggle dark mode"></button>
     <button class="btn btn-primary btn-sm" onclick="App.clearHistory()">Clear History</button>
     <button class="btn btn-primary btn-sm" onclick="App.resetAll()">Reset All</button>
     <button class="btn btn-assign" onclick="App.assign()">Assign Courts</button>
   </div>
 </header>
+
+<!-- ── Session Bar (visible when a session is active) ── -->
+<div class="session-bar" id="sessionBar" style="display:none;">
+  <span class="sb-label">Session:</span>
+  <span class="session-id-code" id="sessionIdDisplay" title="Click to copy" onclick="App.copySessionId()"></span>
+  <button class="btn btn-outline btn-sm" onclick="App.copySessionId()">Copy ID</button>
+  <button class="btn btn-outline btn-sm" id="myProfileBtn" onclick="App.showGuestProfileModal()" style="display:none;">My Profile</button>
+  <span class="sb-gap"></span>
+  <button class="btn btn-danger btn-sm" onclick="App.leaveSession()">Leave Session</button>
+</div>
+
+<!-- ── Permission Denied Modal ── -->
+<div class="modal-backdrop hidden" id="permissionModal">
+  <div class="modal-box">
+    <h2>Sign in required</h2>
+    <p class="modal-sub">Sign in with Google to use this feature.</p>
+    <div class="modal-actions">
+      <button class="btn btn-outline" onclick="App.closePermissionModal()">Cancel</button>
+      <button class="btn btn-primary" onclick="App.signInWithGoogle()">Sign in with Google</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── Session Modal (Join or Create) ── -->
+<div class="modal-backdrop hidden" id="sessionModal">
+  <div class="modal-box">
+    <div class="modal-tabs">
+      <button class="modal-tab-btn active" id="tabJoin" onclick="App.switchSessionTab('join')">Join Session</button>
+      <button class="modal-tab-btn" id="tabCreate" onclick="App.switchSessionTab('create')">New Session</button>
+    </div>
+    <!-- Join tab -->
+    <div id="sessionTabJoin">
+      <div class="modal-form-row">
+        <div class="modal-form-label">Session ID</div>
+        <input type="text" id="joinSessionId" placeholder="Paste session ID here">
+        <div class="modal-form-label">Passcode (if required)</div>
+        <input type="password" id="joinPasscode" placeholder="Leave blank if none">
+        <div class="modal-form-label">Your name</div>
+        <input type="text" id="guestName" placeholder="Name">
+        <div class="modal-form-label">Skill level (optional, 1–10)</div>
+        <input type="number" id="guestSkill" placeholder="e.g. 4.5" min="1" max="10" step="0.5">
+        <label class="modal-check-row">
+          <input type="checkbox" id="guestOvo"> Prefer 1v1 (singles)
+        </label>
+      </div>
+      <div class="modal-actions">
+        <button class="btn btn-outline" onclick="App.closeSessionModal()">Cancel</button>
+        <button class="btn btn-primary" onclick="App.joinAsGuest()">Join</button>
+      </div>
+    </div>
+    <!-- Create tab (requires auth) -->
+    <div id="sessionTabCreate" style="display:none;">
+      <div id="sessionCreateAuthNotice">
+        <p class="modal-sub">You must be signed in with Google to create a session.</p>
+        <div class="modal-actions">
+          <button class="btn btn-outline" onclick="App.closeSessionModal()">Cancel</button>
+          <button class="btn btn-primary" onclick="App.signInWithGoogle()">Sign in with Google</button>
+        </div>
+      </div>
+      <div id="sessionCreateForm" style="display:none;">
+        <div class="modal-form-row">
+          <label class="modal-check-row">
+            <input type="checkbox" id="newSessionPrivate" onchange="App.togglePasscodeField()">
+            Private session (require passcode to join)
+          </label>
+          <div id="passcodeField" style="display:none;">
+            <div class="modal-form-label" style="margin-top:6px;">Passcode</div>
+            <input type="password" id="newSessionPasscode" placeholder="Enter passcode">
+          </div>
+        </div>
+        <div class="modal-actions">
+          <button class="btn btn-outline" onclick="App.closeSessionModal()">Cancel</button>
+          <button class="btn btn-primary" onclick="App.createSession()">Create Session</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ── Guest Profile Modal ── -->
+<div class="modal-backdrop hidden" id="guestProfileModal">
+  <div class="modal-box">
+    <h2>My Profile</h2>
+    <p class="modal-sub">Update your details in this session.</p>
+    <div class="modal-form-row">
+      <div class="modal-form-label">Name</div>
+      <input type="text" id="guestEditName" placeholder="Your name">
+      <div class="modal-form-label">Skill level (optional, 1–10)</div>
+      <input type="number" id="guestEditSkill" placeholder="e.g. 4.5" min="1" max="10" step="0.5">
+      <label class="modal-check-row">
+        <input type="checkbox" id="guestEditOvo"> Prefer 1v1 (singles)
+      </label>
+    </div>
+    <div class="modal-divider"></div>
+    <div class="modal-actions">
+      <button class="btn btn-outline" onclick="App.closeGuestProfileModal()">Cancel</button>
+      <button class="btn btn-danger btn-sm" onclick="App.pauseGuest()">Pause me</button>
+      <button class="btn btn-danger btn-sm" onclick="App.removeGuest()">Leave session</button>
+      <button class="btn btn-primary" onclick="App.saveGuestProfile()">Save</button>
+    </div>
+  </div>
+</div>
 
 <div class="app-layout">
   <aside class="sidebar">
@@ -765,7 +1056,37 @@ body {
   </main>
 </div>
 
-<script>
+<script type="module">
+import { initializeApp }                                          from 'https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js';
+import { getDatabase, ref, set, get, update, remove, onValue }  from 'https://www.gstatic.com/firebasejs/10.14.1/firebase-database.js';
+import { getAuth, signInWithPopup, GoogleAuthProvider,
+         onAuthStateChanged, signOut as fbSignOut }              from 'https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js';
+
+// ─── Firebase Configuration ────────────────────────────────────────────────
+// Replace these placeholder values with your actual Firebase project config.
+// Find it in: Firebase Console → Project Settings → Your apps → SDK setup.
+const firebaseConfig = {
+  apiKey:            'YOUR_API_KEY',
+  authDomain:        'YOUR_PROJECT.firebaseapp.com',
+  databaseURL:       'https://YOUR_PROJECT-default-rtdb.firebaseio.com',
+  projectId:         'YOUR_PROJECT_ID',
+  storageBucket:     'YOUR_PROJECT.appspot.com',
+  messagingSenderId: 'YOUR_SENDER_ID',
+  appId:             'YOUR_APP_ID',
+};
+
+const fbApp     = initializeApp(firebaseConfig);
+const db        = getDatabase(fbApp);
+const auth      = getAuth(fbApp);
+const gProvider = new GoogleAuthProvider();
+
+// ─── Module-level session state ────────────────────────────────────────────
+// These live outside App.state so they are never persisted to localStorage.
+let _currentUser  = null;
+let _sessionId    = localStorage.getItem('pickleJarSessionId') || null;
+let _guestId      = localStorage.getItem('pickleJarGuestId')   || null;
+let _sessionUnsub = null;  // unsubscribe fn for the onValue listener
+
 const App = {
   state: {
     players: [],
@@ -797,6 +1118,8 @@ const App = {
     this.loadState();
     this.render();
     setInterval(() => this.updateTimers(), 1000);
+    this.initFirebase();
+    this.updateSessionBar();
   },
 
   // ─── Theme ────────────────────────────────────
@@ -827,7 +1150,12 @@ const App = {
   saveState() {
     this.state.options.useSkill = document.getElementById('optSkill').checked;
     this.state.options.minimizeRepeats = document.getElementById('optRepeats').checked;
-    localStorage.setItem('pickleJar', JSON.stringify(this.state));
+    // Do not persist Firebase guest players — they re-sync from the listener on load
+    const stateToSave = {
+      ...this.state,
+      players: this.state.players.filter(p => !p.isGuest),
+    };
+    localStorage.setItem('pickleJar', JSON.stringify(stateToSave));
   },
 
   loadState() {
@@ -876,10 +1204,17 @@ const App = {
 
   removePlayer(id) {
     if (this.isPlayerOnCourt(id) || this.isPlayerPending(id)) return;
+    const player = this.state.players.find(p => p.id === id);
     this.state.players = this.state.players.filter(p => p.id !== id);
-    this.state.teams = this.state.teams.filter(t => t.p1 !== id && t.p2 !== id);
+    this.state.teams   = this.state.teams.filter(t => t.p1 !== id && t.p2 !== id);
     this.saveState();
     this.render();
+    // If the removed player is a Firebase guest and the current user is authenticated,
+    // also remove them from the database.
+    if (player?.isGuest && player.guestId && _sessionId && _currentUser) {
+      remove(ref(db, `sessions/${_sessionId}/players/${player.guestId}`))
+        .catch(err => this.handleFirebaseError(err));
+    }
   },
 
   togglePlayer(id) {
@@ -1516,37 +1851,47 @@ const App = {
       el.innerHTML = '<li style="color:var(--text-light);font-size:0.85rem;padding:4px 8px;">Add players to get started</li>';
       return;
     }
+    const isHost = !!_currentUser;
     el.innerHTML = this.state.players.map(p => {
-      const sitouts = this.getSitoutCount(p.id);
-      const courtNum = this.getPlayerCourt(p.id);
-      const onCourt = courtNum !== null;
+      const sitouts     = this.getSitoutCount(p.id);
+      const courtNum    = this.getPlayerCourt(p.id);
+      const onCourt     = courtNum !== null;
       const pendingCourt = this.getPlayerPendingCourt(p.id);
-      const isPending = pendingCourt !== null;
-      const isSelected = this.state.selectedPlayerId === p.id;
-      const locked = onCourt || isPending;
-      const itemClass = [
+      const isPending   = pendingCourt !== null;
+      const isSelected  = this.state.selectedPlayerId === p.id;
+      const locked      = onCourt || isPending;
+      const isMine      = !!(p.guestId && p.guestId === _guestId);
+      // Authenticated hosts can remove any player; guests can only remove themselves
+      const canRemove   = isHost || isMine;
+      // Use idFor() so UUID string IDs are quoted in onclick attrs
+      const idRef       = this.idFor(p.id);
+      const itemClass   = [
         'player-item',
-        onCourt ? 'on-court' : '',
-        isPending ? 'pending' : '',
+        onCourt   ? 'on-court' : '',
+        isPending ? 'pending'  : '',
         isSelected ? 'selected' : '',
+        isMine    ? 'is-me'    : '',
       ].filter(Boolean).join(' ');
       const canSelect = p.active && !locked;
       return `<li class="${itemClass}">
-        <input type="checkbox" ${p.active ? 'checked' : ''} ${locked ? 'disabled' : ''} onchange="App.togglePlayer(${p.id})">
-        <span class="player-name${canSelect ? ' selectable' : ''}" onclick="${canSelect ? `App.selectPlayer(${p.id})` : ''}">${this.esc(p.name)}</span>
+        <input type="checkbox" ${p.active ? 'checked' : ''} ${locked ? 'disabled' : ''} onchange="App.togglePlayer(${idRef})">
+        <span class="player-name${canSelect ? ' selectable' : ''}" onclick="${canSelect ? `App.selectPlayer(${idRef})` : ''}">${this.esc(p.name)}</span>
+        ${isMine ? '<span class="me-badge">me</span>' : ''}
         ${onCourt ? `<span class="player-court-badge">Ct ${courtNum}</span>` : ''}
         ${isPending ? `<span class="player-pending-badge">Ct ${pendingCourt}</span>` : ''}
-        ${p.wantsSingles ? `<span class="player-pref wants-singles" onclick="App.toggleSingles(${p.id})" title="Click to remove">1v1</span>` : ''}
+        ${p.wantsSingles ? `<span class="player-pref wants-singles" onclick="App.toggleSingles(${idRef})" title="Click to remove">1v1</span>` : ''}
         ${p.roundsPlayed ? `<span class="player-rounds">${p.roundsPlayed} gm${p.roundsPlayed !== 1 ? 's' : ''}</span>` : ''}
         ${p.score !== null ? `<span class="player-score">${p.score}</span>` : ''}
         ${sitouts > 0 && !onCourt && !isPending ? `<span class="player-sitout">sat ${sitouts}</span>` : ''}
-        <button class="btn btn-ghost btn-sm player-remove" onclick="App.removePlayer(${p.id})" ${locked ? 'disabled' : ''}>&times;</button>
+        ${isMine ? `<button class="btn-edit-me" onclick="App.showGuestProfileModal()">Edit</button>` : ''}
+        ${canRemove ? `<button class="btn btn-ghost btn-sm player-remove" onclick="App.removePlayer(${idRef})" ${locked ? 'disabled' : ''}>&times;</button>` : ''}
       </li>`;
     }).join('');
   },
 
   renderTeamDropdowns() {
-    const players = this.state.players;
+    // Exclude Firebase guest players from team creation — teams are a host concept
+    const players = this.state.players.filter(p => !p.isGuest);
     for (const selId of ['teamPlayer1', 'teamPlayer2']) {
       const sel = document.getElementById(selId);
       const cur = sel.value;
@@ -1598,7 +1943,7 @@ const App = {
           for (let i = 0; i < 2; i++) {
             if (side[i]) {
               const p = this.getPlayer(side[i]);
-              slots.push(`<div class="pending-player"><span>${p ? this.esc(p.name) : '?'}</span><button class="btn btn-ghost btn-sm" onclick="App.removeFromPending(${court.id},${side[i]})">&times;</button></div>`);
+              slots.push(`<div class="pending-player"><span>${p ? this.esc(p.name) : '?'}</span><button class="btn btn-ghost btn-sm" onclick="App.removeFromPending(${court.id},${this.idFor(side[i])})">&times;</button></div>`);
             } else {
               slots.push(`<div class="pending-slot">tap player, then tap here</div>`);
             }
@@ -1747,8 +2092,343 @@ const App = {
     d.textContent = str;
     return d.innerHTML;
   },
+
+  // ─── ID helper ─────────────────────────────────
+  // Returns the player ID formatted for safe embedding in HTML onclick attrs.
+  // Integer IDs render as bare numbers; UUID strings are single-quoted.
+  idFor(id) {
+    return typeof id === 'number' ? id : `'${id}'`;
+  },
+
+  // ─── Firebase Auth ──────────────────────────────
+  async signInWithGoogle() {
+    this.closePermissionModal();
+    try {
+      await signInWithPopup(auth, gProvider);
+    } catch (err) {
+      if (err.code !== 'auth/popup-closed-by-user') console.error('Sign-in error:', err);
+    }
+  },
+
+  async signOut() {
+    try {
+      await fbSignOut(auth);
+    } catch (err) {
+      console.error('Sign-out error:', err);
+    }
+  },
+
+  initFirebase() {
+    onAuthStateChanged(auth, user => {
+      _currentUser = user;
+      this.updateAuthUI();
+      // Re-attach session listener after auth state resolves
+      if (_sessionId) this.attachSessionListener(_sessionId);
+    });
+    // Attach immediately in case auth resolves before listener fires
+    if (_sessionId) this.attachSessionListener(_sessionId);
+  },
+
+  updateAuthUI() {
+    const authSec = document.getElementById('authSection');
+    const userSec = document.getElementById('userSection');
+    const avatar  = document.getElementById('userAvatar');
+    const nameEl  = document.getElementById('userName');
+    if (_currentUser) {
+      if (authSec) authSec.style.display = 'none';
+      if (userSec) userSec.style.display = 'flex';
+      if (avatar) {
+        avatar.src = _currentUser.photoURL || '';
+        avatar.style.display = _currentUser.photoURL ? '' : 'none';
+      }
+      if (nameEl) nameEl.textContent = _currentUser.displayName || _currentUser.email || '';
+    } else {
+      if (authSec) authSec.style.display = 'flex';
+      if (userSec) userSec.style.display = 'none';
+    }
+  },
+
+  // ─── Permission Error Handling ──────────────────
+  // Wraps any Firebase error: PERMISSION_DENIED surfaces the sign-in modal;
+  // other errors are logged. Pass an optional fallback(err) for custom handling.
+  handleFirebaseError(err, fallback) {
+    const code = err?.code || '';
+    const msg  = err?.message || '';
+    if (code === 'PERMISSION_DENIED' || msg.includes('PERMISSION_DENIED')) {
+      this.showPermissionModal();
+    } else {
+      console.error('Firebase error:', err);
+      if (fallback) fallback(err);
+    }
+  },
+
+  showPermissionModal() {
+    document.getElementById('permissionModal').classList.remove('hidden');
+  },
+
+  closePermissionModal() {
+    document.getElementById('permissionModal').classList.add('hidden');
+  },
+
+  // ─── Session Management ─────────────────────────
+  showSessionModal() {
+    document.getElementById('sessionModal').classList.remove('hidden');
+    this.switchSessionTab('join');
+  },
+
+  closeSessionModal() {
+    document.getElementById('sessionModal').classList.add('hidden');
+  },
+
+  switchSessionTab(tab) {
+    document.getElementById('sessionTabJoin').style.display   = tab === 'join'   ? '' : 'none';
+    document.getElementById('sessionTabCreate').style.display = tab === 'create' ? '' : 'none';
+    document.getElementById('tabJoin').classList.toggle('active',   tab === 'join');
+    document.getElementById('tabCreate').classList.toggle('active', tab === 'create');
+    if (tab === 'create') {
+      const hasAuth = !!_currentUser;
+      document.getElementById('sessionCreateAuthNotice').style.display = hasAuth ? 'none' : '';
+      document.getElementById('sessionCreateForm').style.display       = hasAuth ? ''     : 'none';
+    }
+  },
+
+  togglePasscodeField() {
+    const isPrivate = document.getElementById('newSessionPrivate').checked;
+    document.getElementById('passcodeField').style.display = isPrivate ? '' : 'none';
+  },
+
+  async createSession() {
+    if (!_currentUser) { this.showPermissionModal(); return; }
+    const isPrivate = document.getElementById('newSessionPrivate').checked;
+    const passcode  = document.getElementById('newSessionPasscode').value.trim();
+    if (isPrivate && !passcode) {
+      alert('Please enter a passcode for the private session.');
+      return;
+    }
+    const sessionId   = crypto.randomUUID();
+    const sessionData = {
+      isPrivate,
+      passcode: isPrivate ? passcode : null,
+      createdAt: Date.now(),
+      createdBy: _currentUser.uid,
+      hostName:  _currentUser.displayName || _currentUser.email || 'Host',
+    };
+    try {
+      await set(ref(db, `sessions/${sessionId}`), sessionData);
+      _sessionId = sessionId;
+      localStorage.setItem('pickleJarSessionId', sessionId);
+      this.closeSessionModal();
+      this.updateSessionBar();
+      this.attachSessionListener(sessionId);
+    } catch (err) {
+      this.handleFirebaseError(err);
+    }
+  },
+
+  // Internal: clears session state without showing a confirm dialog.
+  _doLeaveSession() {
+    if (_sessionUnsub) { _sessionUnsub(); _sessionUnsub = null; }
+    _sessionId = null;
+    _guestId   = null;
+    localStorage.removeItem('pickleJarSessionId');
+    localStorage.removeItem('pickleJarGuestId');
+    this.state.players = this.state.players.filter(p => !p.isGuest);
+    this.updateSessionBar();
+    this.render();
+  },
+
+  leaveSession() {
+    if (!confirm('Leave this session? You can rejoin later with the same session ID.')) return;
+    this._doLeaveSession();
+  },
+
+  updateSessionBar() {
+    const bar       = document.getElementById('sessionBar');
+    const display   = document.getElementById('sessionIdDisplay');
+    const profBtn   = document.getElementById('myProfileBtn');
+    if (_sessionId && bar && display) {
+      bar.style.display   = 'flex';
+      display.textContent = _sessionId;
+    } else if (bar) {
+      bar.style.display = 'none';
+    }
+    if (profBtn) profBtn.style.display = _guestId ? '' : 'none';
+  },
+
+  async copySessionId() {
+    if (!_sessionId) return;
+    try {
+      await navigator.clipboard.writeText(_sessionId);
+      const display = document.getElementById('sessionIdDisplay');
+      if (display) {
+        const orig = display.textContent;
+        display.textContent = 'Copied!';
+        setTimeout(() => { display.textContent = orig; }, 1500);
+      }
+    } catch { alert(`Session ID:\n${_sessionId}`); }
+  },
+
+  // ─── Guest Join Flow ────────────────────────────
+  async joinAsGuest() {
+    const sessionIdInput = document.getElementById('joinSessionId').value.trim();
+    const passcode       = document.getElementById('joinPasscode').value.trim();
+    const name           = document.getElementById('guestName').value.trim() || 'Guest';
+    const skillRaw       = document.getElementById('guestSkill').value;
+    const skill          = skillRaw ? parseFloat(skillRaw) : null;
+    const wantsOvo       = document.getElementById('guestOvo').checked;
+
+    if (!sessionIdInput) { alert('Please enter a session ID.'); return; }
+
+    // Generate a guestId if this browser doesn't have one yet
+    if (!_guestId) {
+      _guestId = crypto.randomUUID();
+      localStorage.setItem('pickleJarGuestId', _guestId);
+    }
+
+    // For private sessions: write passcode to sessionAccess BEFORE reading the
+    // session, so the Firebase rule can verify it and grant read access.
+    if (passcode) {
+      try {
+        await set(ref(db, `sessionAccess/${sessionIdInput}/passcode`), passcode);
+      } catch (err) {
+        this.handleFirebaseError(err);
+        return;
+      }
+    }
+
+    // Write the guest's player record into the session
+    const playerData = {
+      guestId:            _guestId,
+      name,
+      skill,
+      oneVsOnePreference: wantsOvo || null,
+      status:             'active',
+    };
+    try {
+      await set(ref(db, `sessions/${sessionIdInput}/players/${_guestId}`), playerData);
+    } catch (err) {
+      this.handleFirebaseError(err);
+      return;
+    }
+
+    // Clear the passcode from sessionAccess after the player record is written
+    if (passcode) {
+      try { await remove(ref(db, `sessionAccess/${sessionIdInput}/passcode`)); }
+      catch { /* best-effort */ }
+    }
+
+    _sessionId = sessionIdInput;
+    localStorage.setItem('pickleJarSessionId', sessionIdInput);
+    this.closeSessionModal();
+    this.updateSessionBar();
+    this.attachSessionListener(sessionIdInput);
+  },
+
+  // ─── Guest Self-Management ──────────────────────
+  showGuestProfileModal() {
+    if (!_guestId || !_sessionId) return;
+    // Pre-fill form from current local state
+    const myPlayer = this.state.players.find(p => p.guestId === _guestId);
+    if (myPlayer) {
+      const nameEl  = document.getElementById('guestEditName');
+      const skillEl = document.getElementById('guestEditSkill');
+      const ovoEl   = document.getElementById('guestEditOvo');
+      if (nameEl)  nameEl.value  = myPlayer.name  || '';
+      if (skillEl) skillEl.value = myPlayer.skill != null ? myPlayer.skill : '';
+      if (ovoEl)   ovoEl.checked = !!myPlayer.oneVsOnePreference;
+    }
+    document.getElementById('guestProfileModal').classList.remove('hidden');
+  },
+
+  closeGuestProfileModal() {
+    document.getElementById('guestProfileModal').classList.add('hidden');
+  },
+
+  // Update name, skill, and 1v1 preference — writes to sessions/{sid}/players/{guestId}
+  async saveGuestProfile() {
+    if (!_guestId || !_sessionId) return;
+    const name     = document.getElementById('guestEditName').value.trim() || 'Guest';
+    const skillRaw = document.getElementById('guestEditSkill').value;
+    const skill    = skillRaw ? parseFloat(skillRaw) : null;
+    const wantsOvo = document.getElementById('guestEditOvo').checked;
+    try {
+      await update(ref(db, `sessions/${_sessionId}/players/${_guestId}`), {
+        name,
+        skill,
+        oneVsOnePreference: wantsOvo || null,
+      });
+      this.closeGuestProfileModal();
+    } catch (err) {
+      this.handleFirebaseError(err);
+    }
+  },
+
+  // Pause self — writes status:'paused' to sessions/{sid}/players/{guestId}
+  async pauseGuest() {
+    if (!_guestId || !_sessionId) return;
+    if (!confirm('Pause yourself in this session? The host can reactivate you.')) return;
+    try {
+      await update(ref(db, `sessions/${_sessionId}/players/${_guestId}`), { status: 'paused' });
+      this.closeGuestProfileModal();
+    } catch (err) {
+      this.handleFirebaseError(err);
+    }
+  },
+
+  // Remove self — deletes sessions/{sid}/players/{guestId} then leaves session
+  async removeGuest() {
+    if (!_guestId || !_sessionId) return;
+    if (!confirm('Remove yourself from this session?')) return;
+    try {
+      await remove(ref(db, `sessions/${_sessionId}/players/${_guestId}`));
+    } catch (err) {
+      this.handleFirebaseError(err);
+      return;
+    }
+    this._doLeaveSession();
+    this.closeGuestProfileModal();
+  },
+
+  // ─── Real-time Session Sync ─────────────────────
+  attachSessionListener(sessionId) {
+    if (_sessionUnsub) { _sessionUnsub(); _sessionUnsub = null; }
+    const playersRef = ref(db, `sessions/${sessionId}/players`);
+    _sessionUnsub = onValue(
+      playersRef,
+      snap => { this.mergeFirebasePlayers(snap.val() || {}); },
+      err  => { this.handleFirebaseError(err); }
+    );
+  },
+
+  // Merge Firebase guest players into local state without overwriting local (host-added) players
+  mergeFirebasePlayers(playersData) {
+    const fbPlayers = Object.values(playersData).map(fp => ({
+      id:                 fp.guestId,
+      guestId:            fp.guestId,
+      name:               fp.name  || 'Guest',
+      score:              fp.skill  != null ? fp.skill : null,
+      skill:              fp.skill  != null ? fp.skill : null,
+      active:             fp.status !== 'paused',
+      wantsSingles:       !!fp.oneVsOnePreference,
+      oneVsOnePreference: fp.oneVsOnePreference || null,
+      status:             fp.status || 'active',
+      isGuest:            true,
+    }));
+
+    // Keep local (non-guest) players; update or append Firebase players
+    const localPlayers = this.state.players.filter(p => !p.isGuest);
+    const merged       = [...localPlayers];
+    for (const fp of fbPlayers) {
+      const idx = merged.findIndex(p => p.guestId === fp.guestId);
+      if (idx >= 0) merged[idx] = { ...merged[idx], ...fp };
+      else merged.push(fp);
+    }
+    this.state.players = merged;
+    this.render();
+  },
 };
 
+window.App = App;
 App.init();
 </script>
 </body>
