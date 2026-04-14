@@ -1181,6 +1181,7 @@ const App = {
 
   // ─── Players ───────────────────────────────────
   addPlayer() {
+    if (!this.requireHostAuth()) return;
     const nameEl = document.getElementById('playerName');
     const scoreEl = document.getElementById('playerScore');
     const singlesEl = document.getElementById('playerSingles');
@@ -1203,6 +1204,7 @@ const App = {
   },
 
   removePlayer(id) {
+    if (!this.requireHostAuth()) return;
     if (this.isPlayerOnCourt(id) || this.isPlayerPending(id)) return;
     const player = this.state.players.find(p => p.id === id);
     this.state.players = this.state.players.filter(p => p.id !== id);
@@ -1218,6 +1220,7 @@ const App = {
   },
 
   togglePlayer(id) {
+    if (!this.requireHostAuth()) return;
     if (this.isPlayerOnCourt(id) || this.isPlayerPending(id)) return;
     const p = this.state.players.find(p => p.id === id);
     if (p) p.active = !p.active;
@@ -1226,6 +1229,7 @@ const App = {
   },
 
   toggleSingles(id) {
+    if (!this.requireHostAuth()) return;
     const p = this.state.players.find(p => p.id === id);
     if (p) p.wantsSingles = !p.wantsSingles;
     this.saveState();
@@ -1261,6 +1265,7 @@ const App = {
 
   // ─── Teams ─────────────────────────────────────
   addTeam() {
+    if (!this.requireHostAuth()) return;
     const p1 = parseInt(document.getElementById('teamPlayer1').value);
     const p2 = parseInt(document.getElementById('teamPlayer2').value);
     const doNotSplit = document.getElementById('teamDoNotSplit').checked;
@@ -1276,6 +1281,7 @@ const App = {
   },
 
   removeTeam(id) {
+    if (!this.requireHostAuth()) return;
     this.state.teams = this.state.teams.filter(t => t.id !== id);
     this.saveState();
     this.render();
@@ -1283,6 +1289,7 @@ const App = {
 
   // ─── Courts ────────────────────────────────────
   toggleCourt(id) {
+    if (!this.requireHostAuth()) return;
     if (this.state.activeGames[id] || this.state.pendingGames[id]) return;
     const c = this.state.courts.find(c => c.id === id);
     if (c) c.active = !c.active;
@@ -1291,12 +1298,14 @@ const App = {
   },
 
   endGame(courtId) {
+    if (!this.requireHostAuth()) return;
     this.state.scoringGames[courtId] = true;
     this.saveState();
     this.render();
   },
 
   submitScore(courtId) {
+    if (!this.requireHostAuth()) return;
     const s1Input = document.getElementById(`score-s1-${courtId}`);
     const s2Input = document.getElementById(`score-s2-${courtId}`);
     const score1 = parseInt(s1Input.value);
@@ -1331,12 +1340,14 @@ const App = {
   },
 
   cancelScoring(courtId) {
+    if (!this.requireHostAuth()) return;
     delete this.state.scoringGames[courtId];
     this.saveState();
     this.render();
   },
 
   clearCourt(courtId) {
+    if (!this.requireHostAuth()) return;
     delete this.state.activeGames[courtId];
     this.saveState();
     this.render();
@@ -1366,6 +1377,7 @@ const App = {
   },
 
   placePlayer(courtId) {
+    if (!this.requireHostAuth()) return;
     const pid = this.state.selectedPlayerId;
     if (!pid) return;
     if (this.isPlayerOnCourt(pid) || this.isPlayerPending(pid)) return;
@@ -1389,6 +1401,7 @@ const App = {
   },
 
   removeFromPending(courtId, playerId) {
+    if (!this.requireHostAuth()) return;
     const pg = this.state.pendingGames[courtId];
     if (!pg) return;
     pg.side1 = pg.side1.filter(id => id !== playerId);
@@ -1403,12 +1416,14 @@ const App = {
   },
 
   clearPending(courtId) {
+    if (!this.requireHostAuth()) return;
     delete this.state.pendingGames[courtId];
     this.saveState();
     this.render();
   },
 
   startGame(courtId) {
+    if (!this.requireHostAuth()) return;
     const pg = this.state.pendingGames[courtId];
     if (!pg || pg.side1.length === 0 || pg.side2.length === 0) return;
     const mode = (pg.side1.length === 1 && pg.side2.length === 1) ? 'singles' : 'doubles';
@@ -1469,6 +1484,7 @@ const App = {
 
   // ─── Assignment Algorithm ──────────────────────
   assign() {
+    if (!this.requireHostAuth()) return;
     const onCourt = this.getPlayersOnCourts();
     const pendingPlayerIds = new Set();
     for (const pg of Object.values(this.state.pendingGames)) {
@@ -1801,6 +1817,7 @@ const App = {
 
   // ─── History ───────────────────────────────────
   clearHistory() {
+    if (!this.requireHostAuth()) return;
     if (!confirm('Clear all match history and sit-out counts?')) return;
     this.state.opponentHistory = {};
     this.state.sitoutCounts = {};
@@ -1811,6 +1828,7 @@ const App = {
   },
 
   resetAll() {
+    if (!this.requireHostAuth()) return;
     if (!confirm('Reset everything? This removes all players, teams, and history.')) return;
     localStorage.removeItem('pickleJar');
     this.state = {
@@ -1884,7 +1902,9 @@ const App = {
         ${p.score !== null ? `<span class="player-score">${p.score}</span>` : ''}
         ${sitouts > 0 && !onCourt && !isPending ? `<span class="player-sitout">sat ${sitouts}</span>` : ''}
         ${isMine ? `<button class="btn-edit-me" onclick="App.showGuestProfileModal()">Edit</button>` : ''}
-        ${canRemove ? `<button class="btn btn-ghost btn-sm player-remove" onclick="App.removePlayer(${idRef})" ${locked ? 'disabled' : ''}>&times;</button>` : ''}
+        ${isMine
+          ? `<button class="btn btn-ghost btn-sm player-remove" onclick="App.removeGuest()" ${locked ? 'disabled' : ''}>&times;</button>`
+          : isHost ? `<button class="btn btn-ghost btn-sm player-remove" onclick="App.removePlayer(${idRef})" ${locked ? 'disabled' : ''}>&times;</button>` : ''}
       </li>`;
     }).join('');
   },
@@ -2098,6 +2118,20 @@ const App = {
   // Integer IDs render as bare numbers; UUID strings are single-quoted.
   idFor(id) {
     return typeof id === 'number' ? id : `'${id}'`;
+  },
+
+  // ─── Host auth guard ───────────────────────────
+  // Call at the top of every host-level write operation.
+  // When no session is active the app works fully offline — no auth needed.
+  // When a session IS active, the Firebase rules require authentication for all
+  // host writes; we enforce the same rule client-side so the modal fires
+  // immediately instead of only after a round-trip to Firebase.
+  requireHostAuth() {
+    if (_sessionId && !_currentUser) {
+      this.showPermissionModal();
+      return false;
+    }
+    return true;
   },
 
   // ─── Firebase Auth ──────────────────────────────
