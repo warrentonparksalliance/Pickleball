@@ -1075,10 +1075,10 @@ const firebaseConfig = {
   appId:             'YOUR_APP_ID',
 };
 
-const fbApp     = initializeApp(firebaseConfig);
-const db        = getDatabase(fbApp);
-const auth      = getAuth(fbApp);
-const gProvider = new GoogleAuthProvider();
+// Declared with let so they can be assigned after App is defined.
+// If Firebase fails to initialize they stay null; the auth guard still works
+// because _currentUser defaults to null (= not signed in = host ops blocked).
+let db = null, auth = null, gProvider = null;
 
 // ─── Module-level session state ────────────────────────────────────────────
 // These live outside App.state so they are never persisted to localStorage.
@@ -1213,7 +1213,7 @@ const App = {
     this.render();
     // If the removed player is a Firebase guest and the current user is authenticated,
     // also remove them from the database.
-    if (player?.isGuest && player.guestId && _sessionId && _currentUser) {
+    if (db && player?.isGuest && player.guestId && _sessionId && _currentUser) {
       remove(ref(db, `sessions/${_sessionId}/players/${player.guestId}`))
         .catch(err => this.handleFirebaseError(err));
     }
@@ -2135,6 +2135,10 @@ const App = {
 
   // ─── Firebase Auth ──────────────────────────────
   async signInWithGoogle() {
+    if (!auth || !gProvider) {
+      alert('Firebase is not configured yet. Add your Firebase project config to index.html (see the firebaseConfig block).');
+      return;
+    }
     this.closePermissionModal();
     try {
       await signInWithPopup(auth, gProvider);
@@ -2144,6 +2148,7 @@ const App = {
   },
 
   async signOut() {
+    if (!auth) return;
     try {
       await fbSignOut(auth);
     } catch (err) {
@@ -2152,6 +2157,11 @@ const App = {
   },
 
   initFirebase() {
+    if (!auth) {
+      // Firebase didn't initialize (check your firebaseConfig).
+      // _currentUser stays null → requireHostAuth() correctly blocks everyone.
+      return;
+    }
     onAuthStateChanged(auth, user => {
       _currentUser = user;
       this.updateAuthUI();
@@ -2232,6 +2242,7 @@ const App = {
 
   async createSession() {
     if (!_currentUser) { this.showPermissionModal(); return; }
+    if (!db) { alert('Firebase is not configured. Add your firebaseConfig to index.html.'); return; }
     const isPrivate = document.getElementById('newSessionPrivate').checked;
     const passcode  = document.getElementById('newSessionPasscode').value.trim();
     if (isPrivate && !passcode) {
@@ -2303,6 +2314,7 @@ const App = {
 
   // ─── Guest Join Flow ────────────────────────────
   async joinAsGuest() {
+    if (!db) { alert('Firebase is not configured. Add your firebaseConfig to index.html.'); return; }
     const sessionIdInput = document.getElementById('joinSessionId').value.trim();
     const passcode       = document.getElementById('joinPasscode').value.trim();
     const name           = document.getElementById('guestName').value.trim() || 'Guest';
@@ -2379,6 +2391,7 @@ const App = {
 
   // Update name, skill, and 1v1 preference — writes to sessions/{sid}/players/{guestId}
   async saveGuestProfile() {
+    if (!db) return;
     if (!_guestId || !_sessionId) return;
     const name     = document.getElementById('guestEditName').value.trim() || 'Guest';
     const skillRaw = document.getElementById('guestEditSkill').value;
@@ -2398,6 +2411,7 @@ const App = {
 
   // Pause self — writes status:'paused' to sessions/{sid}/players/{guestId}
   async pauseGuest() {
+    if (!db) return;
     if (!_guestId || !_sessionId) return;
     if (!confirm('Pause yourself in this session? The host can reactivate you.')) return;
     try {
@@ -2410,6 +2424,7 @@ const App = {
 
   // Remove self — deletes sessions/{sid}/players/{guestId} then leaves session
   async removeGuest() {
+    if (!db) return;
     if (!_guestId || !_sessionId) return;
     if (!confirm('Remove yourself from this session?')) return;
     try {
@@ -2424,6 +2439,7 @@ const App = {
 
   // ─── Real-time Session Sync ─────────────────────
   attachSessionListener(sessionId) {
+    if (!db) return;
     if (_sessionUnsub) { _sessionUnsub(); _sessionUnsub = null; }
     const playersRef = ref(db, `sessions/${sessionId}/players`);
     _sessionUnsub = onValue(
@@ -2461,7 +2477,22 @@ const App = {
   },
 };
 
+// ── Make App globally reachable BEFORE Firebase init ──────────────────────
+// This guarantees onclick="App.X()" handlers always find the App object.
+// If Firebase fails below, the app still loads and the auth guard still
+// works: _currentUser stays null → requireHostAuth() blocks host ops.
 window.App = App;
+
+// ── Firebase initialization (non-fatal) ───────────────────────────────────
+try {
+  const fbApp = initializeApp(firebaseConfig);
+  db          = getDatabase(fbApp);
+  auth        = getAuth(fbApp);
+  gProvider   = new GoogleAuthProvider();
+} catch (e) {
+  console.warn('[Pickle Jar] Firebase init failed. The app runs in offline mode and Firebase features are unavailable:', e.message);
+}
+
 App.init();
 </script>
 </body>
