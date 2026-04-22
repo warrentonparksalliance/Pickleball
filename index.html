@@ -2026,8 +2026,9 @@ const App = {
     }
     delete s.assignMode;
     delete s.courts; delete s.pendingGames; delete s.currentSittingOut; delete s.selectedPlayerId;
-    // Players without joinedAt are legacy/stale — mark as immediately eligible for expiry
-    for (const p of s.players) { if (!p.joinedAt) p.joinedAt = 0; }
+    // Backfill joinedAt for players added before this field existed
+    const _now = Date.now();
+    for (const p of s.players) { if (!p.joinedAt) p.joinedAt = _now; }
   },
 
   // ─── Persistence ───────────────────────────
@@ -4267,6 +4268,7 @@ const Session = {
       already.score = user.skill || already.score;
       if (user.wantsSingles != null) already.wantsSingles = !!user.wantsSingles;
       if (Admin._user?.uid) already.firebaseUid = Admin._user.uid;
+      already.joinedAt = Date.now();
       try { localStorage.setItem('pickleJar', JSON.stringify(App.state)); } catch(e) {}
       this._patch({ players: App.state.players });
       App.render();
