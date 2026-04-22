@@ -110,14 +110,14 @@ body {
 .hiw-section p strong { color: var(--text); font-weight: 600; }
 .btn-hiw {
   width: 100%;
-  margin-top: 14px;
+  margin-bottom: 14px;
   padding: 12px;
-  background: none;
-  border: 1px solid var(--border);
+  background: var(--primary-light);
+  border: 1.5px solid var(--primary-muted);
   border-radius: var(--radius-sm);
   font-size: 1rem;
   font-weight: 700;
-  color: var(--text-light);
+  color: var(--primary);
   cursor: pointer;
   font-family: inherit;
 }
@@ -1593,7 +1593,8 @@ body {
       <!-- Entry options: sign in or join as guest -->
       <div id="setupEntryOptions">
         <h2 style="font-size:1.75rem;font-weight:700;margin-bottom:6px;color:var(--text);">Welcome to Pickle Jar</h2>
-        <p style="font-size:0.9rem;color:var(--text-muted);margin-bottom:18px;line-height:1.4;">Sign in to create sessions, save your preferences, and keep your match history.</p>
+        <p style="font-size:0.9rem;color:var(--text-muted);margin-bottom:18px;line-height:1.4;">Manage your pickleball session queue, court assignments, and match history.</p>
+        <button class="btn-hiw" onclick="App.openHiw()">&#9654; How it Works</button>
         <button class="btn-confirm-join" id="btnEntryGoogle" onclick="Admin.signIn()" style="width:100%;padding:12px;font-size:1rem;font-weight:700;margin-bottom:10px;display:flex;align-items:center;justify-content:center;gap:8px;">
           <svg width="16" height="16" viewBox="0 0 48 48" style="flex-shrink:0;"><path fill="#4285F4" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#34A853" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59a14.5 14.5 0 0 1 0-9.18l-7.98-6.19a24.0 24.0 0 0 0 0 21.56l7.98-6.19z"/><path fill="#EA4335" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg>
           Sign in with Google
@@ -1603,8 +1604,14 @@ body {
           <span style="font-size:0.75rem;font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.05em;">or</span>
           <div style="flex:1;height:1px;background:var(--border);"></div>
         </div>
-        <button class="btn-outline" onclick="Onboard.showGuestJoin()" style="width:100%;padding:12px;font-size:1rem;font-weight:700;">Continue without signing in</button>
-        <button class="btn-hiw" onclick="App.openHiw()">How it Works</button>
+        <button class="btn-outline" onclick="Onboard.showGuestConfirm()" style="width:100%;padding:12px;font-size:1rem;font-weight:700;">Continue without signing in</button>
+        <div id="guestConfirmMsg" style="display:none;margin-top:10px;padding:12px;background:#fef9c3;border:1.5px solid #fbbf24;border-radius:var(--radius-sm);">
+          <p style="font-size:0.85rem;color:#78350f;line-height:1.45;margin-bottom:10px;">&#9888;&#xFE0F; Your name and preferences <strong>won't be saved</strong> for next time, and you won't have access to personal match history across sessions.</p>
+          <div style="display:flex;gap:8px;">
+            <button class="btn-confirm-join" onclick="Onboard.showGuestJoin()" style="flex:1;padding:10px;font-size:0.9rem;">Got it, continue</button>
+            <button class="btn-outline" onclick="Onboard.hideGuestConfirm()" style="flex:1;padding:10px;font-size:0.9rem;">Go back</button>
+          </div>
+        </div>
       </div>
       <!-- Signed-in profile card (shown for Google-signed-in users) -->
       <div id="setupSignedIn" style="display:none;margin-bottom:14px;">
@@ -1904,6 +1911,16 @@ body {
         <button class="hiw-close" onclick="App.closeHiw()" aria-label="Close">&times;</button>
       </div>
       <div class="hiw-body">
+        <div class="hiw-section" style="background:var(--primary-light);border:1.5px solid var(--primary-muted);border-radius:var(--radius-sm);padding:12px;">
+          <h3 style="color:var(--primary);">&#10003; Sign in with Google for full access</h3>
+          <p>Signing in unlocks everything Pickle Jar has to offer:</p>
+          <ul style="margin-top:6px;padding-left:18px;display:flex;flex-direction:column;gap:4px;font-size:0.85rem;color:var(--text-light);line-height:1.5;">
+            <li><strong>Personal match history</strong> — view your record across all past sessions</li>
+            <li><strong>Saved preferences</strong> — your name, skill level, and partners are remembered</li>
+            <li><strong>Create private sessions</strong> — for league nights or reserved courts</li>
+            <li><strong>Become a session admin</strong> — manage courts and players</li>
+          </ul>
+        </div>
         <div class="hiw-section">
           <h3>🌐 Joining a Public Session</h3>
           <p>Select your location from the drop-down, enter your name and optional skill level, then tap <strong>Join</strong>. You'll be added to the rotation and courts will be assigned automatically each round.</p>
@@ -4634,6 +4651,16 @@ const Onboard = {
     Session._connect(sessionId, label, false, user);
   },
 
+  showGuestConfirm() {
+    const msg = document.getElementById('guestConfirmMsg');
+    if (msg) msg.style.display = '';
+  },
+
+  hideGuestConfirm() {
+    const msg = document.getElementById('guestConfirmMsg');
+    if (msg) msg.style.display = 'none';
+  },
+
   showGuestJoin() {
     const form = document.getElementById('setupJoinForm');
     if (form) form.dataset.guestMode = '1';
@@ -4643,8 +4670,10 @@ const Onboard = {
   backToEntry() {
     const entry = document.getElementById('setupEntryOptions');
     const form = document.getElementById('setupJoinForm');
+    const msg = document.getElementById('guestConfirmMsg');
     if (entry) entry.style.display = '';
     if (form) { form.style.display = 'none'; delete form.dataset.guestMode; }
+    if (msg) msg.style.display = 'none';
   },
 
   _showJoinForm() {
