@@ -10,10 +10,10 @@
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
 :root {
-  --primary: #4f46e5;
-  --primary-hover: #4338ca;
-  --primary-light: #eef2ff;
-  --primary-muted: #c7d2fe;
+  --primary: #2d6a2d;
+  --primary-hover: #1e4d1e;
+  --primary-light: #e0f0e0;
+  --primary-muted: #b8d9b8;
   --danger: #ef4444;
   --danger-hover: #dc2626;
   --danger-light: #fef2f2;
@@ -21,7 +21,7 @@
   --success-light: #ecfdf5;
   --warning: #d97706;
   --warning-light: #fffbeb;
-  --bg: #f4f6fb;
+  --bg: #f5f1e8;
   --card: #ffffff;
   --border: #e4e7ef;
   --border-strong: #c7cdd9;
@@ -36,8 +36,8 @@
   --radius: 12px;
   --radius-lg: 16px;
   --radius-full: 9999px;
-  --hover-bg: #f1f4fb;
-  --side1-bg: #eef2ff;
+  --hover-bg: #eef5ee;
+  --side1-bg: #e8f5e8;
   --side2-bg: #fefce8;
   --bench-bg: #fef2f2;
   --bench-text: #b91c1c;
@@ -58,9 +58,22 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 
+/* ── Back nav ───────────────────────────────── */
+.back-nav {
+  background: #152815;
+  padding: 5px 20px;
+}
+.back-link {
+  color: rgba(255,255,255,0.75);
+  text-decoration: none;
+  font-size: 0.78rem;
+  font-weight: 500;
+}
+.back-link:hover { color: white; }
+
 /* ── Header ─────────────────────────────────── */
 .header {
-  background: #0f172a;
+  background: #1e3d1e;
   color: white;
   padding: 12px 24px;
   display: flex;
@@ -160,7 +173,7 @@ body {
   vertical-align: middle;
 }
 .tab-btn.active .tab-badge {
-  background: #4f46e5;
+  background: #2d6a2d;
   color: white;
 }
 
@@ -1442,6 +1455,7 @@ body {
 <body>
 
 <!-- ── Header ──────────────────────────────────── -->
+<nav class="back-nav"><a href="https://warrentonparksalliance.com" class="back-link">← Warrenton Parks Alliance</a></nav>
 <header class="header">
   <div class="header-brand">
     <h1>Pickle Jar</h1>
