@@ -4457,7 +4457,7 @@ const Session = {
 
     if (this.id) {
       headerRight.style.display = 'flex';
-      headerLocName.textContent = this.label || this.id;
+      if (headerLocName) headerLocName.textContent = this.label || this.id;
       if (setup) setup.style.display = 'none';
       const histView = document.getElementById('myHistoryView');
       if (histView) histView.style.display = 'none';
