@@ -4412,8 +4412,8 @@ const Session = {
 
         App.render();
         this._receiving = false;
-        App._checkSelfRemoved();
         addSelfOnce();
+        App._checkSelfRemoved();
       } catch(err) { /* ignore */ }
     });
 
