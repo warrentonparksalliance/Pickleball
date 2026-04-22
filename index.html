@@ -47,7 +47,7 @@
   --tab-height: 52px;
 }
 
-html { overflow-x: hidden; }
+html { overflow-x: hidden; font-size: 18px; }
 body {
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   background: var(--bg);
@@ -111,12 +111,12 @@ body {
 .btn-hiw {
   width: 100%;
   margin-top: 14px;
-  padding: 9px;
+  padding: 12px;
   background: none;
   border: 1px solid var(--border);
   border-radius: var(--radius-sm);
-  font-size: 0.82rem;
-  font-weight: 600;
+  font-size: 1rem;
+  font-weight: 700;
   color: var(--text-light);
   cursor: pointer;
   font-family: inherit;
@@ -230,11 +230,11 @@ body {
 }
 .tab-btn {
   flex: 1;
-  padding: 12px 0;
+  padding: 15px 0;
   border: none;
   background: transparent;
   color: #64748b;
-  font-size: 0.85rem;
+  font-size: 1.5rem;
   font-weight: 600;
   font-family: inherit;
   cursor: pointer;
@@ -308,7 +308,7 @@ body {
 .btn-assign:hover:not(:disabled) { background: #22c55e; box-shadow: 0 2px 8px rgba(74,222,128,0.5); }
 .btn-danger { background: var(--danger); color: white; border-radius: var(--radius-sm); }
 .btn-danger:hover:not(:disabled) { background: var(--danger-hover); }
-.btn-sm { padding: 4px 10px; font-size: 0.78rem; }
+.btn-sm { padding: 10px 16px; font-size: 1rem; }
 .btn-ghost {
   background: transparent;
   color: var(--text-muted);
@@ -327,10 +327,11 @@ body {
   background: var(--danger-light);
   color: var(--danger);
   border: 1px solid #fecaca;
-  padding: 6px 14px;
+  padding: 12px 14px;
   margin-top: 8px;
   width: 100%;
-  font-size: 0.8rem;
+  font-size: 1rem;
+  font-weight: 700;
   border-radius: var(--radius-sm);
 }
 .btn-end-game:hover { background: #fee2e2; }
@@ -388,10 +389,10 @@ body {
 }
 .setup-input {
   width: 100%;
-  padding: 9px 12px;
+  padding: 12px 14px;
   border: 1.5px solid var(--border);
   border-radius: var(--radius-sm);
-  font-size: 0.875rem;
+  font-size: 1rem;
   background: var(--bg);
   color: var(--text);
   margin-bottom: 8px;
@@ -453,12 +454,12 @@ body {
 .confirm-skill { font-size: 0.85rem; color: var(--text-light); }
 .btn-confirm-join {
   flex: 1;
-  padding: 10px;
+  padding: 12px;
   background: var(--primary);
   color: white;
   border: none;
   border-radius: var(--radius-sm);
-  font-size: 0.9rem;
+  font-size: 1rem;
   font-weight: 700;
   font-family: inherit;
   cursor: pointer;
@@ -470,13 +471,13 @@ body {
 .btn-back-entry:hover { color:var(--text); }
 .btn-confirm-back {
   flex: 1;
-  padding: 10px;
+  padding: 12px;
   background: transparent;
   color: var(--text-light);
   border: 1px solid var(--border);
   border-radius: var(--radius-sm);
-  font-size: 0.9rem;
-  font-weight: 600;
+  font-size: 1rem;
+  font-weight: 700;
   font-family: inherit;
   cursor: pointer;
   transition: background 0.15s;
@@ -512,12 +513,12 @@ body {
   margin-bottom: 14px;
 }
 .settings-card-title {
-  font-size: 0.7rem;
+  font-size: 2rem;
   font-weight: 700;
   text-transform: uppercase;
-  letter-spacing: 0.08em;
+  letter-spacing: 0.05em;
   color: var(--text-muted);
-  margin-bottom: 12px;
+  margin-bottom: 14px;
 }
 .settings-field {
   display: flex;
@@ -533,10 +534,10 @@ body {
 }
 .settings-field input[type="text"],
 .settings-field input[type="number"] {
-  padding: 9px 12px;
+  padding: 12px 14px;
   border: 1.5px solid var(--border);
   border-radius: var(--radius-sm);
-  font-size: 0.875rem;
+  font-size: 1rem;
   background: var(--bg);
   color: var(--text);
   font-family: inherit;
@@ -581,13 +582,13 @@ body {
 /* ── Partner list in settings ───────────────── */
 .btn-add-partner {
   width: 100%;
-  padding: 8px;
+  padding: 12px;
   border: 1.5px dashed var(--border-strong);
   border-radius: var(--radius-sm);
   background: transparent;
   color: var(--text-light);
-  font-size: 0.82rem;
-  font-weight: 600;
+  font-size: 1rem;
+  font-weight: 700;
   font-family: inherit;
   cursor: pointer;
   transition: border-color 0.15s, color 0.15s;
@@ -687,13 +688,13 @@ body {
   color: var(--text-muted);
 }
 .section-title {
-  font-size: 0.95rem;
+  font-size: 4rem;
   font-weight: 700;
   color: var(--text);
   line-height: 1.2;
 }
 .section-subtitle {
-  font-size: 0.76rem;
+  font-size: 1.52rem;
   color: var(--text-muted);
   line-height: 1.35;
   margin-top: 2px;
@@ -871,10 +872,10 @@ body {
   padding: 12px;
 }
 .add-form input {
-  padding: 8px 10px;
+  padding: 12px 14px;
   border: 1px solid var(--border);
   border-radius: var(--radius-sm);
-  font-size: 0.875rem;
+  font-size: 1rem;
   background: var(--card);
   color: var(--text);
   font-family: inherit;
@@ -902,13 +903,13 @@ body {
 .add-form .singles-label input { accent-color: var(--primary); }
 .btn-add-another {
   width: 100%;
-  padding: 9px;
+  padding: 12px;
   background: transparent;
   color: var(--primary);
   border: 1.5px dashed var(--primary-muted);
   border-radius: var(--radius-sm);
-  font-size: 0.85rem;
-  font-weight: 600;
+  font-size: 1rem;
+  font-weight: 700;
   font-family: inherit;
   cursor: pointer;
   margin-bottom: 8px;
@@ -955,16 +956,16 @@ body {
   white-space: nowrap;
 }
 .assign-court-select {
-  padding: 5px 8px;
+  padding: 10px 8px;
   border: 1.5px solid var(--border);
   border-radius: var(--radius-sm);
-  font-size: 0.875rem;
+  font-size: 1rem;
   font-family: inherit;
   background: var(--bg);
   color: var(--text);
   cursor: pointer;
   font-weight: 600;
-  width: 60px;
+  width: 70px;
 }
 .assign-court-select:focus { outline: none; border-color: var(--primary); }
 .assign-match-options {
@@ -1531,7 +1532,8 @@ body {
 }
 
 /* ── Responsive ─────────────────────────────── */
-@media (max-width: 600px) {
+@media (max-width: 768px) {
+  html { font-size: 20px; }
   .page-wrap { padding: 12px 8px; }
   .header { padding: 10px 12px; }
   .header-loc-name { font-size: 0.8rem; }
@@ -1590,9 +1592,9 @@ body {
     <div class="setup-card">
       <!-- Entry options: sign in or join as guest -->
       <div id="setupEntryOptions">
-        <h2 style="font-size:1.1rem;font-weight:700;margin-bottom:6px;color:var(--text);">Welcome to Pickle Jar</h2>
-        <p style="font-size:0.82rem;color:var(--text-muted);margin-bottom:18px;line-height:1.4;">Sign in to create sessions, save your preferences, and keep your match history.</p>
-        <button class="btn-confirm-join" id="btnEntryGoogle" onclick="Admin.signIn()" style="width:100%;padding:10px;margin-bottom:10px;display:flex;align-items:center;justify-content:center;gap:8px;">
+        <h2 style="font-size:3rem;font-weight:700;margin-bottom:6px;color:var(--text);">Welcome to Pickle Jar</h2>
+        <p style="font-size:1.1rem;color:var(--text-muted);margin-bottom:18px;line-height:1.4;">Sign in to create sessions, save your preferences, and keep your match history.</p>
+        <button class="btn-confirm-join" id="btnEntryGoogle" onclick="Admin.signIn()" style="width:100%;padding:12px;font-size:1rem;font-weight:700;margin-bottom:10px;display:flex;align-items:center;justify-content:center;gap:8px;">
           <svg width="16" height="16" viewBox="0 0 48 48" style="flex-shrink:0;"><path fill="#4285F4" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#34A853" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59a14.5 14.5 0 0 1 0-9.18l-7.98-6.19a24.0 24.0 0 0 0 0 21.56l7.98-6.19z"/><path fill="#EA4335" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg>
           Sign in with Google
         </button>
@@ -1601,7 +1603,7 @@ body {
           <span style="font-size:0.75rem;font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.05em;">or</span>
           <div style="flex:1;height:1px;background:var(--border);"></div>
         </div>
-        <button class="btn-outline" onclick="Onboard.showGuestJoin()" style="width:100%;padding:10px;font-size:0.88rem;font-weight:600;">Continue without signing in</button>
+        <button class="btn-outline" onclick="Onboard.showGuestJoin()" style="width:100%;padding:12px;font-size:1rem;font-weight:700;">Continue without signing in</button>
         <button class="btn-hiw" onclick="App.openHiw()">How it Works</button>
       </div>
       <!-- Signed-in profile card (shown for Google-signed-in users) -->
@@ -1626,10 +1628,10 @@ body {
           <label class="singles-label" style="display:flex;align-items:center;gap:6px;font-size:0.85rem;font-weight:500;color:var(--text-light);cursor:pointer;margin:0;">
             <input type="checkbox" id="onboardSingles" style="accent-color:var(--primary);width:15px;height:15px;"> Open to 1v1
           </label>
-          <button type="button" class="btn-outline" onclick="Onboard.saveProfile()" style="padding:4px 12px;font-size:0.78rem;">Save</button>
+          <button type="button" class="btn-outline" onclick="Onboard.saveProfile()" style="padding:12px 16px;font-size:1rem;font-weight:700;">Save</button>
         </div>
         <p id="onboardNameError" class="setup-error">Enter your name first</p>
-        <button type="button" class="btn-outline" onclick="MyHistory.show()" id="btnMyHistoryProfile" style="width:100%;padding:8px;font-size:0.82rem;margin-top:8px;">My Match History</button>
+        <button type="button" class="btn-outline" onclick="MyHistory.show()" id="btnMyHistoryProfile" style="width:100%;padding:12px;font-size:1rem;font-weight:700;margin-top:8px;">My Match History</button>
       </div>
       <!-- Join form (hidden until guest click or signed in) -->
       <div id="setupJoinForm" style="display:none;">
@@ -1655,15 +1657,15 @@ body {
           <select class="setup-input" id="publicLocationSelect" onchange="Onboard._updateJoinBtn('publicLocationSelect','btnJoinPublic')" style="flex:1;margin-bottom:0;cursor:pointer;">
             <option value="">Select a location...</option>
           </select>
-          <button type="button" class="btn-confirm-join" id="btnJoinPublic" onclick="Onboard.joinPublic()" disabled style="white-space:nowrap;padding:8px 14px;font-size:0.82rem;">Join</button>
+          <button type="button" class="btn-confirm-join" id="btnJoinPublic" onclick="Onboard.joinPublic()" disabled style="white-space:nowrap;padding:12px 18px;font-size:1rem;">Join</button>
         </div>
         <div id="publicConfirmInline" style="display:none;margin-bottom:14px;"></div>
-        <button type="button" class="btn-outline" onclick="Onboard.toggleCreatePublic()" id="btn-create-public" style="display:none;width:100%;padding:9px 14px;margin-top:8px;font-size:0.82rem;font-weight:600;font-family:inherit;">+ Create New</button>
+        <button type="button" class="btn-outline" onclick="Onboard.toggleCreatePublic()" id="btn-create-public" style="display:none;width:100%;padding:12px 14px;margin-top:8px;font-size:1rem;font-weight:700;font-family:inherit;">+ Create New</button>
         <div id="publicCreateForm" style="display:none;margin-top:10px;padding:14px;background:var(--bg);border:1.5px solid var(--border);border-radius:var(--radius);">
           <div style="font-size:0.78rem;font-weight:600;color:var(--text-light);margin-bottom:10px;">New Public Location</div>
           <input type="text" class="setup-input" id="publicLocationName" placeholder="Location name" maxlength="30" style="margin-bottom:8px;">
           <p id="publicLocationError" class="setup-error" style="display:none;">Enter a location name</p>
-          <button type="button" class="btn-confirm-join" onclick="Onboard.createPublicLocation()" style="width:100%;padding:10px;">Create &amp; Join</button>
+          <button type="button" class="btn-confirm-join" onclick="Onboard.createPublicLocation()" style="width:100%;padding:12px;font-size:1rem;font-weight:700;">Create &amp; Join</button>
           <div id="publicCreateConfirmInline" style="display:none;margin-top:6px;"></div>
         </div>
       </div>
@@ -1673,17 +1675,17 @@ body {
           <select class="setup-input" id="privateSessionSelect" onchange="Onboard._updateJoinBtn('privateSessionSelect','btnJoinPrivate')" style="flex:1;margin-bottom:0;cursor:pointer;">
             <option value="">Select a session...</option>
           </select>
-          <button type="button" class="btn-confirm-join" id="btnJoinPrivate" onclick="Onboard.joinSavedPrivate()" disabled style="white-space:nowrap;padding:8px 14px;font-size:0.82rem;">Join</button>
+          <button type="button" class="btn-confirm-join" id="btnJoinPrivate" onclick="Onboard.joinSavedPrivate()" disabled style="white-space:nowrap;padding:12px 18px;font-size:1rem;">Join</button>
         </div>
         <div id="privateConfirmInline" style="display:none;margin-bottom:8px;"></div>
-        <button type="button" class="btn-outline" onclick="Onboard.toggleCreatePrivate()" id="btn-create-private" style="width:100%;padding:9px 14px;margin-top:8px;font-size:0.82rem;font-weight:600;font-family:inherit;">+ Create New</button>
+        <button type="button" class="btn-outline" onclick="Onboard.toggleCreatePrivate()" id="btn-create-private" style="width:100%;padding:12px 14px;margin-top:8px;font-size:1rem;font-weight:700;font-family:inherit;">+ Create New</button>
       </div>
       <div id="privateCreateForm" style="display:none;margin-top:10px;padding:14px;background:var(--bg);border:1.5px solid var(--border);border-radius:var(--radius);">
         <div style="font-size:0.78rem;font-weight:600;color:var(--text-light);margin-bottom:10px;">New Private Session</div>
         <input type="text" class="setup-input" id="privateSessionName" placeholder="Session name" maxlength="20" style="margin-bottom:8px;">
         <div style="display:flex;gap:8px;align-items:center;margin-bottom:10px;">
           <input type="text" class="setup-input" id="privatePasscode" placeholder="Passcode (4 chars)" maxlength="4" style="flex:1;margin-bottom:0;text-transform:uppercase;">
-          <button type="button" class="btn-outline" onclick="Onboard.randomPasscode()" style="white-space:nowrap;padding:7px 10px;font-size:0.78rem;">Random</button>
+          <button type="button" class="btn-outline" onclick="Onboard.randomPasscode()" style="white-space:nowrap;padding:12px 14px;font-size:1rem;font-weight:700;">Random</button>
         </div>
         <select class="setup-input" id="selectSessionType" onchange="Onboard.setSessionType(this.value)" style="margin-bottom:12px;cursor:pointer;">
           <option value="" disabled selected>Select session type...</option>
@@ -1692,13 +1694,13 @@ body {
           <option value="tournament">Tournament</option>
         </select>
         <p id="privateSessionError" class="setup-error" style="display:none;">Enter a session name and 4-character passcode</p>
-        <button type="button" class="btn-confirm-join" onclick="Onboard.createPrivate()" style="width:100%;padding:10px;">Create &amp; Join</button>
+        <button type="button" class="btn-confirm-join" onclick="Onboard.createPrivate()" style="width:100%;padding:12px;font-size:1rem;font-weight:700;">Create &amp; Join</button>
         <div id="createConfirmInline" style="display:none;margin-top:6px;"></div>
       </div>
       </div><!-- /sessionSelectionBlock -->
       <!-- Share-link join button (shown when joining via share link) -->
       <div id="shareLinkJoinBlock" style="display:none;margin-top:16px;">
-        <button type="button" class="btn-confirm-join" onclick="Onboard._completeShareJoin()" style="width:100%;padding:10px;">Join Session</button>
+        <button type="button" class="btn-confirm-join" onclick="Onboard._completeShareJoin()" style="width:100%;padding:12px;font-size:1rem;font-weight:700;">Join Session</button>
       </div>
       <div id="sessionLoading" class="session-loading" style="display:none;">
         <span class="session-spinner"></span>
@@ -1809,7 +1811,7 @@ body {
         <label style="display:flex;align-items:center;gap:6px;font-size:0.85rem;font-weight:500;color:var(--text-light);cursor:pointer;margin:0;">
           <input type="checkbox" id="settingsSingles" style="accent-color:var(--primary);width:15px;height:15px;"> Open to 1v1
         </label>
-        <button type="button" class="btn-outline" onclick="App.saveSettings()" style="padding:4px 12px;font-size:0.78rem;">Save</button>
+        <button type="button" class="btn-outline" onclick="App.saveSettings()" style="padding:12px 16px;font-size:1rem;font-weight:700;">Save</button>
       </div>
     </div>
 
@@ -1831,7 +1833,7 @@ body {
       <p class="section-subtitle" style="margin-bottom:10px;">Invite others to join this session.</p>
       <div style="display:flex;gap:8px;align-items:center;">
         <input type="text" class="setup-input" id="shareLinkInput" readonly style="flex:1;margin-bottom:0;font-size:0.82rem;cursor:text;">
-        <button type="button" class="btn-outline" id="btnCopyShareLink" onclick="App.copyShareLink()" style="white-space:nowrap;padding:7px 12px;font-size:0.8rem;">Copy</button>
+        <button type="button" class="btn-outline" id="btnCopyShareLink" onclick="App.copyShareLink()" style="white-space:nowrap;padding:12px 16px;font-size:1rem;font-weight:700;">Copy</button>
       </div>
     </div>
 
@@ -1850,7 +1852,7 @@ body {
       <div class="settings-card-title">Session Passcode</div>
       <div style="display:flex;align-items:center;gap:8px;">
         <span id="passcodeDisplay" style="font-size:0.95rem;font-weight:700;letter-spacing:0.15em;">****</span>
-        <button type="button" class="btn-outline" onclick="App.togglePasscode()" id="btnTogglePasscode" style="padding:4px 10px;font-size:0.78rem;">Show</button>
+        <button type="button" class="btn-outline" onclick="App.togglePasscode()" id="btnTogglePasscode" style="padding:12px 16px;font-size:1rem;font-weight:700;">Show</button>
       </div>
     </div>
 
@@ -1888,7 +1890,7 @@ body {
       </div>
       <div class="history-filters" style="display:flex;gap:8px;align-items:center;">
         <input type="text" id="historySearch" class="history-search" placeholder="Search player name..." oninput="App.renderHistory()" style="flex:1;">
-        <button type="button" class="btn-outline" id="btnFilterMyMatches" onclick="App.toggleMyMatches()" style="white-space:nowrap;padding:6px 12px;font-size:0.8rem;">My Matches</button>
+        <button type="button" class="btn-outline" id="btnFilterMyMatches" onclick="App.toggleMyMatches()" style="white-space:nowrap;padding:12px 16px;font-size:1rem;font-weight:700;">My Matches</button>
       </div>
       <div class="history-table-wrap" id="historyRounds"></div>
     </div>
@@ -3848,7 +3850,7 @@ const App = {
           </label>` : ''}
           ${this.isTournament() ? `<div style="font-size:0.75rem;color:var(--text-muted);margin-top:4px;">Bracket match &mdash; winner advances</div>` : ''}
           <div class="score-buttons">
-            <button class="btn btn-assign" style="padding:8px 16px;font-size:0.85rem;" onclick="App.submitScore(${courtId})">Save Score</button>
+            <button class="btn btn-assign" style="padding:12px 16px;font-size:1rem;" onclick="App.submitScore(${courtId})">Save Score</button>
             ${this.isTournament() ? '' : `<button class="btn btn-outline" onclick="App.endWithoutScore(${courtId})">Skip</button>`}
             <button class="btn btn-ghost" onclick="App.cancelScoring(${courtId})">Cancel</button>
           </div>
@@ -4581,7 +4583,7 @@ const Onboard = {
         style="text-transform:uppercase;text-align:center;"
         onkeydown="if(event.key==='Enter')Onboard._verifySharePasscode()">
       <p id="sharePasscodeError" class="setup-error" style="display:none;">Incorrect passcode</p>
-      <button type="button" class="btn-confirm-join" onclick="Onboard._verifySharePasscode()" style="width:100%;padding:10px;margin-top:4px;">Continue</button>
+      <button type="button" class="btn-confirm-join" onclick="Onboard._verifySharePasscode()" style="width:100%;padding:12px;font-size:1rem;font-weight:700;margin-top:4px;">Continue</button>
     `;
     document.getElementById('sharePasscodeInput')?.focus();
 
