@@ -1191,28 +1191,50 @@ body {
   border-radius: var(--radius-full);
   letter-spacing: 0.04em;
 }
-.court-timer {
-  font-size: 0.72rem;
-  font-weight: 600;
-  font-variant-numeric: tabular-nums;
-  background: rgba(0,0,0,0.15);
-  padding: 2px 7px;
-  border-radius: var(--radius-full);
-  display: inline-flex;
-  align-items: center;
-  gap: 3px;
-}
-.timer-toggle {
-  background: none;
-  border: none;
-  color: inherit;
+.btn-start-match {
+  width: 100%;
+  padding: 10px;
+  background: var(--success-light);
+  color: var(--success);
+  border: 1.5px solid var(--success);
+  border-radius: var(--radius-sm);
+  font-size: 1rem;
+  font-weight: 700;
+  font-family: inherit;
   cursor: pointer;
-  padding: 0;
-  font-size: 0.62rem;
-  line-height: 1;
-  opacity: 0.8;
+  margin-bottom: 8px;
+  transition: background 0.15s;
 }
-.timer-toggle:hover { opacity: 1; }
+.btn-start-match:hover { background: #d1fae5; }
+.match-timer-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 12px;
+  background: var(--hover-bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  margin-bottom: 8px;
+}
+.match-timer-display {
+  font-size: 1.1rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: var(--text);
+}
+.btn-pause-match {
+  background: none;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-sm);
+  padding: 5px 10px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--text-light);
+  cursor: pointer;
+  font-family: inherit;
+  transition: background 0.15s, color 0.15s;
+}
+.btn-pause-match:hover { background: var(--card); color: var(--text); }
 
 /* ── Sitting out ────────────────────────────── */
 .sitting-out {
@@ -3843,8 +3865,7 @@ const App = {
       const isScoring = !!this.state.scoringGames[courtId];
       const modeBadge = '';
       const timerMs = this.getTimerElapsed(game);
-      const timerToggle = !isScoring ? `<button class="timer-toggle" onclick="event.stopPropagation();App.toggleTimer(${courtId})" title="${game.timerPaused ? 'Start timer' : 'Pause timer'}">${game.timerPaused ? '&#9654;' : '&#9208;'}</button>` : '';
-      const timerBadge = game.startTime != null ? `<span class="court-timer">${timerToggle}<span id="timer-${courtId}">${this.formatTimer(timerMs)}</span></span>` : '';
+      const neverStarted = game.timerPaused && (game.timerElapsed || 0) === 0 && !game.timerResumedAt;
       const cardClass = isScoring ? 'court-card' : 'court-card game-active';
 
       let bodyHTML;
@@ -3873,6 +3894,12 @@ const App = {
           </div>
         </div>`;
       } else {
+        const timerWidget = neverStarted
+          ? `<button class="btn-start-match" onclick="App.toggleTimer(${courtId})">&#9654; Start Match</button>`
+          : `<div class="match-timer-row">
+               <span class="match-timer-display" id="timer-${courtId}">${this.formatTimer(timerMs)}</span>
+               <button class="btn-pause-match" onclick="App.toggleTimer(${courtId})">${game.timerPaused ? '&#9654; Resume Match' : '&#9208; Pause Match'}</button>
+             </div>`;
         bodyHTML = `<div class="court-assignment">
           <div class="court-side side-1">
             ${this.renderSide(game.side1)}
@@ -3881,13 +3908,14 @@ const App = {
           <div class="court-side side-2">
             ${this.renderSide(game.side2)}
           </div>
+          ${timerWidget}
           <button class="btn btn-end-game" onclick="App.endGame(${courtId})">End Match</button>
         </div>`;
       }
 
       return `<div class="${cardClass}">
         <div class="court-header">
-          <span>Court ${courtId} ${modeBadge} ${timerBadge}</span>
+          <span>Court ${courtId} ${modeBadge}</span>
           <div class="court-controls" style="gap:8px;">
             <span class="court-status">${isScoring ? 'Score entry' : ''}</span>
             ${!isScoring ? `<button class="btn-cancel-game" onclick="App.cancelGame(${courtId})">&times;</button>` : ''}
