@@ -2026,6 +2026,9 @@ const App = {
     }
     delete s.assignMode;
     delete s.courts; delete s.pendingGames; delete s.currentSittingOut; delete s.selectedPlayerId;
+    // Backfill joinedAt for players added before this field existed
+    const now = Date.now();
+    for (const p of s.players) { if (!p.joinedAt) p.joinedAt = now; }
   },
 
   // ─── Persistence ───────────────────────────
@@ -2125,6 +2128,7 @@ const App = {
       wantsSingles: !!(singlesEl?.checked),
       isLive: false,
       addedBy: Onboard.selfId,
+      joinedAt: Date.now(),
     });
     this._myGuests.add(newId);
     this._saveMyGuests();
@@ -2448,7 +2452,25 @@ const App = {
 
   MAX_MATCH_MS: 100 * 60 * 1000, // 100 minutes
 
+  _lastExpireCheck: 0,
+
+  _autoExpirePlayers() {
+    const now = Date.now();
+    if (now - this._lastExpireCheck < 60_000) return;
+    this._lastExpireCheck = now;
+    const FOUR_HOURS = 4 * 60 * 60 * 1000;
+    const onCourt = this.getPlayersOnCourts();
+    const stale = this.state.players.filter(p => !onCourt.has(p.id) && now - (p.joinedAt || now) >= FOUR_HOURS);
+    if (stale.length === 0) return;
+    const staleIds = new Set(stale.map(p => p.id));
+    this.state.players = this.state.players.filter(p => !staleIds.has(p.id));
+    this.state.teams   = this.state.teams.filter(t => !staleIds.has(t.p1) && !staleIds.has(t.p2));
+    this.saveState();
+    this.render();
+  },
+
   updateTimers() {
+    this._autoExpirePlayers();
     const expired = [];
     for (const [courtId, game] of Object.entries(this.state.activeGames)) {
       const elapsed = this.getTimerElapsed(game);
@@ -4225,6 +4247,7 @@ const Session = {
         active: true,
         wantsSingles: !!(user.wantsSingles),
         isLive: true,
+        joinedAt: Date.now(),
       };
       if (Admin._user?.uid) newPlayer.firebaseUid = Admin._user.uid;
       App.state.players.push(newPlayer);
