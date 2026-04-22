@@ -79,10 +79,10 @@ body {
 
 /* Buttons */
 .btn {
-  padding: 8px 16px;
+  padding: 10px 18px;
   border: none;
   border-radius: 6px;
-  font-size: 0.875rem;
+  font-size: 0.95rem;
   font-weight: 600;
   cursor: pointer;
   transition: background 0.15s, opacity 0.15s;
@@ -93,17 +93,17 @@ body {
 .btn-assign {
   background: #fbbf24;
   color: #1f2937;
-  font-size: 1rem;
-  padding: 10px 24px;
+  font-size: 1.05rem;
+  padding: 11px 24px;
 }
 .btn-assign:hover:not(:disabled) { background: #f59e0b; }
 .btn-danger { background: var(--danger); color: white; }
 .btn-danger:hover:not(:disabled) { background: var(--danger-hover); }
-.btn-sm { padding: 4px 10px; font-size: 0.8rem; }
+.btn-sm { padding: 7px 12px; font-size: 0.875rem; }
 .btn-ghost {
   background: transparent;
   color: var(--text-light);
-  padding: 4px 8px;
+  padding: 5px 8px;
 }
 .btn-ghost:hover { color: var(--danger); }
 .btn-outline {
@@ -116,10 +116,10 @@ body {
   background: #fef2f2;
   color: var(--danger);
   border: 1px solid #fecaca;
-  padding: 6px 14px;
+  padding: 8px 14px;
   margin-top: 8px;
   width: 100%;
-  font-size: 0.8rem;
+  font-size: 0.875rem;
 }
 .btn-end-game:hover { background: #fee2e2; }
 
@@ -142,7 +142,7 @@ body {
   gap: 20px;
 }
 .sidebar-section h2 {
-  font-size: 0.85rem;
+  font-size: 1rem;
   text-transform: uppercase;
   letter-spacing: 0.05em;
   color: var(--text-light);
@@ -158,10 +158,10 @@ body {
   align-items: center;
 }
 .add-form input, .add-form select {
-  padding: 6px 10px;
+  padding: 8px 10px;
   border: 1px solid var(--border);
   border-radius: 6px;
-  font-size: 0.875rem;
+  font-size: 0.95rem;
   background: white;
 }
 .add-form input:focus, .add-form select:focus {
@@ -172,23 +172,23 @@ body {
 .input-name { flex: 1; min-width: 80px; }
 .input-score { width: 55px; }
 .add-form .singles-label {
-  font-size: 0.75rem;
+  font-size: 0.9rem;
   color: var(--text-light);
   display: flex;
   align-items: center;
-  gap: 3px;
+  gap: 4px;
   cursor: pointer;
   white-space: nowrap;
 }
 .add-form .singles-label input { accent-color: var(--primary); }
 
 /* Player list */
-.player-list { list-style: none; display: flex; flex-direction: column; gap: 4px; }
+.player-list { list-style: none; display: flex; flex-direction: column; gap: 2px; }
 .player-item {
   display: flex;
   align-items: center;
-  gap: 6px;
-  padding: 6px 8px;
+  gap: 8px;
+  padding: 9px 8px;
   border-radius: 6px;
   transition: background 0.1s;
 }
@@ -202,24 +202,25 @@ body {
 }
 .player-item input[type="checkbox"] {
   accent-color: var(--primary);
-  width: 16px;
-  height: 16px;
+  width: 18px;
+  height: 18px;
   cursor: pointer;
+  flex-shrink: 0;
 }
-.player-name { flex: 1; font-size: 0.9rem; }
+.player-name { flex: 1; font-size: 1rem; }
 .player-score {
-  font-size: 0.8rem;
+  font-size: 0.875rem;
   color: var(--text-light);
   background: var(--hover-bg);
-  padding: 2px 6px;
+  padding: 2px 7px;
   border-radius: 4px;
   min-width: 20px;
   text-align: center;
 }
 .player-pref {
-  font-size: 0.65rem;
+  font-size: 0.75rem;
   font-weight: 600;
-  padding: 1px 5px;
+  padding: 2px 6px;
   border-radius: 3px;
   cursor: pointer;
   user-select: none;
@@ -231,15 +232,15 @@ body {
   border-color: #93c5fd;
 }
 .player-court-badge {
-  font-size: 0.65rem;
+  font-size: 0.75rem;
   font-weight: 600;
   background: var(--primary-light);
   color: var(--primary);
-  padding: 1px 5px;
+  padding: 2px 6px;
   border-radius: 3px;
 }
 .player-sitout {
-  font-size: 0.7rem;
+  font-size: 0.8rem;
   color: #f59e0b;
 }
 .player-remove { font-size: 1rem; line-height: 1; }
@@ -252,8 +253,8 @@ body {
   margin-bottom: 10px;
 }
 .team-form .row { display: flex; gap: 6px; align-items: center; }
-.team-form select { flex: 1; padding: 6px 8px; border: 1px solid var(--border); border-radius: 6px; font-size: 0.85rem; }
-.team-form label { font-size: 0.8rem; color: var(--text-light); display: flex; align-items: center; gap: 4px; cursor: pointer; }
+.team-form select { flex: 1; padding: 8px 8px; border: 1px solid var(--border); border-radius: 6px; font-size: 0.95rem; }
+.team-form label { font-size: 0.9rem; color: var(--text-light); display: flex; align-items: center; gap: 4px; cursor: pointer; }
 .team-form label input { accent-color: var(--primary); }
 
 .team-list { list-style: none; display: flex; flex-direction: column; gap: 4px; }
@@ -261,16 +262,16 @@ body {
   display: flex;
   align-items: center;
   gap: 8px;
-  padding: 6px 8px;
+  padding: 8px 10px;
   border-radius: 6px;
   background: var(--primary-light);
-  font-size: 0.85rem;
+  font-size: 0.9rem;
 }
 .team-item .team-names { flex: 1; }
 .team-item .team-lock {
-  font-size: 0.65rem;
+  font-size: 0.75rem;
   font-weight: 600;
-  padding: 1px 5px;
+  padding: 2px 6px;
   border-radius: 3px;
 }
 .team-item .team-lock.locked {
@@ -308,17 +309,17 @@ body {
   gap: 6px;
 }
 .option-group label {
-  font-size: 0.85rem;
+  font-size: 0.95rem;
   cursor: pointer;
   display: flex;
   align-items: center;
-  gap: 4px;
+  gap: 6px;
   user-select: none;
 }
 .option-group input[type="checkbox"] {
   accent-color: var(--primary);
-  width: 16px;
-  height: 16px;
+  width: 18px;
+  height: 18px;
 }
 .player-rounds {
   font-size: 0.7rem;
@@ -349,20 +350,20 @@ body {
 }
 
 .court-header {
-  padding: 10px 14px;
+  padding: 12px 14px;
   display: flex;
   align-items: center;
   justify-content: space-between;
   background: var(--primary);
   color: white;
   font-weight: 600;
-  font-size: 0.9rem;
+  font-size: 1rem;
 }
 .court-card.inactive .court-header { background: #9ca3af; }
 .court-card.game-active .court-header { background: #047857; }
 
 .court-status {
-  font-size: 0.7rem;
+  font-size: 0.8rem;
   font-weight: 400;
   opacity: 0.9;
 }
@@ -373,11 +374,11 @@ body {
   align-items: center;
 }
 .court-controls label {
-  font-size: 0.75rem;
+  font-size: 0.875rem;
   cursor: pointer;
   display: flex;
   align-items: center;
-  gap: 3px;
+  gap: 4px;
   color: rgba(255,255,255,0.9);
 }
 .court-controls input[type="checkbox"] {
@@ -395,7 +396,7 @@ body {
 .court-empty {
   text-align: center;
   color: var(--text-light);
-  font-size: 0.85rem;
+  font-size: 0.95rem;
   font-style: italic;
 }
 .court-empty.clickable {
@@ -411,24 +412,24 @@ body {
   gap: 4px;
 }
 .court-side {
-  padding: 8px 10px;
+  padding: 10px 12px;
   border-radius: 6px;
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: 3px;
 }
 .side-1 { background: var(--side1-bg); }
 .side-2 { background: var(--side2-bg); }
 
 .court-side .side-player {
-  font-size: 0.85rem;
+  font-size: 0.95rem;
   font-weight: 500;
   display: flex;
   justify-content: space-between;
 }
-.court-side .side-player .score { color: var(--text-light); font-weight: 400; font-size: 0.8rem; }
+.court-side .side-player .score { color: var(--text-light); font-weight: 400; font-size: 0.875rem; }
 .court-side .team-badge {
-  font-size: 0.65rem;
+  font-size: 0.75rem;
   color: var(--primary);
   font-weight: 600;
 }
@@ -436,9 +437,9 @@ body {
 .court-vs {
   text-align: center;
   font-weight: 700;
-  font-size: 0.8rem;
+  font-size: 0.875rem;
   color: var(--text-light);
-  padding: 2px 0;
+  padding: 3px 0;
 }
 
 .court-mode-badge {
@@ -465,9 +466,9 @@ body {
   box-shadow: var(--shadow);
 }
 .sitting-out h3 {
-  font-size: 0.85rem;
+  font-size: 1rem;
   color: var(--text-light);
-  margin-bottom: 6px;
+  margin-bottom: 8px;
 }
 .sitting-out .bench-players {
   display: flex;
@@ -476,9 +477,9 @@ body {
 }
 .bench-player {
   background: var(--bench-bg);
-  padding: 4px 10px;
+  padding: 5px 12px;
   border-radius: 12px;
-  font-size: 0.8rem;
+  font-size: 0.9rem;
   color: var(--bench-text);
 }
 
@@ -490,8 +491,8 @@ body {
   overflow: hidden;
 }
 .history-section summary {
-  padding: 12px 16px;
-  font-size: 0.85rem;
+  padding: 14px 16px;
+  font-size: 1rem;
   font-weight: 600;
   color: var(--text-light);
   cursor: pointer;
@@ -506,24 +507,24 @@ body {
   padding: 8px 0;
 }
 .history-round-label {
-  font-size: 0.75rem;
+  font-size: 0.85rem;
   font-weight: 700;
   color: var(--text-light);
   text-transform: uppercase;
   margin-bottom: 4px;
 }
 .history-match {
-  font-size: 0.8rem;
+  font-size: 0.9rem;
   padding: 3px 0;
   color: var(--text);
 }
 .history-match .court-label {
   color: var(--text-light);
-  font-size: 0.7rem;
+  font-size: 0.8rem;
 }
 .history-empty {
   padding: 8px 0;
-  font-size: 0.8rem;
+  font-size: 0.9rem;
   color: var(--text-light);
   font-style: italic;
 }
@@ -542,11 +543,11 @@ body {
 }
 .player-name.selectable { cursor: pointer; }
 .player-pending-badge {
-  font-size: 0.65rem;
+  font-size: 0.75rem;
   font-weight: 600;
   background: var(--pending-bg);
   color: var(--pending-text);
-  padding: 1px 5px;
+  padding: 2px 6px;
   border-radius: 3px;
   border: 1px dashed var(--pending-border);
 }
@@ -572,19 +573,19 @@ body {
   min-height: 32px;
 }
 .pending-player {
-  font-size: 0.85rem;
+  font-size: 0.95rem;
   font-weight: 500;
   display: flex;
   justify-content: space-between;
   align-items: center;
 }
-.pending-player .btn-ghost { padding: 0 4px; font-size: 0.85rem; }
+.pending-player .btn-ghost { padding: 0 4px; font-size: 0.95rem; }
 .pending-slot {
-  font-size: 0.8rem;
+  font-size: 0.9rem;
   color: var(--text-light);
   border: 1px dashed var(--border);
   border-radius: 4px;
-  padding: 4px 8px;
+  padding: 6px 8px;
   text-align: center;
   font-style: italic;
 }
@@ -597,8 +598,8 @@ body {
 .btn-start-game {
   background: #047857;
   color: white;
-  padding: 6px 14px;
-  font-size: 0.8rem;
+  padding: 8px 14px;
+  font-size: 0.9rem;
 }
 .btn-start-game:hover:not(:disabled) { background: #065f46; }
 
@@ -615,13 +616,13 @@ body {
   padding: 8px 10px;
   border-radius: 6px;
 }
-.score-side .side-names { flex: 1; font-size: 0.85rem; font-weight: 500; }
+.score-side .side-names { flex: 1; font-size: 0.95rem; font-weight: 500; }
 .score-side input[type="number"] {
-  width: 60px;
-  padding: 6px 8px;
+  width: 64px;
+  padding: 8px 8px;
   border: 1px solid var(--border);
   border-radius: 6px;
-  font-size: 1rem;
+  font-size: 1.1rem;
   font-weight: 700;
   text-align: center;
 }
@@ -794,7 +795,7 @@ body {
 <body>
 
 <header class="header">
-  <div><h1>Pickle Jar</h1><span style="font-size:0.8rem;opacity:0.85;">Everyone's in the jar. Shake it up.</span></div>
+  <div><h1>Pickle Jar</h1><span style="font-size:0.9rem;opacity:0.85;">Everyone's in the jar. Shake it up.</span></div>
   <div class="header-actions">
     <button class="theme-toggle" onclick="App.toggleTheme()" id="themeToggle" title="Toggle dark mode"></button>
     <button class="btn btn-primary btn-sm" onclick="App.clearHistory()">Clear History</button>
@@ -1611,7 +1612,7 @@ const App = {
   renderPlayers() {
     const el = document.getElementById('playerList');
     if (this.state.players.length === 0) {
-      el.innerHTML = '<li style="color:var(--text-light);font-size:0.85rem;padding:4px 8px;">Add players to get started</li>';
+      el.innerHTML = '<li style="color:var(--text-light);font-size:0.95rem;padding:6px 8px;">Add players to get started</li>';
       return;
     }
     el.innerHTML = this.state.players.map(p => {
