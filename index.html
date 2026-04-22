@@ -5214,6 +5214,7 @@ const Admin = {
     if (!this._fb) return;
     try {
       const provider = new this._fb.GoogleAuthProvider();
+      provider.setCustomParameters({ prompt: 'select_account' });
       await this._fb.signInWithPopup(this._fb.auth, provider);
     } catch(e) {
       if (e.code !== 'auth/popup-closed-by-user') {
