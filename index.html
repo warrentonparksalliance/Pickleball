@@ -95,6 +95,40 @@ body {
   font-size: 1.4rem;
   line-height: 1;
   color: var(--text-light);
+  margin-bottom: 10px;
+}
+
+/* Forms */
+.add-form {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 10px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+.add-form input, .add-form select {
+  padding: 6px 10px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  font-size: 0.875rem;
+  background: white;
+}
+.add-form input::placeholder, .add-form select::placeholder {
+  font-size: 75%;
+}
+.add-form input:focus, .add-form select:focus {
+  outline: none;
+  border-color: var(--primary);
+  box-shadow: 0 0 0 2px var(--primary-light);
+}
+.input-name { flex: 1; min-width: 80px; }
+.input-score { width: 55px; }
+.add-form .singles-label {
+  font-size: 0.75rem;
+  color: var(--text-light);
+  display: flex;
+  align-items: center;
+  gap: 3px;
   cursor: pointer;
   padding: 0 4px;
 }
@@ -1284,6 +1318,9 @@ body {
   font-family: inherit;
   background: var(--card);
   color: var(--text);
+}
+.score-side input[type="number"]::placeholder {
+  font-size: 75%;
 }
 .score-side input[type="number"]:focus {
   outline: none;
