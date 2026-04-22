@@ -105,9 +105,6 @@ body {
   align-items: center;
   justify-content: space-between;
   box-shadow: 0 1px 0 rgba(255,255,255,0.06);
-  position: sticky;
-  top: 0;
-  z-index: 50;
 }
 .header-brand { display: flex; align-items: center; gap: 10px; }
 .header h1 { font-size: 1.2rem; font-weight: 700; letter-spacing: -0.03em; color: #f8fafc; }
@@ -154,12 +151,17 @@ body {
 .btn-header.leave:hover { background: rgba(248,113,113,0.15); }
 
 /* ── Tab Bar ────────────────────────────────── */
+.sticky-top {
+  position: sticky;
+  top: 0;
+  z-index: 50;
+}
 .tab-bar {
   display: flex;
   background: #1e293b;
   border-bottom: 1px solid #334155;
   position: sticky;
-  top: 52px;
+  top: 94px;
   z-index: 45;
 }
 .tab-btn {
@@ -1481,6 +1483,7 @@ body {
 
 <!-- ── Header ──────────────────────────────────── -->
 <nav class="back-nav"><a href="https://warrentonparksalliance.com" class="back-link">← Warrenton Parks Alliance</a></nav>
+<div class="sticky-top">
 <header class="header">
   <div class="header-brand">
     <h1>Pickle Jar</h1>
@@ -1502,6 +1505,7 @@ body {
 <div class="wpa-banner">
   Pickle Jar is a free community tool provided by <a href="https://warrentonparksalliance.com" target="_blank" rel="noopener">Warrenton Parks Alliance</a>, a 501(c)(3) nonprofit keeping Warrenton's parks and trails thriving.
   <a href="https://warrentonparksalliance.com/ways-to-support/" target="_blank" rel="noopener" class="wpa-donate-btn">Donate ♥</a>
+</div>
 </div>
 
 <!-- ── Tab Bar (shown when in session) ─────────── -->
