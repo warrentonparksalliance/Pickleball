@@ -434,7 +434,7 @@ body {
   transition: border-color 0.15s, box-shadow 0.15s;
 }
 .setup-input:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 3px var(--primary-light); }
-.setup-input::placeholder { color: var(--text-muted); }
+.setup-input::placeholder { color: var(--text-muted); font-size: 75%; }
 .setup-error { font-size: 0.78rem; color: var(--danger); margin-bottom: 8px; display: none; font-weight: 500; }
 .setup-section-label {
   font-size: 0.7rem;
@@ -1723,7 +1723,7 @@ body {
           <select class="setup-input" id="publicLocationSelect" onchange="Onboard._updateJoinBtn('publicLocationSelect','btnJoinPublic')" style="flex:1;margin-bottom:0;cursor:pointer;">
             <option value="">Select a location...</option>
           </select>
-          <button type="button" class="btn-confirm-join" id="btnJoinPublic" onclick="Onboard.joinPublic()" disabled style="white-space:nowrap;padding:12px 18px;font-size:1rem;">Join</button>
+          <button type="button" class="btn-confirm-join" id="btnJoinPublic" onclick="Onboard.joinPublic()" disabled style="white-space:nowrap;padding:12px 18px;font-size:1rem;flex:0 0 auto;">Join</button>
         </div>
         <div id="publicConfirmInline" style="display:none;margin-bottom:14px;"></div>
         <button type="button" class="btn-outline" onclick="Onboard.toggleCreatePublic()" id="btn-create-public" style="display:none;width:100%;padding:12px 14px;margin-top:8px;font-size:1rem;font-weight:700;font-family:inherit;">+ Create New</button>
@@ -1741,7 +1741,7 @@ body {
           <select class="setup-input" id="privateSessionSelect" onchange="Onboard._updateJoinBtn('privateSessionSelect','btnJoinPrivate')" style="flex:1;margin-bottom:0;cursor:pointer;">
             <option value="">Select a session...</option>
           </select>
-          <button type="button" class="btn-confirm-join" id="btnJoinPrivate" onclick="Onboard.joinSavedPrivate()" disabled style="white-space:nowrap;padding:12px 18px;font-size:1rem;">Join</button>
+          <button type="button" class="btn-confirm-join" id="btnJoinPrivate" onclick="Onboard.joinSavedPrivate()" disabled style="white-space:nowrap;padding:12px 18px;font-size:1rem;flex:0 0 auto;">Join</button>
         </div>
         <div id="privateConfirmInline" style="display:none;margin-bottom:8px;"></div>
         <button type="button" class="btn-outline" onclick="Onboard.toggleCreatePrivate()" id="btn-create-private" style="width:100%;padding:12px 14px;margin-top:8px;font-size:1rem;font-weight:700;font-family:inherit;">+ Create New</button>
