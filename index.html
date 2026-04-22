@@ -2026,9 +2026,8 @@ const App = {
     }
     delete s.assignMode;
     delete s.courts; delete s.pendingGames; delete s.currentSittingOut; delete s.selectedPlayerId;
-    // Backfill joinedAt for players added before this field existed
-    const now = Date.now();
-    for (const p of s.players) { if (!p.joinedAt) p.joinedAt = now; }
+    // Players without joinedAt are legacy/stale — mark as immediately eligible for expiry
+    for (const p of s.players) { if (!p.joinedAt) p.joinedAt = 0; }
   },
 
   // ─── Persistence ───────────────────────────
@@ -2460,13 +2459,26 @@ const App = {
     this._lastExpireCheck = now;
     const FOUR_HOURS = 4 * 60 * 60 * 1000;
     const onCourt = this.getPlayersOnCourts();
-    const stale = this.state.players.filter(p => !onCourt.has(p.id) && now - (p.joinedAt || now) >= FOUR_HOURS);
+    const stale = this.state.players.filter(p => !onCourt.has(p.id) && now - (p.joinedAt || 0) >= FOUR_HOURS);
     if (stale.length === 0) return;
     const staleIds = new Set(stale.map(p => p.id));
+    const selfExpired = Onboard.selfId != null && staleIds.has(Onboard.selfId);
     this.state.players = this.state.players.filter(p => !staleIds.has(p.id));
     this.state.teams   = this.state.teams.filter(t => !staleIds.has(t.p1) && !staleIds.has(t.p2));
     this.saveState();
+    if (selfExpired) {
+      alert('Your session timed out after 4 hours of inactivity. Please rejoin to continue playing.');
+      Session.leave();
+      return;
+    }
     this.render();
+  },
+
+  _checkSelfRemoved() {
+    if (Onboard.selfId == null || !Session.id) return;
+    if (this.state.players.some(p => p.id === Onboard.selfId)) return;
+    alert('Your session timed out after 4 hours of inactivity. Please rejoin to continue playing.');
+    Session.leave();
   },
 
   updateTimers() {
@@ -4377,6 +4389,7 @@ const Session = {
 
         App.render();
         this._receiving = false;
+        App._checkSelfRemoved();
         addSelfOnce();
       } catch(err) { /* ignore */ }
     });
@@ -4403,6 +4416,7 @@ const Session = {
         App._normState();
         App.render();
         this._receiving = false;
+        App._checkSelfRemoved();
       } catch(err) { /* ignore */ }
     });
   },
