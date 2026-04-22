@@ -115,8 +115,8 @@ body {
   background: none;
   border: 1px solid var(--border);
   border-radius: var(--radius-sm);
-  font-size: 0.95rem;
-  font-weight: 600;
+  font-size: 1rem;
+  font-weight: 700;
   color: var(--text-light);
   cursor: pointer;
   font-family: inherit;
@@ -308,7 +308,7 @@ body {
 .btn-assign:hover:not(:disabled) { background: #22c55e; box-shadow: 0 2px 8px rgba(74,222,128,0.5); }
 .btn-danger { background: var(--danger); color: white; border-radius: var(--radius-sm); }
 .btn-danger:hover:not(:disabled) { background: var(--danger-hover); }
-.btn-sm { padding: 7px 12px; font-size: 0.9rem; }
+.btn-sm { padding: 10px 16px; font-size: 1rem; }
 .btn-ghost {
   background: transparent;
   color: var(--text-muted);
@@ -327,10 +327,11 @@ body {
   background: var(--danger-light);
   color: var(--danger);
   border: 1px solid #fecaca;
-  padding: 9px 14px;
+  padding: 12px 14px;
   margin-top: 8px;
   width: 100%;
-  font-size: 0.95rem;
+  font-size: 1rem;
+  font-weight: 700;
   border-radius: var(--radius-sm);
 }
 .btn-end-game:hover { background: #fee2e2; }
@@ -453,12 +454,12 @@ body {
 .confirm-skill { font-size: 0.85rem; color: var(--text-light); }
 .btn-confirm-join {
   flex: 1;
-  padding: 14px;
+  padding: 12px;
   background: var(--primary);
   color: white;
   border: none;
   border-radius: var(--radius-sm);
-  font-size: 1.05rem;
+  font-size: 1rem;
   font-weight: 700;
   font-family: inherit;
   cursor: pointer;
@@ -470,13 +471,13 @@ body {
 .btn-back-entry:hover { color:var(--text); }
 .btn-confirm-back {
   flex: 1;
-  padding: 14px;
+  padding: 12px;
   background: transparent;
   color: var(--text-light);
   border: 1px solid var(--border);
   border-radius: var(--radius-sm);
-  font-size: 1.05rem;
-  font-weight: 600;
+  font-size: 1rem;
+  font-weight: 700;
   font-family: inherit;
   cursor: pointer;
   transition: background 0.15s;
@@ -533,10 +534,10 @@ body {
 }
 .settings-field input[type="text"],
 .settings-field input[type="number"] {
-  padding: 9px 12px;
+  padding: 12px 14px;
   border: 1.5px solid var(--border);
   border-radius: var(--radius-sm);
-  font-size: 0.875rem;
+  font-size: 1rem;
   background: var(--bg);
   color: var(--text);
   font-family: inherit;
@@ -581,13 +582,13 @@ body {
 /* ── Partner list in settings ───────────────── */
 .btn-add-partner {
   width: 100%;
-  padding: 8px;
+  padding: 12px;
   border: 1.5px dashed var(--border-strong);
   border-radius: var(--radius-sm);
   background: transparent;
   color: var(--text-light);
-  font-size: 0.82rem;
-  font-weight: 600;
+  font-size: 1rem;
+  font-weight: 700;
   font-family: inherit;
   cursor: pointer;
   transition: border-color 0.15s, color 0.15s;
@@ -871,10 +872,10 @@ body {
   padding: 12px;
 }
 .add-form input {
-  padding: 8px 10px;
+  padding: 12px 14px;
   border: 1px solid var(--border);
   border-radius: var(--radius-sm);
-  font-size: 0.875rem;
+  font-size: 1rem;
   background: var(--card);
   color: var(--text);
   font-family: inherit;
@@ -902,13 +903,13 @@ body {
 .add-form .singles-label input { accent-color: var(--primary); }
 .btn-add-another {
   width: 100%;
-  padding: 9px;
+  padding: 12px;
   background: transparent;
   color: var(--primary);
   border: 1.5px dashed var(--primary-muted);
   border-radius: var(--radius-sm);
-  font-size: 0.85rem;
-  font-weight: 600;
+  font-size: 1rem;
+  font-weight: 700;
   font-family: inherit;
   cursor: pointer;
   margin-bottom: 8px;
@@ -955,10 +956,10 @@ body {
   white-space: nowrap;
 }
 .assign-court-select {
-  padding: 5px 8px;
+  padding: 10px 8px;
   border: 1.5px solid var(--border);
   border-radius: var(--radius-sm);
-  font-size: 0.875rem;
+  font-size: 1rem;
   font-family: inherit;
   background: var(--bg);
   color: var(--text);
@@ -1664,7 +1665,7 @@ body {
           <div style="font-size:0.95rem;font-weight:600;color:var(--text-light);margin-bottom:10px;">New Public Location</div>
           <input type="text" class="setup-input" id="publicLocationName" placeholder="Location name" maxlength="30" style="margin-bottom:8px;">
           <p id="publicLocationError" class="setup-error" style="display:none;">Enter a location name</p>
-          <button type="button" class="btn-confirm-join" onclick="Onboard.createPublicLocation()" style="width:100%;padding:10px;">Create &amp; Join</button>
+          <button type="button" class="btn-confirm-join" onclick="Onboard.createPublicLocation()" style="width:100%;padding:12px;font-size:1rem;font-weight:700;">Create &amp; Join</button>
           <div id="publicCreateConfirmInline" style="display:none;margin-top:6px;"></div>
         </div>
       </div>
@@ -1684,7 +1685,7 @@ body {
         <input type="text" class="setup-input" id="privateSessionName" placeholder="Session name" maxlength="20" style="margin-bottom:8px;">
         <div style="display:flex;gap:8px;align-items:center;margin-bottom:10px;">
           <input type="text" class="setup-input" id="privatePasscode" placeholder="Passcode (4 chars)" maxlength="4" style="flex:1;margin-bottom:0;text-transform:uppercase;">
-          <button type="button" class="btn-outline" onclick="Onboard.randomPasscode()" style="white-space:nowrap;padding:12px 14px;font-size:0.95rem;">Random</button>
+          <button type="button" class="btn-outline" onclick="Onboard.randomPasscode()" style="white-space:nowrap;padding:12px 14px;font-size:1rem;font-weight:700;">Random</button>
         </div>
         <select class="setup-input" id="selectSessionType" onchange="Onboard.setSessionType(this.value)" style="margin-bottom:12px;cursor:pointer;">
           <option value="" disabled selected>Select session type...</option>
@@ -1693,13 +1694,13 @@ body {
           <option value="tournament">Tournament</option>
         </select>
         <p id="privateSessionError" class="setup-error" style="display:none;">Enter a session name and 4-character passcode</p>
-        <button type="button" class="btn-confirm-join" onclick="Onboard.createPrivate()" style="width:100%;padding:10px;">Create &amp; Join</button>
+        <button type="button" class="btn-confirm-join" onclick="Onboard.createPrivate()" style="width:100%;padding:12px;font-size:1rem;font-weight:700;">Create &amp; Join</button>
         <div id="createConfirmInline" style="display:none;margin-top:6px;"></div>
       </div>
       </div><!-- /sessionSelectionBlock -->
       <!-- Share-link join button (shown when joining via share link) -->
       <div id="shareLinkJoinBlock" style="display:none;margin-top:16px;">
-        <button type="button" class="btn-confirm-join" onclick="Onboard._completeShareJoin()" style="width:100%;padding:10px;">Join Session</button>
+        <button type="button" class="btn-confirm-join" onclick="Onboard._completeShareJoin()" style="width:100%;padding:12px;font-size:1rem;font-weight:700;">Join Session</button>
       </div>
       <div id="sessionLoading" class="session-loading" style="display:none;">
         <span class="session-spinner"></span>
@@ -1810,7 +1811,7 @@ body {
         <label style="display:flex;align-items:center;gap:6px;font-size:0.85rem;font-weight:500;color:var(--text-light);cursor:pointer;margin:0;">
           <input type="checkbox" id="settingsSingles" style="accent-color:var(--primary);width:15px;height:15px;"> Open to 1v1
         </label>
-        <button type="button" class="btn-outline" onclick="App.saveSettings()" style="padding:4px 12px;font-size:0.78rem;">Save</button>
+        <button type="button" class="btn-outline" onclick="App.saveSettings()" style="padding:12px 16px;font-size:1rem;font-weight:700;">Save</button>
       </div>
     </div>
 
@@ -1832,7 +1833,7 @@ body {
       <p class="section-subtitle" style="margin-bottom:10px;">Invite others to join this session.</p>
       <div style="display:flex;gap:8px;align-items:center;">
         <input type="text" class="setup-input" id="shareLinkInput" readonly style="flex:1;margin-bottom:0;font-size:0.82rem;cursor:text;">
-        <button type="button" class="btn-outline" id="btnCopyShareLink" onclick="App.copyShareLink()" style="white-space:nowrap;padding:7px 12px;font-size:0.8rem;">Copy</button>
+        <button type="button" class="btn-outline" id="btnCopyShareLink" onclick="App.copyShareLink()" style="white-space:nowrap;padding:12px 16px;font-size:1rem;font-weight:700;">Copy</button>
       </div>
     </div>
 
@@ -1851,7 +1852,7 @@ body {
       <div class="settings-card-title">Session Passcode</div>
       <div style="display:flex;align-items:center;gap:8px;">
         <span id="passcodeDisplay" style="font-size:0.95rem;font-weight:700;letter-spacing:0.15em;">****</span>
-        <button type="button" class="btn-outline" onclick="App.togglePasscode()" id="btnTogglePasscode" style="padding:4px 10px;font-size:0.78rem;">Show</button>
+        <button type="button" class="btn-outline" onclick="App.togglePasscode()" id="btnTogglePasscode" style="padding:12px 16px;font-size:1rem;font-weight:700;">Show</button>
       </div>
     </div>
 
@@ -1889,7 +1890,7 @@ body {
       </div>
       <div class="history-filters" style="display:flex;gap:8px;align-items:center;">
         <input type="text" id="historySearch" class="history-search" placeholder="Search player name..." oninput="App.renderHistory()" style="flex:1;">
-        <button type="button" class="btn-outline" id="btnFilterMyMatches" onclick="App.toggleMyMatches()" style="white-space:nowrap;padding:6px 12px;font-size:0.8rem;">My Matches</button>
+        <button type="button" class="btn-outline" id="btnFilterMyMatches" onclick="App.toggleMyMatches()" style="white-space:nowrap;padding:12px 16px;font-size:1rem;font-weight:700;">My Matches</button>
       </div>
       <div class="history-table-wrap" id="historyRounds"></div>
     </div>
@@ -3849,7 +3850,7 @@ const App = {
           </label>` : ''}
           ${this.isTournament() ? `<div style="font-size:0.75rem;color:var(--text-muted);margin-top:4px;">Bracket match &mdash; winner advances</div>` : ''}
           <div class="score-buttons">
-            <button class="btn btn-assign" style="padding:8px 16px;font-size:0.85rem;" onclick="App.submitScore(${courtId})">Save Score</button>
+            <button class="btn btn-assign" style="padding:12px 16px;font-size:1rem;" onclick="App.submitScore(${courtId})">Save Score</button>
             ${this.isTournament() ? '' : `<button class="btn btn-outline" onclick="App.endWithoutScore(${courtId})">Skip</button>`}
             <button class="btn btn-ghost" onclick="App.cancelScoring(${courtId})">Cancel</button>
           </div>
