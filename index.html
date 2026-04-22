@@ -58,6 +58,71 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 
+/* ── How it Works modal ─────────────────────── */
+.hiw-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.5);
+  z-index: 200;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+}
+.hiw-modal {
+  background: var(--card);
+  border-radius: var(--radius);
+  box-shadow: 0 20px 60px rgba(0,0,0,0.25);
+  width: 100%;
+  max-width: 480px;
+  max-height: 85vh;
+  overflow-y: auto;
+}
+.hiw-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 18px 20px 14px;
+  border-bottom: 1px solid var(--border);
+  position: sticky;
+  top: 0;
+  background: var(--card);
+}
+.hiw-header h2 { font-size: 1.05rem; font-weight: 700; color: var(--text); }
+.hiw-close {
+  background: none;
+  border: none;
+  font-size: 1.4rem;
+  line-height: 1;
+  color: var(--text-light);
+  cursor: pointer;
+  padding: 0 4px;
+}
+.hiw-close:hover { color: var(--text); }
+.hiw-body { padding: 18px 20px; display: flex; flex-direction: column; gap: 18px; }
+.hiw-section h3 {
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: var(--primary);
+  margin-bottom: 5px;
+}
+.hiw-section p { font-size: 0.85rem; color: var(--text-light); line-height: 1.55; }
+.hiw-section p strong { color: var(--text); font-weight: 600; }
+.btn-hiw {
+  width: 100%;
+  margin-top: 14px;
+  padding: 9px;
+  background: none;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--text-light);
+  cursor: pointer;
+  font-family: inherit;
+}
+.btn-hiw:hover { color: var(--primary); border-color: var(--primary); background: var(--primary-light); }
+
 /* ── WPA banner ─────────────────────────────── */
 .wpa-banner {
   background: #e8f5e8;
@@ -1538,6 +1603,7 @@ body {
           <div style="flex:1;height:1px;background:var(--border);"></div>
         </div>
         <button class="btn-outline" onclick="Onboard.showGuestJoin()" style="width:100%;padding:10px;font-size:0.88rem;font-weight:600;">Continue without signing in</button>
+        <button class="btn-hiw" onclick="App.openHiw()">How it Works</button>
       </div>
       <!-- Signed-in profile card (shown for Google-signed-in users) -->
       <div id="setupSignedIn" style="display:none;margin-bottom:14px;">
@@ -1826,6 +1892,34 @@ body {
         <button type="button" class="btn-outline" id="btnFilterMyMatches" onclick="App.toggleMyMatches()" style="white-space:nowrap;padding:6px 12px;font-size:0.8rem;">My Matches</button>
       </div>
       <div class="history-table-wrap" id="historyRounds"></div>
+    </div>
+  </div>
+
+  <!-- ── How it Works Modal ──────────────────── -->
+  <div id="hiwModal" class="hiw-overlay" style="display:none;" onclick="App.closeHiw(event)">
+    <div class="hiw-modal" onclick="event.stopPropagation()">
+      <div class="hiw-header">
+        <h2>How Pickle Jar Works</h2>
+        <button class="hiw-close" onclick="App.closeHiw()" aria-label="Close">&times;</button>
+      </div>
+      <div class="hiw-body">
+        <div class="hiw-section">
+          <h3>🌐 Joining a Public Session</h3>
+          <p>Select your location from the drop-down, enter your name and optional skill level, then tap <strong>Join</strong>. You'll be added to the rotation and courts will be assigned automatically each round.</p>
+        </div>
+        <div class="hiw-section">
+          <h3>🔒 Private Sessions</h3>
+          <p>Sign in with Google to <strong>create a private session</strong> for your group. Share the link or session code with friends — they can join without signing in. Perfect for reserved court nights or league play.</p>
+        </div>
+        <div class="hiw-section">
+          <h3>⚙️ Updating Your Info</h3>
+          <p>Once in a session, open the <strong>Settings</strong> tab to update your display name, skill level, and singles (1v1) preference at any time.</p>
+        </div>
+        <div class="hiw-section">
+          <h3>📋 Match History</h3>
+          <p>The <strong>History</strong> tab shows all completed matches for the current session — courts, opponents, and scores. Signed-in players can also view their personal match history across all past sessions.</p>
+        </div>
+      </div>
     </div>
   </div>
 
@@ -3379,6 +3473,17 @@ const App = {
     const name = user ? (user.displayName || user.email || 'Unknown') : 'Unknown';
     if (!Array.isArray(this.state.adminLog)) this.state.adminLog = [];
     this.state.adminLog.push({ action, admin: name, time: Date.now() });
+  },
+
+  openHiw() {
+    document.getElementById('hiwModal').style.display = 'flex';
+    document.body.style.overflow = 'hidden';
+  },
+
+  closeHiw(e) {
+    if (e && e.target !== document.getElementById('hiwModal')) return;
+    document.getElementById('hiwModal').style.display = 'none';
+    document.body.style.overflow = '';
   },
 
   clearHistory() {
