@@ -8,12 +8,12 @@
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
 :root {
-  --primary: #2563eb;
-  --primary-hover: #1d4ed8;
-  --primary-light: #dbeafe;
+  --primary: #2d6a2d;
+  --primary-hover: #1e4d1e;
+  --primary-light: #e0f0e0;
   --danger: #dc2626;
   --danger-hover: #b91c1c;
-  --bg: #f1f5f0;
+  --bg: #f5f1e8;
   --card: #ffffff;
   --border: #d1d5db;
   --text: #1f2937;
@@ -24,9 +24,9 @@
 }
 
 [data-theme="dark"] {
-  --primary: #3b82f6;
-  --primary-hover: #2563eb;
-  --primary-light: #1e3a5f;
+  --primary: #4caf50;
+  --primary-hover: #388e3c;
+  --primary-light: #1a3d1a;
   --danger: #ef4444;
   --danger-hover: #dc2626;
   --bg: #111827;
@@ -37,7 +37,7 @@
   --shadow: 0 1px 3px rgba(0,0,0,0.3);
   --shadow-md: 0 4px 6px rgba(0,0,0,0.4);
   --hover-bg: #374151;
-  --side1-bg: #1e3a5f;
+  --side1-bg: #1a3d1a;
   --side2-bg: #422006;
   --bench-bg: #451a03;
   --bench-text: #fca5a5;
@@ -48,7 +48,7 @@
 
 :root {
   --hover-bg: #f9fafb;
-  --side1-bg: #eff6ff;
+  --side1-bg: #e8f5e8;
   --side2-bg: #fef3c7;
   --bench-bg: #fef2f2;
   --bench-text: #991b1b;
@@ -226,9 +226,9 @@ body {
   border: 1px solid transparent;
 }
 .player-pref.wants-singles {
-  background: #dbeafe;
-  color: #1d4ed8;
-  border-color: #93c5fd;
+  background: #e0f0e0;
+  color: #1e4d1e;
+  border-color: #86c386;
 }
 .player-court-badge {
   font-size: 0.65rem;
@@ -652,7 +652,7 @@ body {
 [data-theme="dark"] .btn-end-game { background: #451a03; color: var(--danger); border-color: #7f1d1d; }
 [data-theme="dark"] .btn-end-game:hover { background: #7f1d1d; }
 [data-theme="dark"] .btn-outline { border-color: var(--border); color: var(--text); }
-[data-theme="dark"] .player-pref.wants-singles { background: #1e3a5f; color: #60a5fa; border-color: #2563eb; }
+[data-theme="dark"] .player-pref.wants-singles { background: #1a3d1a; color: #86c386; border-color: #4caf50; }
 [data-theme="dark"] .player-sitout { color: #fbbf24; }
 [data-theme="dark"] .team-item { background: var(--primary-light); }
 [data-theme="dark"] .team-item .team-lock.locked { background: #451a03; color: #fca5a5; }
@@ -664,6 +664,19 @@ body {
 [data-theme="dark"] .add-form input, [data-theme="dark"] .add-form select { background: var(--bg); color: var(--text); border-color: var(--border); }
 [data-theme="dark"] .team-form select { background: var(--bg); color: var(--text); border-color: var(--border); }
 [data-theme="dark"] .player-item input[type="checkbox"] { accent-color: var(--primary); }
+
+/* Back nav */
+.back-nav {
+  background: #1e3d1e;
+  padding: 6px 24px;
+}
+.back-link {
+  color: rgba(255,255,255,0.8);
+  text-decoration: none;
+  font-size: 0.8rem;
+  font-weight: 500;
+}
+.back-link:hover { color: white; }
 
 /* Theme toggle */
 .theme-toggle {
@@ -695,6 +708,7 @@ body {
 </head>
 <body>
 
+<nav class="back-nav"><a href="https://warrentonparksalliance.com" class="back-link">← Warrenton Parks Alliance</a></nav>
 <header class="header">
   <div><h1>Pickle Jar</h1><span style="font-size:0.8rem;opacity:0.85;">Everyone's in the jar. Shake it up.</span></div>
   <div class="header-actions">
