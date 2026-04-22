@@ -47,7 +47,7 @@
   --tab-height: 52px;
 }
 
-html { overflow-x: hidden; }
+html { overflow-x: hidden; font-size: 18px; }
 body {
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   background: var(--bg);
@@ -1531,7 +1531,8 @@ body {
 }
 
 /* ── Responsive ─────────────────────────────── */
-@media (max-width: 600px) {
+@media (max-width: 768px) {
+  html { font-size: 20px; }
   .page-wrap { padding: 12px 8px; }
   .header { padding: 10px 12px; }
   .header-loc-name { font-size: 0.8rem; }
