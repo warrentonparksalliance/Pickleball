@@ -2356,11 +2356,14 @@ const App = {
         this.bracketRecordWinner(courtId, winner);
       }
     }
+    const courtPlayers = game ? [...(game.side1 || []), ...(game.side2 || [])] : [];
     const rematch = this._checkRematch(courtId, game);
     delete this.state.activeGames[courtId];
     delete this.state.scoringGames[courtId];
     if (rematch) this._startRematch(courtId, rematch);
+    const selfExpired = this._expireStaleFromCourt(courtPlayers);
     this.saveState();
+    if (selfExpired) { this._handleSelfExpired(); return; }
     this.render();
   },
 
@@ -2391,11 +2394,14 @@ const App = {
       this.state.roundHistory.push(histEntry);
       MyHistory.saveMatch(histEntry);
     }
+    const courtPlayers = game ? [...(game.side1 || []), ...(game.side2 || [])] : [];
     const rematch = this._checkRematch(courtId, game);
     delete this.state.activeGames[courtId];
     delete this.state.scoringGames[courtId];
     if (rematch) this._startRematch(courtId, rematch);
+    const selfExpired = this._expireStaleFromCourt(courtPlayers);
     this.saveState();
+    if (selfExpired) { this._handleSelfExpired(); return; }
     this.render();
   },
 
@@ -2453,32 +2459,43 @@ const App = {
 
   _lastExpireCheck: 0,
 
-  _autoExpirePlayers() {
+  // Remove stale players from a given ID list. Returns true if self was expired.
+  _expireStaleFromCourt(playerIds) {
     const now = Date.now();
-    if (now - this._lastExpireCheck < 60_000) return;
-    this._lastExpireCheck = now;
     const FOUR_HOURS = 4 * 60 * 60 * 1000;
-    const onCourt = this.getPlayersOnCourts();
-    const stale = this.state.players.filter(p => !onCourt.has(p.id) && now - (p.joinedAt || 0) >= FOUR_HOURS);
-    if (stale.length === 0) return;
-    const staleIds = new Set(stale.map(p => p.id));
+    const stale = playerIds.filter(id => {
+      const p = this.getPlayer(id);
+      return p && now - (p.joinedAt || 0) >= FOUR_HOURS;
+    });
+    if (stale.length === 0) return false;
+    const staleIds = new Set(stale);
     const selfExpired = Onboard.selfId != null && staleIds.has(Onboard.selfId);
     this.state.players = this.state.players.filter(p => !staleIds.has(p.id));
     this.state.teams   = this.state.teams.filter(t => !staleIds.has(t.p1) && !staleIds.has(t.p2));
-    this.saveState();
-    if (selfExpired) {
-      alert('Your session timed out after 4 hours of inactivity. Please rejoin to continue playing.');
-      Session.leave();
-      return;
-    }
-    this.render();
+    return selfExpired;
+  },
+
+  _handleSelfExpired() {
+    alert('Your session timed out after 4 hours. Please rejoin to continue playing.');
+    Session.leave();
   },
 
   _checkSelfRemoved() {
     if (Onboard.selfId == null || !Session.id) return;
     if (this.state.players.some(p => p.id === Onboard.selfId)) return;
-    alert('Your session timed out after 4 hours of inactivity. Please rejoin to continue playing.');
-    Session.leave();
+    this._handleSelfExpired();
+  },
+
+  _autoExpirePlayers() {
+    const now = Date.now();
+    if (now - this._lastExpireCheck < 60_000) return;
+    this._lastExpireCheck = now;
+    const onCourt = this.getPlayersOnCourts();
+    const eligible = this.state.players.filter(p => !onCourt.has(p.id)).map(p => p.id);
+    const before = this.state.players.length;
+    const selfExpired = this._expireStaleFromCourt(eligible);
+    if (selfExpired) { this._handleSelfExpired(); return; }
+    if (this.state.players.length < before) { this.saveState(); this.render(); }
   },
 
   updateTimers() {
@@ -2497,10 +2514,15 @@ const App = {
       }
     }
     if (expired.length > 0) {
+      const expiredPlayers = [];
       for (const courtId of expired) {
+        const g = this.state.activeGames[courtId];
+        if (g) expiredPlayers.push(...(g.side1 || []), ...(g.side2 || []));
         this._expireMatch(courtId);
       }
+      const selfExpired = this._expireStaleFromCourt(expiredPlayers);
       this.saveState();
+      if (selfExpired) { this._handleSelfExpired(); return; }
       this.render();
     }
   },
