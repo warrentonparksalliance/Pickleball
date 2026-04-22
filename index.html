@@ -4413,7 +4413,6 @@ const Session = {
         App.render();
         this._receiving = false;
         addSelfOnce();
-        App._checkSelfRemoved();
       } catch(err) { /* ignore */ }
     });
 
@@ -4439,7 +4438,6 @@ const Session = {
         App._normState();
         App.render();
         this._receiving = false;
-        App._checkSelfRemoved();
       } catch(err) { /* ignore */ }
     });
   },
