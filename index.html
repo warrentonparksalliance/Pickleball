@@ -230,11 +230,11 @@ body {
 }
 .tab-btn {
   flex: 1;
-  padding: 12px 0;
+  padding: 15px 0;
   border: none;
   background: transparent;
   color: #64748b;
-  font-size: 0.85rem;
+  font-size: 1.3rem;
   font-weight: 600;
   font-family: inherit;
   cursor: pointer;
@@ -512,12 +512,12 @@ body {
   margin-bottom: 14px;
 }
 .settings-card-title {
-  font-size: 0.7rem;
+  font-size: 1.4rem;
   font-weight: 700;
   text-transform: uppercase;
-  letter-spacing: 0.08em;
+  letter-spacing: 0.05em;
   color: var(--text-muted);
-  margin-bottom: 12px;
+  margin-bottom: 14px;
 }
 .settings-field {
   display: flex;
@@ -687,7 +687,7 @@ body {
   color: var(--text-muted);
 }
 .section-title {
-  font-size: 0.95rem;
+  font-size: 1.4rem;
   font-weight: 700;
   color: var(--text);
   line-height: 1.2;
@@ -1591,7 +1591,7 @@ body {
     <div class="setup-card">
       <!-- Entry options: sign in or join as guest -->
       <div id="setupEntryOptions">
-        <h2 style="font-size:1.6rem;font-weight:700;margin-bottom:10px;color:var(--text);">Welcome to Pickle Jar</h2>
+        <h2 style="font-size:2.4rem;font-weight:700;margin-bottom:12px;color:var(--text);">Welcome to Pickle Jar</h2>
         <p style="font-size:1rem;color:var(--text-muted);margin-bottom:20px;line-height:1.5;">Sign in to create sessions, save your preferences, and keep your match history.</p>
         <button class="btn-confirm-join" id="btnEntryGoogle" onclick="Admin.signIn()" style="width:100%;padding:10px;margin-bottom:10px;display:flex;align-items:center;justify-content:center;gap:8px;">
           <svg width="16" height="16" viewBox="0 0 48 48" style="flex-shrink:0;"><path fill="#4285F4" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#34A853" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59a14.5 14.5 0 0 1 0-9.18l-7.98-6.19a24.0 24.0 0 0 0 0 21.56l7.98-6.19z"/><path fill="#EA4335" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg>
@@ -1636,7 +1636,7 @@ body {
       <div id="setupJoinForm" style="display:none;">
       <div id="joinFormHeader" style="display:flex;align-items:center;margin-bottom:16px;">
         <button type="button" id="btnBackToEntry" class="btn-back-entry" onclick="Onboard.backToEntry()" title="Back">&larr;</button>
-        <h2 id="joinFormHeading" style="font-size:1.5rem;font-weight:700;margin:0;color:var(--text);flex:1;text-align:center;">Join a Session</h2>
+        <h2 id="joinFormHeading" style="font-size:2rem;font-weight:700;margin:0;color:var(--text);flex:1;text-align:center;">Join a Session</h2>
         <div style="width:28px;"></div>
       </div>
       <!-- Guest profile fields (hidden for signed-in users who have profile card above) -->
@@ -1714,7 +1714,7 @@ body {
     <div class="setup-card">
       <div style="display:flex;align-items:center;margin-bottom:14px;">
         <button type="button" class="btn-back-entry" onclick="MyHistory.hide()" title="Back">&larr;</button>
-        <h2 style="font-size:1.1rem;font-weight:700;margin:0;color:var(--text);flex:1;text-align:center;">My Match History</h2>
+        <h2 style="font-size:1.65rem;font-weight:700;margin:0;color:var(--text);flex:1;text-align:center;">My Match History</h2>
         <div style="width:28px;"></div>
       </div>
       <input type="text" id="myHistorySearch" class="history-search" placeholder="Search player name..." oninput="MyHistory.filter()" style="margin-bottom:10px;">
