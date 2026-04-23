@@ -413,7 +413,7 @@ body {
   max-width: 420px;
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 16px;
 }
 .setup-block {
   background: var(--card);
@@ -1728,7 +1728,7 @@ body {
       <!-- Session selection (hidden during share-link flow) -->
       <div id="sessionSelectionBlock">
       <div class="setup-block">
-        <div class="setup-section-label">Public Session</div>
+        <div class="section-title" style="margin-bottom:10px;">Public Session</div>
         <div style="display:flex;gap:8px;margin-bottom:4px;">
           <select class="setup-input" id="publicLocationSelect" onchange="Onboard._updateJoinBtn('publicLocationSelect','btnJoinPublic')" style="flex:1;margin-bottom:0;cursor:pointer;">
             <option value="">Select a location...</option>
@@ -1746,7 +1746,7 @@ body {
         </div>
       </div>
       <div class="setup-block">
-        <div class="setup-section-label">Private Session</div>
+        <div class="section-title" style="margin-bottom:10px;">Private Session</div>
         <div style="display:flex;gap:8px;margin-bottom:4px;">
           <select class="setup-input" id="privateSessionSelect" onchange="Onboard._updateJoinBtn('privateSessionSelect','btnJoinPrivate')" style="flex:1;margin-bottom:0;cursor:pointer;">
             <option value="">Select a session...</option>
