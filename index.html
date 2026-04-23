@@ -1646,6 +1646,10 @@ body {
     <div class="settings-card-title" onclick="document.getElementById('superAdminPanel').style.display=document.getElementById('superAdminPanel').style.display==='none'?'':'none';this.querySelector('.sa-toggle').textContent=document.getElementById('superAdminPanel').style.display==='none'?'▸':'▾'" style="cursor:pointer;display:flex;justify-content:space-between;align-items:center;">Super Admin Management <span class="sa-toggle" style="font-size:0.8rem;color:var(--text-muted);">▸</span></div>
     <div id="superAdminPanel" style="display:none;"></div>
   </div>
+  <div id="allSessionsSection" class="settings-card" style="display:none;margin-bottom:14px;">
+    <div class="settings-card-title" onclick="(function(p,t){p.style.display=p.style.display==='none'?'':'none';t.textContent=p.style.display==='none'?'▸':'▾';})(document.getElementById('allSessionsPanel'),this.querySelector('.as-toggle'));if(document.getElementById('allSessionsPanel').style.display!=='none')Admin.renderAllSessionsPanel();" style="cursor:pointer;display:flex;justify-content:space-between;align-items:center;">All Private Sessions <span class="as-toggle" style="font-size:0.8rem;color:var(--text-muted);">▸</span></div>
+    <div id="allSessionsPanel" style="display:none;"></div>
+  </div>
   <!-- ── Session setup (shown before joining) ─── -->
   <div id="sessionSetupSection" class="setup-center">
     <div class="setup-card">
@@ -4312,6 +4316,14 @@ const Session = {
       }
       App._normState();
       // For new sessions, write the full state to Firebase immediately
+      if (isNew && id.startsWith('pvt-')) {
+        App.state._createdBy = {
+          name: Admin._user?.displayName || user?.name || '',
+          email: Admin._user?.email || '',
+          uid: Admin._user?.uid || '',
+        };
+        App.state._createdAt = Date.now();
+      }
       if (isNew) await this._put(App.state);
       App.render();
       this._receiving = false;
@@ -4414,7 +4426,7 @@ const Session = {
       await fetch(this._url(), {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(state),
+        body: JSON.stringify({ ...state, _updatedAt: Date.now() }),
         signal: ctrl.signal,
       });
       clearTimeout(t);
@@ -4429,7 +4441,7 @@ const Session = {
       await fetch(this._url(), {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(data),
+        body: JSON.stringify({ ...data, _updatedAt: Date.now() }),
         signal: ctrl.signal,
       });
       clearTimeout(t);
@@ -5313,6 +5325,56 @@ const Admin = {
       </div>`;
   },
 
+  async renderAllSessionsPanel() {
+    const panel = document.getElementById('allSessionsPanel');
+    if (!panel) return;
+    panel.innerHTML = '<div style="color:var(--text-muted);font-size:0.82rem;padding:8px 0;">Loading&hellip;</div>';
+    try {
+      const res = await fetch(`${this.DB}/sessions.json`);
+      const all = await res.json();
+      if (!all) { panel.innerHTML = '<div style="color:var(--text-muted);font-size:0.82rem;font-style:italic;padding:8px 0;">No sessions found.</div>'; return; }
+      const fmt = ts => ts ? new Date(ts).toLocaleString() : '—';
+      const sessions = Object.entries(all)
+        .filter(([k, v]) => k.startsWith('pvt-') && v && typeof v === 'object')
+        .sort((a, b) => (b[1]._createdAt || 0) - (a[1]._createdAt || 0));
+      if (!sessions.length) { panel.innerHTML = '<div style="color:var(--text-muted);font-size:0.82rem;font-style:italic;padding:8px 0;">No private sessions.</div>'; return; }
+      const rows = sessions.map(([k, v]) => {
+        const name = App.esc(v._sessionName || k.replace(/^pvt-/, ''));
+        const creatorName = App.esc(v._createdBy?.name || '—');
+        const creatorEmail = App.esc(v._createdBy?.email || '—');
+        const createdAt = fmt(v._createdAt);
+        const updatedAt = fmt(v._updatedAt);
+        const players = Array.isArray(v.players) ? v.players.length : 0;
+        const guests = Array.isArray(v.players) ? v.players.filter(p => !p.isLive).length : 0;
+        const users = players - guests;
+        const tdStyle = 'padding:6px 8px 6px 0;border-bottom:1px solid var(--border);vertical-align:top;';
+        return `<tr>
+          <td style="${tdStyle}font-weight:600;">${name}</td>
+          <td style="${tdStyle}">${creatorName}<br><span style="font-size:0.75rem;color:var(--text-muted);">${creatorEmail}</span></td>
+          <td style="${tdStyle}white-space:nowrap;">${createdAt}</td>
+          <td style="${tdStyle}white-space:nowrap;">${updatedAt}</td>
+          <td style="${tdStyle}text-align:center;">${users}u&nbsp;/&nbsp;${guests}g</td>
+        </tr>`;
+      }).join('');
+      panel.innerHTML = `
+        <div style="overflow-x:auto;margin-top:8px;">
+          <table style="width:100%;border-collapse:collapse;font-size:0.8rem;">
+            <thead><tr style="text-align:left;border-bottom:2px solid var(--border);color:var(--text-muted);">
+              <th style="padding:4px 8px 6px 0;">Session</th>
+              <th style="padding:4px 8px 6px 0;">Created by</th>
+              <th style="padding:4px 8px 6px 0;">Created</th>
+              <th style="padding:4px 8px 6px 0;">Last modified</th>
+              <th style="padding:4px 8px 6px 0;">Players</th>
+            </tr></thead>
+            <tbody>${rows}</tbody>
+          </table>
+        </div>
+        <button class="btn-outline" onclick="Admin.renderAllSessionsPanel()" style="margin-top:10px;font-size:0.78rem;padding:4px 10px;">Refresh</button>`;
+    } catch(e) {
+      panel.innerHTML = '<div style="color:var(--danger);font-size:0.82rem;padding:8px 0;">Failed to load sessions.</div>';
+    }
+  },
+
   _updateUI() {
     const isAdmin = this.isAdmin();
     const isSuperAdmin = this.isSuperAdmin();
@@ -5364,6 +5426,8 @@ const Admin = {
       superSection.style.display = isSuperAdmin ? '' : 'none';
       if (isSuperAdmin) this.renderSuperAdminPanel();
     }
+    const allSessionsSection = document.getElementById('allSessionsSection');
+    if (allSessionsSection) allSessionsSection.style.display = isSuperAdmin ? '' : 'none';
     // Header badge
     const badge = document.getElementById('adminHeaderBadge');
     if (badge) {
