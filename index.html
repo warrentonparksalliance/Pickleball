@@ -1646,10 +1646,6 @@ body {
     <div class="settings-card-title" onclick="document.getElementById('superAdminPanel').style.display=document.getElementById('superAdminPanel').style.display==='none'?'':'none';this.querySelector('.sa-toggle').textContent=document.getElementById('superAdminPanel').style.display==='none'?'▸':'▾'" style="cursor:pointer;display:flex;justify-content:space-between;align-items:center;">Super Admin Management <span class="sa-toggle" style="font-size:0.8rem;color:var(--text-muted);">▸</span></div>
     <div id="superAdminPanel" style="display:none;"></div>
   </div>
-  <div id="allSessionsSection" class="settings-card" style="display:none;margin-bottom:14px;">
-    <div class="settings-card-title" onclick="(function(p,t){p.style.display=p.style.display==='none'?'':'none';t.textContent=p.style.display==='none'?'▸':'▾';})(document.getElementById('allSessionsPanel'),this.querySelector('.as-toggle'));if(document.getElementById('allSessionsPanel').style.display!=='none')Admin.renderAllSessionsPanel();" style="cursor:pointer;display:flex;justify-content:space-between;align-items:center;">All Private Sessions <span class="as-toggle" style="font-size:0.8rem;color:var(--text-muted);">▸</span></div>
-    <div id="allSessionsPanel" style="display:none;"></div>
-  </div>
   <!-- ── Session setup (shown before joining) ─── -->
   <div id="sessionSetupSection" class="setup-center">
     <div class="setup-card">
@@ -1778,6 +1774,11 @@ body {
       </div>
       </div><!-- /setupJoinForm -->
     </div>
+  </div>
+
+  <div id="allSessionsSection" class="settings-card" style="display:none;margin-bottom:14px;">
+    <div class="settings-card-title" onclick="(function(p,t){p.style.display=p.style.display==='none'?'':'none';t.textContent=p.style.display==='none'?'▸':'▾';})(document.getElementById('allSessionsPanel'),this.querySelector('.as-toggle'));if(document.getElementById('allSessionsPanel').style.display!=='none')Admin.renderAllSessionsPanel();" style="cursor:pointer;display:flex;justify-content:space-between;align-items:center;">All Private Sessions <span class="as-toggle" style="font-size:0.8rem;color:var(--text-muted);">▸</span></div>
+    <div id="allSessionsPanel" style="display:none;"></div>
   </div>
 
   <!-- My Match History view (outside sessionSetupSection so it can be shown independently) -->
