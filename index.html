@@ -922,7 +922,7 @@ body {
 }
 .add-form input::placeholder { color: var(--text-muted); }
 .add-form-row2 { display: flex; gap: 8px; align-items: center; }
-.input-score { flex: 1; }
+.add-form .input-score { width: auto; min-width: 130px; }
 .add-form .singles-label {
   font-size: 0.78rem;
   color: var(--text-light);
@@ -932,7 +932,7 @@ body {
   cursor: pointer;
   white-space: nowrap;
   font-weight: 500;
-  align-self: flex-start;
+  margin-left: auto;
 }
 .add-form .singles-label input { accent-color: var(--primary); }
 .btn-add-another {
@@ -1805,11 +1805,11 @@ body {
         <input class="input-name" type="text" id="playerName" placeholder="Player name" onkeydown="if(event.key==='Enter')App.addPlayer()">
         <div class="add-form-row2">
           <input class="input-score" type="number" id="playerScore" placeholder="Skill (optional)" min="2" max="8" step="0.01" onkeydown="if(event.key==='Enter')App.addPlayer()" onblur="App.fmtSkillInput(this)">
+          <label class="singles-label"><input type="checkbox" id="playerSingles"> Open to 1v1</label>
         </div>
-        <label class="singles-label"><input type="checkbox" id="playerSingles"> Open to 1v1</label>
         <div style="display:flex;gap:8px;">
           <button class="btn-add-player" style="flex:1;" onclick="App.addPlayer()">+ Add Guest</button>
-          <button class="btn-add-player" style="flex:0;background:var(--border);color:var(--text);" onclick="App.toggleAddForm()">Cancel</button>
+          <button class="btn-add-player" style="flex:1;background:var(--border);color:var(--text);" onclick="App.toggleAddForm()">Cancel</button>
         </div>
       </div>
       <div id="playerList" class="queue-list"></div>
