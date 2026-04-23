@@ -9,3 +9,6 @@
 
 [context.branch-deploy]
   publish = "."
+
+[context.uat]
+  publish = "."
