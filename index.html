@@ -1646,10 +1646,6 @@ body {
     <div class="settings-card-title" onclick="document.getElementById('superAdminPanel').style.display=document.getElementById('superAdminPanel').style.display==='none'?'':'none';this.querySelector('.sa-toggle').textContent=document.getElementById('superAdminPanel').style.display==='none'?'▸':'▾'" style="cursor:pointer;display:flex;justify-content:space-between;align-items:center;">Super Admin Management <span class="sa-toggle" style="font-size:0.8rem;color:var(--text-muted);">▸</span></div>
     <div id="superAdminPanel" style="display:none;"></div>
   </div>
-  <div id="allSessionsSection" class="settings-card" style="display:none;margin-bottom:14px;">
-    <div class="settings-card-title" onclick="(function(p,t){p.style.display=p.style.display==='none'?'':'none';t.textContent=p.style.display==='none'?'▸':'▾';})(document.getElementById('allSessionsPanel'),this.querySelector('.as-toggle'));if(document.getElementById('allSessionsPanel').style.display!=='none')Admin.renderAllSessionsPanel();" style="cursor:pointer;display:flex;justify-content:space-between;align-items:center;">All Private Sessions <span class="as-toggle" style="font-size:0.8rem;color:var(--text-muted);">▸</span></div>
-    <div id="allSessionsPanel" style="display:none;"></div>
-  </div>
   <!-- ── Session setup (shown before joining) ─── -->
   <div id="sessionSetupSection" class="setup-center">
     <div class="setup-card">
@@ -1778,6 +1774,15 @@ body {
       </div>
       </div><!-- /setupJoinForm -->
     </div>
+  </div>
+
+  <div id="allSessionsSection" class="settings-card" style="display:none;margin-bottom:14px;">
+    <div class="settings-card-title" onclick="(function(p,t){p.style.display=p.style.display==='none'?'':'none';t.textContent=p.style.display==='none'?'▸':'▾';})(document.getElementById('allSessionsPanel'),this.querySelector('.as-toggle'));if(document.getElementById('allSessionsPanel').style.display!=='none')Admin.renderAllSessionsPanel();" style="cursor:pointer;display:flex;justify-content:space-between;align-items:center;">All Private Sessions <span class="as-toggle" style="font-size:0.8rem;color:var(--text-muted);">▸</span></div>
+    <div id="allSessionsPanel" style="display:none;"></div>
+  </div>
+  <div id="allUsersSection" class="settings-card" style="display:none;margin-bottom:14px;">
+    <div class="settings-card-title" onclick="(function(p,t){p.style.display=p.style.display==='none'?'':'none';t.textContent=p.style.display==='none'?'▸':'▾';})(document.getElementById('allUsersPanel'),this.querySelector('.au-toggle'));if(document.getElementById('allUsersPanel').style.display!=='none')Admin.renderAllUsersPanel();" style="cursor:pointer;display:flex;justify-content:space-between;align-items:center;">All Users <span class="au-toggle" style="font-size:0.8rem;color:var(--text-muted);">▸</span></div>
+    <div id="allUsersPanel" style="display:none;"></div>
   </div>
 
   <!-- My Match History view (outside sessionSetupSection so it can be shown independently) -->
@@ -5198,6 +5203,7 @@ const Admin = {
         Admin._user = user;
         if (user) {
           await Admin._checkSuperAdmin();
+          Admin._recordLogin(user);
         } else {
           Admin._isSuperAdmin = false;
         }
@@ -5375,6 +5381,66 @@ const Admin = {
     }
   },
 
+  async _recordLogin(user) {
+    if (!user?.uid) return;
+    const path = `${this.DB}/users/${user.uid}.json`;
+    try {
+      const res = await fetch(path);
+      const existing = (res.ok ? await res.json() : null) || {};
+      await fetch(path, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: user.displayName || existing.name || '',
+          email: user.email || existing.email || '',
+          createdAt: existing.createdAt || new Date(user.metadata.creationTime).getTime(),
+          lastLoginAt: Date.now(),
+          loginCount: (existing.loginCount || 0) + 1,
+        }),
+      });
+    } catch(e) { /* silent */ }
+  },
+
+  async renderAllUsersPanel() {
+    const panel = document.getElementById('allUsersPanel');
+    if (!panel) return;
+    panel.innerHTML = '<div style="color:var(--text-muted);font-size:0.82rem;padding:8px 0;">Loading&hellip;</div>';
+    try {
+      const res = await fetch(`${this.DB}/users.json`);
+      const all = await res.json();
+      if (!all) { panel.innerHTML = '<div style="color:var(--text-muted);font-size:0.82rem;font-style:italic;padding:8px 0;">No users found.</div>'; return; }
+      const fmt = ts => ts ? new Date(ts).toLocaleString() : '—';
+      const users = Object.values(all)
+        .filter(u => u && u.email)
+        .sort((a, b) => (b.lastLoginAt || 0) - (a.lastLoginAt || 0));
+      if (!users.length) { panel.innerHTML = '<div style="color:var(--text-muted);font-size:0.82rem;font-style:italic;padding:8px 0;">No users found.</div>'; return; }
+      const tdStyle = 'padding:6px 8px 6px 0;border-bottom:1px solid var(--border);vertical-align:top;';
+      const rows = users.map(u => `<tr>
+        <td style="${tdStyle}font-weight:600;">${App.esc(u.name || '—')}<br><span style="font-size:0.75rem;color:var(--text-muted);">${App.esc(u.email)}</span></td>
+        <td style="${tdStyle}white-space:nowrap;">${fmt(u.createdAt)}</td>
+        <td style="${tdStyle}white-space:nowrap;">${fmt(u.lastLoginAt)}</td>
+        <td style="${tdStyle}text-align:center;">${u.loginCount || 0}</td>
+        <td style="${tdStyle}text-align:center;">${u.gamesPlayed || 0}</td>
+      </tr>`).join('');
+      panel.innerHTML = `
+        <div style="overflow-x:auto;margin-top:8px;">
+          <table style="width:100%;border-collapse:collapse;font-size:0.8rem;">
+            <thead><tr style="text-align:left;border-bottom:2px solid var(--border);color:var(--text-muted);">
+              <th style="padding:4px 8px 6px 0;">User</th>
+              <th style="padding:4px 8px 6px 0;">Created</th>
+              <th style="padding:4px 8px 6px 0;">Last login</th>
+              <th style="padding:4px 8px 6px 0;text-align:center;">Logins</th>
+              <th style="padding:4px 8px 6px 0;text-align:center;">Games</th>
+            </tr></thead>
+            <tbody>${rows}</tbody>
+          </table>
+        </div>
+        <button class="btn-outline" onclick="Admin.renderAllUsersPanel()" style="margin-top:10px;font-size:0.78rem;padding:4px 10px;">Refresh</button>`;
+    } catch(e) {
+      panel.innerHTML = '<div style="color:var(--danger);font-size:0.82rem;padding:8px 0;">Failed to load users.</div>';
+    }
+  },
+
   _updateUI() {
     const isAdmin = this.isAdmin();
     const isSuperAdmin = this.isSuperAdmin();
@@ -5428,6 +5494,8 @@ const Admin = {
     }
     const allSessionsSection = document.getElementById('allSessionsSection');
     if (allSessionsSection) allSessionsSection.style.display = isSuperAdmin ? '' : 'none';
+    const allUsersSection = document.getElementById('allUsersSection');
+    if (allUsersSection) allUsersSection.style.display = isSuperAdmin ? '' : 'none';
     // Header badge
     const badge = document.getElementById('adminHeaderBadge');
     if (badge) {
@@ -5481,6 +5549,15 @@ const MyHistory = {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(entry),
+      });
+      // Increment gamesPlayed on the user record
+      const userPath = `${this.DB}/users/${Admin._user.uid}.json`;
+      const ur = await fetch(userPath);
+      const ud = (ur.ok ? await ur.json() : null) || {};
+      await fetch(userPath, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ gamesPlayed: (ud.gamesPlayed || 0) + 1 }),
       });
     } catch(e) { console.error('Failed to save personal match history:', e); }
   },
