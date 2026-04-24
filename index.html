@@ -5479,21 +5479,47 @@ const Admin = {
     if (!panel) return;
     panel.innerHTML = '<div style="color:var(--text-muted);font-size:0.82rem;padding:8px 0;">Loading&hellip;</div>';
     try {
-      const res = await fetch(`${this.DB}/users.json`);
-      const all = await res.json();
-      if (!all) { panel.innerHTML = '<div style="color:var(--text-muted);font-size:0.82rem;font-style:italic;padding:8px 0;">No users found.</div>'; return; }
+      const [usersRes, sessionsRes] = await Promise.all([
+        fetch(`${this.DB}/users.json`),
+        fetch(`${this.DB}/sessions.json`),
+      ]);
+      const usersData = (usersRes.ok ? await usersRes.json() : null) || {};
+      const sessionsData = (sessionsRes.ok ? await sessionsRes.json() : null) || {};
+
+      // Build map uid → user from /users/
+      const userMap = {};
+      for (const [uid, u] of Object.entries(usersData)) {
+        if (u) userMap[uid] = { ...u, uid };
+      }
+
+      // Fill in anyone from sessions not yet in /users/
+      for (const [key, session] of Object.entries(sessionsData)) {
+        if (!key.startsWith('pvt-') || !session) continue;
+        // Session creator (has email)
+        const cb = session._createdBy;
+        if (cb?.uid && !userMap[cb.uid]) {
+          userMap[cb.uid] = { uid: cb.uid, name: cb.name || '—', email: cb.email || null };
+        }
+        // Signed-in players (name only, no email)
+        for (const p of (Array.isArray(session.players) ? session.players : [])) {
+          if (p?.firebaseUid && !userMap[p.firebaseUid]) {
+            userMap[p.firebaseUid] = { uid: p.firebaseUid, name: p.name || '—', email: null };
+          }
+        }
+      }
+
       const fmt = ts => ts ? new Date(ts).toLocaleString() : '—';
-      const users = Object.values(all)
-        .filter(u => u && u.email)
+      const users = Object.values(userMap)
+        .filter(u => u)
         .sort((a, b) => (b.lastLoginAt || 0) - (a.lastLoginAt || 0));
       if (!users.length) { panel.innerHTML = '<div style="color:var(--text-muted);font-size:0.82rem;font-style:italic;padding:8px 0;">No users found.</div>'; return; }
       const tdStyle = 'padding:6px 8px 6px 0;border-bottom:1px solid var(--border);vertical-align:top;';
       const rows = users.map(u => `<tr>
-        <td style="${tdStyle}font-weight:600;">${App.esc(u.name || '—')}<br><span style="font-size:0.75rem;color:var(--text-muted);">${App.esc(u.email)}</span></td>
+        <td style="${tdStyle}font-weight:600;">${App.esc(u.name || '—')}<br><span style="font-size:0.75rem;color:var(--text-muted);">${u.email ? App.esc(u.email) : '<em>sign in to record</em>'}</span></td>
         <td style="${tdStyle}white-space:nowrap;">${fmt(u.createdAt)}</td>
         <td style="${tdStyle}white-space:nowrap;">${fmt(u.lastLoginAt)}</td>
-        <td style="${tdStyle}text-align:center;">${u.loginCount || 0}</td>
-        <td style="${tdStyle}text-align:center;">${u.gamesPlayed || 0}</td>
+        <td style="${tdStyle}text-align:center;">${u.loginCount ?? '—'}</td>
+        <td style="${tdStyle}text-align:center;">${u.gamesPlayed ?? '—'}</td>
       </tr>`).join('');
       panel.innerHTML = `
         <div style="overflow-x:auto;margin-top:8px;">
