@@ -1618,6 +1618,20 @@ body {
   .match-card-team { font-size: 0.8rem; }
   .court-card { margin: 0 -2px; }
 }
+
+@media print {
+  body * { visibility: hidden; }
+  #bracketPrintArea, #bracketPrintArea * { visibility: visible; }
+  #bracketPrintArea {
+    position: fixed;
+    inset: 0;
+    padding: 24px;
+    background: #fff;
+    overflow: visible;
+  }
+  .bracket-container { overflow: visible; flex-wrap: wrap; }
+  .btn-print-bracket { display: none; }
+}
 </style>
 </head>
 <body>
@@ -1882,8 +1896,13 @@ body {
     <!-- Tournament: bracket view -->
     <div id="bracketSection" style="display:none;margin-top:14px;">
       <div class="queue-bar-wrap">
-        <div class="section-title" style="margin-bottom:8px;">Bracket</div>
-        <div id="bracketView"></div>
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
+          <div class="section-title">Bracket</div>
+          <button class="btn-outline btn-print-bracket" onclick="window.print()" style="padding:6px 12px;font-size:0.8rem;font-weight:600;">&#128438; Save as PDF</button>
+        </div>
+        <div id="bracketPrintArea">
+          <div id="bracketView"></div>
+        </div>
       </div>
     </div>
   </div>
