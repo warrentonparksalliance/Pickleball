@@ -691,16 +691,227 @@ body {
 @media (max-width: 550px) {
   .courts-grid { grid-template-columns: 1fr; }
 }
+
+/* ── Session Setup Screen ────────────────────────────── */
+.session-setup {
+  position: fixed;
+  inset: 0;
+  background: var(--bg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 20px;
+}
+
+.setup-card {
+  background: var(--card);
+  border-radius: 16px;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.12);
+  padding: 40px 36px;
+  max-width: 500px;
+  width: 100%;
+  text-align: center;
+}
+[data-theme="dark"] .setup-card { box-shadow: 0 8px 32px rgba(0,0,0,0.4); }
+
+.setup-logo {
+  font-size: 1.8rem;
+  font-weight: 800;
+  color: var(--primary);
+  letter-spacing: -0.02em;
+}
+.setup-tagline {
+  color: var(--text-light);
+  font-size: 0.875rem;
+  margin-top: 4px;
+  margin-bottom: 28px;
+}
+.setup-section-label {
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  color: var(--text-light);
+  margin-bottom: 12px;
+}
+.setup-divider {
+  border: none;
+  border-top: 1px solid var(--border);
+  margin: 22px 0;
+}
+
+.type-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+}
+.type-card {
+  border: 2px solid var(--border);
+  border-radius: 10px;
+  padding: 18px 10px 14px;
+  cursor: pointer;
+  transition: border-color 0.15s, background 0.15s, transform 0.1s;
+}
+.type-card:hover:not(.disabled) {
+  border-color: var(--primary);
+  background: var(--primary-light);
+  transform: translateY(-1px);
+}
+.type-card.active {
+  border-color: var(--primary);
+  background: var(--primary-light);
+}
+.type-card.disabled {
+  opacity: 0.38;
+  cursor: not-allowed;
+}
+.type-card-label {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--text);
+  margin-bottom: 4px;
+}
+.type-card.active .type-card-label { color: var(--primary); }
+.type-card-sub {
+  font-size: 0.7rem;
+  font-weight: 400;
+  color: var(--text-light);
+}
+
+.format-section { animation: slideDown 0.18s ease; }
+@keyframes slideDown {
+  from { opacity: 0; transform: translateY(-6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.format-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+  margin-bottom: 22px;
+}
+.format-card {
+  border: 2px solid var(--border);
+  border-radius: 8px;
+  padding: 14px 8px;
+  cursor: pointer;
+  transition: border-color 0.15s, background 0.15s, transform 0.1s;
+}
+.format-card:hover {
+  border-color: var(--primary);
+  background: var(--primary-light);
+  transform: translateY(-1px);
+}
+.format-card.active {
+  border-color: var(--primary);
+  background: var(--primary-light);
+}
+.format-card-label {
+  font-size: 0.875rem;
+  font-weight: 700;
+  color: var(--text);
+  margin-bottom: 3px;
+}
+.format-card.active .format-card-label { color: var(--primary); }
+.format-card-sub {
+  font-size: 0.68rem;
+  font-weight: 400;
+  color: var(--text-light);
+}
+
+.btn-setup-start {
+  width: 100%;
+  padding: 13px;
+  background: var(--primary);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 1rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.15s, opacity 0.15s;
+}
+.btn-setup-start:hover:not(:disabled) { background: var(--primary-hover); }
+.btn-setup-start:disabled { opacity: 0.35; cursor: not-allowed; }
+
+/* Session badges in header */
+.header-session-meta { display: flex; flex-direction: column; gap: 2px; }
+.header-badges { display: flex; gap: 5px; align-items: center; flex-wrap: wrap; margin-top: 3px; }
+.session-badge {
+  font-size: 0.63rem;
+  font-weight: 700;
+  padding: 2px 7px;
+  border-radius: 3px;
+  background: rgba(255,255,255,0.2);
+  color: rgba(255,255,255,0.92);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
 </style>
 </head>
 <body>
 
+<!-- Session Setup Overlay -->
+<div id="sessionSetup" class="session-setup">
+  <div class="setup-card">
+    <div class="setup-logo">Pickle Jar</div>
+    <div class="setup-tagline">Everyone's in the jar. Shake it up.</div>
+
+    <div class="setup-section-label">Session Type</div>
+    <div class="type-grid">
+      <div class="type-card disabled">
+        <div class="type-card-label">Public</div>
+        <div class="type-card-sub">Coming soon</div>
+      </div>
+      <div class="type-card disabled">
+        <div class="type-card-label">Private</div>
+        <div class="type-card-sub">Coming soon</div>
+      </div>
+      <div class="type-card" id="typeCardOffline" onclick="App.selectSessionType('offline')">
+        <div class="type-card-label">Offline</div>
+        <div class="type-card-sub">Local &amp; private</div>
+      </div>
+    </div>
+
+    <div id="formatSection" style="display:none;">
+      <hr class="setup-divider">
+      <div class="setup-section-label format-section">Session Format</div>
+      <div class="format-grid format-section">
+        <div class="format-card" id="formatCardOpenPlay" onclick="App.selectFormat('open-play')">
+          <div class="format-card-label">Open Play</div>
+          <div class="format-card-sub">Rotate freely</div>
+        </div>
+        <div class="format-card" id="formatCardRoundRobin" onclick="App.selectFormat('round-robin')">
+          <div class="format-card-label">Round Robin</div>
+          <div class="format-card-sub">Play everyone</div>
+        </div>
+        <div class="format-card" id="formatCardTournament" onclick="App.selectFormat('tournament')">
+          <div class="format-card-label">Tournament</div>
+          <div class="format-card-sub">Bracket play</div>
+        </div>
+      </div>
+      <button class="btn-setup-start" id="btnStartSession" onclick="App.startSession()" disabled>
+        Start Session
+      </button>
+    </div>
+  </div>
+</div>
+
 <header class="header">
-  <div><h1>Pickle Jar</h1><span style="font-size:0.8rem;opacity:0.85;">Everyone's in the jar. Shake it up.</span></div>
+  <div class="header-session-meta">
+    <h1>Pickle Jar</h1>
+    <div class="header-badges">
+      <span style="font-size:0.8rem;opacity:0.85;">Everyone's in the jar. Shake it up.</span>
+      <span id="badgeType" class="session-badge" style="display:none;"></span>
+      <span id="badgeFormat" class="session-badge" style="display:none;"></span>
+    </div>
+  </div>
   <div class="header-actions">
     <button class="theme-toggle" onclick="App.toggleTheme()" id="themeToggle" title="Toggle dark mode"></button>
     <button class="btn btn-primary btn-sm" onclick="App.clearHistory()">Clear History</button>
     <button class="btn btn-primary btn-sm" onclick="App.resetAll()">Reset All</button>
+    <button class="btn btn-primary btn-sm" onclick="App.endSession()">End Session</button>
     <button class="btn btn-assign" onclick="App.assign()">Assign Courts</button>
   </div>
 </header>
@@ -789,13 +1000,22 @@ const App = {
     currentSittingOut: null,
     roundHistory: [],      // [{ round, courtId, side1, side2, mode }]
     nextId: 1,
+    sessionType: null,     // null | 'offline'
+    sessionFormat: null,   // null | 'open-play' | 'round-robin' | 'tournament'
+    sessionStarted: false,
   },
 
   // ─── Init ──────────────────────────────────────
   init() {
     this.loadTheme();
     this.loadState();
-    this.render();
+    if (this.state.sessionStarted) {
+      document.getElementById('sessionSetup').style.display = 'none';
+      this.updateSessionBadges();
+      this.render();
+    } else {
+      this.restoreSetupSelections();
+    }
     setInterval(() => this.updateTimers(), 1000);
   },
 
@@ -840,6 +1060,18 @@ const App = {
         if (!this.state.scoringGames) this.state.scoringGames = {};
         if (!this.state.pendingGames) this.state.pendingGames = {};
         if (!this.state.roundHistory) this.state.roundHistory = [];
+        // Migrate existing users to offline session if they already have data
+        if (!('sessionStarted' in this.state)) {
+          if (this.state.players && this.state.players.length > 0) {
+            this.state.sessionStarted = true;
+            this.state.sessionType = 'offline';
+            this.state.sessionFormat = 'open-play';
+          } else {
+            this.state.sessionStarted = false;
+            this.state.sessionType = null;
+            this.state.sessionFormat = null;
+          }
+        }
         // Migrate old team data: canSplit -> doNotSplit
         for (const t of this.state.teams) {
           if ('canSplit' in t) {
@@ -1476,7 +1708,61 @@ const App = {
   },
 
   resetAll() {
-    if (!confirm('Reset everything? This removes all players, teams, and history.')) return;
+    if (!confirm('Reset all players, teams, and history? The session will remain active.')) return;
+    const { sessionType, sessionFormat, sessionStarted } = this.state;
+    this.state = {
+      players: [], teams: [],
+      courts: [
+        { id: 1, active: false },
+        { id: 2, active: false },
+        { id: 3, active: false },
+        { id: 4, active: false },
+        { id: 5, active: false },
+        { id: 6, active: false },
+      ],
+      options: { useSkill: false, minimizeRepeats: false },
+      opponentHistory: {}, sitoutCounts: {}, round: 0,
+      activeGames: {}, scoringGames: {}, pendingGames: {}, selectedPlayerId: null,
+      currentSittingOut: null, roundHistory: [], nextId: 1,
+      sessionType, sessionFormat, sessionStarted,
+    };
+    this.saveState();
+    this.render();
+  },
+
+  // ─── Session Setup ─────────────────────────────
+  selectSessionType(type) {
+    this.state.sessionType = type;
+    document.querySelectorAll('.type-card').forEach(el => el.classList.remove('active'));
+    const cardIds = { offline: 'typeCardOffline' };
+    const el = document.getElementById(cardIds[type]);
+    if (el) el.classList.add('active');
+    const fs = document.getElementById('formatSection');
+    fs.style.display = '';
+    this.saveState();
+  },
+
+  selectFormat(format) {
+    this.state.sessionFormat = format;
+    document.querySelectorAll('.format-card').forEach(el => el.classList.remove('active'));
+    const cardIds = { 'open-play': 'formatCardOpenPlay', 'round-robin': 'formatCardRoundRobin', 'tournament': 'formatCardTournament' };
+    const el = document.getElementById(cardIds[format]);
+    if (el) el.classList.add('active');
+    document.getElementById('btnStartSession').disabled = false;
+    this.saveState();
+  },
+
+  startSession() {
+    if (!this.state.sessionType || !this.state.sessionFormat) return;
+    this.state.sessionStarted = true;
+    this.saveState();
+    document.getElementById('sessionSetup').style.display = 'none';
+    this.updateSessionBadges();
+    this.render();
+  },
+
+  endSession() {
+    if (!confirm('End this session? All players, teams, and history will be cleared.')) return;
     localStorage.removeItem('pickleJar');
     this.state = {
       players: [], teams: [],
@@ -1492,9 +1778,39 @@ const App = {
       opponentHistory: {}, sitoutCounts: {}, round: 0,
       activeGames: {}, scoringGames: {}, pendingGames: {}, selectedPlayerId: null,
       currentSittingOut: null, roundHistory: [], nextId: 1,
+      sessionType: null, sessionFormat: null, sessionStarted: false,
     };
     this.saveState();
+    this.updateSessionBadges();
+    document.getElementById('sessionSetup').style.display = '';
+    this.restoreSetupSelections();
     this.render();
+  },
+
+  restoreSetupSelections() {
+    if (this.state.sessionType) {
+      this.selectSessionType(this.state.sessionType);
+    }
+    if (this.state.sessionFormat) {
+      this.selectFormat(this.state.sessionFormat);
+    }
+  },
+
+  updateSessionBadges() {
+    const typeLabels = { offline: 'Offline' };
+    const formatLabels = { 'open-play': 'Open Play', 'round-robin': 'Round Robin', 'tournament': 'Tournament' };
+    const typeEl = document.getElementById('badgeType');
+    const fmtEl = document.getElementById('badgeFormat');
+    if (!typeEl || !fmtEl) return;
+    if (this.state.sessionStarted) {
+      typeEl.textContent = typeLabels[this.state.sessionType] || '';
+      typeEl.style.display = this.state.sessionType ? '' : 'none';
+      fmtEl.textContent = formatLabels[this.state.sessionFormat] || '';
+      fmtEl.style.display = this.state.sessionFormat ? '' : 'none';
+    } else {
+      typeEl.style.display = 'none';
+      fmtEl.style.display = 'none';
+    }
   },
 
   // ─── Rendering ─────────────────────────────────
