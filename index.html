@@ -1793,6 +1793,18 @@ body {
         <button type="button" class="btn-confirm-join" onclick="Onboard.createPrivate()" style="width:100%;padding:12px;font-size:1rem;font-weight:700;">Create &amp; Join</button>
         <div id="createConfirmInline" style="display:none;margin-top:6px;"></div>
       </div>
+      <div class="setup-block">
+        <div class="section-title" style="margin-bottom:6px;">Offline Session</div>
+        <p style="font-size:0.82rem;color:var(--text-muted);margin-bottom:10px;">No sign-in needed. You add all players locally — no one else can join.</p>
+        <select class="setup-input" id="offlineSessionType" onchange="Onboard._clearOfflineError()" style="margin-bottom:8px;cursor:pointer;">
+          <option value="" disabled selected>Select session type...</option>
+          <option value="open">Open Play</option>
+          <option value="roundrobin">Round Robin</option>
+          <option value="tournament">Tournament</option>
+        </select>
+        <p id="offlineSessionError" class="setup-error" style="display:none;">Select a session type first</p>
+        <button type="button" class="btn-confirm-join" onclick="Onboard.startOffline()" style="width:100%;padding:12px;font-size:1rem;font-weight:700;">Start Offline Session</button>
+      </div>
       </div><!-- /sessionSelectionBlock -->
       <!-- Share-link join button (shown when joining via share link) -->
       <div id="shareLinkJoinBlock" style="display:none;margin-top:16px;">
@@ -4350,12 +4362,14 @@ const Session = {
 
   leave() {
     // Deactivate self in the session so others can still manage courts
-    const selfId = Onboard.selfId;
-    if (selfId) {
-      const p = App.getPlayer(selfId);
-      if (p && !App.isPlayerOnCourt(selfId)) {
-        p.active = false;
-        App.saveState();
+    if (this.id !== 'offline') {
+      const selfId = Onboard.selfId;
+      if (selfId) {
+        const p = App.getPlayer(selfId);
+        if (p && !App.isPlayerOnCourt(selfId)) {
+          p.active = false;
+          App.saveState();
+        }
       }
     }
     if (this._sse) { this._sse.close(); this._sse = null; }
@@ -4367,7 +4381,7 @@ const Session = {
   },
 
   push() {
-    if (!this.id || this._receiving) return;
+    if (!this.id || this._receiving || this.id === 'offline') return;
     clearTimeout(this._pushTimer);
     this._pushTimer = setTimeout(() => this._put(App.state), 300);
   },
@@ -5236,6 +5250,31 @@ const Onboard = {
       if (entry) entry.style.display = '';
       if (form) { form.style.display = 'none'; delete form.dataset.guestMode; }
     }
+  },
+
+  startOffline() {
+    const typeEl = document.getElementById('offlineSessionType');
+    const errEl = document.getElementById('offlineSessionError');
+    const sessionType = typeEl?.value;
+    if (!sessionType) {
+      if (errEl) errEl.style.display = 'block';
+      return;
+    }
+    if (errEl) errEl.style.display = 'none';
+    App.state = App._freshState();
+    App.state._sessionType = sessionType;
+    App.state._offline = true;
+    App._normState();
+    App.render();
+    this._hide();
+    Session.id = 'offline';
+    Session.label = 'Offline';
+    Session._updateUI();
+  },
+
+  _clearOfflineError() {
+    const errEl = document.getElementById('offlineSessionError');
+    if (errEl) errEl.style.display = 'none';
   },
 
   _hide() {
