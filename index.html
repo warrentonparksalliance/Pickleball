@@ -1748,22 +1748,16 @@ body {
       <!-- Session selection (hidden during share-link flow) -->
       <div id="sessionSelectionBlock">
       <div class="setup-block">
-        <div class="section-title" style="margin-bottom:10px;">Public Session</div>
-        <div style="display:flex;gap:8px;margin-bottom:4px;">
-          <select class="setup-input" id="publicLocationSelect" onchange="Onboard._updateJoinBtn('publicLocationSelect','btnJoinPublic')" style="flex:1;margin-bottom:0;cursor:pointer;">
-            <option value="">Select a location...</option>
-          </select>
-          <button type="button" class="btn-confirm-join" id="btnJoinPublic" onclick="Onboard.joinPublic()" disabled style="white-space:nowrap;padding:12px 18px;font-size:1rem;flex:0 0 auto;">Join</button>
-        </div>
-        <div id="publicConfirmInline" style="display:none;margin-bottom:14px;"></div>
-        <button type="button" class="btn-outline" onclick="Onboard.toggleCreatePublic()" id="btn-create-public" style="display:none;width:100%;padding:12px 14px;margin-top:8px;font-size:1rem;font-weight:700;font-family:inherit;">+ Create New</button>
-        <div id="publicCreateForm" style="display:none;margin-top:10px;padding:14px;background:var(--bg);border:1.5px solid var(--border);border-radius:var(--radius);">
-          <div style="font-size:0.78rem;font-weight:600;color:var(--text-light);margin-bottom:10px;">New Public Location</div>
-          <input type="text" class="setup-input" id="publicLocationName" placeholder="Location name" maxlength="30" style="margin-bottom:8px;">
-          <p id="publicLocationError" class="setup-error" style="display:none;">Enter a location name</p>
-          <button type="button" class="btn-confirm-join" onclick="Onboard.createPublicLocation()" style="width:100%;padding:12px;font-size:1rem;font-weight:700;">Create &amp; Join</button>
-          <div id="publicCreateConfirmInline" style="display:none;margin-top:6px;"></div>
-        </div>
+        <div class="section-title" style="margin-bottom:6px;">Offline Session</div>
+        <p style="font-size:0.82rem;color:var(--text-muted);margin-bottom:10px;">No sign-in needed. You add all players locally — no one else can join.</p>
+        <select class="setup-input" id="offlineSessionType" onchange="Onboard._clearOfflineError()" style="margin-bottom:8px;cursor:pointer;">
+          <option value="" disabled selected>Select session type...</option>
+          <option value="open">Open Play</option>
+          <option value="roundrobin">Round Robin</option>
+          <option value="tournament">Tournament</option>
+        </select>
+        <p id="offlineSessionError" class="setup-error" style="display:none;">Select a session type first</p>
+        <button type="button" class="btn-confirm-join" onclick="Onboard.startOffline()" style="width:100%;padding:12px;font-size:1rem;font-weight:700;">Start Offline Session</button>
       </div>
       <div class="setup-block">
         <div class="section-title" style="margin-bottom:10px;">Private Session</div>
@@ -1794,16 +1788,22 @@ body {
         <div id="createConfirmInline" style="display:none;margin-top:6px;"></div>
       </div>
       <div class="setup-block">
-        <div class="section-title" style="margin-bottom:6px;">Offline Session</div>
-        <p style="font-size:0.82rem;color:var(--text-muted);margin-bottom:10px;">No sign-in needed. You add all players locally — no one else can join.</p>
-        <select class="setup-input" id="offlineSessionType" onchange="Onboard._clearOfflineError()" style="margin-bottom:8px;cursor:pointer;">
-          <option value="" disabled selected>Select session type...</option>
-          <option value="open">Open Play</option>
-          <option value="roundrobin">Round Robin</option>
-          <option value="tournament">Tournament</option>
-        </select>
-        <p id="offlineSessionError" class="setup-error" style="display:none;">Select a session type first</p>
-        <button type="button" class="btn-confirm-join" onclick="Onboard.startOffline()" style="width:100%;padding:12px;font-size:1rem;font-weight:700;">Start Offline Session</button>
+        <div class="section-title" style="margin-bottom:10px;">Public Session</div>
+        <div style="display:flex;gap:8px;margin-bottom:4px;">
+          <select class="setup-input" id="publicLocationSelect" onchange="Onboard._updateJoinBtn('publicLocationSelect','btnJoinPublic')" style="flex:1;margin-bottom:0;cursor:pointer;">
+            <option value="">Select a location...</option>
+          </select>
+          <button type="button" class="btn-confirm-join" id="btnJoinPublic" onclick="Onboard.joinPublic()" disabled style="white-space:nowrap;padding:12px 18px;font-size:1rem;flex:0 0 auto;">Join</button>
+        </div>
+        <div id="publicConfirmInline" style="display:none;margin-bottom:14px;"></div>
+        <button type="button" class="btn-outline" onclick="Onboard.toggleCreatePublic()" id="btn-create-public" style="display:none;width:100%;padding:12px 14px;margin-top:8px;font-size:1rem;font-weight:700;font-family:inherit;">+ Create New</button>
+        <div id="publicCreateForm" style="display:none;margin-top:10px;padding:14px;background:var(--bg);border:1.5px solid var(--border);border-radius:var(--radius);">
+          <div style="font-size:0.78rem;font-weight:600;color:var(--text-light);margin-bottom:10px;">New Public Location</div>
+          <input type="text" class="setup-input" id="publicLocationName" placeholder="Location name" maxlength="30" style="margin-bottom:8px;">
+          <p id="publicLocationError" class="setup-error" style="display:none;">Enter a location name</p>
+          <button type="button" class="btn-confirm-join" onclick="Onboard.createPublicLocation()" style="width:100%;padding:12px;font-size:1rem;font-weight:700;">Create &amp; Join</button>
+          <div id="publicCreateConfirmInline" style="display:none;margin-top:6px;"></div>
+        </div>
       </div>
       </div><!-- /sessionSelectionBlock -->
       <!-- Share-link join button (shown when joining via share link) -->
@@ -2037,16 +2037,16 @@ body {
           </ul>
         </div>
         <div class="hiw-section">
-          <h3>🌐 Joining a Public Session</h3>
-          <p>Select your location from the drop-down, enter your name and optional skill level, then tap <strong>Join</strong>. You'll be added to the rotation and courts will be assigned automatically each round.</p>
+          <h3>📋 Offline Sessions</h3>
+          <p>No sign-in needed. Select a format — <strong>Open Play</strong>, <strong>Round Robin</strong>, or <strong>Tournament</strong> — and tap <strong>Start Offline Session</strong>. You add all players yourself, including their names and skill levels. No one else can join. Use the pause (checkbox) and remove (&times;) controls to manage your roster at any time. Everything stays on your device — nothing is shared online.</p>
         </div>
         <div class="hiw-section">
           <h3>🔒 Private Sessions</h3>
           <p>Sign in with Google to <strong>create a private session</strong> for your group. Share the link or session code with friends — they can join without signing in. Perfect for reserved court nights or league play.</p>
         </div>
         <div class="hiw-section">
-          <h3>📋 Offline Sessions</h3>
-          <p>No sign-in needed. Select a format — <strong>Open Play</strong>, <strong>Round Robin</strong>, or <strong>Tournament</strong> — and tap <strong>Start Offline Session</strong>. You add all players yourself, including their names and skill levels. No one else can join. Use the pause (checkbox) and remove (&times;) controls to manage your roster at any time. Everything stays on your device — nothing is shared online.</p>
+          <h3>🌐 Joining a Public Session</h3>
+          <p>Select your location from the drop-down, enter your name and optional skill level, then tap <strong>Join</strong>. You'll be added to the rotation and courts will be assigned automatically each round.</p>
         </div>
         <div class="hiw-section">
           <h3>⚙️ Updating Your Info</h3>
