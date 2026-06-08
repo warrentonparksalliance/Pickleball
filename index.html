@@ -1632,6 +1632,46 @@ body {
   .bracket-container { overflow: visible; flex-wrap: wrap; }
   .btn-print-bracket { display: none; }
 }
+
+/* ── Add Guest standalone card ───────────────── */
+#addGuestSection .add-form {
+  background: none;
+  border: none;
+  padding: 0;
+  margin-bottom: 0;
+}
+
+/* ── Three-column layout (tablet / desktop) ───── */
+@media (min-width: 769px) {
+  .page-wrap { max-width: 100%; }
+  #tabCourts.active {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 14px;
+    align-items: start;
+  }
+  #playersSection  { grid-column: 1; margin-bottom: 0 !important; }
+  #addGuestSection { grid-column: 2; margin-bottom: 0 !important; }
+  #assignHeader    { grid-column: 3; margin-bottom: 0 !important; }
+  #courtsGrid {
+    grid-column: 1 / -1;
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+  }
+  #rrUpcomingSection {
+    grid-column: 1 / -1;
+    margin-top: 0 !important;
+  }
+  #rrUpcomingList {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0 24px;
+  }
+  #bracketSection {
+    grid-column: 1 / -1;
+    margin-top: 0 !important;
+  }
+}
 </style>
 </head>
 <body>
@@ -1845,27 +1885,24 @@ body {
 
     <!-- Queue -->
     <div id="playersSection" class="queue-bar-wrap" style="margin-bottom:14px;">
-      <div class="queue-bar-top">
-        <div>
-          <div class="section-title" id="queueTitle">Queue</div>
-          <div class="section-subtitle" id="queueSubtitle">Players waiting to be assigned to a court.</div>
-        </div>
-        <button class="btn-add-another" id="addAnotherBtn" onclick="App.toggleAddForm()" style="width:auto;white-space:nowrap;flex-shrink:0;margin-bottom:0;">+ Add Guest</button>
-      </div>
-      <div class="add-form" id="addPlayerForm" style="display:none;">
+      <div class="section-title" id="queueTitle" style="margin-bottom:4px;">Queue</div>
+      <div class="section-subtitle" id="queueSubtitle" style="margin-bottom:10px;">Players waiting to be assigned to a court.</div>
+      <div id="playerList" class="queue-list"></div>
+      <div id="queueHint" class="section-subtitle" style="margin-top:8px;">Use &#x23F8; to sit out temporarily or &times; to remove.</div>
+      <button id="rrUnlockBtn" class="btn-outline" onclick="App.isRoundRobin()?App.rrUnlockPlayers():App.bracketUnlockPlayers()" style="display:none;margin-top:8px;width:100%;color:var(--warning);border-color:var(--warning);font-size:0.82rem;">Unlock Players &amp; Reset</button>
+    </div>
+
+    <!-- Add Guest -->
+    <div id="addGuestSection" class="queue-bar-wrap" style="margin-bottom:14px;">
+      <div class="section-title" style="margin-bottom:10px;">Add Guest</div>
+      <div id="addPlayerForm" class="add-form">
         <input class="input-name" type="text" id="playerName" placeholder="Player name" onkeydown="if(event.key==='Enter')App.addPlayer()">
         <div class="add-form-row2">
           <input class="input-score" type="number" id="playerScore" placeholder="Skill (optional)" min="2" max="8" step="0.01" onkeydown="if(event.key==='Enter')App.addPlayer()" onblur="App.fmtSkillInput(this)">
           <label class="singles-label"><input type="checkbox" id="playerSingles"> Open to 1v1</label>
         </div>
-        <div style="display:flex;gap:8px;">
-          <button class="btn-add-player" style="flex:1;" onclick="App.addPlayer()">+ Add Guest</button>
-          <button class="btn-add-player" style="flex:1;background:var(--border);color:var(--text);" onclick="App.toggleAddForm()">Cancel</button>
-        </div>
+        <button class="btn-add-player" style="width:100%;margin-top:4px;" onclick="App.addPlayer()">+ Add Guest</button>
       </div>
-      <div id="playerList" class="queue-list"></div>
-      <div id="queueHint" class="section-subtitle" style="margin-top:8px;">Use &#x23F8; to sit out temporarily or &times; to remove.</div>
-      <button id="rrUnlockBtn" class="btn-outline" onclick="App.isRoundRobin()?App.rrUnlockPlayers():App.bracketUnlockPlayers()" style="display:none;margin-top:8px;width:100%;color:var(--warning);border-color:var(--warning);font-size:0.82rem;">Unlock Players &amp; Reset</button>
     </div>
 
     <!-- Assign -->
@@ -2277,7 +2314,6 @@ const App = {
     nameEl.value = '';
     scoreEl.value = '';
     if (singlesEl) singlesEl.checked = false;
-    document.getElementById('addPlayerForm').style.display = 'none';
     this.saveState();
     this.render();
   },
@@ -3791,7 +3827,7 @@ ${bracketHTML}
     // Update queue section labels for structured modes
     const qTitle = document.getElementById('queueTitle');
     const qSub = document.getElementById('queueSubtitle');
-    const addBtn = document.getElementById('addAnotherBtn');
+    const addBtn = document.getElementById('addGuestSection');
     if (qTitle) qTitle.textContent = structured ? 'Players' : 'Queue';
     if (qSub) qSub.textContent = rr
       ? (rrLocked ? 'Players are locked for this round robin.' : 'Add all players, then lock the roster to generate the schedule.')
