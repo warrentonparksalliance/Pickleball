@@ -1619,6 +1619,34 @@ body {
   .court-card { margin: 0 -2px; }
 }
 
+/* ── Three-column layout (tablet / desktop) ───── */
+@media (min-width: 769px) {
+  .page-wrap { max-width: 100%; }
+
+  /* Session setup: full-width 3-col grid aligned with tab columns */
+  #sessionSetupSection { align-items: stretch; padding: 0; }
+  #sessionSetupSection .setup-card { max-width: none; }
+  /* Keep welcome / signed-in cards centered at comfortable width */
+  #setupEntryOptions, #setupSignedIn { max-width: 480px; margin: 0 auto; }
+  /* Join form becomes the 3-col grid */
+  #setupJoinForm { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 14px; align-items: start; }
+  #joinFormHeader { grid-column: 1 / -1; }
+  #onboardProfileFields { grid-column: 1; margin: 0; }
+  /* Dissolve the session-selection wrapper so its children are direct grid items */
+  #sessionSelectionBlock { display: contents; }
+  #sessionSelectionBlock > div:nth-child(1) { grid-column: 2; } /* Public */
+  #sessionSelectionBlock > div:nth-child(2) { grid-column: 3; } /* Private */
+  #sessionSelectionBlock > div:nth-child(3) { grid-column: 3; } /* privateCreateForm */
+
+  /* In-session: 3-column courts layout */
+  #tabCourts.active {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 14px;
+    align-items: start;
+  }
+}
+
 @media print {
   body * { visibility: hidden; }
   #bracketPrintArea, #bracketPrintArea * { visibility: visible; }
@@ -1755,15 +1783,13 @@ body {
             </div>
           </div>
         </div>
-        <div style="display:flex;gap:8px;margin-bottom:8px;">
-          <input type="text" class="setup-input" id="onboardName" placeholder="Display name" autocomplete="given-name" style="flex:1;min-width:0;margin-bottom:0;">
+        <input type="text" class="setup-input" id="onboardName" placeholder="Display name" autocomplete="given-name" style="margin-bottom:8px;width:100%;">
+        <div style="display:flex;gap:8px;align-items:center;margin-bottom:4px;">
           <input type="number" class="setup-input" id="onboardSkill" placeholder="Skill (optional)" min="2" max="8" step="0.01" onblur="App.fmtSkillInput(this)" style="width:130px;flex-shrink:0;margin-bottom:0;">
-        </div>
-        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;">
-          <label class="singles-label" style="display:flex;align-items:center;gap:6px;font-size:0.85rem;font-weight:500;color:var(--text-light);cursor:pointer;margin:0;">
+          <label class="singles-label" style="display:flex;align-items:center;gap:6px;font-size:0.85rem;font-weight:500;color:var(--text-light);cursor:pointer;margin-left:auto;">
             <input type="checkbox" id="onboardSingles" style="accent-color:var(--primary);width:15px;height:15px;"> Open to 1v1
           </label>
-          <button type="button" class="btn-outline" onclick="Onboard.saveProfile()" style="padding:12px 16px;font-size:1rem;font-weight:700;">Save</button>
+          <button type="button" class="btn-outline" onclick="Onboard.saveProfile()" style="padding:12px 16px;font-size:1rem;font-weight:700;flex-shrink:0;">Save</button>
         </div>
         <p id="onboardNameError" class="setup-error">Enter your name first</p>
         <button type="button" class="btn-outline" onclick="MyHistory.show()" id="btnMyHistoryProfile" style="width:100%;padding:12px;font-size:1rem;font-weight:700;margin-top:8px;">My Match History</button>
@@ -1778,10 +1804,12 @@ body {
       <!-- Guest profile fields (hidden for signed-in users who have profile card above) -->
       <div id="onboardProfileFields" class="setup-block">
       <input type="text" class="setup-input" id="guestOnboardName" placeholder="Your name" autocomplete="given-name">
-      <input type="number" class="setup-input" id="guestOnboardSkill" placeholder="Skill level (optional)" min="2" max="8" step="0.01" onblur="App.fmtSkillInput(this)">
-      <label class="singles-label" style="margin-bottom:18px;display:flex;align-items:center;gap:6px;font-size:0.85rem;font-weight:500;color:var(--text-light);cursor:pointer;">
-        <input type="checkbox" id="guestOnboardSingles" style="accent-color:var(--primary);width:15px;height:15px;"> Open to 1v1
-      </label>
+      <div style="display:flex;gap:8px;align-items:center;margin-bottom:18px;">
+        <input type="number" class="setup-input" id="guestOnboardSkill" placeholder="Skill level (optional)" min="2" max="8" step="0.01" onblur="App.fmtSkillInput(this)" style="width:130px;flex-shrink:0;margin-bottom:0;">
+        <label class="singles-label" style="display:flex;align-items:center;gap:6px;font-size:0.85rem;font-weight:500;color:var(--text-light);cursor:pointer;margin-left:auto;">
+          <input type="checkbox" id="guestOnboardSingles" style="accent-color:var(--primary);width:15px;height:15px;"> Open to 1v1
+        </label>
+      </div>
       <p id="guestOnboardNameError" class="setup-error">Enter your name first</p>
       </div>
       <!-- Session selection (hidden during share-link flow) -->
