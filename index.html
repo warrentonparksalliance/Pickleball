@@ -1803,6 +1803,7 @@ body {
       </div>
       <!-- Guest profile fields (hidden for signed-in users who have profile card above) -->
       <div id="onboardProfileFields" class="setup-block">
+      <div class="section-title" style="margin-bottom:10px;">Player Profile</div>
       <input type="text" class="setup-input" id="guestOnboardName" placeholder="Your name" autocomplete="given-name">
       <div style="display:flex;gap:8px;align-items:center;margin-bottom:18px;">
         <input type="number" class="setup-input" id="guestOnboardSkill" placeholder="Skill level (optional)" min="2" max="8" step="0.01" onblur="App.fmtSkillInput(this)" style="width:130px;flex-shrink:0;margin-bottom:0;">
@@ -1921,14 +1922,14 @@ body {
 
     <!-- Add Guest -->
     <div id="addGuestSection" class="queue-bar-wrap" style="margin-bottom:14px;">
-      <div class="section-title" style="margin-bottom:10px;">Add Guest</div>
+      <div class="section-title" style="margin-bottom:10px;">Add Player</div>
       <div id="addPlayerForm" class="add-form">
         <input class="input-name" type="text" id="playerName" placeholder="Player name" onkeydown="if(event.key==='Enter')App.addPlayer()">
         <div class="add-form-row2">
           <input class="input-score" type="number" id="playerScore" placeholder="Skill (optional)" min="2" max="8" step="0.01" onkeydown="if(event.key==='Enter')App.addPlayer()" onblur="App.fmtSkillInput(this)">
           <label class="singles-label"><input type="checkbox" id="playerSingles"> Open to 1v1</label>
         </div>
-        <button class="btn-add-player" style="width:100%;margin-top:4px;" onclick="App.addPlayer()">+ Add Guest</button>
+        <button class="btn-add-player" style="width:100%;margin-top:4px;" onclick="App.addPlayer()">+ Add Player</button>
       </div>
     </div>
 
@@ -2004,23 +2005,29 @@ body {
     <!-- Partners -->
     <div class="settings-card" id="partnerSection">
       <div class="settings-card-title">Your Partner(s)</div>
-      <p class="section-subtitle" style="margin-bottom:10px;">When both you and a partner are in the queue, you'll be placed on the same side in doubles. If a partner isn't available, you'll be assigned normally.</p>
-      <div id="partnerDisplay"></div>
-      <button class="btn-add-partner" id="btnAddPartner" onclick="App.togglePartnerPicker()">+ Add Partner</button>
-      <div class="partner-picker" id="partnerPicker" style="display:none;">
-        <div class="partner-picker-list" id="partnerPickerList"></div>
+      <div id="partnerOnlineBlock">
+        <p class="section-subtitle" style="margin-bottom:10px;">When both you and a partner are in the queue, you'll be placed on the same side in doubles. If a partner isn't available, you'll be assigned normally.</p>
+        <div id="partnerDisplay"></div>
+        <button class="btn-add-partner" id="btnAddPartner" onclick="App.togglePartnerPicker()">+ Add Partner</button>
+        <div class="partner-picker" id="partnerPicker" style="display:none;">
+          <div class="partner-picker-list" id="partnerPickerList"></div>
+        </div>
       </div>
+      <p id="partnerOfflineMsg" style="display:none;font-size:0.85rem;color:var(--text-muted);margin:0;">Partners are not available for offline sessions.</p>
     </div>
 
 
     <!-- Share Link -->
     <div class="settings-card" id="shareLinkSection">
       <div class="settings-card-title">Share Link</div>
-      <p class="section-subtitle" style="margin-bottom:10px;">Invite others to join this session.</p>
-      <div style="display:flex;gap:8px;align-items:center;">
-        <input type="text" class="setup-input" id="shareLinkInput" readonly style="flex:1;margin-bottom:0;font-size:0.82rem;cursor:text;">
-        <button type="button" class="btn-outline" id="btnCopyShareLink" onclick="App.copyShareLink()" style="white-space:nowrap;padding:12px 16px;font-size:1rem;font-weight:700;">Copy</button>
+      <div id="shareLinkOnlineBlock">
+        <p class="section-subtitle" style="margin-bottom:10px;">Invite others to join this session.</p>
+        <div style="display:flex;gap:8px;align-items:center;">
+          <input type="text" class="setup-input" id="shareLinkInput" readonly style="flex:1;margin-bottom:0;font-size:0.82rem;cursor:text;">
+          <button type="button" class="btn-outline" id="btnCopyShareLink" onclick="App.copyShareLink()" style="white-space:nowrap;padding:12px 16px;font-size:1rem;font-weight:700;">Copy</button>
+        </div>
       </div>
+      <p id="shareLinkOfflineMsg" style="display:none;font-size:0.85rem;color:var(--text-muted);margin:0;">Share links are not available for offline sessions.</p>
     </div>
 
     <!-- Session Type (admin only, private sessions) -->
@@ -2905,12 +2912,23 @@ const App = {
   },
 
   updateShareLink() {
+    const onlineBlock = document.getElementById('shareLinkOnlineBlock');
+    const offlineMsg = document.getElementById('shareLinkOfflineMsg');
     const input = document.getElementById('shareLinkInput');
-    if (!input || !Session.id) return;
-    const url = new URL(window.location.href);
-    url.search = '';
-    url.searchParams.set('s', Session.id);
-    input.value = url.toString();
+    const partnerOnlineBlock = document.getElementById('partnerOnlineBlock');
+    const partnerOfflineMsg = document.getElementById('partnerOfflineMsg');
+    if (!Session.id) return;
+    const isOffline = Session.id === 'offline';
+    if (onlineBlock) onlineBlock.style.display = isOffline ? 'none' : '';
+    if (offlineMsg) offlineMsg.style.display = isOffline ? '' : 'none';
+    if (partnerOnlineBlock) partnerOnlineBlock.style.display = isOffline ? 'none' : '';
+    if (partnerOfflineMsg) partnerOfflineMsg.style.display = isOffline ? '' : 'none';
+    if (!isOffline && input) {
+      const url = new URL(window.location.href);
+      url.search = '';
+      url.searchParams.set('s', Session.id);
+      input.value = url.toString();
+    }
   },
 
   copyShareLink() {
