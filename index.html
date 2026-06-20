@@ -2005,12 +2005,15 @@ body {
     <!-- Partners -->
     <div class="settings-card" id="partnerSection">
       <div class="settings-card-title">Your Partner(s)</div>
-      <p class="section-subtitle" style="margin-bottom:10px;">When both you and a partner are in the queue, you'll be placed on the same side in doubles. If a partner isn't available, you'll be assigned normally.</p>
-      <div id="partnerDisplay"></div>
-      <button class="btn-add-partner" id="btnAddPartner" onclick="App.togglePartnerPicker()">+ Add Partner</button>
-      <div class="partner-picker" id="partnerPicker" style="display:none;">
-        <div class="partner-picker-list" id="partnerPickerList"></div>
+      <div id="partnerOnlineBlock">
+        <p class="section-subtitle" style="margin-bottom:10px;">When both you and a partner are in the queue, you'll be placed on the same side in doubles. If a partner isn't available, you'll be assigned normally.</p>
+        <div id="partnerDisplay"></div>
+        <button class="btn-add-partner" id="btnAddPartner" onclick="App.togglePartnerPicker()">+ Add Partner</button>
+        <div class="partner-picker" id="partnerPicker" style="display:none;">
+          <div class="partner-picker-list" id="partnerPickerList"></div>
+        </div>
       </div>
+      <p id="partnerOfflineMsg" style="display:none;font-size:0.85rem;color:var(--text-muted);margin:0;">Partners are not available for offline sessions.</p>
     </div>
 
 
@@ -2912,10 +2915,14 @@ const App = {
     const onlineBlock = document.getElementById('shareLinkOnlineBlock');
     const offlineMsg = document.getElementById('shareLinkOfflineMsg');
     const input = document.getElementById('shareLinkInput');
+    const partnerOnlineBlock = document.getElementById('partnerOnlineBlock');
+    const partnerOfflineMsg = document.getElementById('partnerOfflineMsg');
     if (!Session.id) return;
     const isOffline = Session.id === 'offline';
     if (onlineBlock) onlineBlock.style.display = isOffline ? 'none' : '';
     if (offlineMsg) offlineMsg.style.display = isOffline ? '' : 'none';
+    if (partnerOnlineBlock) partnerOnlineBlock.style.display = isOffline ? 'none' : '';
+    if (partnerOfflineMsg) partnerOfflineMsg.style.display = isOffline ? '' : 'none';
     if (!isOffline && input) {
       const url = new URL(window.location.href);
       url.search = '';
