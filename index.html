@@ -1626,10 +1626,13 @@ body {
   /* Session setup: full-width 3-col grid aligned with tab columns */
   #sessionSetupSection { align-items: stretch; padding: 0; }
   #sessionSetupSection .setup-card { max-width: none; }
-  /* Keep welcome / signed-in cards centered at comfortable width */
-  #setupEntryOptions, #setupSignedIn { max-width: 480px; margin: 0 auto; }
+  /* Keep welcome card centered at comfortable width */
+  #setupEntryOptions { max-width: 480px; margin: 0 auto; }
   /* Join form becomes the 3-col grid */
   #setupJoinForm { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 14px; align-items: start; }
+  /* Logo occupies top-left column; profile card spans the other two */
+  #setupLogoArea { grid-column: 1; display: flex; align-items: center; justify-content: center; }
+  #setupSignedIn { grid-column: 2 / -1; max-width: none; margin: 0; }
   #joinFormHeader { grid-column: 1 / -1; }
   /* Guest profile fields span full width above session columns */
   #onboardProfileFields { grid-column: 1 / -1; margin: 0; }
@@ -1771,6 +1774,28 @@ body {
           </div>
         </div>
       </div>
+      <!-- Join form (hidden until guest click or signed in) -->
+      <div id="setupJoinForm" style="display:none;">
+      <!-- Logo area: top-left column on desktop when signed in -->
+      <div id="setupLogoArea" style="display:none;">
+        <a href="https://warrentonparksalliance.com" target="_blank" rel="noopener"
+           style="display:flex;flex-direction:column;align-items:center;justify-content:center;text-decoration:none;padding:12px 8px;gap:10px;opacity:0.9;">
+          <svg width="52" height="52" viewBox="0 0 52 52" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <circle cx="26" cy="26" r="24" fill="var(--primary-light)" stroke="var(--primary-muted)" stroke-width="1.5"/>
+            <path d="M26 40V26" stroke="var(--primary)" stroke-width="2.5" stroke-linecap="round"/>
+            <ellipse cx="26" cy="20" rx="9" ry="10" fill="var(--primary)" opacity="0.18"/>
+            <ellipse cx="26" cy="20" rx="9" ry="10" stroke="var(--primary)" stroke-width="1.8"/>
+            <ellipse cx="20" cy="25" rx="7" ry="8" fill="var(--primary)" opacity="0.15"/>
+            <ellipse cx="20" cy="25" rx="7" ry="8" stroke="var(--primary)" stroke-width="1.5"/>
+            <ellipse cx="32" cy="25" rx="7" ry="8" fill="var(--primary)" opacity="0.15"/>
+            <ellipse cx="32" cy="25" rx="7" ry="8" stroke="var(--primary)" stroke-width="1.5"/>
+          </svg>
+          <div style="text-align:center;line-height:1.35;">
+            <div style="font-size:0.7rem;font-weight:800;color:var(--primary);letter-spacing:0.07em;text-transform:uppercase;">Warrenton</div>
+            <div style="font-size:0.62rem;font-weight:600;color:var(--text-muted);letter-spacing:0.05em;text-transform:uppercase;">Parks Alliance</div>
+          </div>
+        </a>
+      </div>
       <!-- Signed-in profile card (shown for Google-signed-in users) -->
       <div id="setupSignedIn" class="setup-block" style="display:none;">
         <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;">
@@ -1796,8 +1821,6 @@ body {
         <p id="onboardNameError" class="setup-error">Enter your name first</p>
         <button type="button" class="btn-outline" onclick="MyHistory.show()" id="btnMyHistoryProfile" style="width:100%;padding:12px;font-size:1rem;font-weight:700;margin-top:8px;">My Match History</button>
       </div>
-      <!-- Join form (hidden until guest click or signed in) -->
-      <div id="setupJoinForm" style="display:none;">
       <div id="joinFormHeader" style="display:flex;align-items:center;margin-bottom:16px;">
         <button type="button" id="btnBackToEntry" class="btn-back-entry" onclick="Onboard.backToEntry()" title="Back">&larr;</button>
         <h2 id="joinFormHeading" style="font-size:1.1rem;font-weight:700;margin:0;color:var(--text);flex:1;text-align:center;">Join a Session</h2>
@@ -4950,11 +4973,13 @@ const Onboard = {
     const isShareLink = !!this._shareLink;
 
     const joinHeader = document.getElementById('joinFormHeader');
+    const logoArea = document.getElementById('setupLogoArea');
     // Hide back button and heading when signed in
     if (backBtn) backBtn.style.display = isSignedIn ? 'none' : '';
     if (joinHeader) joinHeader.style.display = (isSignedIn && !isShareLink) ? 'none' : '';
-    // Profile card visible for signed-in users (not during share-link guest flow)
+    // Profile card and logo visible for signed-in users on desktop (not during share-link guest flow)
     if (signedInCard) signedInCard.style.display = (isSignedIn && !isShareLink) ? '' : 'none';
+    if (logoArea) logoArea.style.display = (isSignedIn && !isShareLink) ? '' : 'none';
 
     if (isShareLink) {
       // Share-link mode: show guest profile fields + join button, hide session selection
