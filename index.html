@@ -1631,12 +1631,14 @@ body {
   /* Join form becomes the 3-col grid */
   #setupJoinForm { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 14px; align-items: start; }
   #joinFormHeader { grid-column: 1 / -1; }
-  #onboardProfileFields { grid-column: 1; margin: 0; }
+  /* Guest profile fields span full width above session columns */
+  #onboardProfileFields { grid-column: 1 / -1; margin: 0; }
   /* Dissolve the session-selection wrapper so its children are direct grid items */
   #sessionSelectionBlock { display: contents; }
-  #sessionSelectionBlock > div:nth-child(1) { grid-column: 2; } /* Public */
-  #sessionSelectionBlock > div:nth-child(2) { grid-column: 3; } /* Private */
-  #sessionSelectionBlock > div:nth-child(3) { grid-column: 3; } /* privateCreateForm */
+  #sessionSelectionBlock > div:nth-child(1) { grid-column: 1; } /* Offline */
+  #sessionSelectionBlock > div:nth-child(2) { grid-column: 2; } /* Private */
+  #sessionSelectionBlock > div:nth-child(3) { grid-column: 2; } /* privateCreateForm */
+  #sessionSelectionBlock > div:nth-child(4) { grid-column: 3; } /* Public */
 
   /* In-session: 3-column courts layout */
   #tabCourts.active {
