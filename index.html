@@ -1734,7 +1734,7 @@ body {
 <!-- ── Tab Bar (shown when in session) ─────────── -->
 <nav class="tab-bar" id="tabBar" style="display:none;">
   <button class="tab-btn active" data-tab="courts" onclick="App.switchTab('courts')">Courts <span class="tab-badge" id="tabBadgeCourts">0</span></button>
-  <button class="tab-btn" data-tab="settings" onclick="App.switchTab('settings')">Settings</button>
+  <button class="tab-btn" id="tabBtnSettings" data-tab="settings" onclick="App.switchTab('settings')">Settings</button>
   <button class="tab-btn" data-tab="history" onclick="App.switchTab('history')">History <span class="tab-badge" id="tabBadgeHistory">0</span></button>
 </nav>
 
@@ -3993,6 +3993,13 @@ ${bracketHTML}
     if (addBtn) addBtn.style.display = (isLocked || isQuickPlay) ? 'none' : '';
     const qAddBtn = document.getElementById('btnQueueAddPlayer');
     if (qAddBtn) qAddBtn.style.display = (isQuickPlay && !isLocked) ? '' : 'none';
+
+    // Quick Play sessions have no persistent identity/preferences to manage
+    const settingsTabBtn = document.getElementById('tabBtnSettings');
+    if (settingsTabBtn) {
+      settingsTabBtn.style.display = isQuickPlay ? 'none' : '';
+      if (isQuickPlay && this._activeTab === 'settings') this.switchTab('courts');
+    }
 
     this.renderPlayers();
     if (!structured) {
