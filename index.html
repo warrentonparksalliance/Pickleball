@@ -5546,10 +5546,10 @@ const Onboard = {
         joinedAt: Date.now(),
       });
     });
-    App.render();
-    this._hide();
     Session.id = 'offline';
     Session.label = 'Offline';
+    App.render();
+    this._hide();
     Session._updateUI();
   },
 
