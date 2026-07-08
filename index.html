@@ -1924,6 +1924,7 @@ body {
       <div id="playerList" class="queue-list"></div>
       <div id="queueHint" class="section-subtitle" style="margin-top:8px;">Use &#x23F8; to sit out temporarily or &times; to remove.</div>
       <button id="rrUnlockBtn" class="btn-outline" onclick="App.isRoundRobin()?App.rrUnlockPlayers():App.bracketUnlockPlayers()" style="display:none;margin-top:8px;width:100%;color:var(--warning);border-color:var(--warning);font-size:0.82rem;">Unlock Players &amp; Reset</button>
+      <button id="btnQueueAddPlayer" class="btn-add-player" style="display:none;margin-top:10px;" onclick="App.openQueueAddPlayer()">+ Add Player</button>
     </div>
 
     <!-- Add Guest -->
@@ -2142,6 +2143,56 @@ body {
     </div>
   </div>
 
+  <!-- ── Quick Play: player count modal ────────── -->
+  <div id="qpCountModal" class="hiw-overlay" style="display:none;" onclick="Onboard.qpCancel(event)">
+    <div class="hiw-modal" style="max-width:380px;" onclick="event.stopPropagation()">
+      <div class="hiw-header">
+        <h2>Quick Play</h2>
+        <button class="hiw-close" onclick="Onboard.qpCancel()" aria-label="Close">&times;</button>
+      </div>
+      <div class="hiw-body">
+        <p style="font-size:0.85rem;color:var(--text-light);line-height:1.5;margin:0;">How many players are starting?</p>
+        <input type="number" class="setup-input" id="qpPlayerCount" min="1" max="24" step="1" value="4" style="width:100%;" onkeydown="if(event.key==='Enter')Onboard.qpContinueToNames()">
+        <p style="font-size:0.78rem;color:var(--text-muted);margin:0;">You can add more players later.</p>
+        <p id="qpCountError" class="setup-error">Enter a number of players (1 or more)</p>
+        <button type="button" class="btn-confirm-join" style="width:100%;padding:12px;font-size:1rem;font-weight:700;" onclick="Onboard.qpContinueToNames()">Continue</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Quick Play: player names modal ────────── -->
+  <div id="qpNamesModal" class="hiw-overlay" style="display:none;" onclick="Onboard.qpCancel(event)">
+    <div class="hiw-modal" style="max-width:420px;" onclick="event.stopPropagation()">
+      <div class="hiw-header">
+        <h2>Quick Play &mdash; Player Names</h2>
+        <button class="hiw-close" onclick="Onboard.qpCancel()" aria-label="Close">&times;</button>
+      </div>
+      <div class="hiw-body">
+        <div id="qpNamesList" style="display:flex;flex-direction:column;gap:8px;"></div>
+        <p id="qpNamesError" class="setup-error">Enter at least one player name</p>
+        <div style="display:flex;gap:8px;">
+          <button type="button" class="btn-outline" style="flex:1;padding:12px;font-size:1rem;font-weight:700;" onclick="Onboard.qpBackToCount()">&larr; Back</button>
+          <button type="button" class="btn-confirm-join" style="flex:2;padding:12px;font-size:1rem;font-weight:700;" onclick="Onboard.qpStart()">Start Playing</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Quick Play sessions: add player to queue modal ── -->
+  <div id="queueAddPlayerModal" class="hiw-overlay" style="display:none;" onclick="App.closeQueueAddPlayer(event)">
+    <div class="hiw-modal" style="max-width:360px;" onclick="event.stopPropagation()">
+      <div class="hiw-header">
+        <h2>Add Player</h2>
+        <button class="hiw-close" onclick="App.closeQueueAddPlayer()" aria-label="Close">&times;</button>
+      </div>
+      <div class="hiw-body">
+        <input type="text" class="setup-input" id="queueAddPlayerName" placeholder="Player name" style="width:100%;" onkeydown="if(event.key==='Enter')App.submitQueueAddPlayer()">
+        <p id="queueAddPlayerError" class="setup-error">Enter a player name</p>
+        <button type="button" class="btn-confirm-join" style="width:100%;padding:12px;font-size:1rem;font-weight:700;" onclick="App.submitQueueAddPlayer()">+ Add Player</button>
+      </div>
+    </div>
+  </div>
+
   <footer class="app-footer">
     <div>Provided by <a href="https://www.warrentonparksalliance.com" target="_blank" rel="noopener">Warrenton Parks Alliance</a></div>
     <div><a href="https://www.warrentonparksalliance.com/ways-to-support/" target="_blank" rel="noopener">Donate</a> to support our mission.</div>
@@ -2356,6 +2407,51 @@ const App = {
     if (singlesEl) singlesEl.checked = false;
     this.saveState();
     this.render();
+  },
+
+  // Quick Play sessions add players via a modal on the queue (name only,
+  // no skill/singles) instead of the full Add Player form.
+  openQueueAddPlayer() {
+    const nameEl = document.getElementById('queueAddPlayerName');
+    if (nameEl) nameEl.value = '';
+    const errEl = document.getElementById('queueAddPlayerError');
+    if (errEl) errEl.style.display = 'none';
+    document.getElementById('queueAddPlayerModal').style.display = 'flex';
+    document.body.style.overflow = 'hidden';
+    nameEl?.focus();
+  },
+
+  closeQueueAddPlayer(event) {
+    if (event && event.target !== event.currentTarget) return;
+    document.getElementById('queueAddPlayerModal').style.display = 'none';
+    document.body.style.overflow = '';
+  },
+
+  submitQueueAddPlayer() {
+    const nameEl = document.getElementById('queueAddPlayerName');
+    const name = nameEl?.value.trim();
+    if (!name) {
+      const errEl = document.getElementById('queueAddPlayerError');
+      if (errEl) errEl.style.display = 'block';
+      nameEl?.focus();
+      return;
+    }
+    const newId = this.state.nextId++;
+    this.state.players.push({
+      id: newId,
+      name,
+      score: null,
+      active: true,
+      wantsSingles: false,
+      isLive: false,
+      addedBy: Onboard.selfId,
+      joinedAt: Date.now(),
+    });
+    this._myGuests.add(newId);
+    this._saveMyGuests();
+    this.saveState();
+    this.render();
+    this.closeQueueAddPlayer();
   },
 
   _pendingRemove: null,
@@ -3829,11 +3925,17 @@ ${bracketHTML}
     const prevLog = [...this.state.adminLog];
     const prevPasscode = this.state._passcode;
     const prevAdmins = [...(this.state._admins || [])];
+    const prevOffline = this.state._offline;
+    const prevQuickPlay = this.state._quickPlay;
+    const prevSessionType = this.state._sessionType;
     const fresh = this._freshState();
     fresh._resetAt = Date.now();
     fresh.adminLog = prevLog;
     if (prevPasscode) fresh._passcode = prevPasscode;
     if (prevAdmins.length) fresh._admins = prevAdmins;
+    if (prevOffline) fresh._offline = prevOffline;
+    if (prevQuickPlay) fresh._quickPlay = prevQuickPlay;
+    if (prevSessionType) fresh._sessionType = prevSessionType;
     localStorage.removeItem('courtManager');
     this._myGuests = new Set();
     this._saveMyGuests();
@@ -3887,7 +3989,10 @@ ${bracketHTML}
       : 'Players waiting to be assigned to a court.';
     const qHint = document.getElementById('queueHint');
     if (qHint) qHint.style.display = structured ? 'none' : '';
-    if (addBtn) addBtn.style.display = isLocked ? 'none' : '';
+    const isQuickPlay = !!this.state._quickPlay;
+    if (addBtn) addBtn.style.display = (isLocked || isQuickPlay) ? 'none' : '';
+    const qAddBtn = document.getElementById('btnQueueAddPlayer');
+    if (qAddBtn) qAddBtn.style.display = (isQuickPlay && !isLocked) ? '' : 'none';
 
     this.renderPlayers();
     if (!structured) {
@@ -5359,14 +5464,88 @@ const Onboard = {
   // One-tap entry point from the home screen: jumps straight into a new
   // offline Open Play session, skipping sign-in and all setup forms.
   quickPlay() {
-    this._startOfflineSession('open');
+    const countEl = document.getElementById('qpPlayerCount');
+    if (countEl) countEl.value = 4;
+    const errEl = document.getElementById('qpCountError');
+    if (errEl) errEl.style.display = 'none';
+    document.getElementById('qpCountModal').style.display = 'flex';
+    document.body.style.overflow = 'hidden';
+    countEl?.focus();
   },
 
-  _startOfflineSession(sessionType) {
+  qpCancel(event) {
+    if (event && event.target !== event.currentTarget) return;
+    document.getElementById('qpCountModal').style.display = 'none';
+    document.getElementById('qpNamesModal').style.display = 'none';
+    document.body.style.overflow = '';
+  },
+
+  qpContinueToNames() {
+    const countEl = document.getElementById('qpPlayerCount');
+    const errEl = document.getElementById('qpCountError');
+    const count = parseInt(countEl?.value, 10);
+    if (!count || count < 1) {
+      if (errEl) errEl.style.display = 'block';
+      return;
+    }
+    if (errEl) errEl.style.display = 'none';
+    const list = document.getElementById('qpNamesList');
+    if (list) {
+      list.innerHTML = '';
+      for (let i = 1; i <= count; i++) {
+        const input = document.createElement('input');
+        input.type = 'text';
+        input.className = 'setup-input';
+        input.placeholder = `Player ${i} name`;
+        input.style.width = '100%';
+        input.dataset.qpNameIndex = i;
+        if (i === count) input.onkeydown = (e) => { if (e.key === 'Enter') this.qpStart(); };
+        list.appendChild(input);
+      }
+      list.querySelector('input')?.focus();
+    }
+    document.getElementById('qpCountModal').style.display = 'none';
+    document.getElementById('qpNamesModal').style.display = 'flex';
+  },
+
+  qpBackToCount() {
+    document.getElementById('qpNamesModal').style.display = 'none';
+    document.getElementById('qpCountModal').style.display = 'flex';
+    document.getElementById('qpPlayerCount')?.focus();
+  },
+
+  qpStart() {
+    const inputs = document.querySelectorAll('#qpNamesList input');
+    const names = [...inputs].map(el => el.value.trim()).filter(Boolean);
+    const errEl = document.getElementById('qpNamesError');
+    if (!names.length) {
+      if (errEl) errEl.style.display = 'block';
+      return;
+    }
+    if (errEl) errEl.style.display = 'none';
+    document.getElementById('qpNamesModal').style.display = 'none';
+    document.body.style.overflow = '';
+    this._startOfflineSession('open', { quickPlay: true, names });
+  },
+
+  _startOfflineSession(sessionType, opts = {}) {
     App.state = App._freshState();
     App.state._sessionType = sessionType;
     App.state._offline = true;
+    if (opts.quickPlay) App.state._quickPlay = true;
     App._normState();
+    (opts.names || []).forEach(name => {
+      App.state.players.push({
+        id: App.state.nextId++,
+        name,
+        score: null,
+        active: true,
+        wantsSingles: false,
+        isLive: false,
+        addedBy: this.selfId,
+        joinedAt: Date.now(),
+      });
+    });
     App.render();
     this._hide();
     Session.id = 'offline';
