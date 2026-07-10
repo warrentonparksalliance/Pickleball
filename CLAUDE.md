@@ -2,15 +2,12 @@
 
 ## Git Workflow
 
-**Default target branch is `uat`, not `main`.**
-
 For all new work:
-1. Create a feature branch from `uat`
+1. Create a feature branch from `main`
 2. Commit changes to the feature branch
-3. Open a PR from the feature branch → `uat`
-4. Only merge to `main` when explicitly asked to release/promote from `uat`
+3. Open a PR from the feature branch → `main`
 
-Never push directly to `main` or `uat`. All changes go through a PR.
+Never push directly to `main`. All changes go through a PR.
 
 ## Branch Naming
 
