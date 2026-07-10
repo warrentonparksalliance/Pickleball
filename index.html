@@ -337,13 +337,20 @@ body {
   color: var(--danger);
   border: 1px solid #fecaca;
   padding: 12px 14px;
-  margin-top: 8px;
-  width: 100%;
   font-size: 1rem;
   font-weight: 700;
   border-radius: var(--radius-sm);
+  flex: 0 0 auto;
+  white-space: nowrap;
 }
 .btn-end-game:hover { background: #fee2e2; }
+.match-action-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+.match-action-row .match-timer-row { flex: 1; margin-bottom: 0; }
 
 /* ── Page layout ────────────────────────────── */
 .page-wrap {
@@ -1217,7 +1224,7 @@ body {
   letter-spacing: 0.04em;
 }
 .btn-start-match {
-  width: 100%;
+  flex: 1;
   padding: 10px;
   background: var(--success-light);
   color: var(--success);
@@ -1227,7 +1234,6 @@ body {
   font-weight: 700;
   font-family: inherit;
   cursor: pointer;
-  margin-bottom: 8px;
   transition: background 0.15s;
 }
 .btn-start-match:hover { background: #d1fae5; }
@@ -2546,19 +2552,24 @@ const App = {
   submitScore(courtId) {
     const s1Input = document.getElementById(`score-s1-${courtId}`);
     const s2Input = document.getElementById(`score-s2-${courtId}`);
-    const score1 = parseInt(s1Input.value);
-    const score2 = parseInt(s2Input.value);
-    if (isNaN(score1) || isNaN(score2)) {
-      const errEl = document.getElementById(`score-err-${courtId}`);
-      if (errEl) errEl.textContent = 'Enter a score for both sides.';
-      return;
+    const raw1 = s1Input.value.trim();
+    const raw2 = s2Input.value.trim();
+    const errEl = document.getElementById(`score-err-${courtId}`);
+    let score1 = null, score2 = null;
+    if (raw1 !== '' || raw2 !== '') {
+      score1 = parseInt(raw1);
+      score2 = parseInt(raw2);
+      if (isNaN(score1) || isNaN(score2)) {
+        if (errEl) errEl.textContent = 'Enter a score for both sides, or leave both blank.';
+        return;
+      }
+      // Tournament requires a clear winner (no ties)
+      if (this.isTournament() && score1 === score2) {
+        if (errEl) errEl.textContent = 'Tournament matches cannot end in a tie.';
+        return;
+      }
     }
-    // Tournament requires a clear winner (no ties)
-    if (this.isTournament() && score1 === score2) {
-      const errEl = document.getElementById(`score-err-${courtId}`);
-      if (errEl) errEl.textContent = 'Tournament matches cannot end in a tie.';
-      return;
-    }
+    const hasScores = score1 != null && score2 != null;
     const game = this.state.activeGames[courtId];
     if (game) {
       this.recordOpponents(game.side1, game.side2);
@@ -2566,7 +2577,7 @@ const App = {
         const p = this.getPlayer(id);
         if (p) p.roundsPlayed = (p.roundsPlayed || 0) + 1;
       }
-      const winner = score1 > score2 ? 1 : score2 > score1 ? 2 : 0;
+      const winner = hasScores ? (score1 > score2 ? 1 : score2 > score1 ? 2 : 0) : null;
       const duration = this.getTimerElapsed(game) || null;
       const histEntry = {
         round: this.state.round,
@@ -2604,38 +2615,6 @@ const App = {
   cancelScoring(courtId) {
     delete this.state.scoringGames[courtId];
     this.saveState();
-    this.render();
-  },
-
-  endWithoutScore(courtId) {
-    const game = this.state.activeGames[courtId];
-    if (game) {
-      this.recordOpponents(game.side1, game.side2);
-      for (const id of [...game.side1, ...game.side2]) {
-        const p = this.getPlayer(id);
-        if (p) p.roundsPlayed = (p.roundsPlayed || 0) + 1;
-      }
-      const duration = this.getTimerElapsed(game) || null;
-      const histEntry = {
-        round: this.state.round,
-        courtId,
-        side1: [...game.side1],
-        side2: [...game.side2],
-        mode: game.mode,
-        duration,
-        startTime: game.startTime || null,
-      };
-      this.state.roundHistory.push(histEntry);
-      MyHistory.saveMatch(histEntry);
-    }
-    const courtPlayers = game ? [...(game.side1 || []), ...(game.side2 || [])] : [];
-    const rematch = this._checkRematch(courtId, game);
-    delete this.state.activeGames[courtId];
-    delete this.state.scoringGames[courtId];
-    if (rematch) this._startRematch(courtId, rematch);
-    const selfExpired = this._expireStaleFromCourt(courtPlayers);
-    this.saveState();
-    if (selfExpired) { this._handleSelfExpired(); return; }
     this.render();
   },
 
@@ -3899,7 +3878,7 @@ ${bracketHTML}
     // Update queue section labels for structured modes
     const qTitle = document.getElementById('queueTitle');
     const qSub = document.getElementById('queueSubtitle');
-    if (qTitle) qTitle.textContent = structured ? 'Players' : 'Queue';
+    if (qTitle) qTitle.textContent = 'Queue';
     if (qSub) qSub.textContent = rr
       ? (rrLocked ? 'Players are locked for this round robin.' : 'Add all players, then lock the roster to generate the schedule.')
       : tourn
@@ -4139,17 +4118,22 @@ ${bracketHTML}
           </label>` : ''}
           ${this.isTournament() ? `<div style="font-size:0.75rem;color:var(--text-muted);margin-top:4px;">Bracket match &mdash; winner advances</div>` : ''}
           <div class="score-buttons">
-            <button class="btn btn-assign" style="padding:12px 16px;font-size:1rem;" onclick="App.submitScore(${courtId})">Save Score</button>
-            ${this.isTournament() ? '' : `<button class="btn btn-outline" onclick="App.endWithoutScore(${courtId})">Skip</button>`}
             <button class="btn btn-ghost" onclick="App.cancelScoring(${courtId})">Cancel</button>
+            <button class="btn btn-assign" style="padding:12px 16px;font-size:1rem;" onclick="App.submitScore(${courtId})">Save</button>
           </div>
         </div>`;
       } else {
         const timerWidget = neverStarted
-          ? `<button class="btn-start-match" onclick="App.toggleTimer(${courtId})">&#9654; Start Match</button>`
-          : `<div class="match-timer-row">
-               <span class="match-timer-display" id="timer-${courtId}">${this.formatTimer(timerMs)}</span>
-               <button class="btn-pause-match" onclick="App.toggleTimer(${courtId})">${game.timerPaused ? '&#9654; Resume Match' : '&#9208; Pause Match'}</button>
+          ? `<div class="match-action-row">
+               <button class="btn-start-match" onclick="App.toggleTimer(${courtId})">&#9654; Start</button>
+               <button class="btn btn-end-game" onclick="App.endGame(${courtId})">End</button>
+             </div>`
+          : `<div class="match-action-row">
+               <div class="match-timer-row">
+                 <span class="match-timer-display" id="timer-${courtId}">${this.formatTimer(timerMs)}</span>
+                 <button class="btn-pause-match" onclick="App.toggleTimer(${courtId})">${game.timerPaused ? '&#9654; Resume' : '&#9208; Pause'}</button>
+               </div>
+               <button class="btn btn-end-game" onclick="App.endGame(${courtId})">End</button>
              </div>`;
         bodyHTML = `<div class="court-assignment">
           <div class="court-side side-1">
@@ -4160,7 +4144,6 @@ ${bracketHTML}
             ${this.renderSide(game.side2)}
           </div>
           ${timerWidget}
-          <button class="btn btn-end-game" onclick="App.endGame(${courtId})">End Match</button>
         </div>`;
       }
 
