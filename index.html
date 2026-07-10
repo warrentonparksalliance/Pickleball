@@ -4522,23 +4522,28 @@ ${bracketHTML}
       winIds.forEach(id => playerWins.set(id, (playerWins.get(id) || 0) + 1));
     });
 
-    let bestTeam = null;
-    teamWins.forEach(entry => { if (!bestTeam || entry.wins > bestTeam.wins) bestTeam = entry; });
-    let bestPlayerId = null, bestPlayerWins = 0;
-    playerWins.forEach((wins, id) => { if (wins > bestPlayerWins) { bestPlayerWins = wins; bestPlayerId = id; } });
+    let maxTeamWins = 0;
+    teamWins.forEach(entry => { if (entry.wins > maxTeamWins) maxTeamWins = entry.wins; });
+    const bestTeams = maxTeamWins > 0 ? [...teamWins.values()].filter(e => e.wins === maxTeamWins) : [];
 
-    if (!bestTeam && bestPlayerId == null) {
+    let maxPlayerWins = 0;
+    playerWins.forEach(wins => { if (wins > maxPlayerWins) maxPlayerWins = wins; });
+    const bestPlayerIds = maxPlayerWins > 0 ? [...playerWins.entries()].filter(([, wins]) => wins === maxPlayerWins).map(([id]) => id) : [];
+
+    if (!bestTeams.length && !bestPlayerIds.length) {
       stats.style.display = 'none';
       return;
     }
     stats.style.display = '';
 
-    const teamName = bestTeam ? bestTeam.ids.map(id => this.getPlayer(id)?.name || '?').join(' & ') : '–';
-    const playerName = bestPlayerId != null ? (this.getPlayer(bestPlayerId)?.name || '?') : '–';
-    document.getElementById('historyStatTeamName').textContent = teamName;
-    document.getElementById('historyStatTeamWins').textContent = bestTeam ? `${bestTeam.wins} win${bestTeam.wins === 1 ? '' : 's'}` : '';
-    document.getElementById('historyStatPlayerName').textContent = playerName;
-    document.getElementById('historyStatPlayerWins').textContent = bestPlayerId != null ? `${bestPlayerWins} win${bestPlayerWins === 1 ? '' : 's'}` : '';
+    const teamNames = bestTeams.map(e => e.ids.map(id => this.getPlayer(id)?.name || '?').join(' & '));
+    const playerNames = bestPlayerIds.map(id => this.getPlayer(id)?.name || '?');
+    document.getElementById('historyStatTeamName').textContent = teamNames.length ? teamNames.join(', ') : '–';
+    document.getElementById('historyStatTeamWins').textContent = teamNames.length
+      ? `${maxTeamWins} win${maxTeamWins === 1 ? '' : 's'}${teamNames.length > 1 ? ' (tie)' : ''}` : '';
+    document.getElementById('historyStatPlayerName').textContent = playerNames.length ? playerNames.join(', ') : '–';
+    document.getElementById('historyStatPlayerWins').textContent = playerNames.length
+      ? `${maxPlayerWins} win${maxPlayerWins === 1 ? '' : 's'}${playerNames.length > 1 ? ' (tie)' : ''}` : '';
   },
 
   renderHistory() {
