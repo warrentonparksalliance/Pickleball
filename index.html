@@ -4131,7 +4131,7 @@ ${bracketHTML}
             <input type="number" id="score-s2-${courtId}" min="0" placeholder="–" onkeydown="if(event.key==='Enter')App.submitScore(${courtId})" oninput="document.getElementById('score-err-${courtId}').textContent=''">
           </div>
           <div id="score-err-${courtId}" class="score-error"></div>
-          ${!this.isRoundRobin() && !this.isTournament() ? `<label style="display:flex;align-items:center;gap:6px;font-size:0.82rem;color:var(--text-light);cursor:pointer;margin-top:4px;">
+          ${!this.isRoundRobin() && !this.isTournament() ? `<label style="display:flex;align-items:center;justify-content:flex-end;gap:6px;font-size:0.82rem;color:var(--text-light);cursor:pointer;margin-top:4px;">
             <input type="checkbox" id="rematch-${courtId}" style="accent-color:var(--primary);"> Rematch
           </label>` : ''}
           ${this.isTournament() ? `<div style="font-size:0.75rem;color:var(--text-muted);margin-top:4px;">Bracket match &mdash; winner advances</div>` : ''}
