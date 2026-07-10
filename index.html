@@ -5610,6 +5610,10 @@ const Onboard = {
     }
     text.textContent = this._qpTypeInfo[type] || '';
     text.dataset.type = type;
+    // Move the popover to sit directly under the option that was clicked,
+    // rather than always appearing below the whole radio group.
+    const option = event.currentTarget.closest('.qp-type-option');
+    if (option) option.insertAdjacentElement('afterend', popover);
     popover.style.display = 'flex';
   },
 
