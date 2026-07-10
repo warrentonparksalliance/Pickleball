@@ -38,8 +38,6 @@
   --radius-lg: 16px;
   --radius-full: 9999px;
   --hover-bg: #eef5ee;
-  --side1-bg: #e8f5e8;
-  --side2-bg: #fefce8;
   --bench-bg: #fef2f2;
   --bench-text: #b91c1c;
   --pending-bg: #fffbeb;
@@ -1179,8 +1177,11 @@ body {
   display: flex;
   justify-content: center;
 }
-.side-1 { background: var(--side1-bg); }
-.side-2 { background: var(--side2-bg); }
+.side-1, .side-2 {
+  background: var(--input-bg);
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow-sm);
+}
 .court-side .side-player-name { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .court-side .side-player-skill { color: var(--text-light); font-weight: 400; font-size: 0.78rem; }
 .court-side .side-amp { color: var(--text-muted); font-weight: 500; flex-shrink: 0; }
@@ -1285,6 +1286,13 @@ body {
 
 /* ── Score entry ────────────────────────────── */
 .score-entry { display: flex; flex-direction: column; gap: 6px; }
+.score-entry-label {
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-muted);
+}
 .score-side {
   display: flex;
   align-items: center;
@@ -4121,6 +4129,7 @@ ${bracketHTML}
         const s1Names = game.side1.map(id => { const p = this.getPlayer(id); return p ? this.esc(p.name) + (p.score != null ? ` <span style="font-weight:400;opacity:0.7;">(${this.fmtSkill(p.score)})</span>` : '') : '?'; }).join(' & ');
         const s2Names = game.side2.map(id => { const p = this.getPlayer(id); return p ? this.esc(p.name) + (p.score != null ? ` <span style="font-weight:400;opacity:0.7;">(${this.fmtSkill(p.score)})</span>` : '') : '?'; }).join(' & ');
         bodyHTML = `<div class="score-entry">
+          <div class="score-entry-label">Enter final score</div>
           <div class="score-side side-1">
             <span class="side-names">${s1Names}</span>
             <input type="number" id="score-s1-${courtId}" min="0" placeholder="–" onkeydown="if(event.key==='Enter')App.submitScore(${courtId})" oninput="document.getElementById('score-err-${courtId}').textContent=''">
