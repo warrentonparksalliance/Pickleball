@@ -1418,6 +1418,39 @@ body {
   color: var(--text);
   cursor: pointer;
 }
+.history-stats-card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-sm);
+  padding: 14px 10px;
+  margin-bottom: 14px;
+  max-width: 540px;
+  margin-left: auto;
+  margin-right: auto;
+  display: flex;
+  gap: 8px;
+}
+.history-stat-tile {
+  flex: 1;
+  text-align: center;
+  padding: 6px 4px;
+}
+.history-stat-tile + .history-stat-tile { border-left: 1px solid var(--border); }
+.history-stat-value {
+  font-size: 1.3rem;
+  font-weight: 700;
+  color: var(--text);
+  line-height: 1.2;
+}
+.history-stat-label {
+  font-size: 0.7rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--text-muted);
+  margin-top: 2px;
+}
 .history-table-wrap { display: flex; flex-direction: column; gap: 6px; max-width: 540px; margin: 0 auto; }
 .match-card {
   background: var(--card);
@@ -1880,6 +1913,20 @@ body {
         <button type="button" class="btn-back-entry" onclick="MyHistory.hide()" title="Back">&larr;</button>
         <h2 style="font-size:1.1rem;font-weight:700;margin:0;color:var(--text);flex:1;text-align:center;">My Match History</h2>
         <div style="width:28px;"></div>
+      </div>
+      <div id="myHistoryStats" class="history-stats-card" style="display:none;">
+        <div class="history-stat-tile">
+          <div class="history-stat-value" id="myHistoryStatTotal">0</div>
+          <div class="history-stat-label">Matches</div>
+        </div>
+        <div class="history-stat-tile">
+          <div class="history-stat-value" id="myHistoryStatRecord">0-0</div>
+          <div class="history-stat-label">Win-Loss</div>
+        </div>
+        <div class="history-stat-tile">
+          <div class="history-stat-value" id="myHistoryStatPct">&ndash;</div>
+          <div class="history-stat-label">Win %</div>
+        </div>
       </div>
       <input type="text" id="myHistorySearch" class="history-search" placeholder="Search player name..." oninput="MyHistory.filter()" style="margin-bottom:10px;">
       <div id="myHistoryList"></div>
@@ -6035,6 +6082,7 @@ const MyHistory = {
     const entry = {
       side1Names: resolveSide(match.side1),
       side2Names: resolveSide(match.side2),
+      mySide: (match.side1 || []).includes(selfId) ? 1 : 2,
       score1: match.score1 ?? null,
       score2: match.score2 ?? null,
       winner: match.winner ?? 0,
@@ -6083,16 +6131,52 @@ const MyHistory = {
       const res = await fetch(`${this.DB}/userHistory/${Admin._user.uid}/matches.json`);
       const data = await res.json();
       this._matches = data ? Object.entries(data).map(([key, val]) => ({ ...val, _key: key })).sort((a, b) => (b.startTime || b.savedAt || 0) - (a.startTime || a.savedAt || 0)) : [];
+      this._renderStats();
       this._render();
     } catch(e) {
       console.error('Failed to load personal match history:', e);
       this._matches = [];
+      this._renderStats();
       if (list) list.innerHTML = '<div class="history-empty">Failed to load history</div>';
     }
   },
 
   filter() {
     this._render();
+  },
+
+  // Resolve which side the signed-in player was on for a given saved match
+  _mySide(m) {
+    if (m.mySide === 1 || m.mySide === 2) return m.mySide;
+    const myName = (Admin._user?.displayName || '').toLowerCase().trim();
+    if (!myName) return null;
+    if ((m.side1Names || []).some(n => n.toLowerCase().trim() === myName)) return 1;
+    if ((m.side2Names || []).some(n => n.toLowerCase().trim() === myName)) return 2;
+    return null;
+  },
+
+  _renderStats() {
+    const stats = document.getElementById('myHistoryStats');
+    if (!stats) return;
+    const decided = this._matches.filter(m => !m.expired && (m.winner === 1 || m.winner === 2));
+    let wins = 0, losses = 0;
+    decided.forEach(m => {
+      const side = this._mySide(m);
+      if (side == null) return;
+      if (m.winner === side) wins++;
+      else losses++;
+    });
+    const total = this._matches.length;
+    const decidedCount = wins + losses;
+    const pct = decidedCount ? Math.round((wins / decidedCount) * 100) : null;
+    if (total === 0) {
+      stats.style.display = 'none';
+      return;
+    }
+    stats.style.display = '';
+    document.getElementById('myHistoryStatTotal').textContent = total;
+    document.getElementById('myHistoryStatRecord').textContent = `${wins}-${losses}`;
+    document.getElementById('myHistoryStatPct').textContent = pct == null ? '–' : `${pct}%`;
   },
 
   _render() {
@@ -6206,6 +6290,7 @@ const MyHistory = {
       await fetch(`${this.DB}/userHistory/${Admin._user.uid}/matches/${key}.json`, { method: 'DELETE' });
     } catch(e) { console.error('Failed to delete match:', e); }
     this._matches = this._matches.filter(m => m._key !== key);
+    this._renderStats();
     setTimeout(() => this._render(), 300);
   },
 
