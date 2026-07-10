@@ -2611,6 +2611,11 @@ const App = {
     const raw2 = s2Input.value.trim();
     const errEl = document.getElementById(`score-err-${courtId}`);
     let score1 = null, score2 = null;
+    // Tournament matches must report a score so the bracket can advance
+    if (this.isTournament() && (raw1 === '' || raw2 === '')) {
+      if (errEl) errEl.textContent = 'Enter a score for both sides to advance the bracket.';
+      return;
+    }
     if (raw1 !== '' || raw2 !== '') {
       score1 = parseInt(raw1);
       score2 = parseInt(raw2);
