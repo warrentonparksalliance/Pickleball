@@ -1631,8 +1631,6 @@ body {
   /* Join form becomes the 3-col grid */
   #setupJoinForm { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 14px; align-items: start; }
   #joinFormHeader { grid-column: 1 / -1; }
-  /* Guest profile fields span full width above session columns */
-  #onboardProfileFields { grid-column: 1 / -1; margin: 0; }
   /* Dissolve the session-selection wrapper so its children are direct grid items */
   #sessionSelectionBlock { display: contents; }
   #sessionSelectionBlock > div:nth-child(1) { grid-column: 1; } /* Offline */
@@ -1663,26 +1661,17 @@ body {
   .btn-print-bracket { display: none; }
 }
 
-/* ── Add Guest standalone card ───────────────── */
-#addGuestSection .add-form {
-  background: none;
-  border: none;
-  padding: 0;
-  margin-bottom: 0;
-}
-
-/* ── Three-column layout (tablet / desktop) ───── */
+/* ── Two-column layout (tablet / desktop) ──────── */
 @media (min-width: 769px) {
   .page-wrap { max-width: 100%; }
   #tabCourts.active {
     display: grid;
-    grid-template-columns: 1fr 1fr 1fr;
+    grid-template-columns: 1fr 1fr;
     gap: 14px;
     align-items: start;
   }
   #playersSection  { grid-column: 1; margin-bottom: 0 !important; }
-  #addGuestSection { grid-column: 2; margin-bottom: 0 !important; }
-  #assignHeader    { grid-column: 3; margin-bottom: 0 !important; }
+  #assignHeader    { grid-column: 2; margin-bottom: 0 !important; }
   #courtsGrid {
     grid-column: 1 / -1;
     display: grid;
@@ -1734,7 +1723,7 @@ body {
 <!-- ── Tab Bar (shown when in session) ─────────── -->
 <nav class="tab-bar" id="tabBar" style="display:none;">
   <button class="tab-btn active" data-tab="courts" onclick="App.switchTab('courts')">Courts <span class="tab-badge" id="tabBadgeCourts">0</span></button>
-  <button class="tab-btn" data-tab="settings" onclick="App.switchTab('settings')">Settings</button>
+  <button class="tab-btn" id="tabBtnSettings" data-tab="settings" onclick="App.switchTab('settings')">Settings</button>
   <button class="tab-btn" data-tab="history" onclick="App.switchTab('history')">History <span class="tab-badge" id="tabBadgeHistory">0</span></button>
 </nav>
 
@@ -1753,15 +1742,19 @@ body {
         <h2 style="font-size:1.75rem;font-weight:700;margin-bottom:6px;color:var(--text);">Welcome!</h2>
         <p style="font-size:0.9rem;color:var(--text-muted);margin-bottom:18px;line-height:1.4;">Manage your pickleball session queue, court assignments, and match history.</p>
         <button class="btn-hiw" onclick="App.openHiw()">&#9654; How it Works</button>
-        <button class="btn-confirm-join" id="btnEntryGoogle" onclick="Admin.signIn()" style="width:100%;padding:12px;font-size:1rem;font-weight:700;margin-bottom:10px;display:flex;align-items:center;justify-content:center;gap:8px;">
-          <svg width="16" height="16" viewBox="0 0 48 48" style="flex-shrink:0;"><path fill="#4285F4" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#34A853" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59a14.5 14.5 0 0 1 0-9.18l-7.98-6.19a24.0 24.0 0 0 0 0 21.56l7.98-6.19z"/><path fill="#EA4335" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg>
-          Sign in with Google
+        <button class="btn-confirm-join" id="btnQuickPlay" onclick="Onboard.quickPlay()" style="width:100%;padding:12px;font-size:1rem;font-weight:700;margin-bottom:10px;display:flex;align-items:center;justify-content:center;gap:8px;">
+          &#9889; Quick Play
         </button>
+        <p style="font-size:0.78rem;color:var(--text-muted);margin:-4px 0 14px;line-height:1.4;">Jumps straight into a new offline Open Play session on this device &mdash; no sign-in, no setup.</p>
         <div style="display:flex;align-items:center;gap:12px;margin-bottom:10px;">
           <div style="flex:1;height:1px;background:var(--border);"></div>
           <span style="font-size:0.75rem;font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.05em;">or</span>
           <div style="flex:1;height:1px;background:var(--border);"></div>
         </div>
+        <button class="btn-confirm-join" id="btnEntryGoogle" onclick="Admin.signIn()" style="width:100%;padding:12px;font-size:1rem;font-weight:700;margin-bottom:10px;display:flex;align-items:center;justify-content:center;gap:8px;">
+          <svg width="16" height="16" viewBox="0 0 48 48" style="flex-shrink:0;"><path fill="#4285F4" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#34A853" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59a14.5 14.5 0 0 1 0-9.18l-7.98-6.19a24.0 24.0 0 0 0 0 21.56l7.98-6.19z"/><path fill="#EA4335" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg>
+          Sign in with Google
+        </button>
         <button class="btn-outline" onclick="Onboard.showGuestConfirm()" style="width:100%;padding:12px;font-size:1rem;font-weight:700;">Continue without signing in</button>
         <div id="guestConfirmMsg" style="display:none;margin-top:10px;padding:12px;background:#fef9c3;border:1.5px solid #fbbf24;border-radius:var(--radius-sm);">
           <p style="font-size:0.85rem;color:#78350f;line-height:1.45;margin-bottom:10px;">&#9888;&#xFE0F; Your name and preferences <strong>won't be saved</strong> for next time, and you won't have access to personal match history across sessions.</p>
@@ -1785,16 +1778,7 @@ body {
             </div>
           </div>
         </div>
-        <input type="text" class="setup-input" id="onboardName" placeholder="Display name" autocomplete="given-name" style="margin-bottom:8px;width:100%;">
-        <div style="display:flex;gap:8px;align-items:center;margin-bottom:4px;">
-          <input type="number" class="setup-input" id="onboardSkill" placeholder="Skill (optional)" min="2" max="8" step="0.01" onblur="App.fmtSkillInput(this)" style="width:130px;flex-shrink:0;margin-bottom:0;">
-          <label class="singles-label" style="display:flex;align-items:center;gap:6px;font-size:0.85rem;font-weight:500;color:var(--text-light);cursor:pointer;margin-left:auto;">
-            <input type="checkbox" id="onboardSingles" style="accent-color:var(--primary);width:15px;height:15px;"> Open to 1v1
-          </label>
-          <button type="button" class="btn-outline" onclick="Onboard.saveProfile()" style="padding:12px 16px;font-size:1rem;font-weight:700;flex-shrink:0;">Save</button>
-        </div>
-        <p id="onboardNameError" class="setup-error">Enter your name first</p>
-        <button type="button" class="btn-outline" onclick="MyHistory.show()" id="btnMyHistoryProfile" style="width:100%;padding:12px;font-size:1rem;font-weight:700;margin-top:8px;">My Match History</button>
+        <button type="button" class="btn-outline" onclick="MyHistory.show()" id="btnMyHistoryProfile" style="width:100%;padding:12px;font-size:1rem;font-weight:700;">My Match History</button>
       </div>
       <!-- Join form (hidden until guest click or signed in) -->
       <div id="setupJoinForm" style="display:none;">
@@ -1802,18 +1786,6 @@ body {
         <button type="button" id="btnBackToEntry" class="btn-back-entry" onclick="Onboard.backToEntry()" title="Back">&larr;</button>
         <h2 id="joinFormHeading" style="font-size:1.1rem;font-weight:700;margin:0;color:var(--text);flex:1;text-align:center;">Join a Session</h2>
         <div style="width:28px;"></div>
-      </div>
-      <!-- Guest profile fields (hidden for signed-in users who have profile card above) -->
-      <div id="onboardProfileFields" class="setup-block">
-      <div class="section-title" style="margin-bottom:10px;">Player Profile</div>
-      <input type="text" class="setup-input" id="guestOnboardName" placeholder="Your name" autocomplete="given-name">
-      <div style="display:flex;gap:8px;align-items:center;margin-bottom:18px;">
-        <input type="number" class="setup-input" id="guestOnboardSkill" placeholder="Skill level (optional)" min="2" max="8" step="0.01" onblur="App.fmtSkillInput(this)" style="width:130px;flex-shrink:0;margin-bottom:0;">
-        <label class="singles-label" style="display:flex;align-items:center;gap:6px;font-size:0.85rem;font-weight:500;color:var(--text-light);cursor:pointer;margin-left:auto;">
-          <input type="checkbox" id="guestOnboardSingles" style="accent-color:var(--primary);width:15px;height:15px;"> Open to 1v1
-        </label>
-      </div>
-      <p id="guestOnboardNameError" class="setup-error">Enter your name first</p>
       </div>
       <!-- Session selection (hidden during share-link flow) -->
       <div id="sessionSelectionBlock">
@@ -1920,19 +1892,7 @@ body {
       <div id="playerList" class="queue-list"></div>
       <div id="queueHint" class="section-subtitle" style="margin-top:8px;">Use &#x23F8; to sit out temporarily or &times; to remove.</div>
       <button id="rrUnlockBtn" class="btn-outline" onclick="App.isRoundRobin()?App.rrUnlockPlayers():App.bracketUnlockPlayers()" style="display:none;margin-top:8px;width:100%;color:var(--warning);border-color:var(--warning);font-size:0.82rem;">Unlock Players &amp; Reset</button>
-    </div>
-
-    <!-- Add Guest -->
-    <div id="addGuestSection" class="queue-bar-wrap" style="margin-bottom:14px;">
-      <div class="section-title" style="margin-bottom:10px;">Add Player</div>
-      <div id="addPlayerForm" class="add-form">
-        <input class="input-name" type="text" id="playerName" placeholder="Player name" onkeydown="if(event.key==='Enter')App.addPlayer()">
-        <div class="add-form-row2">
-          <input class="input-score" type="number" id="playerScore" placeholder="Skill (optional)" min="2" max="8" step="0.01" onkeydown="if(event.key==='Enter')App.addPlayer()" onblur="App.fmtSkillInput(this)">
-          <label class="singles-label"><input type="checkbox" id="playerSingles"> Open to 1v1</label>
-        </div>
-        <button class="btn-add-player" style="width:100%;margin-top:4px;" onclick="App.addPlayer()">+ Add Player</button>
-      </div>
+      <button id="btnQueueAddPlayer" class="btn-add-player" style="display:none;margin-top:10px;" onclick="App.openQueueAddPlayer()">+ Add Player</button>
     </div>
 
     <!-- Assign -->
@@ -2119,7 +2079,7 @@ body {
         </div>
         <div class="hiw-section">
           <h3>🌐 Joining a Public Session</h3>
-          <p>Select your location from the drop-down, enter your name and optional skill level, then tap <strong>Join</strong>. You'll be added to the rotation and courts will be assigned automatically each round.</p>
+          <p>Select your location from the drop-down and tap <strong>Join</strong>. You'll be asked for your name and optional skill level, then added to the rotation and courts will be assigned automatically each round.</p>
         </div>
         <div class="hiw-section">
           <h3>⚙️ Updating Your Info</h3>
@@ -2134,6 +2094,76 @@ body {
           <h3>📋 Match History</h3>
           <p>The <strong>History</strong> tab shows all completed matches for the current session — courts, opponents, and scores. Signed-in players can also view their personal match history across all past sessions.</p>
         </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Your name/skill, asked right when joining or creating a private/public session ── -->
+  <div id="selfProfileModal" class="hiw-overlay" style="display:none;" onclick="Onboard._selfProfileCancel(event)">
+    <div class="hiw-modal" style="max-width:380px;" onclick="event.stopPropagation()">
+      <div class="hiw-header">
+        <h2>Your Info</h2>
+        <button class="hiw-close" onclick="Onboard._selfProfileCancel()" aria-label="Close">&times;</button>
+      </div>
+      <div class="hiw-body">
+        <input type="text" class="setup-input" id="selfProfileName" placeholder="Your name" autocomplete="given-name" style="width:100%;" onkeydown="if(event.key==='Enter')Onboard._selfProfileSubmit()">
+        <p id="selfProfileNameError" class="setup-error">Enter your name first</p>
+        <input type="number" class="setup-input" id="selfProfileSkill" placeholder="Skill level (optional)" min="2" max="8" step="0.01" style="width:100%;" onblur="App.fmtSkillInput(this)" onkeydown="if(event.key==='Enter')Onboard._selfProfileSubmit()">
+        <p style="font-size:0.78rem;color:var(--text-muted);margin:0;">You can update this anytime from Settings.</p>
+        <button type="button" class="btn-confirm-join" style="width:100%;padding:12px;font-size:1rem;font-weight:700;" onclick="Onboard._selfProfileSubmit()">Continue</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── New session: player count modal ────────── -->
+  <div id="bulkCountModal" class="hiw-overlay" style="display:none;" onclick="Onboard._bulkCancel(event)">
+    <div class="hiw-modal" style="max-width:380px;" onclick="event.stopPropagation()">
+      <div class="hiw-header">
+        <h2 id="bulkCountHeading">Get Started</h2>
+        <button class="hiw-close" onclick="Onboard._bulkCancel()" aria-label="Close">&times;</button>
+      </div>
+      <div class="hiw-body">
+        <p style="font-size:0.85rem;color:var(--text-light);line-height:1.5;margin:0;">How many players are starting?</p>
+        <input type="number" class="setup-input" id="bulkPlayerCount" min="1" max="24" step="1" value="4" style="width:100%;" onkeydown="if(event.key==='Enter')Onboard._bulkContinueToNames()">
+        <p style="font-size:0.78rem;color:var(--text-muted);margin:0;">You can add more players later.</p>
+        <p id="bulkCountError" class="setup-error">Enter a number of players (1 or more)</p>
+        <button type="button" class="btn-confirm-join" style="width:100%;padding:12px;font-size:1rem;font-weight:700;" onclick="Onboard._bulkContinueToNames()">Continue</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── New session: player names (+ skill) modal ── -->
+  <div id="bulkNamesModal" class="hiw-overlay" style="display:none;" onclick="Onboard._bulkCancel(event)">
+    <div class="hiw-modal" style="max-width:420px;" onclick="event.stopPropagation()">
+      <div class="hiw-header">
+        <h2>Player Names</h2>
+        <button class="hiw-close" onclick="Onboard._bulkCancel()" aria-label="Close">&times;</button>
+      </div>
+      <div class="hiw-body">
+        <div id="bulkNamesList" style="display:flex;flex-direction:column;gap:8px;"></div>
+        <p id="bulkNamesError" class="setup-error">Enter at least one player name</p>
+        <div style="display:flex;gap:8px;">
+          <button type="button" class="btn-outline" style="flex:1;padding:12px;font-size:1rem;font-weight:700;" onclick="Onboard._bulkBackToCount()">&larr; Back</button>
+          <button type="button" class="btn-confirm-join" id="bulkSubmitBtn" style="flex:2;padding:12px;font-size:1rem;font-weight:700;" onclick="Onboard._bulkSubmit()">Start Playing</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── In-session: add player to queue modal ── -->
+  <div id="queueAddPlayerModal" class="hiw-overlay" style="display:none;" onclick="App.closeQueueAddPlayer(event)">
+    <div class="hiw-modal" style="max-width:360px;" onclick="event.stopPropagation()">
+      <div class="hiw-header">
+        <h2>Add Player</h2>
+        <button class="hiw-close" onclick="App.closeQueueAddPlayer()" aria-label="Close">&times;</button>
+      </div>
+      <div class="hiw-body">
+        <div style="display:flex;gap:8px;">
+          <input type="text" class="setup-input" id="queueAddPlayerName" placeholder="Player name" style="flex:1;margin-bottom:0;" onkeydown="if(event.key==='Enter')App.submitQueueAddPlayer()">
+          <input type="number" class="setup-input" id="queueAddPlayerSkill" placeholder="Skill" min="2" max="8" step="0.01" style="width:80px;flex-shrink:0;margin-bottom:0;" onblur="App.fmtSkillInput(this)" onkeydown="if(event.key==='Enter')App.submitQueueAddPlayer()">
+        </div>
+        <p id="queueAddPlayerError" class="setup-error">Enter a player name</p>
+        <button type="button" class="btn-confirm-join" style="width:100%;padding:12px;font-size:1rem;font-weight:700;" onclick="App.submitQueueAddPlayer()">+ Add Player</button>
       </div>
     </div>
   </div>
@@ -2320,38 +2350,56 @@ const App = {
   },
 
   // ─── Players ───────────────────────────────
-  toggleAddForm() {
-    const form = document.getElementById('addPlayerForm');
-    const open = form.style.display !== 'none';
-    form.style.display = open ? 'none' : '';
-    if (!open) document.getElementById('playerName').focus();
+  // All session types add players via a modal opened from the queue's
+  // + Add Player button (Quick Play sessions skip the skill field).
+  openQueueAddPlayer() {
+    const nameEl = document.getElementById('queueAddPlayerName');
+    const skillEl = document.getElementById('queueAddPlayerSkill');
+    if (nameEl) nameEl.value = '';
+    if (skillEl) {
+      skillEl.value = '';
+      skillEl.style.display = this.state._quickPlay ? 'none' : '';
+    }
+    const errEl = document.getElementById('queueAddPlayerError');
+    if (errEl) errEl.style.display = 'none';
+    document.getElementById('queueAddPlayerModal').style.display = 'flex';
+    document.body.style.overflow = 'hidden';
+    nameEl?.focus();
   },
 
-  addPlayer() {
-    const nameEl = document.getElementById('playerName');
-    const scoreEl = document.getElementById('playerScore');
-    const singlesEl = document.getElementById('playerSingles');
-    const name = nameEl.value.trim();
-    if (!name) return;
-    const score = scoreEl.value ? parseFloat(scoreEl.value) : null;
+  closeQueueAddPlayer(event) {
+    if (event && event.target !== event.currentTarget) return;
+    document.getElementById('queueAddPlayerModal').style.display = 'none';
+    document.body.style.overflow = '';
+  },
+
+  submitQueueAddPlayer() {
+    const nameEl = document.getElementById('queueAddPlayerName');
+    const skillEl = document.getElementById('queueAddPlayerSkill');
+    const name = nameEl?.value.trim();
+    if (!name) {
+      const errEl = document.getElementById('queueAddPlayerError');
+      if (errEl) errEl.style.display = 'block';
+      nameEl?.focus();
+      return;
+    }
+    const skill = (!this.state._quickPlay && skillEl?.value) ? parseFloat(skillEl.value) : null;
     const newId = this.state.nextId++;
     this.state.players.push({
       id: newId,
       name,
-      score,
+      score: (skill != null && !isNaN(skill)) ? skill : null,
       active: true,
-      wantsSingles: !!(singlesEl?.checked),
+      wantsSingles: false,
       isLive: false,
       addedBy: Onboard.selfId,
       joinedAt: Date.now(),
     });
     this._myGuests.add(newId);
     this._saveMyGuests();
-    nameEl.value = '';
-    scoreEl.value = '';
-    if (singlesEl) singlesEl.checked = false;
     this.saveState();
     this.render();
+    this.closeQueueAddPlayer();
   },
 
   _pendingRemove: null,
@@ -3825,11 +3873,17 @@ ${bracketHTML}
     const prevLog = [...this.state.adminLog];
     const prevPasscode = this.state._passcode;
     const prevAdmins = [...(this.state._admins || [])];
+    const prevOffline = this.state._offline;
+    const prevQuickPlay = this.state._quickPlay;
+    const prevSessionType = this.state._sessionType;
     const fresh = this._freshState();
     fresh._resetAt = Date.now();
     fresh.adminLog = prevLog;
     if (prevPasscode) fresh._passcode = prevPasscode;
     if (prevAdmins.length) fresh._admins = prevAdmins;
+    if (prevOffline) fresh._offline = prevOffline;
+    if (prevQuickPlay) fresh._quickPlay = prevQuickPlay;
+    if (prevSessionType) fresh._sessionType = prevSessionType;
     localStorage.removeItem('courtManager');
     this._myGuests = new Set();
     this._saveMyGuests();
@@ -3874,7 +3928,6 @@ ${bracketHTML}
     // Update queue section labels for structured modes
     const qTitle = document.getElementById('queueTitle');
     const qSub = document.getElementById('queueSubtitle');
-    const addBtn = document.getElementById('addGuestSection');
     if (qTitle) qTitle.textContent = structured ? 'Players' : 'Queue';
     if (qSub) qSub.textContent = rr
       ? (rrLocked ? 'Players are locked for this round robin.' : 'Add all players, then lock the roster to generate the schedule.')
@@ -3883,7 +3936,16 @@ ${bracketHTML}
       : 'Players waiting to be assigned to a court.';
     const qHint = document.getElementById('queueHint');
     if (qHint) qHint.style.display = structured ? 'none' : '';
-    if (addBtn) addBtn.style.display = isLocked ? 'none' : '';
+    const qAddBtn = document.getElementById('btnQueueAddPlayer');
+    if (qAddBtn) qAddBtn.style.display = isLocked ? 'none' : '';
+
+    // Offline sessions have no persistent identity/preferences to manage
+    const isOffline = !!this.state._offline;
+    const settingsTabBtn = document.getElementById('tabBtnSettings');
+    if (settingsTabBtn) {
+      settingsTabBtn.style.display = isOffline ? 'none' : '';
+      if (isOffline && this._activeTab === 'settings') this.switchTab('courts');
+    }
 
     this.renderPlayers();
     if (!structured) {
@@ -3993,7 +4055,7 @@ ${bracketHTML}
       const editBtn = canEdit ? `<button class="queue-row-btn queue-row-action" onclick="App.editGuest(${p.id})" title="Edit guest">&#x270E;</button>` : '';
       const statusBadge = isYou ? '<span class="queue-row-you">you</span>'
         : p.isLive ? '<span class="queue-row-status user">user</span>'
-        : '<span class="queue-row-status guest">guest</span>';
+        : '';
       const rr = this.isRoundRobin();
       const tourn = this.isTournament();
       const structured = rr || tourn;
@@ -4778,30 +4840,6 @@ const Onboard = {
       this._handleShareLink(s, user);
       return;
     }
-
-    if (user) {
-      this._prefillProfile(user);
-    }
-  },
-
-  _prefillProfile(user) {
-    // Fill signed-in profile card fields
-    const nameEl = document.getElementById('onboardName');
-    const skillEl = document.getElementById('onboardSkill');
-    if (nameEl) nameEl.value = user.name || '';
-    if (skillEl && user.skill != null) skillEl.value = App.fmtSkill(user.skill);
-    const singlesEl = document.getElementById('onboardSingles');
-    if (singlesEl) singlesEl.checked = !!(user.wantsSingles);
-    // Fill guest fields too
-    const guestName = document.getElementById('guestOnboardName');
-    const guestSkill = document.getElementById('guestOnboardSkill');
-    if (guestName) guestName.value = user.name || '';
-    if (guestSkill && user.skill != null) guestSkill.value = App.fmtSkill(user.skill);
-    const guestSingles = document.getElementById('guestOnboardSingles');
-    if (guestSingles) guestSingles.checked = !!(user.wantsSingles);
-    // Update profile card display name
-    const nameDisplay = document.getElementById('signedInName');
-    if (nameDisplay) nameDisplay.textContent = user.name || '';
   },
 
   async _handleShareLink(s, user) {
@@ -4890,22 +4928,20 @@ const Onboard = {
     } else {
       // No profile — store pending share link, show entry options for sign-in or guest join
       this._shareLink = { sessionId, label };
-      this._prefillProfile(user || {});
-      // Show join form with profile fields (they need to enter info)
       const entryOpts = document.getElementById('setupEntryOptions');
       if (entryOpts) entryOpts.style.display = '';
     }
   },
 
-  // Called when user submits profile from the join form during a share-link flow
+  // Called when user clicks "Join Session" from the join form during a share-link flow
   _completeShareJoin() {
-    const user = this._saveIdentity();
-    if (!user) return;
-    const { sessionId, label } = this._shareLink;
-    this._shareLink = null;
-    this._hide();
-    if (sessionId.startsWith('pvt-')) this._savePrivateSession(sessionId, label);
-    Session._connect(sessionId, label, false, user);
+    this._promptSelfProfile((user) => {
+      const { sessionId, label } = this._shareLink;
+      this._shareLink = null;
+      this._hide();
+      if (sessionId.startsWith('pvt-')) this._savePrivateSession(sessionId, label);
+      Session._connect(sessionId, label, false, user);
+    });
   },
 
   showGuestConfirm() {
@@ -4937,7 +4973,6 @@ const Onboard = {
     const entry = document.getElementById('setupEntryOptions');
     const form = document.getElementById('setupJoinForm');
     const backBtn = document.getElementById('btnBackToEntry');
-    const profileFields = document.getElementById('onboardProfileFields');
     const sessionBlock = document.getElementById('sessionSelectionBlock');
     const shareBlock = document.getElementById('shareLinkJoinBlock');
     const shareLabel = document.getElementById('shareLinkLabel');
@@ -4957,66 +4992,70 @@ const Onboard = {
     if (signedInCard) signedInCard.style.display = (isSignedIn && !isShareLink) ? '' : 'none';
 
     if (isShareLink) {
-      // Share-link mode: show guest profile fields + join button, hide session selection
+      // Share-link mode: show the join button, hide session selection
       if (sessionBlock) sessionBlock.style.display = 'none';
       if (shareBlock) shareBlock.style.display = '';
       if (shareLabel) shareLabel.innerHTML = `Joining <strong>${App.esc(this._shareLink.label)}</strong>`;
-      if (profileFields) profileFields.style.display = isSignedIn ? 'none' : '';
       if (heading) heading.textContent = 'Join ' + this._shareLink.label;
     } else {
       // Normal mode
       if (sessionBlock) sessionBlock.style.display = '';
       if (shareBlock) shareBlock.style.display = 'none';
       if (heading) heading.textContent = 'Join a Session';
-      // Signed-in users: profile is in the card above, hide guest fields
       const firstSection = sessionBlock?.firstElementChild;
-      if (isSignedIn) {
-        if (profileFields) profileFields.style.display = 'none';
-        if (firstSection) { firstSection.style.borderTop = 'none'; firstSection.style.paddingTop = '0'; firstSection.style.marginTop = '0'; }
-      } else {
-        if (profileFields) profileFields.style.display = '';
-        if (firstSection) { firstSection.style.borderTop = ''; firstSection.style.paddingTop = ''; firstSection.style.marginTop = ''; }
-      }
+      if (firstSection) { firstSection.style.borderTop = 'none'; firstSection.style.paddingTop = '0'; firstSection.style.marginTop = '0'; }
     }
     // Show "Create New" for public sessions (super admin only)
     const createPublicBtn = document.getElementById('btn-create-public');
     if (createPublicBtn) createPublicBtn.style.display = Admin.isSuperAdmin() && !isShareLink ? '' : 'none';
   },
 
-  _saveIdentity() {
-    // Signed-in users use profile card fields, guests use the guest fields
-    const isSignedIn = Admin.isSignedIn();
-    const nameEl = document.getElementById(isSignedIn ? 'onboardName' : 'guestOnboardName');
-    const errEl = document.getElementById(isSignedIn ? 'onboardNameError' : 'guestOnboardNameError');
+  // ─── Self profile (name/skill), asked right when joining or creating a
+  // private/public session instead of always sitting on the join page ───
+  _selfProfileCtx: null,
+
+  _promptSelfProfile(onComplete) {
+    this._selfProfileCtx = { onComplete };
+    const saved = this._savedUser() || {};
+    const nameEl = document.getElementById('selfProfileName');
+    const skillEl = document.getElementById('selfProfileSkill');
+    const errEl = document.getElementById('selfProfileNameError');
+    if (nameEl) nameEl.value = saved.name || Admin._user?.displayName || '';
+    if (skillEl) skillEl.value = saved.skill != null ? App.fmtSkill(saved.skill) : '';
+    if (errEl) errEl.style.display = 'none';
+    document.getElementById('selfProfileModal').style.display = 'flex';
+    document.body.style.overflow = 'hidden';
+    nameEl?.focus();
+  },
+
+  _selfProfileCancel(event) {
+    if (event && event.target !== event.currentTarget) return;
+    document.getElementById('selfProfileModal').style.display = 'none';
+    document.body.style.overflow = '';
+    this._selfProfileCtx = null;
+  },
+
+  _selfProfileSubmit() {
+    const nameEl = document.getElementById('selfProfileName');
+    const skillEl = document.getElementById('selfProfileSkill');
+    const errEl = document.getElementById('selfProfileNameError');
     const name = nameEl ? nameEl.value.trim() : '';
     if (!name) {
       if (errEl) errEl.style.display = 'block';
-      if (nameEl) nameEl.focus();
-      return null;
+      nameEl?.focus();
+      return;
     }
     if (errEl) errEl.style.display = 'none';
-    const skillEl = document.getElementById(isSignedIn ? 'onboardSkill' : 'guestOnboardSkill');
     const skillRaw = skillEl?.value || '';
     const skill = skillRaw ? parseFloat(parseFloat(skillRaw).toFixed(2)) : null;
-    const singlesEl = document.getElementById(isSignedIn ? 'onboardSingles' : 'guestOnboardSingles');
-    const wantsSingles = !!(singlesEl?.checked);
+    const wantsSingles = !!(this._savedUser()?.wantsSingles);
     const user = { name, skill, wantsSingles };
     try { localStorage.setItem('courtManagerUser', JSON.stringify(user)); } catch(e) {}
-    return user;
-  },
-
-  saveProfile() {
-    const user = this._saveIdentity();
-    if (user) {
-      const btn = document.querySelector('#setupSignedIn .btn-outline');
-      if (btn && btn.textContent === 'Save') {
-        btn.textContent = 'Saved!';
-        setTimeout(() => { btn.textContent = 'Save'; }, 1500);
-      }
-      // Update the display name in the profile card
-      const nameDisplay = document.getElementById('signedInName');
-      if (nameDisplay) nameDisplay.textContent = user.name;
-    }
+    document.getElementById('selfProfileModal').style.display = 'none';
+    document.body.style.overflow = '';
+    const ctx = this._selfProfileCtx;
+    this._selfProfileCtx = null;
+    ctx?.onComplete?.(user);
   },
 
   _pendingKey: null,
@@ -5111,9 +5150,16 @@ const Onboard = {
         sel.options[0].textContent = 'Select a location...';
       }
     }
-    this._pendingKey = key;
-    this._pendingLabel = name;
-    this._showInlineConfirm('publicCreateConfirmInline', name, () => this.confirmJoin());
+    this._promptSelfProfile(() => {
+      this._pendingKey = key;
+      this._pendingLabel = name;
+      this._showInlineConfirm('publicCreateConfirmInline', name, () => {
+        this._openBulkSetup({
+          quickPlay: false,
+          onComplete: (players) => { this._pendingBulkPlayers = players; this.confirmJoin(); },
+        });
+      });
+    });
   },
 
   joinPublic() {
@@ -5122,11 +5168,11 @@ const Onboard = {
     if (!key) return;
     const loc = Session.LOCATIONS.find(l => l.key === key);
     if (!loc) return;
-    const user = this._saveIdentity();
-    if (!user) return;
-    this._pendingKey = key;
-    this._pendingLabel = loc.label;
-    this._showInlineConfirm('publicConfirmInline', loc.label, () => this.confirmJoin());
+    this._promptSelfProfile(() => {
+      this._pendingKey = key;
+      this._pendingLabel = loc.label;
+      this._showInlineConfirm('publicConfirmInline', loc.label, () => this.confirmJoin());
+    });
   },
 
   // ─── Private sessions ──────────────────────
@@ -5195,11 +5241,11 @@ const Onboard = {
     // Look up from localStorage first, fall back to the dropdown's display text
     const saved = this._getSavedPrivateSessions().find(s => s.id === id);
     const label = saved ? saved.name : sel.options[sel.selectedIndex]?.textContent || id;
-    const user = this._saveIdentity();
-    if (!user) return;
-    this._pendingKey = id;
-    this._pendingLabel = label;
-    this._showInlineConfirm('privateConfirmInline', label, () => this.confirmJoin());
+    this._promptSelfProfile(() => {
+      this._pendingKey = id;
+      this._pendingLabel = label;
+      this._showInlineConfirm('privateConfirmInline', label, () => this.confirmJoin());
+    });
   },
 
   _newSessionType: '',
@@ -5233,8 +5279,6 @@ const Onboard = {
   },
 
   createPrivate() {
-    const user = this._saveIdentity();
-    if (!user) return;
     const nameEl = document.getElementById('privateSessionName');
     const codeEl = document.getElementById('privatePasscode');
     const errEl = document.getElementById('privateSessionError');
@@ -5247,13 +5291,20 @@ const Onboard = {
     if (errEl) errEl.style.display = 'none';
     const id = 'pvt-' + sessionName.toLowerCase().replace(/[^a-z0-9]/g, '');
     this._savePrivateSession(id, sessionName);
-    this._pendingKey = id;
-    this._pendingLabel = sessionName;
-    this._pendingPasscode = passcode;
-    this._pendingIsCreate = true;
-    this._pendingSessionType = this._newSessionType;
-    const typeLabel = this._newSessionType === 'roundrobin' ? ' (Round Robin)' : this._newSessionType === 'tournament' ? ' (Tournament)' : ' (Open Play)';
-    this._showInlineConfirm('createConfirmInline', sessionName + typeLabel, () => this.confirmJoin());
+    this._promptSelfProfile(() => {
+      this._pendingKey = id;
+      this._pendingLabel = sessionName;
+      this._pendingPasscode = passcode;
+      this._pendingIsCreate = true;
+      this._pendingSessionType = this._newSessionType;
+      const typeLabel = this._newSessionType === 'roundrobin' ? ' (Round Robin)' : this._newSessionType === 'tournament' ? ' (Tournament)' : ' (Open Play)';
+      this._showInlineConfirm('createConfirmInline', sessionName + typeLabel, () => {
+        this._openBulkSetup({
+          quickPlay: false,
+          onComplete: (players) => { this._pendingBulkPlayers = players; this.confirmJoin(); },
+        });
+      });
+    });
   },
 
   // ─── Confirm / Cancel / Navigation ─────────
@@ -5272,6 +5323,8 @@ const Onboard = {
       adminOnly = choice.trim() === '2';
     }
     const connectUser = adminOnly ? null : user;
+    const bulkPlayers = this._pendingBulkPlayers;
+    this._pendingBulkPlayers = null;
 
     if (key.startsWith('pvt-')) {
       if (this._pendingIsCreate) {
@@ -5281,7 +5334,7 @@ const Onboard = {
         App.state._sessionName = label;
         App.state._admins = Admin._user ? [Admin._user.uid] : [];
         if (this._pendingSessionType) App.state._sessionType = this._pendingSessionType;
-        Session._connect(key, label, true, connectUser);
+        await Session._connect(key, label, true, connectUser);
       } else {
         // Joining existing — verify passcode
         const data = await Session._get(key);
@@ -5294,10 +5347,15 @@ const Onboard = {
           }
         }
         this._savePrivateSession(key, label);
-        Session._connect(key, label, false, connectUser);
+        await Session._connect(key, label, false, connectUser);
       }
     } else {
-      Session._connect(key, label, false, connectUser);
+      await Session._connect(key, label, false, connectUser);
+    }
+    if (bulkPlayers?.length) {
+      this._pushBulkPlayers(bulkPlayers);
+      App.saveState();
+      App.render();
     }
     this._pendingPasscode = null;
     this._pendingIsCreate = false;
@@ -5329,8 +5387,6 @@ const Onboard = {
     this._populatePrivateDropdown();
     // Show join form if signed in, otherwise show entry options
     if (Admin.isSignedIn()) {
-      const user = this._savedUser();
-      if (user) this._prefillProfile(user);
       this._showJoinForm();
     } else {
       const entry = document.getElementById('setupEntryOptions');
@@ -5349,15 +5405,149 @@ const Onboard = {
       return;
     }
     if (errEl) errEl.style.display = 'none';
+    this._openBulkSetup({
+      quickPlay: false,
+      onComplete: (players) => this._startOfflineSession(sessionType, { players }),
+    });
+  },
+
+  // One-tap entry point from the home screen: jumps straight into a new
+  // offline Open Play session, skipping sign-in and all setup forms.
+  quickPlay() {
+    this._openBulkSetup({
+      quickPlay: true,
+      onComplete: (players) => this._startOfflineSession('open', { quickPlay: true, players }),
+    });
+  },
+
+  _startOfflineSession(sessionType, opts = {}) {
     App.state = App._freshState();
     App.state._sessionType = sessionType;
     App.state._offline = true;
+    if (opts.quickPlay) App.state._quickPlay = true;
     App._normState();
-    App.render();
-    this._hide();
+    this._pushBulkPlayers(opts.players);
     Session.id = 'offline';
     Session.label = 'Offline';
+    App.render();
+    this._hide();
     Session._updateUI();
+  },
+
+  // ─── Bulk player setup (count → names/skill), used before a new session
+  // first opens: Quick Play, manual offline start, and creating a private
+  // or public session all funnel through this. ────────────────────────
+  _bulkCtx: null,
+
+  _openBulkSetup(ctx) {
+    this._bulkCtx = ctx;
+    const countEl = document.getElementById('bulkPlayerCount');
+    if (countEl) countEl.value = 4;
+    const errEl = document.getElementById('bulkCountError');
+    if (errEl) errEl.style.display = 'none';
+    const submitBtn = document.getElementById('bulkSubmitBtn');
+    if (submitBtn) submitBtn.textContent = ctx.quickPlay ? 'Start Playing' : 'Add Players';
+    document.getElementById('bulkCountModal').style.display = 'flex';
+    document.body.style.overflow = 'hidden';
+    countEl?.focus();
+  },
+
+  _bulkCancel(event) {
+    if (event && event.target !== event.currentTarget) return;
+    document.getElementById('bulkCountModal').style.display = 'none';
+    document.getElementById('bulkNamesModal').style.display = 'none';
+    document.body.style.overflow = '';
+    this._bulkCtx = null;
+  },
+
+  _bulkContinueToNames() {
+    const countEl = document.getElementById('bulkPlayerCount');
+    const errEl = document.getElementById('bulkCountError');
+    const count = parseInt(countEl?.value, 10);
+    if (!count || count < 1) {
+      if (errEl) errEl.style.display = 'block';
+      return;
+    }
+    if (errEl) errEl.style.display = 'none';
+    const quickPlay = !!this._bulkCtx?.quickPlay;
+    const list = document.getElementById('bulkNamesList');
+    if (list) {
+      list.innerHTML = '';
+      for (let i = 1; i <= count; i++) {
+        const row = document.createElement('div');
+        row.style.cssText = 'display:flex;gap:8px;';
+        const nameInput = document.createElement('input');
+        nameInput.type = 'text';
+        nameInput.className = 'setup-input';
+        nameInput.placeholder = `Player ${i} name`;
+        nameInput.style.cssText = 'flex:1;margin-bottom:0;';
+        nameInput.dataset.bulkName = i;
+        row.appendChild(nameInput);
+        if (!quickPlay) {
+          const skillInput = document.createElement('input');
+          skillInput.type = 'number';
+          skillInput.className = 'setup-input';
+          skillInput.placeholder = 'Skill';
+          skillInput.min = '2';
+          skillInput.max = '8';
+          skillInput.step = '0.01';
+          skillInput.style.cssText = 'width:80px;flex-shrink:0;margin-bottom:0;';
+          skillInput.dataset.bulkSkill = i;
+          skillInput.onblur = () => App.fmtSkillInput(skillInput);
+          row.appendChild(skillInput);
+        }
+        if (i === count) nameInput.onkeydown = (e) => { if (e.key === 'Enter') this._bulkSubmit(); };
+        list.appendChild(row);
+      }
+      list.querySelector('input')?.focus();
+    }
+    document.getElementById('bulkCountModal').style.display = 'none';
+    document.getElementById('bulkNamesModal').style.display = 'flex';
+  },
+
+  _bulkBackToCount() {
+    document.getElementById('bulkNamesModal').style.display = 'none';
+    document.getElementById('bulkCountModal').style.display = 'flex';
+    document.getElementById('bulkPlayerCount')?.focus();
+  },
+
+  _bulkSubmit() {
+    const rows = [...document.querySelectorAll('#bulkNamesList > div')];
+    const players = [];
+    rows.forEach(row => {
+      const nameEl = row.querySelector('[data-bulk-name]');
+      const skillEl = row.querySelector('[data-bulk-skill]');
+      const name = nameEl?.value.trim();
+      if (!name) return;
+      const skill = skillEl?.value ? parseFloat(skillEl.value) : null;
+      players.push({ name, skill });
+    });
+    const errEl = document.getElementById('bulkNamesError');
+    if (!players.length) {
+      if (errEl) errEl.style.display = 'block';
+      return;
+    }
+    if (errEl) errEl.style.display = 'none';
+    document.getElementById('bulkNamesModal').style.display = 'none';
+    document.body.style.overflow = '';
+    const ctx = this._bulkCtx;
+    this._bulkCtx = null;
+    ctx?.onComplete?.(players);
+  },
+
+  _pushBulkPlayers(players) {
+    (players || []).forEach(({ name, skill }) => {
+      App.state.players.push({
+        id: App.state.nextId++,
+        name,
+        score: (skill != null && !isNaN(skill)) ? skill : null,
+        active: true,
+        wantsSingles: false,
+        isLive: false,
+        addedBy: this.selfId,
+        joinedAt: Date.now(),
+      });
+    });
   },
 
   _clearOfflineError() {
@@ -5692,7 +5882,6 @@ const Admin = {
         const signedInName = document.getElementById('signedInName');
         const savedUser = Onboard._savedUser();
         if (signedInName) signedInName.textContent = savedUser?.name || this._user.displayName || '';
-        if (savedUser) Onboard._prefillProfile(savedUser);
         // Share-link + signed in + saved profile → connect directly
         if (Onboard._shareLink && savedUser?.name) {
           const { sessionId, label } = Onboard._shareLink;
