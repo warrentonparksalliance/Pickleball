@@ -1451,6 +1451,16 @@ body {
   color: var(--text-muted);
   margin-top: 2px;
 }
+.history-stat-value.history-stat-name {
+  font-size: 0.95rem;
+  overflow-wrap: break-word;
+}
+.history-stat-sub {
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--success);
+  margin-top: 1px;
+}
 .history-table-wrap { display: flex; flex-direction: column; gap: 6px; max-width: 540px; margin: 0 auto; }
 .match-card {
   background: var(--card);
@@ -2092,6 +2102,18 @@ body {
       <div class="history-header">
         <div class="section-title">Match History</div>
         <button class="btn-clear-history admin-only" id="btnClearHistory" onclick="App.clearHistory()" style="display:none;">Clear History</button>
+      </div>
+      <div id="historyStats" class="history-stats-card" style="display:none;">
+        <div class="history-stat-tile">
+          <div class="history-stat-value history-stat-name" id="historyStatTeamName">&ndash;</div>
+          <div class="history-stat-sub" id="historyStatTeamWins"></div>
+          <div class="history-stat-label">Winningest Team</div>
+        </div>
+        <div class="history-stat-tile">
+          <div class="history-stat-value history-stat-name" id="historyStatPlayerName">&ndash;</div>
+          <div class="history-stat-sub" id="historyStatPlayerWins"></div>
+          <div class="history-stat-label">Winningest Player</div>
+        </div>
       </div>
       <div class="history-filters" style="display:flex;gap:8px;align-items:center;">
         <input type="text" id="historySearch" class="history-search" placeholder="Search player name..." oninput="App.renderHistory()" style="flex:1;">
@@ -4481,9 +4503,49 @@ ${bracketHTML}
     this.renderHistory();
   },
 
+  // Overall session stats: most-winning team pairing and most-winning individual player
+  renderHistoryStats(history) {
+    const stats = document.getElementById('historyStats');
+    if (!stats) return;
+
+    const teamWins = new Map(); // sorted-ids key -> { ids, wins }
+    const playerWins = new Map(); // id -> wins
+
+    history.forEach(m => {
+      if (m.expired || (m.winner !== 1 && m.winner !== 2)) return;
+      const winIds = m.winner === 1 ? m.side1 : m.side2;
+      if (!winIds || !winIds.length) return;
+      const key = [...winIds].sort((a, b) => a - b).join(',');
+      const entry = teamWins.get(key) || { ids: winIds, wins: 0 };
+      entry.wins++;
+      teamWins.set(key, entry);
+      winIds.forEach(id => playerWins.set(id, (playerWins.get(id) || 0) + 1));
+    });
+
+    let bestTeam = null;
+    teamWins.forEach(entry => { if (!bestTeam || entry.wins > bestTeam.wins) bestTeam = entry; });
+    let bestPlayerId = null, bestPlayerWins = 0;
+    playerWins.forEach((wins, id) => { if (wins > bestPlayerWins) { bestPlayerWins = wins; bestPlayerId = id; } });
+
+    if (!bestTeam && bestPlayerId == null) {
+      stats.style.display = 'none';
+      return;
+    }
+    stats.style.display = '';
+
+    const teamName = bestTeam ? bestTeam.ids.map(id => this.getPlayer(id)?.name || '?').join(' & ') : '–';
+    const playerName = bestPlayerId != null ? (this.getPlayer(bestPlayerId)?.name || '?') : '–';
+    document.getElementById('historyStatTeamName').textContent = teamName;
+    document.getElementById('historyStatTeamWins').textContent = bestTeam ? `${bestTeam.wins} win${bestTeam.wins === 1 ? '' : 's'}` : '';
+    document.getElementById('historyStatPlayerName').textContent = playerName;
+    document.getElementById('historyStatPlayerWins').textContent = bestPlayerId != null ? `${bestPlayerWins} win${bestPlayerWins === 1 ? '' : 's'}` : '';
+  },
+
   renderHistory() {
     const el = document.getElementById('historyRounds');
     let history = [...(this.state.roundHistory || [])];
+
+    this.renderHistoryStats(history);
 
     if (history.length === 0) {
       el.innerHTML = '<div class="history-empty">No completed games yet</div>';
