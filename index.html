@@ -1852,7 +1852,8 @@ body {
       <!-- Session selection (hidden during share-link flow) -->
       <div id="sessionSelectionBlock">
       <div class="setup-block">
-        <div class="section-title" style="margin-bottom:18px;">Private Session</div>
+        <div class="section-title" style="margin-bottom:4px;">Private Session</div>
+        <div class="section-subtitle" style="margin-bottom:14px;">Create a session for your group and share the link or code with friends — they can join without signing in. Great for reserved court nights or league play.</div>
         <button type="button" class="btn-outline" onclick="Onboard.openCreatePrivate()" id="btn-create-private" style="width:100%;padding:12px 14px;font-size:1rem;font-weight:700;font-family:inherit;">+ Create New</button>
         <div style="display:flex;align-items:center;gap:10px;margin:14px 0 10px;">
           <div style="flex:1;height:1px;background:var(--border);"></div>
@@ -1868,7 +1869,8 @@ body {
         <div id="privateConfirmInline" style="display:none;margin-bottom:8px;"></div>
       </div>
       <div class="setup-block">
-        <div class="section-title" style="margin-bottom:10px;">Public Session</div>
+        <div class="section-title" style="margin-bottom:4px;">Public Session</div>
+        <div class="section-subtitle" style="margin-bottom:10px;">Select a location and tap Join to enter the rotation — courts are assigned automatically each round alongside other players there.</div>
         <div style="display:flex;gap:8px;margin-bottom:4px;">
           <select class="setup-input" id="publicLocationSelect" onchange="Onboard._updateJoinBtn('publicLocationSelect','btnJoinPublic')" style="flex:1;margin-bottom:0;cursor:pointer;">
             <option value="">Select a location...</option>
