@@ -122,15 +122,6 @@ body {
 }
 .input-name { flex: 1; min-width: 80px; }
 .input-score { width: 55px; }
-.add-form .singles-label {
-  font-size: 0.75rem;
-  color: var(--text-light);
-  display: flex;
-  align-items: center;
-  gap: 3px;
-  cursor: pointer;
-  padding: 0 4px;
-}
 .hiw-close:hover { color: var(--text); }
 .hiw-body { padding: 18px 20px; display: flex; flex-direction: column; gap: 18px; }
 .hiw-section h3 {
@@ -772,13 +763,6 @@ body {
   font-weight: 400;
   color: var(--text-muted);
 }
-.queue-row-badge {
-  font-size: 0.7rem;
-  color: var(--text-muted);
-  border: 1px solid var(--border);
-  border-radius: 3px;
-  padding: 1px 4px;
-}
 .queue-row-edit {
   display: flex;
   align-items: center;
@@ -804,17 +788,6 @@ body {
   border-color: var(--primary);
   box-shadow: 0 0 0 3px var(--primary-light);
 }
-.edit-guest-singles {
-  font-size: 0.78rem;
-  font-weight: 500;
-  color: var(--text-light);
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  cursor: pointer;
-  white-space: nowrap;
-}
-.edit-guest-singles input { accent-color: var(--primary); width: 14px; height: 14px; }
 .btn-edit-save {
   padding: 4px 10px;
   background: var(--primary);
@@ -908,17 +881,6 @@ body {
 .add-form input::placeholder { color: var(--text-muted); }
 .add-form-row2 { display: flex; gap: 8px; align-items: center; justify-content: space-between; width: 100%; }
 .add-form .input-score { width: 130px; flex-shrink: 0; }
-.add-form .singles-label {
-  font-size: 0.78rem;
-  color: var(--text-light);
-  display: flex;
-  align-items: center;
-  gap: 5px;
-  cursor: pointer;
-  white-space: nowrap;
-  font-weight: 500;
-}
-.add-form .singles-label input { accent-color: var(--primary); width: auto; }
 .btn-add-another {
   width: 100%;
   padding: 12px;
@@ -1993,10 +1955,7 @@ body {
         <input type="text" class="setup-input" id="settingsName" placeholder="Display name" maxlength="30" style="flex:1;min-width:0;margin-bottom:0;">
         <input type="number" class="setup-input" id="settingsSkill" placeholder="Skill (optional)" min="2" max="8" step="0.01" onblur="App.fmtSkillInput(this)" style="width:130px;flex-shrink:0;margin-bottom:0;">
       </div>
-      <div style="display:flex;align-items:center;justify-content:space-between;">
-        <label style="display:flex;align-items:center;gap:6px;font-size:0.85rem;font-weight:500;color:var(--text-light);cursor:pointer;margin:0;">
-          <input type="checkbox" id="settingsSingles" style="accent-color:var(--primary);width:15px;height:15px;"> Open to 1v1
-        </label>
+      <div style="display:flex;align-items:center;justify-content:flex-end;">
         <button type="button" class="btn-outline" onclick="App.saveSettings()" style="padding:12px 16px;font-size:1rem;font-weight:700;">Save</button>
       </div>
     </div>
@@ -2120,7 +2079,7 @@ body {
         </div>
         <div class="hiw-section">
           <h3>⚙️ Updating Your Info</h3>
-          <p>Once in a session, open the <strong>Settings</strong> tab to update your display name, skill level, and singles (1v1) preference at any time.</p>
+          <p>Once in a session, open the <strong>Settings</strong> tab to update your display name and skill level at any time.</p>
         </div>
         <div class="hiw-section">
           <h3>🤝 Adding Partners</h3>
@@ -2409,14 +2368,6 @@ const App = {
     if (user) {
       document.getElementById('settingsName').value = user.name || '';
       document.getElementById('settingsSkill').value = user.skill != null ? App.fmtSkill(user.skill) : '';
-      document.getElementById('settingsSingles').checked = !!(user.wantsSingles);
-    }
-    // Also sync the 1v1 preference from the player object
-    if (Onboard.selfId) {
-      const p = this.getPlayer(Onboard.selfId);
-      if (p) {
-        document.getElementById('settingsSingles').checked = !!p.wantsSingles;
-      }
     }
   },
 
@@ -2427,16 +2378,14 @@ const App = {
     App.fmtSkillInput(document.getElementById('settingsSkill'));
     const skillRaw = document.getElementById('settingsSkill').value;
     const skill = skillRaw ? parseFloat(parseFloat(skillRaw).toFixed(2)) : null;
-    const wantsSingles = document.getElementById('settingsSingles').checked;
 
-    try { localStorage.setItem('courtManagerUser', JSON.stringify({ name, skill, wantsSingles })); } catch(e) {}
+    try { localStorage.setItem('courtManagerUser', JSON.stringify({ name, skill })); } catch(e) {}
 
     if (Onboard.selfId != null) {
       const p = this.state.players.find(p => p.id === Onboard.selfId);
       if (p) {
         p.name = name;
         p.score = skill;
-        p.wantsSingles = wantsSingles;
         this.saveState();
         this.render();
       }
@@ -2490,7 +2439,6 @@ const App = {
       name,
       score: (skill != null && !isNaN(skill)) ? skill : null,
       active: true,
-      wantsSingles: false,
       isLive: false,
       addedBy: Onboard.selfId,
       joinedAt: Date.now(),
@@ -2555,14 +2503,11 @@ const App = {
     this.fmtSkillInput(skillEl);
     const skillRaw = skillEl ? skillEl.value : '';
     const skill = skillRaw ? parseFloat(parseFloat(skillRaw).toFixed(2)) : null;
-    const singlesEl = document.getElementById(`editGuestSingles-${id}`);
-    const wantsSingles = singlesEl ? singlesEl.checked : false;
 
     const p = this.state.players.find(p => p.id === id);
     if (p) {
       p.name = name;
       p.score = skill;
-      p.wantsSingles = wantsSingles;
     }
     this._editingGuest = null;
     this.saveState();
@@ -2578,13 +2523,6 @@ const App = {
     if (this.isPlayerOnCourt(id)) return;
     const p = this.state.players.find(p => p.id === id);
     if (p) p.active = !p.active;
-    this.saveState();
-    this.render();
-  },
-
-  toggleSingles(id) {
-    const p = this.state.players.find(p => p.id === id);
-    if (p) p.wantsSingles = !p.wantsSingles;
     this.saveState();
     this.render();
   },
@@ -3420,7 +3358,7 @@ const App = {
       this.state.activeGames[courtNum] = {
         side1: [...match.side1],
         side2: [...match.side2],
-        mode: match.side1.length > 1 ? 'doubles' : 'singles',
+        mode: 'doubles',
         startTime: Date.now(),
         timerPaused: true,
         timerElapsed: 0,
@@ -3521,7 +3459,7 @@ const App = {
       this.state.activeGames[nextCourt] = {
         side1: [...match.side1],
         side2: [...match.side2],
-        mode: match.side1.length > 1 ? 'doubles' : 'singles',
+        mode: 'doubles',
         startTime: Date.now(),
         timerPaused: true,
         timerElapsed: 0,
@@ -3738,20 +3676,9 @@ ${bracketHTML}
     if (freeCourts.length === 0) return;
 
     let anyAssigned = false;
-    const usedCourtIds = new Set();
 
-    // Phase 1: Fill as many courts as possible with doubles (4 players)
     for (const court of freeCourts) {
-      if (this._assignOneCourt('doubles', court.id)) {
-        anyAssigned = true;
-        usedCourtIds.add(court.id);
-      }
-    }
-
-    // Phase 2: Fill remaining free courts with singles (wantsSingles players only)
-    for (const court of freeCourts) {
-      if (usedCourtIds.has(court.id)) continue;
-      if (this._assignOneCourt('singles', court.id)) {
+      if (this._assignOneCourt(court.id)) {
         anyAssigned = true;
       }
     }
@@ -3763,7 +3690,7 @@ ${bracketHTML}
     }
   },
 
-  _assignOneCourt(mode, courtId) {
+  _assignOneCourt(courtId) {
     const onCourt = this.getPlayersOnCourts();
     const allQueue = this.state.players.filter(p => p.active && !onCourt.has(p.id));
 
@@ -3775,49 +3702,40 @@ ${bracketHTML}
 
     let side1, side2;
 
-    if (mode === 'singles') {
-      // Only players who opted in to 1v1
-      let pool = soloPlayers.filter(p => p.wantsSingles).map(p => p.id);
-      if (pool.length < 2) return false;
-      pool = this.shuffle(pool);
-      side1 = [pool[0]];
-      side2 = [pool[1]];
+    const shuffledPairs = this.shuffle([...activePairs]);
+    const shuffledSolos = this.shuffle(soloPlayers.map(p => p.id));
+    let pickedPairs = [], pickedSolos = [], total = 0;
+    const usedIds = new Set();
+
+    for (const pair of shuffledPairs) {
+      if (total + 2 > 4) break;
+      if (usedIds.has(pair.p1) || usedIds.has(pair.p2)) continue;
+      pickedPairs.push(pair); total += 2;
+      usedIds.add(pair.p1); usedIds.add(pair.p2);
+      if (total === 4) break;
+    }
+    for (const id of shuffledSolos) {
+      if (total >= 4) break;
+      pickedSolos.push(id); total++;
+    }
+    if (total < 4) return false;
+
+    if (pickedPairs.length === 2) {
+      side1 = [pickedPairs[0].p1, pickedPairs[0].p2];
+      side2 = [pickedPairs[1].p1, pickedPairs[1].p2];
+    } else if (pickedPairs.length === 1) {
+      side1 = [pickedPairs[0].p1, pickedPairs[0].p2];
+      side2 = pickedSolos;
     } else {
-      const shuffledPairs = this.shuffle([...activePairs]);
-      const shuffledSolos = this.shuffle(soloPlayers.map(p => p.id));
-      let pickedPairs = [], pickedSolos = [], total = 0;
-      const usedIds = new Set();
-
-      for (const pair of shuffledPairs) {
-        if (total + 2 > 4) break;
-        if (usedIds.has(pair.p1) || usedIds.has(pair.p2)) continue;
-        pickedPairs.push(pair); total += 2;
-        usedIds.add(pair.p1); usedIds.add(pair.p2);
-        if (total === 4) break;
-      }
-      for (const id of shuffledSolos) {
-        if (total >= 4) break;
-        pickedSolos.push(id); total++;
-      }
-      if (total < 4) return false;
-
-      if (pickedPairs.length === 2) {
-        side1 = [pickedPairs[0].p1, pickedPairs[0].p2];
-        side2 = [pickedPairs[1].p1, pickedPairs[1].p2];
-      } else if (pickedPairs.length === 1) {
-        side1 = [pickedPairs[0].p1, pickedPairs[0].p2];
-        side2 = pickedSolos;
-      } else {
-        side1 = [pickedSolos[0], pickedSolos[1]];
-        side2 = [pickedSolos[2], pickedSolos[3]];
-        if (this.state.options.useSkill) [side1, side2] = this.balanceDoublesSkill(side1, side2);
-        if (this.state.options.minimizeRepeats) [side1, side2] = this.optimizeDoublesRepeats(side1, side2);
-      }
+      side1 = [pickedSolos[0], pickedSolos[1]];
+      side2 = [pickedSolos[2], pickedSolos[3]];
+      if (this.state.options.useSkill) [side1, side2] = this.balanceDoublesSkill(side1, side2);
+      if (this.state.options.minimizeRepeats) [side1, side2] = this.optimizeDoublesRepeats(side1, side2);
     }
 
     this.state.activeGames[courtId] = {
       side1, side2,
-      mode: mode === 'singles' ? 'singles' : 'doubles',
+      mode: 'doubles',
       startTime: Date.now(),
       timerPaused: true,
       timerElapsed: 0,
@@ -4151,13 +4069,11 @@ ${bracketHTML}
             onkeydown="if(event.key==='Enter')App.saveGuestEdit(${p.id})">
           <input type="number" id="editGuestSkill-${p.id}" value="${p.score != null ? App.fmtSkill(p.score) : ''}" placeholder="Skill (optional)" min="2" max="8" step="0.01"
             onblur="App.fmtSkillInput(this)" onkeydown="if(event.key==='Enter')App.saveGuestEdit(${p.id})">
-          <label class="edit-guest-singles"><input type="checkbox" id="editGuestSingles-${p.id}" ${p.wantsSingles ? 'checked' : ''}> 1v1</label>
           <button class="btn-edit-save" onclick="App.saveGuestEdit(${p.id})">Save</button>
           <button class="btn-edit-cancel" onclick="App.cancelGuestEdit()">Cancel</button>
         </div>`;
       }
       const rowClass = p.active ? 'queue-row' : 'queue-row inactive';
-      const singlesBadge = p.wantsSingles ? `<span class="queue-row-badge">1v1</span>` : '';
       const selfId = Onboard.selfId;
       const isPartner = selfId && selfId !== p.id && this.state.teams.some(t =>
         (t.p1 === selfId && t.p2 === p.id) || (t.p2 === selfId && t.p1 === p.id)
@@ -4182,7 +4098,7 @@ ${bracketHTML}
         : '';
       const skillInline = skillStr ? `<span class="queue-row-skill">(${skillStr})</span>` : '';
       return `<div class="${rowClass}">
-        <span class="queue-row-name">${this.esc(p.name)}${skillInline}${editBtn}${statusBadge}${partnerBadge}${isLocked ? '' : singlesBadge}</span>
+        <span class="queue-row-name">${this.esc(p.name)}${skillInline}${editBtn}${statusBadge}${partnerBadge}</span>
         ${pauseBtn}
         ${removeBtn}
       </div>`;
@@ -4381,11 +4297,10 @@ ${bracketHTML}
     const pairedIds = new Set(activePairs.flatMap(t => [t.p1, t.p2]));
     const soloActive = active.filter(p => !pairedIds.has(p.id));
     const doublesEligible = soloActive.length + pairedIds.size;
-    const singlesEligible = soloActive.filter(p => p.wantsSingles).length;
 
     const n = active.length;
     const paused = this.state.players.filter(p => !p.active && !onCourt.has(p.id)).length;
-    const canAssign = doublesEligible >= 4 || singlesEligible >= 2;
+    const canAssign = doublesEligible >= 4;
 
     if (n === 0 && paused === 0) {
       countEl.textContent = 'No players in queue yet';
@@ -4456,7 +4371,7 @@ ${bracketHTML}
       if (btnAssignAll) {
         const canAdvance = !hasActive && currentRound < totalRounds;
         btnAssignAll.disabled = !canAdvance;
-        btnAssignAll.textContent = currentRound >= totalRounds ? 'Tournament Complete' : 'Start Next Round';
+        btnAssignAll.textContent = currentRound >= totalRounds ? 'All Rounds Complete' : 'Start Next Round';
         btnAssignAll.onclick = () => this.rrAdvanceRound();
       }
       if (courtSelect) courtSelect.parentElement.style.display = 'none';
@@ -4731,7 +4646,6 @@ const Session = {
       // Update name/skill/preferences if changed
       already.name = user.name;
       already.score = user.skill || already.score;
-      if (user.wantsSingles != null) already.wantsSingles = !!user.wantsSingles;
       if (Admin._user?.uid) already.firebaseUid = Admin._user.uid;
       already.joinedAt = Date.now();
       try { localStorage.setItem('courtManager', JSON.stringify(App.state)); } catch(e) {}
@@ -4746,7 +4660,6 @@ const Session = {
         name: user.name,
         score: user.skill || null,
         active: true,
-        wantsSingles: !!(user.wantsSingles),
         isLive: true,
         joinedAt: Date.now(),
       };
@@ -5169,8 +5082,7 @@ const Onboard = {
     if (errEl) errEl.style.display = 'none';
     const skillRaw = skillEl?.value || '';
     const skill = skillRaw ? parseFloat(parseFloat(skillRaw).toFixed(2)) : null;
-    const wantsSingles = !!(this._savedUser()?.wantsSingles);
-    const user = { name, skill, wantsSingles };
+    const user = { name, skill };
     try { localStorage.setItem('courtManagerUser', JSON.stringify(user)); } catch(e) {}
     document.getElementById('selfProfileModal').style.display = 'none';
     document.body.style.overflow = '';
@@ -5706,7 +5618,6 @@ const Onboard = {
         name,
         score: (skill != null && !isNaN(skill)) ? skill : null,
         active: true,
-        wantsSingles: false,
         isLive: false,
         addedBy: this.selfId,
         joinedAt: Date.now(),
