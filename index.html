@@ -6221,8 +6221,17 @@ const MyHistory = {
     if (m.mySide === 1 || m.mySide === 2) return m.mySide;
     const myName = (Admin._user?.displayName || '').toLowerCase().trim();
     if (!myName) return null;
-    if ((m.side1Names || []).some(n => n.toLowerCase().trim() === myName)) return 1;
-    if ((m.side2Names || []).some(n => n.toLowerCase().trim() === myName)) return 2;
+    // Older entries (saved before mySide was tracked) only have display names,
+    // and players often join with just a first name while their Google account
+    // has a full name — so match on first name as well as exact full name.
+    const myFirst = myName.split(/\s+/)[0];
+    const isMe = (n) => {
+      const name = (n || '').toLowerCase().trim();
+      if (!name) return false;
+      return name === myName || name.split(/\s+/)[0] === myFirst;
+    };
+    if ((m.side1Names || []).some(isMe)) return 1;
+    if ((m.side2Names || []).some(isMe)) return 2;
     return null;
   },
 
