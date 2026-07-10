@@ -1749,7 +1749,7 @@ body {
         <button class="btn-confirm-join" id="btnQuickPlay" onclick="Onboard.quickPlay()" style="width:100%;padding:12px;font-size:1rem;font-weight:700;margin-bottom:10px;display:flex;align-items:center;justify-content:center;gap:8px;">
           &#9889; Quick Play
         </button>
-        <p style="font-size:0.78rem;color:var(--text-muted);margin:-4px 0 14px;line-height:1.4;">Jumps straight into a new offline Open Play session on this device &mdash; no sign-in, no setup.</p>
+        <p style="font-size:0.78rem;color:var(--text-muted);margin:-4px 0 14px;line-height:1.4;">Jumps straight into a new offline session on this device &mdash; no sign-in, no setup. Pick Open Play, Round Robin, or Tournament.</p>
         <div style="display:flex;align-items:center;gap:12px;margin-bottom:10px;">
           <div style="flex:1;height:1px;background:var(--border);"></div>
           <span style="font-size:0.75rem;font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.05em;">or</span>
@@ -1759,12 +1759,15 @@ body {
           <svg width="16" height="16" viewBox="0 0 48 48" style="flex-shrink:0;"><path fill="#4285F4" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#34A853" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59a14.5 14.5 0 0 1 0-9.18l-7.98-6.19a24.0 24.0 0 0 0 0 21.56l7.98-6.19z"/><path fill="#EA4335" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg>
           Sign in with Google
         </button>
-        <button class="btn-outline" onclick="Onboard.showGuestConfirm()" style="width:100%;padding:12px;font-size:1rem;font-weight:700;">Continue without signing in</button>
-        <div id="guestConfirmMsg" style="display:none;margin-top:10px;padding:12px;background:#fef9c3;border:1.5px solid #fbbf24;border-radius:var(--radius-sm);">
-          <p style="font-size:0.85rem;color:#78350f;line-height:1.45;margin-bottom:10px;">&#9888;&#xFE0F; Your name and preferences <strong>won't be saved</strong> for next time, and you won't have access to personal match history across sessions.</p>
-          <div style="display:flex;gap:8px;">
-            <button class="btn-confirm-join" onclick="Onboard.showGuestJoin()" style="flex:1;padding:10px;font-size:0.9rem;">Got it, continue</button>
-            <button class="btn-outline" onclick="Onboard.hideGuestConfirm()" style="flex:1;padding:10px;font-size:0.9rem;">Go back</button>
+        <!-- Guest join is only offered when arriving via a shared session link -->
+        <div id="guestContinueBlock" style="display:none;">
+          <button class="btn-outline" onclick="Onboard.showGuestConfirm()" style="width:100%;padding:12px;font-size:1rem;font-weight:700;">Continue without signing in</button>
+          <div id="guestConfirmMsg" style="display:none;margin-top:10px;padding:12px;background:#fef9c3;border:1.5px solid #fbbf24;border-radius:var(--radius-sm);">
+            <p style="font-size:0.85rem;color:#78350f;line-height:1.45;margin-bottom:10px;">&#9888;&#xFE0F; Your name and preferences <strong>won't be saved</strong> for next time, and you won't have access to personal match history across sessions.</p>
+            <div style="display:flex;gap:8px;">
+              <button class="btn-confirm-join" onclick="Onboard.showGuestJoin()" style="flex:1;padding:10px;font-size:0.9rem;">Got it, continue</button>
+              <button class="btn-outline" onclick="Onboard.hideGuestConfirm()" style="flex:1;padding:10px;font-size:0.9rem;">Go back</button>
+            </div>
           </div>
         </div>
         <div style="height:1px;background:var(--border);margin:18px 0 14px;"></div>
@@ -2078,8 +2081,8 @@ body {
           </ul>
         </div>
         <div class="hiw-section">
-          <h3>📋 Offline Sessions</h3>
-          <p>No sign-in needed. Select a format — <strong>Open Play</strong>, <strong>Round Robin</strong>, or <strong>Tournament</strong> — and tap <strong>Start Offline Session</strong>. You add all players yourself, including their names and skill levels. No one else can join. Use the pause (checkbox) and remove (&times;) controls to manage your roster at any time. Everything stays on your device — nothing is shared online.</p>
+          <h3>&#9889; Quick Play</h3>
+          <p>No sign-in needed. Tap <strong>Quick Play</strong>, pick a format — <strong>Open Play</strong>, <strong>Round Robin</strong>, or <strong>Tournament</strong> — and add your players' names. No skill levels or in-session settings to manage, and no one else can join. Use the pause (checkbox) and remove (&times;) controls to manage your roster at any time. Everything stays on your device — nothing is shared online.</p>
         </div>
         <div class="hiw-section">
           <h3>🔒 Private Sessions</h3>
@@ -2119,6 +2122,27 @@ body {
         <input type="number" class="setup-input" id="selfProfileSkill" placeholder="Skill level (optional)" min="2" max="8" step="0.01" style="width:100%;" onblur="App.fmtSkillInput(this)" onkeydown="if(event.key==='Enter')Onboard._selfProfileSubmit()">
         <p style="font-size:0.78rem;color:var(--text-muted);margin:0;">You can update this anytime from Settings.</p>
         <button type="button" class="btn-confirm-join" style="width:100%;padding:12px;font-size:1rem;font-weight:700;" onclick="Onboard._selfProfileSubmit()">Continue</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Quick Play: format selector, shown before the player count ── -->
+  <div id="quickPlayTypeModal" class="hiw-overlay" style="display:none;" onclick="Onboard._quickPlayTypeCancel(event)">
+    <div class="hiw-modal" style="max-width:380px;" onclick="event.stopPropagation()">
+      <div class="hiw-header">
+        <h2>Quick Play</h2>
+        <button class="hiw-close" onclick="Onboard._quickPlayTypeCancel()" aria-label="Close">&times;</button>
+      </div>
+      <div class="hiw-body">
+        <p style="font-size:0.85rem;color:var(--text-light);line-height:1.5;margin:0;">Choose a format to get started.</p>
+        <select class="setup-input" id="quickPlayTypeSelect" style="width:100%;cursor:pointer;" onchange="Onboard._clearQuickPlayTypeError()">
+          <option value="" disabled selected>Select session type...</option>
+          <option value="open">Open Play</option>
+          <option value="roundrobin">Round Robin</option>
+          <option value="tournament">Tournament</option>
+        </select>
+        <p id="quickPlayTypeError" class="setup-error" style="display:none;">Select a session type first</p>
+        <button type="button" class="btn-confirm-join" style="width:100%;padding:12px;font-size:1rem;font-weight:700;" onclick="Onboard._quickPlayContinueType()">Continue</button>
       </div>
     </div>
   </div>
@@ -2587,6 +2611,11 @@ const App = {
     const raw2 = s2Input.value.trim();
     const errEl = document.getElementById(`score-err-${courtId}`);
     let score1 = null, score2 = null;
+    // Tournament matches must report a score so the bracket can advance
+    if (this.isTournament() && (raw1 === '' || raw2 === '')) {
+      if (errEl) errEl.textContent = 'Enter a score for both sides to advance the bracket.';
+      return;
+    }
     if (raw1 !== '' || raw2 !== '') {
       score1 = parseInt(raw1);
       score2 = parseInt(raw2);
@@ -4189,7 +4218,7 @@ ${bracketHTML}
           <span>Court ${courtId} ${modeBadge}</span>
           <div class="court-controls" style="gap:8px;">
             <span class="court-status">${isScoring ? 'Score entry' : ''}</span>
-            ${!isScoring ? `<button class="btn-cancel-game" onclick="App.cancelGame(${courtId})">&times;</button>` : ''}
+            ${!isScoring && !this.isRoundRobin() && !this.isTournament() ? `<button class="btn-cancel-game" onclick="App.cancelGame(${courtId})">&times;</button>` : ''}
           </div>
         </div>
         <div class="court-body">${bodyHTML}</div>
@@ -4921,6 +4950,9 @@ const Onboard = {
       this._shareLink = { sessionId, label };
       const entryOpts = document.getElementById('setupEntryOptions');
       if (entryOpts) entryOpts.style.display = '';
+      // Guest join is only offered for a specific shared link, not on the general landing page
+      const guestBlock = document.getElementById('guestContinueBlock');
+      if (guestBlock) guestBlock.style.display = '';
     }
   },
 
@@ -5376,6 +5408,10 @@ const Onboard = {
     this._sharePending = null;
     this._shareLinkLoading = false;
     this._populatePrivateDropdown();
+    // No pending share link — guest join is not offered on the general landing page
+    this.hideGuestConfirm();
+    const guestBlock = document.getElementById('guestContinueBlock');
+    if (guestBlock) guestBlock.style.display = 'none';
     // Show join form if signed in, otherwise show entry options
     if (Admin.isSignedIn()) {
       this._showJoinForm();
@@ -5402,12 +5438,42 @@ const Onboard = {
     });
   },
 
-  // One-tap entry point from the home screen: jumps straight into a new
-  // offline Open Play session, skipping sign-in and all setup forms.
+  // One-tap entry point from the home screen: pick a format, then jump
+  // straight into a new offline session, skipping sign-in and all setup forms.
   quickPlay() {
+    const sel = document.getElementById('quickPlayTypeSelect');
+    if (sel) sel.value = '';
+    const err = document.getElementById('quickPlayTypeError');
+    if (err) err.style.display = 'none';
+    document.getElementById('quickPlayTypeModal').style.display = 'flex';
+    document.body.style.overflow = 'hidden';
+    sel?.focus();
+  },
+
+  _quickPlayTypeCancel(event) {
+    if (event && event.target !== event.currentTarget) return;
+    document.getElementById('quickPlayTypeModal').style.display = 'none';
+    document.body.style.overflow = '';
+  },
+
+  _clearQuickPlayTypeError() {
+    const err = document.getElementById('quickPlayTypeError');
+    if (err) err.style.display = 'none';
+  },
+
+  _quickPlayContinueType() {
+    const sel = document.getElementById('quickPlayTypeSelect');
+    const err = document.getElementById('quickPlayTypeError');
+    const sessionType = sel?.value;
+    if (!sessionType) {
+      if (err) err.style.display = 'block';
+      return;
+    }
+    document.getElementById('quickPlayTypeModal').style.display = 'none';
+    document.body.style.overflow = '';
     this._openBulkSetup({
       quickPlay: true,
-      onComplete: (players) => this._startOfflineSession('open', { quickPlay: true, players }),
+      onComplete: (players) => this._startOfflineSession(sessionType, { quickPlay: true, players }),
     });
   },
 
