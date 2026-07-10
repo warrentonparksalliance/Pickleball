@@ -157,31 +157,6 @@ body {
 }
 .btn-hiw:hover { color: var(--primary); border-color: var(--primary); background: var(--primary-light); }
 
-/* ── WPA banner ─────────────────────────────── */
-.wpa-banner {
-  background: #e8f5e8;
-  border-bottom: 1px solid #b8d9b8;
-  padding: 10px 20px;
-  text-align: center;
-  font-size: 0.82rem;
-  color: #1e3d1e;
-  line-height: 1.5;
-}
-.wpa-banner a { color: #1e4d1e; font-weight: 600; }
-.wpa-donate-btn {
-  display: inline-block;
-  margin-left: 10px;
-  padding: 3px 12px;
-  background: #2d6a2d;
-  color: white !important;
-  border-radius: 12px;
-  font-weight: 600;
-  text-decoration: none;
-  font-size: 0.78rem;
-  vertical-align: middle;
-}
-.wpa-donate-btn:hover { background: #1e4d1e; }
-
 /* ── Back nav ───────────────────────────────── */
 .back-nav {
   background: #152815;
@@ -1713,11 +1688,6 @@ body {
   </div>
 </header>
 
-<!-- ── WPA Banner ──────────────────────────────── -->
-<div class="wpa-banner">
-  Court Manager is a free community tool provided by <a href="https://warrentonparksalliance.com" target="_blank" rel="noopener">Warrenton Parks Alliance</a>, a 501(c)(3) nonprofit keeping Warrenton's parks and trails thriving.
-  <a href="https://warrentonparksalliance.com/ways-to-support/" target="_blank" rel="noopener" class="wpa-donate-btn">Donate ♥</a>
-</div>
 </div>
 
 <!-- ── Tab Bar (shown when in session) ─────────── -->
@@ -1741,7 +1711,6 @@ body {
       <div id="setupEntryOptions" class="setup-block">
         <h2 style="font-size:1.75rem;font-weight:700;margin-bottom:6px;color:var(--text);">Welcome!</h2>
         <p style="font-size:0.9rem;color:var(--text-muted);margin-bottom:18px;line-height:1.4;">Manage your pickleball session queue, court assignments, and match history.</p>
-        <button class="btn-hiw" onclick="App.openHiw()">&#9654; How it Works</button>
         <button class="btn-confirm-join" id="btnQuickPlay" onclick="Onboard.quickPlay()" style="width:100%;padding:12px;font-size:1rem;font-weight:700;margin-bottom:10px;display:flex;align-items:center;justify-content:center;gap:8px;">
           &#9889; Quick Play
         </button>
@@ -1763,6 +1732,8 @@ body {
             <button class="btn-outline" onclick="Onboard.hideGuestConfirm()" style="flex:1;padding:10px;font-size:0.9rem;">Go back</button>
           </div>
         </div>
+        <div style="height:1px;background:var(--border);margin:18px 0 14px;"></div>
+        <button class="btn-hiw" onclick="App.openHiw()">&#9654; How it Works</button>
       </div>
       <!-- Signed-in profile card (shown for Google-signed-in users) -->
       <div id="setupSignedIn" class="setup-block" style="display:none;">
@@ -2169,7 +2140,7 @@ body {
   </div>
 
   <footer class="app-footer">
-    <div>Provided by <a href="https://www.warrentonparksalliance.com" target="_blank" rel="noopener">Warrenton Parks Alliance</a></div>
+    <div>Court Manager is a free community tool provided by <a href="https://www.warrentonparksalliance.com" target="_blank" rel="noopener">Warrenton Parks Alliance</a>, a 501(c)(3) nonprofit keeping Warrenton's parks and trails thriving.</div>
     <div><a href="https://www.warrentonparksalliance.com/ways-to-support/" target="_blank" rel="noopener">Donate</a> to support our mission.</div>
     <div><a href="guide.html" target="_blank">User guide</a> · <a href="mailto:brooke@warrentonparksalliance.com?subject=Pickle%20Jar%20Feedback">Send feedback</a></div>
   </footer>
