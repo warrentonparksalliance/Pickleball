@@ -1638,15 +1638,14 @@ body {
   #sessionSetupSection .setup-card { max-width: none; }
   /* Keep welcome / signed-in cards centered at comfortable width */
   #setupEntryOptions, #setupSignedIn { max-width: 480px; margin: 0 auto; }
-  /* Join form becomes the 3-col grid */
-  #setupJoinForm { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 14px; align-items: start; }
+  /* Join form becomes a 2-col grid */
+  #setupJoinForm { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; align-items: start; }
   #joinFormHeader { grid-column: 1 / -1; }
   /* Dissolve the session-selection wrapper so its children are direct grid items */
   #sessionSelectionBlock { display: contents; }
-  #sessionSelectionBlock > div:nth-child(1) { grid-column: 1; } /* Offline */
-  #sessionSelectionBlock > div:nth-child(2) { grid-column: 2; } /* Private */
-  #sessionSelectionBlock > div:nth-child(3) { grid-column: 2; } /* privateCreateForm */
-  #sessionSelectionBlock > div:nth-child(4) { grid-column: 3; } /* Public */
+  #sessionSelectionBlock > div:nth-child(1) { grid-column: 1; } /* Private */
+  #sessionSelectionBlock > div:nth-child(2) { grid-column: 1; } /* privateCreateForm */
+  #sessionSelectionBlock > div:nth-child(3) { grid-column: 2; } /* Public */
 
   /* In-session: 3-column courts layout */
   #tabCourts.active {
@@ -1798,18 +1797,6 @@ body {
       </div>
       <!-- Session selection (hidden during share-link flow) -->
       <div id="sessionSelectionBlock">
-      <div class="setup-block">
-        <div class="section-title" style="margin-bottom:10px;">Offline Session</div>
-        <p style="font-size:0.82rem;color:var(--text-muted);margin-bottom:10px;">No sign-in needed. You add all players locally — no one else can join.</p>
-        <select class="setup-input" id="offlineSessionType" onchange="Onboard._clearOfflineError()" style="margin-bottom:8px;cursor:pointer;">
-          <option value="" disabled selected>Select session type...</option>
-          <option value="open">Open Play</option>
-          <option value="roundrobin">Round Robin</option>
-          <option value="tournament">Tournament</option>
-        </select>
-        <p id="offlineSessionError" class="setup-error" style="display:none;">Select a session type first</p>
-        <button type="button" class="btn-confirm-join" onclick="Onboard.startOffline()" style="width:100%;padding:12px;font-size:1rem;font-weight:700;">Start Offline Session</button>
-      </div>
       <div class="setup-block">
         <div class="section-title" style="margin-bottom:10px;">Private Session</div>
         <div style="display:flex;gap:8px;margin-bottom:4px;">
@@ -5423,21 +5410,6 @@ const Onboard = {
     }
   },
 
-  startOffline() {
-    const typeEl = document.getElementById('offlineSessionType');
-    const errEl = document.getElementById('offlineSessionError');
-    const sessionType = typeEl?.value;
-    if (!sessionType) {
-      if (errEl) errEl.style.display = 'block';
-      return;
-    }
-    if (errEl) errEl.style.display = 'none';
-    this._openBulkSetup({
-      quickPlay: false,
-      onComplete: (players) => this._startOfflineSession(sessionType, { players }),
-    });
-  },
-
   // One-tap entry point from the home screen: pick a format, then jump
   // straight into a new offline session, skipping sign-in and all setup forms.
   quickPlay() {
@@ -5492,8 +5464,8 @@ const Onboard = {
   },
 
   // ─── Bulk player setup (count → names/skill), used before a new session
-  // first opens: Quick Play, manual offline start, and creating a private
-  // or public session all funnel through this. ────────────────────────
+  // first opens: Quick Play and creating a private or public session all
+  // funnel through this. ────────────────────────
   _bulkCtx: null,
 
   _openBulkSetup(ctx) {
@@ -5605,11 +5577,6 @@ const Onboard = {
         joinedAt: Date.now(),
       });
     });
-  },
-
-  _clearOfflineError() {
-    const errEl = document.getElementById('offlineSessionError');
-    if (errEl) errEl.style.display = 'none';
   },
 
   _hide() {
