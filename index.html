@@ -1110,16 +1110,16 @@ body {
   border-color: #6ee7b7;
   box-shadow: 0 0 0 1px #6ee7b7, var(--shadow-md);
 }
-.court-card.pending {
+.court-card.scoring {
   border-color: var(--pending-border);
-  border-style: solid;
+  box-shadow: 0 0 0 1px var(--pending-border), var(--shadow-md);
 }
 .court-header {
   padding: 10px 14px;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  background: #6366f1;
+  background: var(--warning);
   color: white;
   font-weight: 700;
   font-size: 0.85rem;
@@ -1127,7 +1127,6 @@ body {
 }
 .court-card.inactive .court-header { background: #9ca3af; }
 .court-card.game-active .court-header { background: #059669; }
-.court-card.pending .court-header { background: #d97706; }
 .court-status { font-size: 0.68rem; font-weight: 500; opacity: 0.85; }
 .btn-cancel-game {
   background: rgba(255,255,255,0.2);
@@ -4123,7 +4122,7 @@ ${bracketHTML}
       const modeBadge = '';
       const timerMs = this.getTimerElapsed(game);
       const neverStarted = game.timerPaused && (game.timerElapsed || 0) === 0 && !game.timerResumedAt;
-      const cardClass = isScoring ? 'court-card' : 'court-card game-active';
+      const cardClass = isScoring ? 'court-card scoring' : 'court-card game-active';
 
       let bodyHTML;
       if (isScoring) {
