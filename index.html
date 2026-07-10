@@ -1644,8 +1644,7 @@ body {
   /* Dissolve the session-selection wrapper so its children are direct grid items */
   #sessionSelectionBlock { display: contents; }
   #sessionSelectionBlock > div:nth-child(1) { grid-column: 1; } /* Private */
-  #sessionSelectionBlock > div:nth-child(2) { grid-column: 1; } /* privateCreateForm */
-  #sessionSelectionBlock > div:nth-child(3) { grid-column: 2; } /* Public */
+  #sessionSelectionBlock > div:nth-child(2) { grid-column: 2; } /* Public */
 
   /* In-session: 3-column courts layout */
   #tabCourts.active {
@@ -1806,24 +1805,7 @@ body {
           <button type="button" class="btn-confirm-join" id="btnJoinPrivate" onclick="Onboard.joinSavedPrivate()" disabled style="white-space:nowrap;padding:12px 18px;font-size:1rem;flex:0 0 auto;">Join</button>
         </div>
         <div id="privateConfirmInline" style="display:none;margin-bottom:8px;"></div>
-        <button type="button" class="btn-outline" onclick="Onboard.toggleCreatePrivate()" id="btn-create-private" style="width:100%;padding:12px 14px;margin-top:8px;font-size:1rem;font-weight:700;font-family:inherit;">+ Create New</button>
-      </div>
-      <div id="privateCreateForm" style="display:none;margin-top:10px;padding:14px;background:var(--bg);border:1.5px solid var(--border);border-radius:var(--radius);">
-        <div style="font-size:0.78rem;font-weight:600;color:var(--text-light);margin-bottom:10px;">New Private Session</div>
-        <input type="text" class="setup-input" id="privateSessionName" placeholder="Session name" maxlength="20" style="margin-bottom:8px;">
-        <div style="display:flex;gap:8px;align-items:center;margin-bottom:10px;">
-          <input type="text" class="setup-input" id="privatePasscode" placeholder="Passcode (4 chars)" maxlength="4" style="flex:1;margin-bottom:0;text-transform:uppercase;">
-          <button type="button" class="btn-outline" onclick="Onboard.randomPasscode()" style="white-space:nowrap;padding:12px 14px;font-size:1rem;font-weight:700;">Random</button>
-        </div>
-        <select class="setup-input" id="selectSessionType" onchange="Onboard.setSessionType(this.value)" style="margin-bottom:12px;cursor:pointer;">
-          <option value="" disabled selected>Select session type...</option>
-          <option value="open">Open Play</option>
-          <option value="roundrobin">Round Robin</option>
-          <option value="tournament">Tournament</option>
-        </select>
-        <p id="privateSessionError" class="setup-error" style="display:none;">Enter a session name and 4-character passcode</p>
-        <button type="button" class="btn-confirm-join" onclick="Onboard.createPrivate()" style="width:100%;padding:12px;font-size:1rem;font-weight:700;">Create &amp; Join</button>
-        <div id="createConfirmInline" style="display:none;margin-top:6px;"></div>
+        <button type="button" class="btn-outline" onclick="Onboard.openCreatePrivate()" id="btn-create-private" style="width:100%;padding:12px 14px;margin-top:8px;font-size:1rem;font-weight:700;font-family:inherit;">+ Create New</button>
       </div>
       <div class="setup-block">
         <div class="section-title" style="margin-bottom:10px;">Public Session</div>
@@ -2130,6 +2112,31 @@ body {
         </select>
         <p id="quickPlayTypeError" class="setup-error" style="display:none;">Select a session type first</p>
         <button type="button" class="btn-confirm-join" style="width:100%;padding:12px;font-size:1rem;font-weight:700;" onclick="Onboard._quickPlayContinueType()">Continue</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── New Private Session: name, passcode, format ── -->
+  <div id="createPrivateModal" class="hiw-overlay" style="display:none;" onclick="Onboard._createPrivateCancel(event)">
+    <div class="hiw-modal" style="max-width:380px;" onclick="event.stopPropagation()">
+      <div class="hiw-header">
+        <h2>New Private Session</h2>
+        <button class="hiw-close" onclick="Onboard._createPrivateCancel()" aria-label="Close">&times;</button>
+      </div>
+      <div class="hiw-body">
+        <input type="text" class="setup-input" id="privateSessionName" placeholder="Session name" maxlength="20" style="width:100%;margin-bottom:0;">
+        <div style="display:flex;gap:8px;align-items:center;">
+          <input type="text" class="setup-input" id="privatePasscode" placeholder="Passcode (4 chars)" maxlength="4" style="flex:1;margin-bottom:0;text-transform:uppercase;">
+          <button type="button" class="btn-outline" onclick="Onboard.randomPasscode()" style="white-space:nowrap;padding:12px 14px;font-size:1rem;font-weight:700;">Random</button>
+        </div>
+        <select class="setup-input" id="selectSessionType" onchange="Onboard.setSessionType(this.value)" style="width:100%;margin-bottom:0;cursor:pointer;">
+          <option value="" disabled selected>Select session type...</option>
+          <option value="open">Open Play</option>
+          <option value="roundrobin">Round Robin</option>
+          <option value="tournament">Tournament</option>
+        </select>
+        <p id="privateSessionError" class="setup-error" style="display:none;">Enter a session name and 4-character passcode</p>
+        <button type="button" class="btn-confirm-join" style="width:100%;padding:12px;font-size:1rem;font-weight:700;" onclick="Onboard.createPrivate()">Create &amp; Join</button>
       </div>
     </div>
   </div>
@@ -5025,12 +5032,17 @@ const Onboard = {
   _selfProfileCtx: null,
 
   _promptSelfProfile(onComplete) {
-    this._selfProfileCtx = { onComplete };
     const saved = this._savedUser() || {};
+    // Already have a saved name — skip the prompt; they can edit it in Settings.
+    if (saved.name) {
+      onComplete?.(saved);
+      return;
+    }
+    this._selfProfileCtx = { onComplete };
     const nameEl = document.getElementById('selfProfileName');
     const skillEl = document.getElementById('selfProfileSkill');
     const errEl = document.getElementById('selfProfileNameError');
-    if (nameEl) nameEl.value = saved.name || Admin._user?.displayName || '';
+    if (nameEl) nameEl.value = Admin._user?.displayName || '';
     if (skillEl) skillEl.value = saved.skill != null ? App.fmtSkill(saved.skill) : '';
     if (errEl) errEl.style.display = 'none';
     document.getElementById('selfProfileModal').style.display = 'flex';
@@ -5073,7 +5085,7 @@ const Onboard = {
 
   _showInlineConfirm(elId, label, onYes) {
     // Hide all other inline confirms
-    ['publicConfirmInline', 'privateConfirmInline', 'createConfirmInline', 'publicCreateConfirmInline'].forEach(id => {
+    ['publicConfirmInline', 'privateConfirmInline', 'publicCreateConfirmInline'].forEach(id => {
       const el = document.getElementById(id);
       if (el) { el.style.display = 'none'; el.innerHTML = ''; }
     });
@@ -5094,7 +5106,7 @@ const Onboard = {
   },
 
   _inlineNo() {
-    ['publicConfirmInline', 'privateConfirmInline', 'createConfirmInline', 'publicCreateConfirmInline'].forEach(id => {
+    ['publicConfirmInline', 'privateConfirmInline', 'publicCreateConfirmInline'].forEach(id => {
       const el = document.getElementById(id);
       if (el) { el.style.display = 'none'; el.innerHTML = ''; }
     });
@@ -5264,21 +5276,29 @@ const Onboard = {
     this._newSessionType = type;
   },
 
-  toggleCreatePrivate() {
+  openCreatePrivate() {
     if (!Admin.isSignedIn()) {
       alert('Sign in with Google to create private sessions and to save your preferences. Use the back arrow and choose "Sign in with Google".');
       return;
     }
-    const form = document.getElementById('privateCreateForm');
-    if (form) {
-      const opening = form.style.display === 'none';
-      form.style.display = opening ? '' : 'none';
-      if (opening) {
-        this._newSessionType = '';
-        const sel = document.getElementById('selectSessionType');
-        if (sel) sel.selectedIndex = 0;
-      }
-    }
+    this._newSessionType = '';
+    const nameEl = document.getElementById('privateSessionName');
+    const codeEl = document.getElementById('privatePasscode');
+    const sel = document.getElementById('selectSessionType');
+    const errEl = document.getElementById('privateSessionError');
+    if (nameEl) nameEl.value = '';
+    if (codeEl) codeEl.value = '';
+    if (sel) sel.selectedIndex = 0;
+    if (errEl) errEl.style.display = 'none';
+    document.getElementById('createPrivateModal').style.display = 'flex';
+    document.body.style.overflow = 'hidden';
+    nameEl?.focus();
+  },
+
+  _createPrivateCancel(event) {
+    if (event && event.target !== event.currentTarget) return;
+    document.getElementById('createPrivateModal').style.display = 'none';
+    document.body.style.overflow = '';
   },
 
   randomPasscode() {
@@ -5301,18 +5321,16 @@ const Onboard = {
     if (errEl) errEl.style.display = 'none';
     const id = 'pvt-' + sessionName.toLowerCase().replace(/[^a-z0-9]/g, '');
     this._savePrivateSession(id, sessionName);
+    document.getElementById('createPrivateModal').style.display = 'none';
     this._promptSelfProfile(() => {
       this._pendingKey = id;
       this._pendingLabel = sessionName;
       this._pendingPasscode = passcode;
       this._pendingIsCreate = true;
       this._pendingSessionType = this._newSessionType;
-      const typeLabel = this._newSessionType === 'roundrobin' ? ' (Round Robin)' : this._newSessionType === 'tournament' ? ' (Tournament)' : ' (Open Play)';
-      this._showInlineConfirm('createConfirmInline', sessionName + typeLabel, () => {
-        this._openBulkSetup({
-          quickPlay: false,
-          onComplete: (players) => { this._pendingBulkPlayers = players; this.confirmJoin(); },
-        });
+      this._openBulkSetup({
+        quickPlay: false,
+        onComplete: (players) => { this._pendingBulkPlayers = players; this.confirmJoin(); },
       });
     });
   },
@@ -5382,8 +5400,8 @@ const Onboard = {
   showStep() {
     const setup = document.getElementById('sessionSetupSection');
     if (setup) setup.style.display = '';
-    const pvtForm = document.getElementById('privateCreateForm');
-    if (pvtForm) pvtForm.style.display = 'none';
+    const pvtModal = document.getElementById('createPrivateModal');
+    if (pvtModal) pvtModal.style.display = 'none';
     const sharePasscode = document.getElementById('sharePasscodePrompt');
     if (sharePasscode) sharePasscode.style.display = 'none';
     this._inlineNo();
