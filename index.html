@@ -714,6 +714,12 @@ body {
   line-height: 1.35;
   margin-top: 2px;
 }
+.queue-list-box {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 0 12px;
+}
 .queue-list { display: flex; flex-direction: column; gap: 0; }
 .queue-row {
   display: flex;
@@ -1876,7 +1882,9 @@ body {
     <div id="playersSection" class="queue-bar-wrap" style="margin-bottom:14px;">
       <div class="section-title" id="queueTitle" style="margin-bottom:4px;">Queue</div>
       <div class="section-subtitle" id="queueSubtitle" style="margin-bottom:10px;">Players waiting to be assigned to a court.</div>
-      <div id="playerList" class="queue-list"></div>
+      <div class="queue-list-box">
+        <div id="playerList" class="queue-list"></div>
+      </div>
       <div id="queueHint" class="section-subtitle" style="margin-top:8px;">Use &#x23F8; to sit out temporarily or &times; to remove.</div>
       <button id="rrUnlockBtn" class="btn-outline" onclick="App.isRoundRobin()?App.rrUnlockPlayers():App.bracketUnlockPlayers()" style="display:none;margin-top:8px;width:100%;color:var(--warning);border-color:var(--warning);font-size:0.82rem;">Unlock Players &amp; Reset</button>
       <button id="btnQueueAddPlayer" class="btn-add-player" style="display:none;margin-top:10px;" onclick="App.openQueueAddPlayer()">+ Add Player</button>
@@ -3975,7 +3983,7 @@ ${bracketHTML}
     const onCourts = this.getPlayersOnCourts();
     const queuePlayers = this.state.players.filter(p => !onCourts.has(p.id));
     if (queuePlayers.length === 0) {
-      el.innerHTML = '<span style="color:var(--text-muted);font-size:0.85rem;font-style:italic;">No players yet — add someone to get started</span>';
+      el.innerHTML = '<span style="display:block;padding:10px 0;color:var(--text-muted);font-size:0.85rem;font-style:italic;">No players waiting in the queue</span>';
       return;
     }
     el.innerHTML = queuePlayers.map(p => {
