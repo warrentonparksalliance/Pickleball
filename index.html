@@ -1426,6 +1426,14 @@ body {
   font-size: 0.72rem;
   color: var(--text-muted);
 }
+.match-card-gameover {
+  text-align: center;
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  color: var(--text-muted);
+  margin-bottom: 6px;
+}
 .match-card-body {
   display: flex;
   align-items: center;
@@ -4482,6 +4490,7 @@ ${bracketHTML}
           <span>${headerLeft}</span>
           <span>${headerRight}</span>
         </div>
+        <div class="match-card-gameover">GAME OVER</div>
         <div class="match-card-body">
           <div class="match-card-team ${s1Class}">${s1.join(' & ')}</div>
           <span class="match-card-vs">vs</span>
@@ -6115,6 +6124,7 @@ const MyHistory = {
             <span>${dateTime} ${sessionTag}</span>
             <span>${dur}</span>
           </div>
+          <div class="match-card-gameover">GAME OVER</div>
           <div class="match-card-body">
             <div class="match-card-team ${s1Class}">${s1.join(' & ')}</div>
             <span class="match-card-vs">vs</span>
