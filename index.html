@@ -1286,13 +1286,6 @@ body {
 
 /* ── Score entry ────────────────────────────── */
 .score-entry { display: flex; flex-direction: column; gap: 6px; }
-.score-entry-label {
-  font-size: 0.72rem;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  color: var(--text-muted);
-}
 .score-side {
   display: flex;
   align-items: center;
@@ -1301,6 +1294,14 @@ body {
   border-radius: var(--radius-sm);
 }
 .score-side .side-names { flex: 1; font-size: 0.85rem; font-weight: 600; }
+.score-input-col { display: flex; flex-direction: column; align-items: center; gap: 2px; }
+.score-input-caption {
+  font-size: 0.62rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--text-muted);
+}
 .score-side input[type="number"] {
   width: 62px;
   padding: 6px 8px;
@@ -4129,15 +4130,20 @@ ${bracketHTML}
         const s1Names = game.side1.map(id => { const p = this.getPlayer(id); return p ? this.esc(p.name) + (p.score != null ? ` <span style="font-weight:400;opacity:0.7;">(${this.fmtSkill(p.score)})</span>` : '') : '?'; }).join(' & ');
         const s2Names = game.side2.map(id => { const p = this.getPlayer(id); return p ? this.esc(p.name) + (p.score != null ? ` <span style="font-weight:400;opacity:0.7;">(${this.fmtSkill(p.score)})</span>` : '') : '?'; }).join(' & ');
         bodyHTML = `<div class="score-entry">
-          <div class="score-entry-label">Enter final score</div>
           <div class="score-side side-1">
             <span class="side-names">${s1Names}</span>
-            <input type="number" id="score-s1-${courtId}" min="0" placeholder="–" onkeydown="if(event.key==='Enter')App.submitScore(${courtId})" oninput="document.getElementById('score-err-${courtId}').textContent=''">
+            <div class="score-input-col">
+              <input type="number" id="score-s1-${courtId}" min="0" placeholder="–" onkeydown="if(event.key==='Enter')App.submitScore(${courtId})" oninput="document.getElementById('score-err-${courtId}').textContent=''">
+              <span class="score-input-caption">points</span>
+            </div>
           </div>
           <div class="court-vs">VS</div>
           <div class="score-side side-2">
             <span class="side-names">${s2Names}</span>
-            <input type="number" id="score-s2-${courtId}" min="0" placeholder="–" onkeydown="if(event.key==='Enter')App.submitScore(${courtId})" oninput="document.getElementById('score-err-${courtId}').textContent=''">
+            <div class="score-input-col">
+              <input type="number" id="score-s2-${courtId}" min="0" placeholder="–" onkeydown="if(event.key==='Enter')App.submitScore(${courtId})" oninput="document.getElementById('score-err-${courtId}').textContent=''">
+              <span class="score-input-caption">points</span>
+            </div>
           </div>
           <div id="score-err-${courtId}" class="score-error"></div>
           ${!this.isRoundRobin() && !this.isTournament() ? `<label style="display:flex;align-items:center;justify-content:flex-end;gap:6px;font-size:0.82rem;color:var(--text-light);cursor:pointer;margin-top:4px;">
