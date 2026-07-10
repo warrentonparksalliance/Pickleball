@@ -2726,6 +2726,10 @@ const App = {
         courtId,
         side1: [...game.side1],
         side2: [...game.side2],
+        // Snapshot names so history stays readable after a player is removed
+        // from the session (e.g. auto-expired) or the session is otherwise mutated.
+        side1Names: game.side1.map(id => this.getPlayer(id)?.name || '?'),
+        side2Names: game.side2.map(id => this.getPlayer(id)?.name || '?'),
         mode: game.mode,
         score1,
         score2,
@@ -2810,17 +2814,18 @@ const App = {
     this.render();
   },
 
-  MAX_MATCH_MS: 100 * 60 * 1000, // 100 minutes
+  MAX_MATCH_MS: 100 * 60 * 1000,        // 100 minutes — normal match duration cap (requires the timer to have been started)
+  COURT_STUCK_MS: 6 * 60 * 60 * 1000,   // 6 hours — force-end a match that's been sitting on a court, win or lose, and send its players back to the queue
+  SESSION_MAX_MS: 12 * 60 * 60 * 1000,  // 12 hours — remove a player (queued or on a court) from the session entirely
 
   _lastExpireCheck: 0,
 
-  // Remove stale players from a given ID list. Returns true if self was expired.
+  // Remove stale players (in the session 12+ hours) from a given ID list. Returns true if self was expired.
   _expireStaleFromCourt(playerIds) {
     const now = Date.now();
-    const FOUR_HOURS = 4 * 60 * 60 * 1000;
     const stale = playerIds.filter(id => {
       const p = this.getPlayer(id);
-      return p && now - (p.joinedAt || 0) >= FOUR_HOURS;
+      return p && now - (p.joinedAt || 0) >= this.SESSION_MAX_MS;
     });
     if (stale.length === 0) return false;
     const staleIds = new Set(stale);
@@ -2831,7 +2836,7 @@ const App = {
   },
 
   _handleSelfExpired() {
-    alert('Your session timed out after 4 hours. Please rejoin to continue playing.');
+    alert('Your session timed out after 12 hours. Please rejoin to continue playing.');
     Session.leave();
   },
 
@@ -2845,12 +2850,34 @@ const App = {
     const now = Date.now();
     if (now - this._lastExpireCheck < 60_000) return;
     this._lastExpireCheck = now;
-    const onCourt = this.getPlayersOnCourts();
-    const eligible = this.state.players.filter(p => !onCourt.has(p.id)).map(p => p.id);
+
+    let changed = false;
+
+    // A match that's been sitting on a court for 6+ hours gets force-ended so
+    // its players return to the queue — catches matches whose timer was never
+    // started (and so never hit the normal 100-minute cap).
+    for (const [courtId, game] of Object.entries(this.state.activeGames)) {
+      if (game.startTime && now - game.startTime >= this.COURT_STUCK_MS) {
+        this._expireMatch(courtId);
+        changed = true;
+      }
+    }
+
+    // Anyone who's been in the session 12+ hours is removed entirely, whether
+    // they're queued or on a court. If they're mid-match, end that match first
+    // so the rest of the game returns to the queue instead of vanishing.
+    for (const [courtId, game] of Object.entries(this.state.activeGames)) {
+      const gamePlayers = [...(game.side1 || []), ...(game.side2 || [])];
+      const hasStalePlayer = gamePlayers.some(id => now - (this.getPlayer(id)?.joinedAt || 0) >= this.SESSION_MAX_MS);
+      if (hasStalePlayer) { this._expireMatch(courtId); changed = true; }
+    }
+    const allIds = this.state.players.map(p => p.id);
     const before = this.state.players.length;
-    const selfExpired = this._expireStaleFromCourt(eligible);
+    const selfExpired = this._expireStaleFromCourt(allIds);
     if (selfExpired) { this._handleSelfExpired(); return; }
-    if (this.state.players.length < before) { this.saveState(); this.render(); }
+    if (this.state.players.length < before) changed = true;
+
+    if (changed) { this.saveState(); this.render(); }
   },
 
   updateTimers() {
@@ -2896,6 +2923,8 @@ const App = {
       courtId,
       side1: [...game.side1],
       side2: [...game.side2],
+      side1Names: game.side1.map(id => this.getPlayer(id)?.name || '?'),
+      side2Names: game.side2.map(id => this.getPlayer(id)?.name || '?'),
       mode: game.mode,
       duration,
       startTime: game.startTime || null,
@@ -4503,10 +4532,24 @@ ${bracketHTML}
     this.renderHistory();
   },
 
+  // Players who've left the session (auto-expired, removed, etc.) no longer
+  // resolve via getPlayer — fall back to the name snapshotted on the match
+  // history entry at the time the match was played.
+  _historyNameMap(history) {
+    const map = new Map();
+    history.forEach(m => {
+      (m.side1 || []).forEach((id, i) => { if (m.side1Names?.[i]) map.set(id, m.side1Names[i]); });
+      (m.side2 || []).forEach((id, i) => { if (m.side2Names?.[i]) map.set(id, m.side2Names[i]); });
+    });
+    return map;
+  },
+
   // Overall session stats: most-winning team pairing and most-winning individual player
   renderHistoryStats(history) {
     const stats = document.getElementById('historyStats');
     if (!stats) return;
+    const nameMap = this._historyNameMap(history);
+    const nameFor = id => this.getPlayer(id)?.name || nameMap.get(id) || '?';
 
     const teamWins = new Map(); // sorted-ids key -> { ids, wins }
     const playerWins = new Map(); // id -> wins
@@ -4536,8 +4579,8 @@ ${bracketHTML}
     }
     stats.style.display = '';
 
-    const teamNames = bestTeams.map(e => e.ids.map(id => this.getPlayer(id)?.name || '?').join(' & '));
-    const playerNames = bestPlayerIds.map(id => this.getPlayer(id)?.name || '?');
+    const teamNames = bestTeams.map(e => e.ids.map(id => nameFor(id)).join(' & '));
+    const playerNames = bestPlayerIds.map(id => nameFor(id));
     document.getElementById('historyStatTeamName').textContent = teamNames.length ? teamNames.join(', ') : '–';
     document.getElementById('historyStatTeamWins').textContent = teamNames.length
       ? `${maxTeamWins} win${maxTeamWins === 1 ? '' : 's'}${teamNames.length > 1 ? ' (tie)' : ''}` : '';
@@ -4565,15 +4608,15 @@ ${bracketHTML}
       history = history.filter(m => [...m.side1, ...m.side2].includes(Onboard.selfId));
     }
 
-    // Filter by player name search
+    // Filter by player name search — fall back to the snapshotted name for
+    // players who've since been removed from the session.
+    const nameMap = this._historyNameMap(this.state.roundHistory || []);
+    const nameFor = id => this.getPlayer(id)?.name || nameMap.get(id) || '?';
     const search = (document.getElementById('historySearch')?.value || '').toLowerCase().trim();
     if (search) {
       history = history.filter(m => {
         const allIds = [...m.side1, ...m.side2];
-        return allIds.some(id => {
-          const p = this.getPlayer(id);
-          return p && p.name.toLowerCase().includes(search);
-        });
+        return allIds.some(id => nameFor(id).toLowerCase().includes(search));
       });
     }
 
@@ -4583,8 +4626,8 @@ ${bracketHTML}
     }
 
     el.innerHTML = history.map(m => {
-      const s1 = m.side1.map(id => { const p = this.getPlayer(id); return p ? this.esc(p.name) + (p.score != null ? ` <span style="font-weight:400;opacity:0.7;">(${this.fmtSkill(p.score)})</span>` : '') : '?'; });
-      const s2 = m.side2.map(id => { const p = this.getPlayer(id); return p ? this.esc(p.name) + (p.score != null ? ` <span style="font-weight:400;opacity:0.7;">(${this.fmtSkill(p.score)})</span>` : '') : '?'; });
+      const s1 = m.side1.map(id => { const p = this.getPlayer(id); return this.esc(nameFor(id)) + (p && p.score != null ? ` <span style="font-weight:400;opacity:0.7;">(${this.fmtSkill(p.score)})</span>` : ''); });
+      const s2 = m.side2.map(id => { const p = this.getPlayer(id); return this.esc(nameFor(id)) + (p && p.score != null ? ` <span style="font-weight:400;opacity:0.7;">(${this.fmtSkill(p.score)})</span>` : ''); });
       const hasScores = m.score1 != null && m.score2 != null;
       const s1Class = hasScores ? (m.winner === 1 ? 'winner' : m.winner === 2 ? 'loser' : '') : '';
       const s2Class = hasScores ? (m.winner === 2 ? 'winner' : m.winner === 1 ? 'loser' : '') : '';
