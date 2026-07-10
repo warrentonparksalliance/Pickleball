@@ -4218,7 +4218,7 @@ ${bracketHTML}
           <span>Court ${courtId} ${modeBadge}</span>
           <div class="court-controls" style="gap:8px;">
             <span class="court-status">${isScoring ? 'Score entry' : ''}</span>
-            ${!isScoring ? `<button class="btn-cancel-game" onclick="App.cancelGame(${courtId})">&times;</button>` : ''}
+            ${!isScoring && !this.isRoundRobin() && !this.isTournament() ? `<button class="btn-cancel-game" onclick="App.cancelGame(${courtId})">&times;</button>` : ''}
           </div>
         </div>
         <div class="court-body">${bodyHTML}</div>
