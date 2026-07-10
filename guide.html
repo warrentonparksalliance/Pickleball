@@ -78,7 +78,7 @@ footer a:hover { text-decoration: underline; }
   <li><strong>&#9889; Quick Play</strong> — Pick a format (Open Play, Round Robin, or Tournament) and jump straight into an offline session on this device. No sign-in, no setup — just tell it how many players and their names.</li>
   <li><strong>Sign in with Google</strong> — Unlocks full features: create and manage private sessions, save your preferences across devices, and keep a personal match history.</li>
 </ul>
-<p>A <strong>Continue without signing in</strong> guest option only appears if you open a link someone shared with you to a specific session — it lets you join that session as a guest without creating an account.</p>
+<p>Opening a link someone shared with you to a specific session takes you to a focused screen for that session instead of the general landing page — it's headed <strong>"Join [session name]"</strong>, hides Quick Play (since it starts an unrelated offline session), and narrows your choice to <strong>Sign in with Google</strong> (to save your preferences and track match history) or <strong>Continue as Guest</strong> (just your name and an optional skill level, nothing saved).</p>
 <p>You can also tap <strong>How it Works</strong> at the bottom of the entry screen for a short in-app overview at any time.</p>
 
 <h3>Quick Play</h3>
@@ -149,6 +149,7 @@ footer a:hover { text-decoration: underline; }
   <li>If a partner is on a court or sitting out, you'll be assigned normally with other players.</li>
   <li>You can add multiple partners — the app will pair you with whichever one is available.</li>
 </ul>
+<p>In <strong>Round Robin</strong> and <strong>Tournament</strong> sessions, partners work a little differently: add a partner while the roster is still being built and you'll be teamed together for the <strong>whole</strong> round robin or tournament, not just one match. Anyone left without a partner is randomly paired with another unpartnered player once the roster is locked. The Partner(s) card disappears from Settings after locking, since teams are fixed at that point.</p>
 <p>Partner preferences aren't available in offline (Quick Play) sessions — there's no Settings tab in those.</p>
 
 <h2>Share Link</h2>
@@ -175,30 +176,30 @@ footer a:hover { text-decoration: underline; }
 </div>
 
 <h3>Round Robin Mode</h3>
-<p>Round Robin is available for private (and offline) sessions and creates a structured tournament schedule:</p>
+<p>Round Robin is available for private (and offline) sessions and creates a structured tournament schedule of fixed doubles teams — you'll need at least <strong>4 players (2 teams)</strong> to start:</p>
 <ol class="steps">
   <li>Add all players to the session.</li>
   <li>Tap <strong>Lock Players to Generate Schedule</strong> in the assign section.</li>
   <li>Set the <strong>number of courts</strong> and tap <strong>Generate Schedule</strong>.</li>
   <li>Round 1 is assigned to courts. All upcoming rounds are shown below.</li>
-  <li>When all Round 1 games finish, tap <strong>Start Next Round</strong> to advance.</li>
+  <li>When all Round 1 games finish, tap <strong>Start Next Round</strong> to advance. Once every round has been played, the button reads <strong>All Rounds Complete</strong>.</li>
 </ol>
 <p>Admins can switch between Open Play, Round Robin, and Tournament in the Settings tab, and can unlock players to modify the roster. All players must be paired into doubles teams (with a partner or automatically); an odd number of unpaired players will prompt you to add one more or pair everyone up.</p>
 
 <h3>Tournament Mode</h3>
-<p>Tournament mode creates a <strong>single-elimination bracket</strong> for private (and offline) sessions:</p>
+<p>Tournament mode creates a <strong>single-elimination bracket</strong> of doubles teams for private (and offline) sessions — you'll need at least <strong>4 players (2 teams)</strong> to start:</p>
 <ol class="steps">
   <li>Add all players to the session.</li>
   <li>Tap <strong>Lock Players to Generate Bracket</strong> in the assign section.</li>
   <li>Set the <strong>number of courts</strong> and tap <strong>Generate Bracket</strong>.</li>
   <li>The bracket is displayed with all rounds. First-round matches are assigned to courts.</li>
-  <li>When a match ends, enter scores — <strong>ties are not allowed</strong> in tournament matches. The winner automatically advances in the bracket. (Saving without a score just clears the court without recording a winner, so use it sparingly here.)</li>
+  <li>When a match ends, enter scores — <strong>ties are not allowed</strong> in tournament matches. The winning team automatically advances in the bracket. (Saving without a score just clears the court without recording a winner, so use it sparingly here.)</li>
   <li>When all matches in a round are complete, tap to start the next round (Semifinals, Final, etc.).</li>
   <li>If there are more matches than courts, remaining matches can be started as courts free up.</li>
 </ol>
 
 <div class="tip">
-  <strong>Seeding:</strong> Players are seeded by skill level (if set) so top seeds face lower seeds in early rounds. If fewer players than a power of 2, top seeds receive first-round byes. Tap <strong>&#128438; Save as PDF</strong> above the bracket to export it.
+  <strong>Seeding:</strong> Teams are seeded by combined skill level (if set) so top seeds face lower seeds in early rounds. If fewer teams than a power of 2, top seeds receive first-round byes. Tap <strong>&#128438; Save as PDF</strong> above the bracket to export it.
 </div>
 
 <h2>Match History</h2>
