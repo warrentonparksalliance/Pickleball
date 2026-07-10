@@ -2090,8 +2090,8 @@ body {
         </div>
         <div class="hiw-section">
           <h3>🤝 Adding Partners</h3>
-          <p>Once you're in a session, open the <strong>Partners</strong> tab to link yourself with another player you'd like to play alongside. Partners are kept together on the same side of the court when courts are assigned.</p>
-          <p style="margin-top:6px;">You can add or remove a partner at any time — the change takes effect the next time courts are assigned.</p>
+          <p>Once you're in a session, open the <strong>Settings</strong> tab to link yourself with another player you'd like to play alongside. Partners are kept together on the same side of the court when courts are assigned.</p>
+          <p style="margin-top:6px;">In Open Play, you can add or remove a partner at any time — the change takes effect the next time courts are assigned. In Round Robin and Tournament, partners must be set while the roster is still being built; once locked, teams are fixed for the rest of the session.</p>
         </div>
         <div class="hiw-section">
           <h3>📋 Match History</h3>
@@ -4676,6 +4676,16 @@ const Session = {
       try { localStorage.setItem('courtManager', JSON.stringify(App.state)); } catch(e) {}
       this._patch({ players: App.state.players, nextId: App.state.nextId });
       App.render();
+      // New joiners always land in the queue — but if the round robin schedule or
+      // tournament bracket is already locked, they won't be part of it until an
+      // admin unlocks and regenerates, so let them know why they're just waiting.
+      const rr = App.isRoundRobin(), tourn = App.isTournament();
+      const locked = (rr && App.state._rrLocked) || (tourn && App.state._bracketLocked);
+      if (locked) {
+        const kind = rr ? 'round robin' : 'tournament';
+        const noun = rr ? 'schedule' : 'bracket';
+        alert(`You've been added to the queue, but this ${kind}'s ${noun} is already locked. An admin will need to unlock the roster and regenerate it to include you.`);
+      }
     }
   },
 
