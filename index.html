@@ -4676,6 +4676,16 @@ const Session = {
       try { localStorage.setItem('courtManager', JSON.stringify(App.state)); } catch(e) {}
       this._patch({ players: App.state.players, nextId: App.state.nextId });
       App.render();
+      // New joiners always land in the queue — but if the round robin schedule or
+      // tournament bracket is already locked, they won't be part of it until an
+      // admin unlocks and regenerates, so let them know why they're just waiting.
+      const rr = App.isRoundRobin(), tourn = App.isTournament();
+      const locked = (rr && App.state._rrLocked) || (tourn && App.state._bracketLocked);
+      if (locked) {
+        const kind = rr ? 'round robin' : 'tournament';
+        const noun = rr ? 'schedule' : 'bracket';
+        alert(`You've been added to the queue, but this ${kind}'s ${noun} is already locked. An admin will need to unlock the roster and regenerate it to include you.`);
+      }
     }
   },
 
