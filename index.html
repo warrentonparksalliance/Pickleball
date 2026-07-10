@@ -1797,16 +1797,18 @@ body {
     <div class="setup-card">
       <!-- Entry options: sign in or join as guest -->
       <div id="setupEntryOptions" class="setup-block">
-        <h2 style="font-size:1.75rem;font-weight:700;margin-bottom:6px;color:var(--text);">Welcome!</h2>
-        <p style="font-size:0.9rem;color:var(--text-muted);margin-bottom:18px;line-height:1.4;">Manage your pickleball session queue, court assignments, and match history.</p>
-        <button class="btn-confirm-join" id="btnQuickPlay" onclick="Onboard.quickPlay()" style="width:100%;padding:12px;font-size:1rem;font-weight:700;margin-bottom:10px;display:flex;align-items:center;justify-content:center;gap:8px;">
-          &#9889; Quick Play
-        </button>
-        <p style="font-size:0.78rem;color:var(--text-muted);margin:-4px 0 14px;line-height:1.4;">Jumps straight into a new offline session on this device &mdash; no sign-in, no setup. Pick Open Play, Round Robin, or Tournament.</p>
-        <div style="display:flex;align-items:center;gap:12px;margin-bottom:10px;">
-          <div style="flex:1;height:1px;background:var(--border);"></div>
-          <span style="font-size:0.75rem;font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.05em;">or</span>
-          <div style="flex:1;height:1px;background:var(--border);"></div>
+        <h2 id="entryHeading" style="font-size:1.75rem;font-weight:700;margin-bottom:6px;color:var(--text);">Welcome!</h2>
+        <p id="entrySubtitle" style="font-size:0.9rem;color:var(--text-muted);margin-bottom:18px;line-height:1.4;">Manage your pickleball session queue, court assignments, and match history.</p>
+        <div id="entryQuickPlayBlock">
+          <button class="btn-confirm-join" id="btnQuickPlay" onclick="Onboard.quickPlay()" style="width:100%;padding:12px;font-size:1rem;font-weight:700;margin-bottom:10px;display:flex;align-items:center;justify-content:center;gap:8px;">
+            &#9889; Quick Play
+          </button>
+          <p style="font-size:0.78rem;color:var(--text-muted);margin:-4px 0 14px;line-height:1.4;">Jumps straight into a new offline session on this device &mdash; no sign-in, no setup. Pick Open Play, Round Robin, or Tournament.</p>
+          <div style="display:flex;align-items:center;gap:12px;margin-bottom:10px;">
+            <div style="flex:1;height:1px;background:var(--border);"></div>
+            <span style="font-size:0.75rem;font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.05em;">or</span>
+            <div style="flex:1;height:1px;background:var(--border);"></div>
+          </div>
         </div>
         <button class="btn-confirm-join" id="btnEntryGoogle" onclick="Admin.signIn()" style="width:100%;padding:12px;font-size:1rem;font-weight:700;margin-bottom:10px;display:flex;align-items:center;justify-content:center;gap:8px;">
           <svg width="16" height="16" viewBox="0 0 48 48" style="flex-shrink:0;"><path fill="#4285F4" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#34A853" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59a14.5 14.5 0 0 1 0-9.18l-7.98-6.19a24.0 24.0 0 0 0 0 21.56l7.98-6.19z"/><path fill="#EA4335" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg>
@@ -1814,7 +1816,7 @@ body {
         </button>
         <!-- Guest join is only offered when arriving via a shared session link -->
         <div id="guestContinueBlock" style="display:none;">
-          <button class="btn-outline" onclick="Onboard.showGuestConfirm()" style="width:100%;padding:12px;font-size:1rem;font-weight:700;">Continue without signing in</button>
+          <button class="btn-outline" onclick="Onboard.showGuestConfirm()" style="width:100%;padding:12px;font-size:1rem;font-weight:700;">Continue as Guest</button>
           <div id="guestConfirmMsg" style="display:none;margin-top:10px;padding:12px;background:#fef9c3;border:1.5px solid #fbbf24;border-radius:var(--radius-sm);">
             <p style="font-size:0.85rem;color:#78350f;line-height:1.45;margin-bottom:10px;">&#9888;&#xFE0F; Your name and preferences <strong>won't be saved</strong> for next time, and you won't have access to personal match history across sessions.</p>
             <div style="display:flex;gap:8px;">
@@ -1823,8 +1825,8 @@ body {
             </div>
           </div>
         </div>
-        <div style="height:1px;background:var(--border);margin:18px 0 14px;"></div>
-        <button class="btn-hiw" onclick="App.openHiw()">&#9654; How it Works</button>
+        <div id="entryHiwDivider" style="height:1px;background:var(--border);margin:18px 0 14px;"></div>
+        <button class="btn-hiw" id="btnEntryHiw" onclick="App.openHiw()">&#9654; How it Works</button>
       </div>
       <!-- Signed-in profile card (shown for Google-signed-in users) -->
       <div id="setupSignedIn" class="setup-block" style="display:none;">
@@ -5055,6 +5057,14 @@ const Onboard = {
       this._shareLink = { sessionId, label };
       const entryOpts = document.getElementById('setupEntryOptions');
       if (entryOpts) entryOpts.style.display = '';
+      // Focus the entry screen on this specific session — hide the unrelated
+      // Quick Play option and make it clear what signing in vs. guest gets you
+      const heading = document.getElementById('entryHeading');
+      if (heading) heading.textContent = `Join "${label}"`;
+      const subtitle = document.getElementById('entrySubtitle');
+      if (subtitle) subtitle.textContent = 'Sign in with Google to track your match history and save your preferences, or continue as a guest with just your name and an optional skill level.';
+      const quickPlayBlock = document.getElementById('entryQuickPlayBlock');
+      if (quickPlayBlock) quickPlayBlock.style.display = 'none';
       // Guest join is only offered for a specific shared link, not on the general landing page
       const guestBlock = document.getElementById('guestContinueBlock');
       if (guestBlock) guestBlock.style.display = '';
@@ -5524,8 +5534,15 @@ const Onboard = {
     this._sharePending = null;
     this._shareLinkLoading = false;
     this._populatePrivateDropdown();
-    // No pending share link — guest join is not offered on the general landing page
+    // No pending share link — restore the default landing page (Quick Play included)
+    // and stop offering guest join, which is only for a specific shared link
     this.hideGuestConfirm();
+    const heading = document.getElementById('entryHeading');
+    if (heading) heading.textContent = 'Welcome!';
+    const subtitle = document.getElementById('entrySubtitle');
+    if (subtitle) subtitle.textContent = 'Manage your pickleball session queue, court assignments, and match history.';
+    const quickPlayBlock = document.getElementById('entryQuickPlayBlock');
+    if (quickPlayBlock) quickPlayBlock.style.display = '';
     const guestBlock = document.getElementById('guestContinueBlock');
     if (guestBlock) guestBlock.style.display = 'none';
     // Show join form if signed in, otherwise show entry options
