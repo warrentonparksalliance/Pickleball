@@ -1711,7 +1711,6 @@ body {
       <div id="setupEntryOptions" class="setup-block">
         <h2 style="font-size:1.75rem;font-weight:700;margin-bottom:6px;color:var(--text);">Welcome!</h2>
         <p style="font-size:0.9rem;color:var(--text-muted);margin-bottom:18px;line-height:1.4;">Manage your pickleball session queue, court assignments, and match history.</p>
-        <button class="btn-hiw" onclick="App.openHiw()">&#9654; How it Works</button>
         <button class="btn-confirm-join" id="btnQuickPlay" onclick="Onboard.quickPlay()" style="width:100%;padding:12px;font-size:1rem;font-weight:700;margin-bottom:10px;display:flex;align-items:center;justify-content:center;gap:8px;">
           &#9889; Quick Play
         </button>
@@ -1733,6 +1732,8 @@ body {
             <button class="btn-outline" onclick="Onboard.hideGuestConfirm()" style="flex:1;padding:10px;font-size:0.9rem;">Go back</button>
           </div>
         </div>
+        <div style="height:1px;background:var(--border);margin:18px 0 14px;"></div>
+        <button class="btn-hiw" onclick="App.openHiw()">&#9654; How it Works</button>
       </div>
       <!-- Signed-in profile card (shown for Google-signed-in users) -->
       <div id="setupSignedIn" class="setup-block" style="display:none;">
