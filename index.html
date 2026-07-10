@@ -4061,7 +4061,7 @@ ${bracketHTML}
       const editBtn = canEdit ? `<button class="queue-row-btn queue-row-action" onclick="App.editGuest(${p.id})" title="Edit guest">&#x270E;</button>` : '';
       const statusBadge = isYou ? '<span class="queue-row-you">you</span>'
         : p.isLive ? '<span class="queue-row-status user">user</span>'
-        : '<span class="queue-row-status guest">guest</span>';
+        : '';
       const rr = this.isRoundRobin();
       const tourn = this.isTournament();
       const structured = rr || tourn;
