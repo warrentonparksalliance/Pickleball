@@ -1869,19 +1869,6 @@ body {
       </div>
       <div class="setup-block">
         <div class="section-title" style="margin-bottom:10px;">Public Session</div>
-        <button type="button" class="btn-outline" onclick="Onboard.toggleCreatePublic()" id="btn-create-public" style="display:none;width:100%;padding:12px 14px;font-size:1rem;font-weight:700;font-family:inherit;">+ Create New</button>
-        <div id="publicCreateForm" style="display:none;margin-top:10px;padding:14px;background:var(--bg);border:1.5px solid var(--border);border-radius:var(--radius);">
-          <div style="font-size:0.78rem;font-weight:600;color:var(--text-light);margin-bottom:10px;">New Public Location</div>
-          <input type="text" class="setup-input" id="publicLocationName" placeholder="Location name" maxlength="30" style="margin-bottom:8px;">
-          <p id="publicLocationError" class="setup-error" style="display:none;">Enter a location name</p>
-          <button type="button" class="btn-confirm-join" onclick="Onboard.createPublicLocation()" style="width:100%;padding:12px;font-size:1rem;font-weight:700;">Create &amp; Join</button>
-          <div id="publicCreateConfirmInline" style="display:none;margin-top:6px;"></div>
-        </div>
-        <div style="display:flex;align-items:center;gap:10px;margin:14px 0 10px;">
-          <div style="flex:1;height:1px;background:var(--border);"></div>
-          <span style="font-size:0.7rem;font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.05em;">Existing Sessions</span>
-          <div style="flex:1;height:1px;background:var(--border);"></div>
-        </div>
         <div style="display:flex;gap:8px;margin-bottom:4px;">
           <select class="setup-input" id="publicLocationSelect" onchange="Onboard._updateJoinBtn('publicLocationSelect','btnJoinPublic')" style="flex:1;margin-bottom:0;cursor:pointer;">
             <option value="">Select a location...</option>
@@ -1889,6 +1876,14 @@ body {
           <button type="button" class="btn-confirm-join" id="btnJoinPublic" onclick="Onboard.joinPublic()" disabled style="white-space:nowrap;padding:12px 18px;font-size:1rem;flex:0 0 auto;">Join</button>
         </div>
         <div id="publicConfirmInline" style="display:none;margin-bottom:14px;"></div>
+        <button type="button" class="btn-outline" onclick="Onboard.toggleCreatePublic()" id="btn-create-public" style="display:none;width:100%;padding:12px 14px;margin-top:8px;font-size:1rem;font-weight:700;font-family:inherit;">+ Create New</button>
+        <div id="publicCreateForm" style="display:none;margin-top:10px;padding:14px;background:var(--bg);border:1.5px solid var(--border);border-radius:var(--radius);">
+          <div style="font-size:0.78rem;font-weight:600;color:var(--text-light);margin-bottom:10px;">New Public Location</div>
+          <input type="text" class="setup-input" id="publicLocationName" placeholder="Location name" maxlength="30" style="margin-bottom:8px;">
+          <p id="publicLocationError" class="setup-error" style="display:none;">Enter a location name</p>
+          <button type="button" class="btn-confirm-join" onclick="Onboard.createPublicLocation()" style="width:100%;padding:12px;font-size:1rem;font-weight:700;">Create &amp; Join</button>
+          <div id="publicCreateConfirmInline" style="display:none;margin-top:6px;"></div>
+        </div>
       </div>
       </div><!-- /sessionSelectionBlock -->
       <!-- Share-link join button (shown when joining via share link) -->
