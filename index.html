@@ -2010,7 +2010,7 @@ body {
     <div class="settings-card" id="partnerSection">
       <div class="settings-card-title">Your Partner(s)</div>
       <div id="partnerOnlineBlock">
-        <p class="section-subtitle" style="margin-bottom:10px;">When both you and a partner are in the queue, you'll be placed on the same side in doubles. If a partner isn't available, you'll be assigned normally.</p>
+        <p class="section-subtitle" id="partnerSubtitle" style="margin-bottom:10px;">When both you and a partner are in the queue, you'll be placed on the same side in doubles. If a partner isn't available, you'll be assigned normally.</p>
         <div id="partnerDisplay"></div>
         <button class="btn-add-partner" id="btnAddPartner" onclick="App.togglePartnerPicker()">+ Add Partner</button>
         <div class="partner-picker" id="partnerPicker" style="display:none;">
@@ -3031,6 +3031,23 @@ const App = {
   // ─── Round Robin ────────────────────────────
   isRoundRobin() { return this.state._sessionType === 'roundrobin'; },
 
+  // Builds fixed doubles teams for Round Robin / Tournament: existing
+  // partner pairs stay together, everyone else is randomly paired up.
+  // Returns null if an odd player is left without a partner.
+  _buildTeamUnits() {
+    const playerIds = this.state.players.map(p => p.id);
+    const idSet = new Set(playerIds);
+    const explicitTeams = this.state.teams.filter(t => idSet.has(t.p1) && idSet.has(t.p2));
+    const pairedIds = new Set(explicitTeams.flatMap(t => [t.p1, t.p2]));
+    const solos = this.shuffle(playerIds.filter(id => !pairedIds.has(id)));
+    if (solos.length % 2 !== 0) return null;
+    const units = explicitTeams.map(t => ({ p1: t.p1, p2: t.p2 }));
+    for (let i = 0; i + 1 < solos.length; i += 2) {
+      units.push({ p1: solos[i], p2: solos[i + 1] });
+    }
+    return units;
+  },
+
   _passcodeVisible: false,
 
   togglePasscode() {
@@ -3110,13 +3127,20 @@ const App = {
   },
 
   rrGenerateSchedule() {
-    const playerIds = this.state.players.map(p => p.id);
-    const numCourts = this.state.availableCourts || 1;
-    const n = playerIds.length;
+    const n = this.state.players.length;
     if (n < 4) return;
+    const units = this._buildTeamUnits();
+    if (!units) {
+      alert('Add one more player, or pair everyone up with a partner, so no one is left without a doubles partner.');
+      return;
+    }
+    if (units.length < 2) return;
 
-    // Circle method for round robin
-    const list = [...playerIds];
+    const numCourts = this.state.availableCourts || 1;
+
+    // Circle method for round robin, run over fixed teams instead of
+    // individual players so partners always stay on the same side.
+    const list = units.map((_, i) => i);
     if (list.length % 2 === 1) list.push(null); // bye
     const total = list.length;
     const numRounds = total - 1;
@@ -3129,24 +3153,18 @@ const App = {
         rotated.push(list[1 + (i - 1 + r) % (total - 1)]);
       }
 
-      // Create pairings: (0, n-1), (1, n-2), etc.
-      const pairs = [];
+      // Create team matchups: (0, n-1), (1, n-2), etc.
+      const matchups = [];
       for (let i = 0; i < total / 2; i++) {
         const a = rotated[i];
         const b = rotated[total - 1 - i];
-        if (a != null && b != null) pairs.push([a, b]);
+        if (a != null && b != null) matchups.push([a, b]);
       }
 
-      // Group pairs into games (2 pairs = 1 game, up to numCourts)
       const games = [];
-      for (let i = 0; i + 1 < pairs.length && games.length < numCourts; i += 2) {
-        games.push({ side1: pairs[i], side2: pairs[i + 1], court: games.length + 1 });
-      }
-
-      // Handle leftover pair as singles if only 1 pair remains
-      if (games.length < numCourts && pairs.length % 2 === 1) {
-        const lastPair = pairs[pairs.length - 1];
-        games.push({ side1: [lastPair[0]], side2: [lastPair[1]], court: games.length + 1, mode: 'singles' });
+      for (const [a, b] of matchups) {
+        if (games.length >= numCourts) break;
+        games.push({ side1: [units[a].p1, units[a].p2], side2: [units[b].p1, units[b].p2], court: games.length + 1 });
       }
 
       if (games.length > 0) rounds.push({ round: r + 1, games });
@@ -3203,8 +3221,8 @@ const App = {
   },
 
   bracketLockPlayers() {
-    if (this.state.players.length < 2) {
-      alert('Need at least 2 players for a tournament.');
+    if (this.state.players.length < 4) {
+      alert('Need at least 4 players (2 teams) for a tournament.');
       return;
     }
     this.state._bracketLocked = true;
@@ -3223,16 +3241,26 @@ const App = {
   },
 
   bracketGenerate() {
-    const playerIds = this.state.players.map(p => p.id);
-    const n = playerIds.length;
-    if (n < 2) return;
+    const units = this._buildTeamUnits();
+    if (!units) {
+      alert('Add one more player, or pair everyone up with a partner, so no one is left without a doubles partner.');
+      return;
+    }
+    const n = units.length;
+    if (n < 2) {
+      alert('Need at least 2 teams for a tournament.');
+      return;
+    }
 
-    // Seed by skill descending (if available), else by ID order
-    const seeded = [...playerIds].sort((a, b) => {
-      const pa = this.getPlayer(a), pb = this.getPlayer(b);
-      const sa = pa && pa.score != null ? pa.score : 0;
-      const sb = pb && pb.score != null ? pb.score : 0;
-      return sb - sa || a - b;
+    // Seed by combined team skill descending (if available), else by lowest player ID
+    const seeded = [...units].sort((a, b) => {
+      const score = u => {
+        const p1 = this.getPlayer(u.p1), p2 = this.getPlayer(u.p2);
+        const s1 = p1 && p1.score != null ? p1.score : 0;
+        const s2 = p2 && p2.score != null ? p2.score : 0;
+        return s1 + s2;
+      };
+      return score(b) - score(a) || Math.min(a.p1, a.p2) - Math.min(b.p1, b.p2);
     });
 
     // Find bracket size (next power of 2)
@@ -3256,8 +3284,8 @@ const App = {
     let matchId = 1;
     const round1 = [];
     for (let i = 0; i < bracketSize; i += 2) {
-      const s1 = slots[i] !== null ? [slots[i]] : null;
-      const s2 = slots[i + 1] !== null ? [slots[i + 1]] : null;
+      const s1 = slots[i] !== null ? [slots[i].p1, slots[i].p2] : null;
+      const s2 = slots[i + 1] !== null ? [slots[i + 1].p1, slots[i + 1].p2] : null;
       const isBye = !s1 || !s2;
       round1.push({
         id: matchId++,
@@ -3521,8 +3549,8 @@ const App = {
     const currentRound = this.state._bracketCurrentRound || 0;
 
     if (!locked) {
-      countEl.innerHTML = n < 2
-        ? `${n} player${n !== 1 ? 's' : ''} &middot; need at least 2 to start`
+      countEl.innerHTML = n < 4
+        ? `${n} player${n !== 1 ? 's' : ''} &middot; need at least 4 to start`
         : `${n} player${n !== 1 ? 's' : ''} &middot; <a href="#" onclick="App.bracketLockPlayers();return false;" style="color:var(--primary);font-weight:600;">Lock Players to Generate Bracket</a>`;
       if (controls) controls.style.display = 'none';
     } else if (bracket.length === 0) {
@@ -3534,7 +3562,7 @@ const App = {
           courtSelect.value = this.state.availableCourts || 1;
         }
         if (btnAssignAll) {
-          btnAssignAll.disabled = n < 2;
+          btnAssignAll.disabled = n < 4;
           btnAssignAll.textContent = 'Generate Bracket';
           btnAssignAll.onclick = () => this.bracketGenerate();
         }
@@ -4028,7 +4056,7 @@ ${bracketHTML}
     }
 
     this.renderPlayers();
-    if (!structured) {
+    if (!structured || !isLocked) {
       this.renderPartners();
       this.renderPartnerPicker();
     }
@@ -4047,9 +4075,16 @@ ${bracketHTML}
     document.getElementById('optSkill').checked = this.state.options.useSkill;
     document.getElementById('optRepeats').checked = this.state.options.minimizeRepeats;
 
-    // Hide partner section in structured modes
+    // Partner section: available while building the roster in any mode;
+    // hidden once a round robin/tournament is locked since teams are then fixed
     const partnerSection = document.getElementById('partnerSection');
-    if (partnerSection) partnerSection.style.display = structured ? 'none' : '';
+    if (partnerSection) partnerSection.style.display = (structured && isLocked) ? 'none' : '';
+    const partnerSubtitle = document.getElementById('partnerSubtitle');
+    if (partnerSubtitle) {
+      partnerSubtitle.textContent = structured
+        ? `Add a partner and you'll be teamed together for the whole ${rr ? 'round robin' : 'tournament'}. Anyone without a partner is randomly paired with another player once the roster is locked.`
+        : `When both you and a partner are in the queue, you'll be placed on the same side in doubles. If a partner isn't available, you'll be assigned normally.`;
+    }
 
     // Show unlock button for admin in round robin or tournament
     const unlockBtn = document.getElementById('rrUnlockBtn');
