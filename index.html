@@ -1816,14 +1816,7 @@ body {
         </button>
         <!-- Guest join is only offered when arriving via a shared session link -->
         <div id="guestContinueBlock" style="display:none;">
-          <button class="btn-outline" onclick="Onboard.showGuestConfirm()" style="width:100%;padding:12px;font-size:1rem;font-weight:700;">Continue as Guest</button>
-          <div id="guestConfirmMsg" style="display:none;margin-top:10px;padding:12px;background:#fef9c3;border:1.5px solid #fbbf24;border-radius:var(--radius-sm);">
-            <p style="font-size:0.85rem;color:#78350f;line-height:1.45;margin-bottom:10px;">&#9888;&#xFE0F; Your name and preferences <strong>won't be saved</strong> for next time, and you won't have access to personal match history across sessions.</p>
-            <div style="display:flex;gap:8px;">
-              <button class="btn-confirm-join" onclick="Onboard.showGuestJoin()" style="flex:1;padding:10px;font-size:0.9rem;">Got it, continue</button>
-              <button class="btn-outline" onclick="Onboard.hideGuestConfirm()" style="flex:1;padding:10px;font-size:0.9rem;">Go back</button>
-            </div>
-          </div>
+          <button class="btn-outline" onclick="Onboard._completeShareJoin()" style="width:100%;padding:12px;font-size:1rem;font-weight:700;">Continue as Guest</button>
         </div>
         <div id="entryHiwDivider" style="height:1px;background:var(--border);margin:18px 0 14px;"></div>
         <button class="btn-hiw" id="btnEntryHiw" onclick="App.openHiw()">&#9654; How it Works</button>
@@ -2154,7 +2147,10 @@ body {
         <p id="selfProfileNameError" class="setup-error">Enter your name first</p>
         <input type="number" class="setup-input" id="selfProfileSkill" placeholder="Skill level (optional)" min="2" max="8" step="0.01" style="width:100%;" onblur="App.fmtSkillInput(this)" onkeydown="if(event.key==='Enter')Onboard._selfProfileSubmit()">
         <p style="font-size:0.78rem;color:var(--text-muted);margin:0;">You can update this anytime from Settings.</p>
-        <button type="button" class="btn-confirm-join" style="width:100%;padding:12px;font-size:1rem;font-weight:700;" onclick="Onboard._selfProfileSubmit()">Continue</button>
+        <div style="display:flex;gap:10px;">
+          <button type="button" class="btn-outline" style="flex:1;padding:12px;font-size:1rem;font-weight:700;" onclick="Onboard._selfProfileCancel()">Cancel</button>
+          <button type="button" class="btn-confirm-join" style="flex:1;padding:12px;font-size:1rem;font-weight:700;" onclick="Onboard._selfProfileSubmit()">Join</button>
+        </div>
       </div>
     </div>
   </div>
@@ -5082,29 +5078,11 @@ const Onboard = {
     });
   },
 
-  showGuestConfirm() {
-    const msg = document.getElementById('guestConfirmMsg');
-    if (msg) msg.style.display = '';
-  },
-
-  hideGuestConfirm() {
-    const msg = document.getElementById('guestConfirmMsg');
-    if (msg) msg.style.display = 'none';
-  },
-
-  showGuestJoin() {
-    const form = document.getElementById('setupJoinForm');
-    if (form) form.dataset.guestMode = '1';
-    this._showJoinForm();
-  },
-
   backToEntry() {
     const entry = document.getElementById('setupEntryOptions');
     const form = document.getElementById('setupJoinForm');
-    const msg = document.getElementById('guestConfirmMsg');
     if (entry) entry.style.display = '';
-    if (form) { form.style.display = 'none'; delete form.dataset.guestMode; }
-    if (msg) msg.style.display = 'none';
+    if (form) form.style.display = 'none';
   },
 
   _showJoinForm() {
@@ -5536,7 +5514,6 @@ const Onboard = {
     this._populatePrivateDropdown();
     // No pending share link — restore the default landing page (Quick Play included)
     // and stop offering guest join, which is only for a specific shared link
-    this.hideGuestConfirm();
     const heading = document.getElementById('entryHeading');
     if (heading) heading.textContent = 'Welcome!';
     const subtitle = document.getElementById('entrySubtitle');
@@ -5552,7 +5529,7 @@ const Onboard = {
       const entry = document.getElementById('setupEntryOptions');
       const form = document.getElementById('setupJoinForm');
       if (entry) entry.style.display = '';
-      if (form) { form.style.display = 'none'; delete form.dataset.guestMode; }
+      if (form) form.style.display = 'none';
     }
   },
 
@@ -6076,7 +6053,7 @@ const Admin = {
         Onboard._showJoinForm();
       } else {
         if (entryOpts) entryOpts.style.display = '';
-        if (joinForm && !joinForm.dataset.guestMode) joinForm.style.display = 'none';
+        if (joinForm) joinForm.style.display = 'none';
         if (signedInWrap) signedInWrap.style.display = 'none';
         if (signedInAs) signedInAs.innerHTML = '';
       }
