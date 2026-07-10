@@ -4371,7 +4371,7 @@ ${bracketHTML}
       if (btnAssignAll) {
         const canAdvance = !hasActive && currentRound < totalRounds;
         btnAssignAll.disabled = !canAdvance;
-        btnAssignAll.textContent = currentRound >= totalRounds ? 'Tournament Complete' : 'Start Next Round';
+        btnAssignAll.textContent = currentRound >= totalRounds ? 'All Rounds Complete' : 'Start Next Round';
         btnAssignAll.onclick = () => this.rrAdvanceRound();
       }
       if (courtSelect) courtSelect.parentElement.style.display = 'none';
