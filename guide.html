@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Pickle Jar — Quick Start Guide</title>
+<title>Court Manager — Quick Start Guide</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -41,7 +41,6 @@ li { margin-bottom: 6px; }
   padding: 2px 8px; border-radius: 9999px; vertical-align: middle;
 }
 .badge-you { color: #059669; background: #ecfdf5; }
-.badge-guest { color: #9ca3af; background: #f1f4fb; border: 1px solid #e4e7ef; }
 .badge-user { color: #4f46e5; background: #eef2ff; border: 1px solid #c7d2fe; }
 .badge-partner { color: #92400e; background: #fef3c7; }
 .tip {
@@ -70,27 +69,32 @@ footer a:hover { text-decoration: underline; }
 </head>
 <body>
 
-<h1>Pickle Jar</h1>
-<p class="subtitle">Everyone's in the jar. Shake it up. — A quick guide to getting started.</p>
+<h1>Court Manager</h1>
+<p class="subtitle">A quick guide to getting started.</p>
 
 <h2>Getting Started</h2>
-<p>When you first open Pickle Jar, you'll see two options:</p>
+<p>When you first open Court Manager, you'll see three options:</p>
 <ul>
+  <li><strong>&#9889; Quick Play</strong> — Jump straight into a new offline Open Play session on this device. No sign-in, no setup — just tell it how many players and their names.</li>
   <li><strong>Sign in with Google</strong> — Unlocks full features: create and manage private sessions, save your preferences across devices, and keep a personal match history.</li>
-  <li><strong>Continue without signing in</strong> — Jump straight in as a guest. You can join and play but can't create sessions, and your match history won't be saved.</li>
+  <li><strong>Continue without signing in</strong> — Join a public or private session as a guest. You can join and play but can't create sessions, and your info won't be saved for next time.</li>
 </ul>
+<p>You can also tap <strong>How it Works</strong> at the bottom of the entry screen for a short in-app overview at any time.</p>
 
-<h3>Joining a Session</h3>
-<p>If you sign in with Google, you'll see your <strong>profile card</strong> with your display name, skill level, and 1v1 preference — all editable with a Save button. Below that, choose a session to join.</p>
-<p>If you continue without signing in, you'll enter your info before selecting a session.</p>
-<ol class="steps">
-  <li><strong>Enter your name</strong> and optionally your skill level (2.0–8.0).</li>
-  <li><strong>Check "Open to 1v1"</strong> if you're willing to play singles matches.</li>
-  <li><strong>Select a location</strong> from the Public Session dropdown and tap <strong>Join</strong>, or select a private session you've previously joined.</li>
-</ol>
+<h3>Quick Play</h3>
+<p>Tap <strong>Quick Play</strong>, enter how many players are starting, then enter each player's name (skill level is skipped for speed). Tap <strong>Start Playing</strong> and you're straight into an Open Play session — entirely offline and local to this device. Nobody else can join it, there's no Settings tab, and nothing is shared online.</p>
+
+<h3>Joining a Session (online)</h3>
+<p>Whether you sign in with Google or continue as a guest, you'll land on the <strong>Join a Session</strong> screen with three panels:</p>
+<ul>
+  <li><strong>Offline Session</strong> — Same idea as Quick Play, but you choose the format first (Open Play, Round Robin, or Tournament) before entering players.</li>
+  <li><strong>Private Session</strong> — Pick a session you've previously joined, or create a new one (sign-in required to create).</li>
+  <li><strong>Public Session</strong> — Pick a location from the dropdown and tap Join.</li>
+</ul>
+<p>When you join or create an online session for the first time, you'll be asked for <strong>your name and optional skill level (2.0–8.0)</strong> in a small popup, then asked to confirm before you're added.</p>
 
 <div class="tip">
-  <strong>Tip:</strong> If you sign in with Google, your name, skill level, and preferences are saved automatically. Next time you visit, just pick a session and go.
+  <strong>Tip:</strong> If you sign in with Google, your name, skill level, and preferences are saved automatically and pre-filled next time. Guests are asked fresh each time and nothing is saved.
 </div>
 
 <h2>The Queue</h2>
@@ -98,15 +102,15 @@ footer a:hover { text-decoration: underline; }
   <div class="card-title">Player Badges</div>
   <p><span class="badge badge-you">you</span> — That's you in the list</p>
   <p><span class="badge badge-user">user</span> — A player using the app on their own device</p>
-  <p><span class="badge badge-guest">guest</span> — Added by someone else (for players without the app)</p>
   <p><span class="badge badge-partner">partner</span> — Your selected partner preference</p>
 </div>
+<p>Players added by someone else (rather than joining themselves) don't carry a badge — but whoever added them sees an edit (&#x270E;) icon to update their name, skill, or 1v1 preference.</p>
 
 <ul>
-  <li><strong>Add Guest</strong> — Add players who don't have the app. You can edit or remove guests you added.</li>
+  <li><strong>+ Add Player</strong> — Add players who don't have the app, or aren't joining themselves. You can edit or remove players you added.</li>
   <li><strong>Sit Out</strong> (&#x23F8;) — Sit out temporarily. You stay in the session but won't be assigned to courts. Anyone can sit out anyone.</li>
   <li><strong>Play</strong> (&#x25B6;) — Rejoin the queue after sitting out.</li>
-  <li><strong>Remove</strong> (&times;) — Remove yourself (leaves the session) or your guests. Admins can remove anyone.</li>
+  <li><strong>Remove</strong> (&times;) — Remove yourself (leaves the session) or players you added. Admins can remove anyone.</li>
 </ul>
 
 <h2>Court Assignments</h2>
@@ -116,12 +120,19 @@ footer a:hover { text-decoration: underline; }
 <ol class="steps">
   <li>Set <strong>"Courts available now"</strong> — how many courts to fill this press.</li>
   <li>Tap <strong>Assign Courts</strong>. Players are randomly paired and assigned.</li>
-  <li>When a game ends, tap <strong>End Match</strong>, enter scores (or skip), and those players return to the queue.</li>
+  <li>Tap <strong>&#9654; Start</strong> on a court to start its timer.</li>
+  <li>When a game ends, tap <strong>End</strong>, then <strong>Save</strong> (with or without a score) or <strong>Cancel</strong> to go back — those players return to the queue.</li>
   <li>Tap Assign Courts again to fill open courts with waiting players.</li>
 </ol>
 
 <div class="tip">
-  <strong>Rematch:</strong> When ending a match, check the "Rematch" box before saving/skipping to immediately start the same matchup again.
+  <strong>Match timer:</strong> Once started, a court shows a live elapsed timer with a <strong>Pause/Resume</strong> toggle. The final duration is saved with the match in History.
+</div>
+<div class="tip">
+  <strong>Rematch:</strong> When ending a match, check the "Rematch" box before saving to immediately start the same matchup again.
+</div>
+<div class="tip">
+  <strong>Scores are optional:</strong> Tap <strong>Save</strong> without entering a score to end the match and log it without a result — this works the same way in Open Play, Round Robin, and Tournament.
 </div>
 
 <h3>Match Options</h3>
@@ -138,22 +149,24 @@ footer a:hover { text-decoration: underline; }
   <li>If a partner is on a court or sitting out, you'll be assigned normally with other players.</li>
   <li>You can add multiple partners — the app will pair you with whichever one is available.</li>
 </ul>
+<p>Partner preferences aren't available in offline sessions (Quick Play or Offline Session) — there's no Settings tab in those.</p>
 
 <h2>Share Link</h2>
-<p>Every session has a <strong>Share Link</strong> in the Settings tab. Copy it and send to friends to invite them to your session. When someone opens a share link:</p>
+<p>Every online session has a <strong>Share Link</strong> in the Settings tab. Copy it and send to friends to invite them to your session. When someone opens a share link:</p>
 <ul>
   <li>For private sessions, they'll be asked for the <strong>passcode</strong> first.</li>
   <li>They can then sign in with Google or join as a guest, enter their info, and they're in.</li>
 </ul>
+<p>Share links aren't available for offline sessions — those never leave your device.</p>
 
 <h2>Private Sessions</h2>
 <p>For games at home, tournaments, or groups that want their own space:</p>
 <ol class="steps">
   <li><strong>Sign in with Google</strong> on the landing page (required to create).</li>
-  <li>Tap <strong>+ Create New</strong> under Private Session.</li>
+  <li>From the Join a Session screen, tap <strong>+ Create New</strong> under Private Session.</li>
   <li>Enter a <strong>session name</strong> and a <strong>4-character passcode</strong> (or tap Random to generate one).</li>
   <li>Choose <strong>Open Play</strong>, <strong>Round Robin</strong>, or <strong>Tournament</strong> from the session type dropdown.</li>
-  <li>Tap <strong>Create &amp; Join</strong> and confirm.</li>
+  <li>Tap <strong>Create &amp; Join</strong>, confirm, then enter the starting player count and names — you're placed straight into the new session with your roster ready.</li>
   <li>Share the link with friends — they'll need the passcode to join. The session creator and super admins skip the passcode.</li>
 </ol>
 
@@ -162,7 +175,7 @@ footer a:hover { text-decoration: underline; }
 </div>
 
 <h3>Round Robin Mode</h3>
-<p>Round Robin is available for private sessions and creates a structured tournament schedule:</p>
+<p>Round Robin is available for private (and offline) sessions and creates a structured tournament schedule:</p>
 <ol class="steps">
   <li>Add all players to the session.</li>
   <li>Tap <strong>Lock Players to Generate Schedule</strong> in the assign section.</li>
@@ -170,22 +183,22 @@ footer a:hover { text-decoration: underline; }
   <li>Round 1 is assigned to courts. All upcoming rounds are shown below.</li>
   <li>When all Round 1 games finish, tap <strong>Start Next Round</strong> to advance.</li>
 </ol>
-<p>Admins can switch between Open Play, Round Robin, and Tournament in the Settings tab, and can unlock players to modify the roster.</p>
+<p>Admins can switch between Open Play, Round Robin, and Tournament in the Settings tab, and can unlock players to modify the roster. With an odd number of players, someone sits out each round; leftover unpaired players may get a singles match instead of doubles.</p>
 
 <h3>Tournament Mode</h3>
-<p>Tournament mode creates a <strong>single-elimination bracket</strong> for private sessions:</p>
+<p>Tournament mode creates a <strong>single-elimination bracket</strong> for private (and offline) sessions:</p>
 <ol class="steps">
   <li>Add all players to the session.</li>
   <li>Tap <strong>Lock Players to Generate Bracket</strong> in the assign section.</li>
   <li>Set the <strong>number of courts</strong> and tap <strong>Generate Bracket</strong>.</li>
   <li>The bracket is displayed with all rounds. First-round matches are assigned to courts.</li>
-  <li>When a match ends, enter scores — <strong>ties are not allowed</strong> in tournament matches. The winner automatically advances in the bracket.</li>
+  <li>When a match ends, enter scores — <strong>ties are not allowed</strong> in tournament matches. The winner automatically advances in the bracket. (Saving without a score just clears the court without recording a winner, so use it sparingly here.)</li>
   <li>When all matches in a round are complete, tap to start the next round (Semifinals, Final, etc.).</li>
   <li>If there are more matches than courts, remaining matches can be started as courts free up.</li>
 </ol>
 
 <div class="tip">
-  <strong>Seeding:</strong> Players are seeded by skill level (if set) so top seeds face lower seeds in early rounds. If fewer players than a power of 2, top seeds receive first-round byes.
+  <strong>Seeding:</strong> Players are seeded by skill level (if set) so top seeds face lower seeds in early rounds. If fewer players than a power of 2, top seeds receive first-round byes. Tap <strong>&#128438; Save as PDF</strong> above the bracket to export it.
 </div>
 
 <h2>Match History</h2>
@@ -193,15 +206,15 @@ footer a:hover { text-decoration: underline; }
 <p>The <strong>History</strong> tab shows all completed matches in the current session with teams, scores, and match duration. Use the search bar to filter by player name, or tap <strong>My Matches</strong> to see only games you played in. Session history persists until an admin clears it.</p>
 
 <h3>Personal Match History</h3>
-<p>If you're signed in with Google, your matches are also saved to your <strong>personal match history</strong>. This history stays even if an admin clears the session history or deletes the session. Access it from the <strong>My Match History</strong> button in your profile card on the landing page. You can search by player name and swipe left on any match to delete it.</p>
+<p>If you're signed in with Google, your matches are also saved to your <strong>personal match history</strong>. This history stays even if an admin clears the session history or deletes the session. Access it from the <strong>My Match History</strong> button in your profile card on the landing page. You can search by player name and swipe left on any match to delete it. Personal match history isn't available for offline or guest sessions.</p>
 
 <h3>Match Time Limit</h3>
 <p>Matches automatically expire after <strong>100 minutes</strong>. Expired matches are saved to history with a score of "N/A" and players are returned to the queue.</p>
 
 <h2>Sharing &amp; Multi-Device</h2>
 <ul>
-  <li>All session data <strong>syncs in real-time</strong> across everyone's devices.</li>
-  <li>Court assignments, scores, and queue changes appear instantly for all users.</li>
+  <li>All <strong>online</strong> session data syncs in real-time across everyone's devices. Offline sessions (Quick Play or Offline Session) stay on the one device that started them.</li>
+  <li>Court assignments, scores, and queue changes appear instantly for all users in an online session.</li>
   <li>If you leave a session, your court assignments stay active for others to manage.</li>
   <li>Share the URL or use the <strong>Share Link</strong> in Settings to invite others — public sessions don't need a code, private ones do.</li>
   <li>Session data <strong>persists</strong> until an admin resets or deletes it — it won't disappear on its own.</li>
@@ -211,7 +224,7 @@ footer a:hover { text-decoration: underline; }
 <p>There are two types of admins:</p>
 <ul>
   <li><strong>Session Admin</strong> — The person who created a session. Automatically gets admin for that session. Other signed-in users can be promoted to session admin from Settings.</li>
-  <li><strong>Super Admin</strong> — Can manage any session (public or private), see all private sessions, create public locations, delete any session, and add/remove other super admins.</li>
+  <li><strong>Super Admin</strong> — Can manage any session (public or private), see all private sessions, create public locations, delete any session, and add/remove other super admins. Super admins also get an "All Private Sessions" and "All Users" panel above the join screen.</li>
 </ul>
 
 <h3>Managing Session Admins</h3>
@@ -221,6 +234,9 @@ footer a:hover { text-decoration: underline; }
   <li>Select a user and confirm to grant them admin access.</li>
   <li>Remove an admin by tapping "remove" next to their name.</li>
 </ul>
+
+<h3>Managing Super Admins</h3>
+<p>Existing super admins see a <strong>Super Admin Management</strong> panel on the landing screen (above the join options) where they can add or remove other super admins by email.</p>
 
 <h3>Admin Actions</h3>
 <p>Admins can:</p>
@@ -239,7 +255,7 @@ footer a:hover { text-decoration: underline; }
 </div>
 
 <footer>
-  <p>Pickle Jar is provided by <a href="https://www.warrentonparksalliance.com" target="_blank">Warrenton Parks Alliance</a></p>
+  <p>Court Manager is provided by <a href="https://www.warrentonparksalliance.com" target="_blank">Warrenton Parks Alliance</a></p>
   <p>Questions or feedback? <a href="mailto:brooke@warrentonparksalliance.com?subject=Pickle%20Jar%20Feedback">brooke@warrentonparksalliance.com</a></p>
 </footer>
 

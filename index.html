@@ -23,6 +23,7 @@
   --warning-light: #fffbeb;
   --bg: #f5f1e8;
   --card: #ffffff;
+  --input-bg: #eef0f2;
   --border: #e4e7ef;
   --border-strong: #c7cdd9;
   --text: #111827;
@@ -37,8 +38,6 @@
   --radius-lg: 16px;
   --radius-full: 9999px;
   --hover-bg: #eef5ee;
-  --side1-bg: #e8f5e8;
-  --side2-bg: #fefce8;
   --bench-bg: #fef2f2;
   --bench-text: #b91c1c;
   --pending-bg: #fffbeb;
@@ -304,27 +303,9 @@ body {
   border: 1px solid rgba(255,255,255,0.15);
 }
 .btn-primary:hover:not(:disabled) { background: rgba(255,255,255,0.2); }
-.btn-assign {
-  background: #4ade80;
-  color: #052e16;
-  font-size: 0.9rem;
-  font-weight: 700;
-  padding: 8px 20px;
-  border-radius: var(--radius-full);
-  letter-spacing: -0.01em;
-  box-shadow: 0 1px 3px rgba(74,222,128,0.4);
-}
-.btn-assign:hover:not(:disabled) { background: #22c55e; box-shadow: 0 2px 8px rgba(74,222,128,0.5); }
 .btn-danger { background: var(--danger); color: white; border-radius: var(--radius-sm); }
 .btn-danger:hover:not(:disabled) { background: var(--danger-hover); }
 .btn-sm { padding: 10px 16px; font-size: 1rem; }
-.btn-ghost {
-  background: transparent;
-  color: var(--text-muted);
-  padding: 3px 7px;
-  border-radius: var(--radius-sm);
-}
-.btn-ghost:hover { color: var(--danger); background: var(--danger-light); }
 .btn-outline {
   background: transparent;
   border: 1px solid var(--border);
@@ -337,13 +318,20 @@ body {
   color: var(--danger);
   border: 1px solid #fecaca;
   padding: 12px 14px;
-  margin-top: 8px;
-  width: 100%;
   font-size: 1rem;
   font-weight: 700;
   border-radius: var(--radius-sm);
+  flex: 0 0 auto;
+  white-space: nowrap;
 }
 .btn-end-game:hover { background: #fee2e2; }
+.match-action-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+.match-action-row .match-timer-row { flex: 1; margin-bottom: 0; }
 
 /* ── Page layout ────────────────────────────── */
 .page-wrap {
@@ -418,7 +406,7 @@ body {
   border: 1.5px solid var(--border);
   border-radius: var(--radius-sm);
   font-size: 1rem;
-  background: var(--bg);
+  background: var(--input-bg);
   color: var(--text);
   margin-bottom: 8px;
   font-family: inherit;
@@ -563,7 +551,7 @@ body {
   border: 1.5px solid var(--border);
   border-radius: var(--radius-sm);
   font-size: 1rem;
-  background: var(--bg);
+  background: var(--input-bg);
   color: var(--text);
   font-family: inherit;
 }
@@ -723,6 +711,12 @@ body {
   color: var(--text-muted);
   line-height: 1.35;
   margin-top: 2px;
+}
+.queue-list-box {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 0 12px;
 }
 .queue-list { display: flex; flex-direction: column; gap: 0; }
 .queue-row {
@@ -975,22 +969,22 @@ body {
   flex-wrap: wrap;
 }
 .assign-option-label {
-  font-size: 0.82rem;
+  font-size: 0.88rem;
   color: var(--text-light);
   font-weight: 500;
   white-space: nowrap;
 }
 .assign-court-select {
-  padding: 10px 8px;
+  padding: 6px 6px;
   border: 1.5px solid var(--border);
   border-radius: var(--radius-sm);
-  font-size: 1rem;
+  font-size: 0.9rem;
   font-family: inherit;
-  background: var(--bg);
+  background: var(--input-bg);
   color: var(--text);
   cursor: pointer;
   font-weight: 600;
-  width: 70px;
+  width: 56px;
 }
 .assign-court-select:focus { outline: none; border-color: var(--primary); }
 .assign-match-options {
@@ -1116,16 +1110,16 @@ body {
   border-color: #6ee7b7;
   box-shadow: 0 0 0 1px #6ee7b7, var(--shadow-md);
 }
-.court-card.pending {
+.court-card.scoring {
   border-color: var(--pending-border);
-  border-style: solid;
+  box-shadow: 0 0 0 1px var(--pending-border), var(--shadow-md);
 }
 .court-header {
   padding: 10px 14px;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  background: #6366f1;
+  background: var(--warning);
   color: white;
   font-weight: 700;
   font-size: 0.85rem;
@@ -1133,7 +1127,6 @@ body {
 }
 .court-card.inactive .court-header { background: #9ca3af; }
 .court-card.game-active .court-header { background: #059669; }
-.court-card.pending .court-header { background: #d97706; }
 .court-status { font-size: 0.68rem; font-weight: 500; opacity: 0.85; }
 .btn-cancel-game {
   background: rgba(255,255,255,0.2);
@@ -1183,8 +1176,11 @@ body {
   display: flex;
   justify-content: center;
 }
-.side-1 { background: var(--side1-bg); }
-.side-2 { background: var(--side2-bg); }
+.side-1, .side-2 {
+  background: var(--input-bg);
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow-sm);
+}
 .court-side .side-player-name { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .court-side .side-player-skill { color: var(--text-light); font-weight: 400; font-size: 0.78rem; }
 .court-side .side-amp { color: var(--text-muted); font-weight: 500; flex-shrink: 0; }
@@ -1217,7 +1213,7 @@ body {
   letter-spacing: 0.04em;
 }
 .btn-start-match {
-  width: 100%;
+  flex: 1;
   padding: 10px;
   background: var(--success-light);
   color: var(--success);
@@ -1227,7 +1223,6 @@ body {
   font-weight: 700;
   font-family: inherit;
   cursor: pointer;
-  margin-bottom: 8px;
   transition: background 0.15s;
 }
 .btn-start-match:hover { background: #d1fae5; }
@@ -1298,6 +1293,14 @@ body {
   border-radius: var(--radius-sm);
 }
 .score-side .side-names { flex: 1; font-size: 0.85rem; font-weight: 600; }
+.score-input-col { display: flex; flex-direction: column; align-items: center; gap: 2px; }
+.score-input-caption {
+  font-size: 0.62rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--text-muted);
+}
 .score-side input[type="number"] {
   width: 62px;
   padding: 6px 8px;
@@ -1318,9 +1321,36 @@ body {
   border-color: var(--primary);
   box-shadow: 0 0 0 3px var(--primary-light);
 }
-.score-buttons { display: flex; gap: 6px; margin-top: 6px; flex-wrap: wrap; }
-.score-buttons .btn { flex: 1; min-width: 80px; }
+.score-buttons { display: flex; gap: 8px; margin-top: 6px; }
 .score-error { font-size: 0.8rem; color: var(--danger); min-height: 1em; }
+.btn-save-score {
+  flex: 1;
+  padding: 10px;
+  background: var(--success-light);
+  color: var(--success);
+  border: 1.5px solid var(--success);
+  border-radius: var(--radius-sm);
+  font-size: 1rem;
+  font-weight: 700;
+  font-family: inherit;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+.btn-save-score:hover { background: #d1fae5; }
+.btn-cancel-score {
+  flex: 1;
+  padding: 10px;
+  background: transparent;
+  color: var(--text-light);
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius-sm);
+  font-size: 1rem;
+  font-weight: 700;
+  font-family: inherit;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s;
+}
+.btn-cancel-score:hover { background: var(--hover-bg); border-color: var(--border-strong); }
 
 /* ── History tab ────────────────────────────── */
 .history-section {
@@ -1350,7 +1380,7 @@ body {
   border-radius: var(--radius-sm);
   font-size: 0.82rem;
   font-family: inherit;
-  background: var(--bg);
+  background: var(--input-bg);
   color: var(--text);
 }
 .history-search:focus { outline: none; border-color: var(--primary); }
@@ -1360,7 +1390,7 @@ body {
   border-radius: var(--radius-sm);
   font-size: 0.82rem;
   font-family: inherit;
-  background: var(--bg);
+  background: var(--input-bg);
   color: var(--text);
   cursor: pointer;
 }
@@ -1447,6 +1477,11 @@ body {
   text-decoration: none;
 }
 .app-footer a:hover { text-decoration: underline; }
+.app-footer-links {
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid var(--border);
+}
 
 /* ── Tournament Bracket ────────────────────── */
 .bracket-container {
@@ -1860,7 +1895,9 @@ body {
     <div id="playersSection" class="queue-bar-wrap" style="margin-bottom:14px;">
       <div class="section-title" id="queueTitle" style="margin-bottom:4px;">Queue</div>
       <div class="section-subtitle" id="queueSubtitle" style="margin-bottom:10px;">Players waiting to be assigned to a court.</div>
-      <div id="playerList" class="queue-list"></div>
+      <div class="queue-list-box">
+        <div id="playerList" class="queue-list"></div>
+      </div>
       <div id="queueHint" class="section-subtitle" style="margin-top:8px;">Use &#x23F8; to sit out temporarily or &times; to remove.</div>
       <button id="rrUnlockBtn" class="btn-outline" onclick="App.isRoundRobin()?App.rrUnlockPlayers():App.bracketUnlockPlayers()" style="display:none;margin-top:8px;width:100%;color:var(--warning);border-color:var(--warning);font-size:0.82rem;">Unlock Players &amp; Reset</button>
       <button id="btnQueueAddPlayer" class="btn-add-player" style="display:none;margin-top:10px;" onclick="App.openQueueAddPlayer()">+ Add Player</button>
@@ -2142,7 +2179,7 @@ body {
   <footer class="app-footer">
     <div>Court Manager is a free community tool provided by <a href="https://www.warrentonparksalliance.com" target="_blank" rel="noopener">Warrenton Parks Alliance</a>, a 501(c)(3) nonprofit keeping Warrenton's parks and trails thriving.</div>
     <div><a href="https://www.warrentonparksalliance.com/ways-to-support/" target="_blank" rel="noopener">Donate</a> to support our mission.</div>
-    <div><a href="guide.html" target="_blank">User guide</a> · <a href="mailto:brooke@warrentonparksalliance.com?subject=Pickle%20Jar%20Feedback">Send feedback</a></div>
+    <div class="app-footer-links"><a href="guide.html" target="_blank">User guide</a> · <a href="mailto:brooke@warrentonparksalliance.com?subject=Pickle%20Jar%20Feedback">Send feedback</a></div>
   </footer>
 
 </div>
@@ -2161,7 +2198,7 @@ const App = {
     roundHistory: [],
     nextId: 1,
     nextCourtId: 1,
-    availableCourts: 2,
+    availableCourts: 1,
   },
 
   _activeTab: 'courts',
@@ -2226,7 +2263,7 @@ const App = {
     if (!s.options) s.options = { useSkill: false, minimizeRepeats: false };
     if (!s.nextId)      s.nextId      = 1;
     if (!s.nextCourtId) s.nextCourtId = 1;
-    if (s.availableCourts == null) s.availableCourts = 2;
+    if (s.availableCourts == null) s.availableCourts = 1;
     if (!Array.isArray(s.adminLog)) s.adminLog = [];
     if (!Array.isArray(s._admins)) s._admins = s._admins ? Object.values(s._admins) : [];
     if (!Array.isArray(s._rrSchedule)) s._rrSchedule = s._rrSchedule ? Object.values(s._rrSchedule) : [];
@@ -2546,19 +2583,24 @@ const App = {
   submitScore(courtId) {
     const s1Input = document.getElementById(`score-s1-${courtId}`);
     const s2Input = document.getElementById(`score-s2-${courtId}`);
-    const score1 = parseInt(s1Input.value);
-    const score2 = parseInt(s2Input.value);
-    if (isNaN(score1) || isNaN(score2)) {
-      const errEl = document.getElementById(`score-err-${courtId}`);
-      if (errEl) errEl.textContent = 'Enter a score for both sides.';
-      return;
+    const raw1 = s1Input.value.trim();
+    const raw2 = s2Input.value.trim();
+    const errEl = document.getElementById(`score-err-${courtId}`);
+    let score1 = null, score2 = null;
+    if (raw1 !== '' || raw2 !== '') {
+      score1 = parseInt(raw1);
+      score2 = parseInt(raw2);
+      if (isNaN(score1) || isNaN(score2)) {
+        if (errEl) errEl.textContent = 'Enter a score for both sides, or leave both blank.';
+        return;
+      }
+      // Tournament requires a clear winner (no ties)
+      if (this.isTournament() && score1 === score2) {
+        if (errEl) errEl.textContent = 'Tournament matches cannot end in a tie.';
+        return;
+      }
     }
-    // Tournament requires a clear winner (no ties)
-    if (this.isTournament() && score1 === score2) {
-      const errEl = document.getElementById(`score-err-${courtId}`);
-      if (errEl) errEl.textContent = 'Tournament matches cannot end in a tie.';
-      return;
-    }
+    const hasScores = score1 != null && score2 != null;
     const game = this.state.activeGames[courtId];
     if (game) {
       this.recordOpponents(game.side1, game.side2);
@@ -2566,7 +2608,7 @@ const App = {
         const p = this.getPlayer(id);
         if (p) p.roundsPlayed = (p.roundsPlayed || 0) + 1;
       }
-      const winner = score1 > score2 ? 1 : score2 > score1 ? 2 : 0;
+      const winner = hasScores ? (score1 > score2 ? 1 : score2 > score1 ? 2 : 0) : null;
       const duration = this.getTimerElapsed(game) || null;
       const histEntry = {
         round: this.state.round,
@@ -2604,38 +2646,6 @@ const App = {
   cancelScoring(courtId) {
     delete this.state.scoringGames[courtId];
     this.saveState();
-    this.render();
-  },
-
-  endWithoutScore(courtId) {
-    const game = this.state.activeGames[courtId];
-    if (game) {
-      this.recordOpponents(game.side1, game.side2);
-      for (const id of [...game.side1, ...game.side2]) {
-        const p = this.getPlayer(id);
-        if (p) p.roundsPlayed = (p.roundsPlayed || 0) + 1;
-      }
-      const duration = this.getTimerElapsed(game) || null;
-      const histEntry = {
-        round: this.state.round,
-        courtId,
-        side1: [...game.side1],
-        side2: [...game.side2],
-        mode: game.mode,
-        duration,
-        startTime: game.startTime || null,
-      };
-      this.state.roundHistory.push(histEntry);
-      MyHistory.saveMatch(histEntry);
-    }
-    const courtPlayers = game ? [...(game.side1 || []), ...(game.side2 || [])] : [];
-    const rematch = this._checkRematch(courtId, game);
-    delete this.state.activeGames[courtId];
-    delete this.state.scoringGames[courtId];
-    if (rematch) this._startRematch(courtId, rematch);
-    const selfExpired = this._expireStaleFromCourt(courtPlayers);
-    this.saveState();
-    if (selfExpired) { this._handleSelfExpired(); return; }
     this.render();
   },
 
@@ -2900,7 +2910,7 @@ const App = {
 
   // ─── Assignment Algorithm ──────────────────
   setAvailableCourts(n) {
-    this.state.availableCourts = parseInt(n) || 2;
+    this.state.availableCourts = parseInt(n) || 1;
     this.saveState();
     this.render();
   },
@@ -3422,7 +3432,7 @@ const App = {
         controls.style.display = 'flex';
         if (courtSelect) {
           courtSelect.parentElement.style.display = '';
-          courtSelect.value = this.state.availableCourts || 2;
+          courtSelect.value = this.state.availableCourts || 1;
         }
         if (btnAssignAll) {
           btnAssignAll.disabled = n < 2;
@@ -3803,7 +3813,7 @@ ${bracketHTML}
       options: { useSkill: true, minimizeRepeats: true },
       opponentHistory: {}, sitoutCounts: {}, round: 0,
       activeGames: {}, scoringGames: {}, roundHistory: [], nextId: 1, nextCourtId: 1,
-      availableCourts: 2, adminLog: [],
+      availableCourts: 1, adminLog: [],
     };
   },
 
@@ -3899,7 +3909,7 @@ ${bracketHTML}
     // Update queue section labels for structured modes
     const qTitle = document.getElementById('queueTitle');
     const qSub = document.getElementById('queueSubtitle');
-    if (qTitle) qTitle.textContent = structured ? 'Players' : 'Queue';
+    if (qTitle) qTitle.textContent = 'Queue';
     if (qSub) qSub.textContent = rr
       ? (rrLocked ? 'Players are locked for this round robin.' : 'Add all players, then lock the roster to generate the schedule.')
       : tourn
@@ -3986,7 +3996,7 @@ ${bracketHTML}
     const onCourts = this.getPlayersOnCourts();
     const queuePlayers = this.state.players.filter(p => !onCourts.has(p.id));
     if (queuePlayers.length === 0) {
-      el.innerHTML = '<span style="color:var(--text-muted);font-size:0.85rem;font-style:italic;">No players yet — add someone to get started</span>';
+      el.innerHTML = '<span style="display:block;padding:10px 0;color:var(--text-muted);font-size:0.85rem;font-style:italic;">No players waiting in the queue</span>';
       return;
     }
     el.innerHTML = queuePlayers.map(p => {
@@ -4117,7 +4127,7 @@ ${bracketHTML}
       const modeBadge = '';
       const timerMs = this.getTimerElapsed(game);
       const neverStarted = game.timerPaused && (game.timerElapsed || 0) === 0 && !game.timerResumedAt;
-      const cardClass = isScoring ? 'court-card' : 'court-card game-active';
+      const cardClass = isScoring ? 'court-card scoring' : 'court-card game-active';
 
       let bodyHTML;
       if (isScoring) {
@@ -4126,30 +4136,41 @@ ${bracketHTML}
         bodyHTML = `<div class="score-entry">
           <div class="score-side side-1">
             <span class="side-names">${s1Names}</span>
-            <input type="number" id="score-s1-${courtId}" min="0" placeholder="–" onkeydown="if(event.key==='Enter')App.submitScore(${courtId})" oninput="document.getElementById('score-err-${courtId}').textContent=''">
+            <div class="score-input-col">
+              <input type="number" id="score-s1-${courtId}" min="0" placeholder="–" onkeydown="if(event.key==='Enter')App.submitScore(${courtId})" oninput="document.getElementById('score-err-${courtId}').textContent=''">
+              <span class="score-input-caption">points</span>
+            </div>
           </div>
           <div class="court-vs">VS</div>
           <div class="score-side side-2">
             <span class="side-names">${s2Names}</span>
-            <input type="number" id="score-s2-${courtId}" min="0" placeholder="–" onkeydown="if(event.key==='Enter')App.submitScore(${courtId})" oninput="document.getElementById('score-err-${courtId}').textContent=''">
+            <div class="score-input-col">
+              <input type="number" id="score-s2-${courtId}" min="0" placeholder="–" onkeydown="if(event.key==='Enter')App.submitScore(${courtId})" oninput="document.getElementById('score-err-${courtId}').textContent=''">
+              <span class="score-input-caption">points</span>
+            </div>
           </div>
           <div id="score-err-${courtId}" class="score-error"></div>
-          ${!this.isRoundRobin() && !this.isTournament() ? `<label style="display:flex;align-items:center;gap:6px;font-size:0.82rem;color:var(--text-light);cursor:pointer;margin-top:4px;">
+          ${!this.isRoundRobin() && !this.isTournament() ? `<label style="display:flex;align-items:center;justify-content:flex-end;gap:6px;font-size:0.82rem;color:var(--text-light);cursor:pointer;margin-top:4px;">
             <input type="checkbox" id="rematch-${courtId}" style="accent-color:var(--primary);"> Rematch
           </label>` : ''}
           ${this.isTournament() ? `<div style="font-size:0.75rem;color:var(--text-muted);margin-top:4px;">Bracket match &mdash; winner advances</div>` : ''}
           <div class="score-buttons">
-            <button class="btn btn-assign" style="padding:12px 16px;font-size:1rem;" onclick="App.submitScore(${courtId})">Save Score</button>
-            ${this.isTournament() ? '' : `<button class="btn btn-outline" onclick="App.endWithoutScore(${courtId})">Skip</button>`}
-            <button class="btn btn-ghost" onclick="App.cancelScoring(${courtId})">Cancel</button>
+            <button class="btn-cancel-score" onclick="App.cancelScoring(${courtId})">Cancel</button>
+            <button class="btn-save-score" onclick="App.submitScore(${courtId})">Save</button>
           </div>
         </div>`;
       } else {
         const timerWidget = neverStarted
-          ? `<button class="btn-start-match" onclick="App.toggleTimer(${courtId})">&#9654; Start Match</button>`
-          : `<div class="match-timer-row">
-               <span class="match-timer-display" id="timer-${courtId}">${this.formatTimer(timerMs)}</span>
-               <button class="btn-pause-match" onclick="App.toggleTimer(${courtId})">${game.timerPaused ? '&#9654; Resume Match' : '&#9208; Pause Match'}</button>
+          ? `<div class="match-action-row">
+               <button class="btn-start-match" onclick="App.toggleTimer(${courtId})">&#9654; Start</button>
+               <button class="btn btn-end-game" onclick="App.endGame(${courtId})">End</button>
+             </div>`
+          : `<div class="match-action-row">
+               <div class="match-timer-row">
+                 <span class="match-timer-display" id="timer-${courtId}">${this.formatTimer(timerMs)}</span>
+                 <button class="btn-pause-match" onclick="App.toggleTimer(${courtId})">${game.timerPaused ? '&#9654; Resume' : '&#9208; Pause'}</button>
+               </div>
+               <button class="btn btn-end-game" onclick="App.endGame(${courtId})">End</button>
              </div>`;
         bodyHTML = `<div class="court-assignment">
           <div class="court-side side-1">
@@ -4160,7 +4181,6 @@ ${bracketHTML}
             ${this.renderSide(game.side2)}
           </div>
           ${timerWidget}
-          <button class="btn btn-end-game" onclick="App.endGame(${courtId})">End Match</button>
         </div>`;
       }
 
@@ -4250,7 +4270,7 @@ ${bracketHTML}
       controls.style.display = 'flex';
       if (courtSelect) {
         courtSelect.parentElement.style.display = '';
-        courtSelect.value = this.state.availableCourts || 2;
+        courtSelect.value = this.state.availableCourts || 1;
       }
       if (btnAssignAll) {
         btnAssignAll.disabled = !canAssign;
@@ -4284,7 +4304,7 @@ ${bracketHTML}
         controls.style.display = 'flex';
         if (courtSelect) {
           courtSelect.parentElement.style.display = '';
-          courtSelect.value = this.state.availableCourts || 2;
+          courtSelect.value = this.state.availableCourts || 1;
         }
         if (btnAssignAll) {
           btnAssignAll.disabled = n < 4;
