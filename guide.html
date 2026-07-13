@@ -76,6 +76,7 @@ footer a:hover { text-decoration: underline; }
 <p>When you first open Court Manager, you'll see two options:</p>
 <ul>
   <li><strong>&#9889; Quick Play</strong> — Pick a format (Open Play, Round Robin, or Tournament) and jump straight into an offline session on this device. No sign-in, no setup — just tell it how many players and their names.</li>
+  <li><strong>&#127955; Score Keeper Only</strong> — Skip sessions entirely and just track serve and score for one match. No sign-in, no roster, nothing saved.</li>
   <li><strong>Sign in with Google</strong> — Unlocks full features: create and manage private sessions, save your preferences across devices, and keep a personal match history.</li>
 </ul>
 <p>Opening a link someone shared with you to a specific session takes you to a focused screen for that session instead of the general landing page — it's headed <strong>"Join [session name]"</strong>, hides Quick Play (since it starts an unrelated offline session), and narrows your choice to <strong>Sign in with Google</strong> (to save your preferences and track match history) or <strong>Continue as Guest</strong> (just your name and an optional skill level, nothing saved).</p>
@@ -140,6 +141,26 @@ footer a:hover { text-decoration: underline; }
   <li><strong>Match by skill</strong> (on by default) — Pairs players with similar skill levels.</li>
   <li><strong>Minimize repeats</strong> (on by default) — Avoids matching players who've already played each other.</li>
 </ul>
+
+<h2>Score Keeper</h2>
+<p>Score Keeper tracks side-out serving and the score for a single game, using standard pickleball scoring — calls read as <strong>server score&ndash;returner score&ndash;server number</strong> (e.g. "4-2-2"). It's available two ways:</p>
+<ul>
+  <li><strong>Score Keeper Only</strong> — Tap it right on the landing page for a standalone scorer. Type in each team's player name(s) (leave the second name blank for singles) and you're scoring — no session, no roster, and nothing is saved once you're done.</li>
+  <li><strong>In a session</strong> — Once a court's match has started, tap <strong>&#127955; Score Keeper</strong> on that court to track the match live instead of entering a score manually at the end.</li>
+</ul>
+<h3>Setup</h3>
+<p>Before scoring starts, choose:</p>
+<ul>
+  <li>The <strong>first server</strong> for each doubles team (skipped for singles).</li>
+  <li>Which team is <strong>serving first</strong>.</li>
+  <li><strong>Playing to</strong> 11 or 15 points (win by 2).</li>
+</ul>
+<h3>Live Scoring</h3>
+<p>The serving team is highlighted, with the current server marked <strong>"Now Serving."</strong> Tap <strong>Point</strong> to award the serving team a point, or <strong>No Point</strong> when they lose the rally. In doubles, losing the rally passes serve to the second server on that side; if both partners have served, it's a <strong>side out</strong> (flashed on screen) and serve passes to the other team. The game ends automatically once a team reaches the target score with at least a 2-point lead, showing a <strong>Game Complete</strong> banner with the winner.</p>
+<div class="tip">
+  <strong>In-session finish:</strong> Tapping <strong>Done</strong> after a session match completes automatically records the result to session (and personal) match history with the match duration, and returns players to the queue — the same as saving a manually-entered score. In Tournament mode, it also advances the winner in the bracket. You can close the Score Keeper panel at any point before finishing to fall back to entering the score manually instead; the court and timer keep running either way.
+</div>
+<p>The standalone Score Keeper Only mode doesn't save anything — closing it or tapping Done at the end just closes the scorer.</p>
 
 <h2>Partner Preferences</h2>
 <p>In the <strong>Settings</strong> tab under <strong>Your Partner(s)</strong>:</p>
