@@ -1376,6 +1376,111 @@ body {
 }
 .btn-cancel-score:hover { background: var(--hover-bg); border-color: var(--border-strong); }
 
+/* ── Score Keeper ───────────────────────────── */
+.btn-score-keeper {
+  background: rgba(255,255,255,0.2);
+  border: none;
+  color: white;
+  font-size: 0.72rem;
+  font-weight: 700;
+  padding: 4px 10px;
+  border-radius: var(--radius-full);
+  cursor: pointer;
+  white-space: nowrap;
+  font-family: inherit;
+}
+.btn-score-keeper:hover { background: rgba(255,255,255,0.35); }
+.btn-score-keeper.active { background: rgba(255,255,255,0.55); }
+.sk-panel { display: flex; flex-direction: column; gap: 8px; }
+.sk-setup-team {
+  padding: 8px 10px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--input-bg);
+}
+.sk-setup-team-label {
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: var(--text-light);
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  margin-bottom: 4px;
+}
+.sk-setup-note { font-size: 0.8rem; color: var(--text); font-weight: 600; }
+.sk-radio-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 0;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--text);
+  cursor: pointer;
+}
+.sk-radio-row input { accent-color: var(--primary); }
+.sk-setup-actions { display: flex; gap: 8px; margin-top: 4px; }
+.sk-team {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  padding: 8px 10px;
+  border-radius: var(--radius-sm);
+  border: 1.5px solid var(--border);
+  background: var(--card);
+}
+.sk-team-serving { border-color: var(--success); background: var(--success-light); }
+.sk-team-returning { border-color: var(--border); background: var(--input-bg); }
+.sk-team-badge { margin-bottom: 2px; }
+.sk-badge {
+  font-size: 0.65rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  padding: 2px 8px;
+  border-radius: var(--radius-full);
+  display: inline-block;
+}
+.sk-badge-serving { background: var(--success); color: white; }
+.sk-badge-returning { background: var(--border-strong); color: var(--text); }
+.sk-player { font-size: 0.88rem; font-weight: 600; color: var(--text); padding: 1px 0; }
+.sk-player-serving { color: var(--success); font-weight: 800; }
+.sk-serving-dot { font-size: 0.68rem; font-weight: 700; color: var(--success); margin-left: 4px; }
+.sk-score {
+  text-align: center;
+  font-size: 1.4rem;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+  color: var(--text);
+  padding: 2px 0;
+  font-variant-numeric: tabular-nums;
+}
+.sk-sideout-flash {
+  text-align: center;
+  font-size: 0.95rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  color: white;
+  background: var(--danger);
+  padding: 6px;
+  border-radius: var(--radius-sm);
+}
+.sk-actions { display: flex; gap: 8px; margin-top: 2px; }
+.sk-panel-footer { text-align: center; margin-top: 2px; }
+.sk-close-link { font-size: 0.78rem; color: var(--text-light); font-weight: 600; text-decoration: underline; cursor: pointer; }
+.sk-gameover-banner {
+  text-align: center;
+  font-size: 0.95rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  color: white;
+  background: var(--primary);
+  padding: 6px;
+  border-radius: var(--radius-sm);
+}
+.sk-team-winner { border-color: var(--warning); background: var(--warning-light); }
+.sk-badge-winner { background: var(--warning); color: white; }
+.sk-player-winner { font-size: 1.05rem; font-weight: 800; color: var(--text); }
+.sk-team-loser { border-color: var(--border); background: var(--input-bg); opacity: 0.75; }
+
 /* ── History tab ────────────────────────────── */
 .history-section {
   background: var(--card);
@@ -1816,6 +1921,10 @@ body {
             &#9889; Quick Play
           </button>
           <p style="font-size:0.78rem;color:var(--text-muted);margin:-4px 0 14px;line-height:1.4;">Jumps straight into a new offline session on this device &mdash; no sign-in, no setup. Pick Open Play, Round Robin, or Tournament.</p>
+          <button class="btn-outline" id="btnStandaloneScoreKeeper" onclick="StandaloneSK.open()" style="width:100%;padding:12px;font-size:1rem;font-weight:700;margin-bottom:10px;display:flex;align-items:center;justify-content:center;gap:8px;">
+            &#127955; Score Keeper Only
+          </button>
+          <p style="font-size:0.78rem;color:var(--text-muted);margin:-4px 0 14px;line-height:1.4;">Just track serve and score for one match &mdash; no session, no history, nothing saved.</p>
           <div style="display:flex;align-items:center;gap:12px;margin-bottom:10px;">
             <div style="flex:1;height:1px;background:var(--border);"></div>
             <span style="font-size:0.75rem;font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.05em;">or</span>
@@ -2285,6 +2394,19 @@ body {
     </div>
   </div>
 
+  <!-- ── Standalone Score Keeper (no session, nothing saved) ── -->
+  <div id="standaloneSkModal" class="hiw-overlay" style="display:none;" onclick="StandaloneSK.close(event)">
+    <div class="hiw-modal" style="max-width:420px;" onclick="event.stopPropagation()">
+      <div class="hiw-header">
+        <h2>Score Keeper</h2>
+        <button class="hiw-close" onclick="StandaloneSK.close()" aria-label="Close">&times;</button>
+      </div>
+      <div class="hiw-body">
+        <div id="standaloneSkContent"></div>
+      </div>
+    </div>
+  </div>
+
   <!-- ── In-session: add player to queue modal ── -->
   <div id="queueAddPlayerModal" class="hiw-overlay" style="display:none;" onclick="App.closeQueueAddPlayer(event)">
     <div class="hiw-modal" style="max-width:360px;" onclick="event.stopPropagation()">
@@ -2312,6 +2434,146 @@ body {
 </div>
 
 <script>
+// Shared pickleball side-out scoring rules + panel markup, used by both the
+// per-court Score Keeper (App, persisted via Firebase) and the standalone
+// Score Keeper (StandaloneSK, ephemeral, no session/history).
+const ScoreKeeperRules = {
+  buildServers(side, firstId) {
+    if (side.length < 2) return [side[0]];
+    const secondId = side.find(id => id !== firstId);
+    return [firstId, secondId];
+  },
+
+  // Mutates `sk` in place: { servingSide, serverNum, servers, score, winTarget, gameComplete, winnerSide, flash }
+  applyPoint(sk, won) {
+    sk.flash = null;
+    const servingSide = sk.servingSide;
+    if (won) {
+      sk.score[servingSide] = (sk.score[servingSide] || 0) + 1;
+      const otherSide = servingSide === 1 ? 2 : 1;
+      const target = sk.winTarget || 11;
+      if (sk.score[servingSide] >= target && sk.score[servingSide] - sk.score[otherSide] >= 2) {
+        sk.gameComplete = true;
+        sk.winnerSide = servingSide;
+      }
+    } else {
+      const servingCount = sk.servers[servingSide].length;
+      if (sk.serverNum < servingCount) {
+        sk.serverNum += 1;
+      } else {
+        sk.servingSide = servingSide === 1 ? 2 : 1;
+        sk.serverNum = 1;
+        sk.flash = 'SIDE OUT';
+      }
+    }
+  },
+
+  renderSetup(side1, side2, nameFn, radioNs, callbacks) {
+    const esc = s => App.esc(s);
+    const teamName = side => side.map(id => esc(nameFn(id))).join(' & ');
+    const sideTeamHtml = (side, idx) => {
+      if (side.length < 2) {
+        return `<div class="sk-setup-team">
+          <div class="sk-setup-team-label">Server</div>
+          <div class="sk-setup-note">${esc(nameFn(side[0]))}</div>
+        </div>`;
+      }
+      const rows = side.map(id => `<label class="sk-radio-row">
+          <input type="radio" name="${radioNs}-first-${idx}" value="${id}" ${id === side[0] ? 'checked' : ''}>
+          <span>${esc(nameFn(id))}</span>
+        </label>`).join('');
+      return `<div class="sk-setup-team">
+        <div class="sk-setup-team-label">First server &mdash; ${teamName(side)}</div>
+        ${rows}
+      </div>`;
+    };
+
+    return `<div class="sk-panel sk-setup">
+      ${sideTeamHtml(side1, 1)}
+      ${sideTeamHtml(side2, 2)}
+      <div class="sk-setup-team">
+        <div class="sk-setup-team-label">Serving first</div>
+        <label class="sk-radio-row"><input type="radio" name="${radioNs}-servefirst" value="1" checked><span>${teamName(side1)}</span></label>
+        <label class="sk-radio-row"><input type="radio" name="${radioNs}-servefirst" value="2"><span>${teamName(side2)}</span></label>
+      </div>
+      <div class="sk-setup-team">
+        <div class="sk-setup-team-label">Playing to</div>
+        <label class="sk-radio-row"><input type="radio" name="${radioNs}-wintarget" value="11" checked><span>11 points</span></label>
+        <label class="sk-radio-row"><input type="radio" name="${radioNs}-wintarget" value="15"><span>15 points</span></label>
+      </div>
+      <div class="sk-setup-actions">
+        <button class="btn-cancel-score" onclick="${callbacks.cancel}">Cancel</button>
+        <button class="btn-save-score" onclick="${callbacks.confirm}">Start Scoring</button>
+      </div>
+    </div>`;
+  },
+
+  renderLive(sk, side1, side2, nameFn, callbacks) {
+    const esc = s => App.esc(s);
+    // Team positions stay fixed for the whole match (first-serving team on
+    // top) — only the color/badge/highlight move to show who's serving now,
+    // since swapping which box is on top read as confusing on side-outs.
+    const topSide = sk.firstServingSide || 1;
+    const bottomSide = topSide === 1 ? 2 : 1;
+    const topIds = topSide === 1 ? side1 : side2;
+    const bottomIds = bottomSide === 1 ? side1 : side2;
+    const servingSide = sk.servingSide;
+    const returningSide = servingSide === 1 ? 2 : 1;
+    const servingServerId = sk.servers[servingSide][sk.serverNum - 1];
+
+    const teamBlock = (ids, side) => {
+      const isServing = side === servingSide;
+      const playersHtml = ids.map(id => {
+        const isCurrentServer = isServing && id === servingServerId;
+        return `<div class="sk-player${isCurrentServer ? ' sk-player-serving' : ''}">${esc(nameFn(id))}${isCurrentServer ? ' <span class="sk-serving-dot">&#8226; Now Serving</span>' : ''}</div>`;
+      }).join('');
+      const badge = isServing
+        ? '<span class="sk-badge sk-badge-serving">&#127955; SERVING</span>'
+        : '<span class="sk-badge sk-badge-returning">&#8617; RETURNING</span>';
+      return `<div class="sk-team ${isServing ? 'sk-team-serving' : 'sk-team-returning'}">
+        <div class="sk-team-badge">${badge}</div>
+        ${playersHtml}
+      </div>`;
+    };
+
+    const scoreText = `${sk.score[servingSide] || 0}-${sk.score[returningSide] || 0}-${sk.serverNum}`;
+
+    return `<div class="sk-panel sk-live">
+      ${sk.flash ? `<div class="sk-sideout-flash">${esc(sk.flash)}</div>` : ''}
+      ${teamBlock(topIds, topSide)}
+      <div class="sk-score">${scoreText}</div>
+      ${teamBlock(bottomIds, bottomSide)}
+      <div class="sk-actions">
+        <button class="btn-save-score" onclick="${callbacks.point(true)}">Point</button>
+        <button class="btn-cancel-score" onclick="${callbacks.point(false)}">No Point</button>
+      </div>
+      <div class="sk-panel-footer"><a href="#" class="sk-close-link" onclick="${callbacks.close}">${callbacks.closeLabel || 'Close Score Keeper'}</a></div>
+    </div>`;
+  },
+
+  renderComplete(sk, side1, side2, nameFn, callbacks) {
+    const esc = s => App.esc(s);
+    const winnerSide = sk.winnerSide;
+    const loserSide = winnerSide === 1 ? 2 : 1;
+    const teamName = side => (side === 1 ? side1 : side2).map(id => esc(nameFn(id))).join(' & ');
+
+    return `<div class="sk-panel sk-complete">
+      <div class="sk-gameover-banner">GAME COMPLETE</div>
+      <div class="sk-team sk-team-winner">
+        <div class="sk-team-badge"><span class="sk-badge sk-badge-winner">&#127942; WINNER</span></div>
+        <div class="sk-player sk-player-winner">${teamName(winnerSide)}</div>
+      </div>
+      <div class="sk-score">${sk.score[winnerSide] || 0}-${sk.score[loserSide] || 0}</div>
+      <div class="sk-team sk-team-loser">
+        <div class="sk-player">${teamName(loserSide)}</div>
+      </div>
+      <div class="sk-actions">
+        <button class="btn-save-score" onclick="${callbacks.finish}">${callbacks.finishLabel || 'Done'}</button>
+      </div>
+    </div>`;
+  },
+};
+
 const App = {
   state: {
     players: [],
@@ -2812,6 +3074,140 @@ const App = {
     }
     this.saveState();
     this.render();
+  },
+
+  // ─── Score Keeper ───────────────────────────
+  toggleScoreKeeper(courtId) {
+    const game = this.state.activeGames[courtId];
+    if (!game) return;
+    if (!game.scoreKeeper) game.scoreKeeper = { open: true, configured: false };
+    else game.scoreKeeper.open = !game.scoreKeeper.open;
+    this.saveState();
+    this.render();
+  },
+
+  confirmScoreKeeperSetup(courtId) {
+    const game = this.state.activeGames[courtId];
+    if (!game) return;
+    const radioNs = `sk-${courtId}`;
+    const buildServers = (side, idx) => {
+      if (side.length < 2) return [side[0]];
+      const sel = document.querySelector(`input[name="${radioNs}-first-${idx}"]:checked`);
+      const firstId = sel ? parseInt(sel.value) : side[0];
+      return ScoreKeeperRules.buildServers(side, firstId);
+    };
+    const servers = { 1: buildServers(game.side1, 1), 2: buildServers(game.side2, 2) };
+    const serveFirstSel = document.querySelector(`input[name="${radioNs}-servefirst"]:checked`);
+    const servingSide = serveFirstSel ? parseInt(serveFirstSel.value) : 1;
+    const winTargetSel = document.querySelector(`input[name="${radioNs}-wintarget"]:checked`);
+    const winTarget = winTargetSel ? parseInt(winTargetSel.value) : 11;
+    game.scoreKeeper = {
+      open: true,
+      configured: true,
+      servers,
+      servingSide,
+      firstServingSide: servingSide,
+      serverNum: 1,
+      score: { 1: 0, 2: 0 },
+      flash: null,
+      winTarget,
+      gameComplete: false,
+      winnerSide: null,
+    };
+    this.saveState();
+    this.render();
+  },
+
+  scoreKeeperPoint(courtId, won) {
+    const game = this.state.activeGames[courtId];
+    if (!game || !game.scoreKeeper || !game.scoreKeeper.configured || game.scoreKeeper.gameComplete) return;
+    const sk = game.scoreKeeper;
+    ScoreKeeperRules.applyPoint(sk, won);
+    if (sk.gameComplete && !game.timerPaused) {
+      game.timerElapsed = (game.timerElapsed || 0) + (Date.now() - (game.timerResumedAt || Date.now()));
+      game.timerPaused = true;
+      game.timerResumedAt = null;
+    }
+    this.saveState();
+    this.render();
+    if (sk.flash) {
+      setTimeout(() => {
+        const g = this.state.activeGames[courtId];
+        if (g && g.scoreKeeper) {
+          g.scoreKeeper.flash = null;
+          this.saveState();
+          this.render();
+        }
+      }, 1600);
+    }
+  },
+
+  // Records the score-keeper result to match history and sends the players
+  // back to the queue, same as a normal manually-scored match.
+  scoreKeeperFinish(courtId) {
+    const game = this.state.activeGames[courtId];
+    if (!game || !game.scoreKeeper || !game.scoreKeeper.gameComplete) return;
+    const sk = game.scoreKeeper;
+    this.recordOpponents(game.side1, game.side2);
+    for (const id of [...game.side1, ...game.side2]) {
+      const p = this.getPlayer(id);
+      if (p) p.roundsPlayed = (p.roundsPlayed || 0) + 1;
+    }
+    const winner = sk.winnerSide;
+    const score1 = sk.score[1] || 0;
+    const score2 = sk.score[2] || 0;
+    const duration = this.getTimerElapsed(game) || null;
+    const histEntry = {
+      round: this.state.round,
+      courtId,
+      side1: [...game.side1],
+      side2: [...game.side2],
+      side1Names: game.side1.map(id => this.getPlayer(id)?.name || '?'),
+      side2Names: game.side2.map(id => this.getPlayer(id)?.name || '?'),
+      mode: game.mode,
+      score1,
+      score2,
+      winner,
+      duration,
+      startTime: game.startTime || null,
+    };
+    this.state.roundHistory.push(histEntry);
+    MyHistory.saveMatch(histEntry);
+
+    if (this.isTournament() && winner) {
+      game._submittedScore1 = score1;
+      game._submittedScore2 = score2;
+      this.bracketRecordWinner(courtId, winner);
+    }
+
+    const courtPlayers = [...(game.side1 || []), ...(game.side2 || [])];
+    delete this.state.activeGames[courtId];
+    delete this.state.scoringGames[courtId];
+    const selfExpired = this._expireStaleFromCourt(courtPlayers);
+    this.saveState();
+    if (selfExpired) { this._handleSelfExpired(); return; }
+    this.render();
+  },
+
+  renderScoreKeeperPanel(game, courtId) {
+    const sk = game.scoreKeeper;
+    const nameFn = id => this.getPlayer(id)?.name || '?';
+    if (!sk || !sk.configured) {
+      return ScoreKeeperRules.renderSetup(game.side1, game.side2, nameFn, `sk-${courtId}`, {
+        cancel: `App.toggleScoreKeeper(${courtId})`,
+        confirm: `App.confirmScoreKeeperSetup(${courtId})`,
+      });
+    }
+    if (sk.gameComplete) {
+      return ScoreKeeperRules.renderComplete(sk, game.side1, game.side2, nameFn, {
+        finish: `App.scoreKeeperFinish(${courtId})`,
+        finishLabel: 'Finish &amp; Return to Queue',
+      });
+    }
+    return ScoreKeeperRules.renderLive(sk, game.side1, game.side2, nameFn, {
+      point: won => `App.scoreKeeperPoint(${courtId}, ${won})`,
+      close: `App.toggleScoreKeeper(${courtId});return false;`,
+    });
   },
 
   MAX_MATCH_MS: 100 * 60 * 1000,        // 100 minutes — normal match duration cap (requires the timer to have been started)
@@ -4282,6 +4678,8 @@ ${bracketHTML}
       const neverStarted = game.timerPaused && (game.timerElapsed || 0) === 0 && !game.timerResumedAt;
       const cardClass = isScoring ? 'court-card scoring' : 'court-card game-active';
 
+      const scoreKeeperComplete = !!(game.scoreKeeper && game.scoreKeeper.gameComplete);
+
       let bodyHTML;
       if (isScoring) {
         const s1Names = game.side1.map(id => { const p = this.getPlayer(id); return p ? this.esc(p.name) + (p.score != null ? ` <span style="font-weight:400;opacity:0.7;">(${this.fmtSkill(p.score)})</span>` : '') : '?'; }).join(' & ');
@@ -4326,21 +4724,30 @@ ${bracketHTML}
                </div>
                <button class="btn btn-end-game" onclick="App.endGame(${courtId})">End</button>
              </div>`;
+        const scoreKeeperOpen = !!(game.scoreKeeper && (game.scoreKeeper.open || scoreKeeperComplete));
+        const courtSidesOrScoreKeeper = scoreKeeperOpen
+          ? this.renderScoreKeeperPanel(game, courtId)
+          : `<div class="court-side side-1">
+              ${this.renderSide(game.side1)}
+            </div>
+            <div class="court-vs">VS</div>
+            <div class="court-side side-2">
+              ${this.renderSide(game.side2)}
+            </div>`;
         bodyHTML = `<div class="court-assignment">
-          <div class="court-side side-1">
-            ${this.renderSide(game.side1)}
-          </div>
-          <div class="court-vs">VS</div>
-          <div class="court-side side-2">
-            ${this.renderSide(game.side2)}
-          </div>
-          ${timerWidget}
+          ${courtSidesOrScoreKeeper}
+          ${scoreKeeperComplete ? '' : timerWidget}
         </div>`;
       }
+
+      const scoreKeeperBtn = (!isScoring && !neverStarted && !scoreKeeperComplete)
+        ? `<button class="btn-score-keeper${game.scoreKeeper && game.scoreKeeper.open ? ' active' : ''}" onclick="App.toggleScoreKeeper(${courtId})">&#127955; Score Keeper</button>`
+        : '';
 
       return `<div class="${cardClass}">
         <div class="court-header">
           <span>Court ${courtId} ${modeBadge}</span>
+          ${scoreKeeperBtn}
           <div class="court-controls" style="gap:8px;">
             <span class="court-status">${isScoring ? 'Score entry' : ''}</span>
             ${!isScoring && !this.isRoundRobin() && !this.isTournament() ? `<button class="btn-cancel-game" onclick="App.cancelGame(${courtId})">&times;</button>` : ''}
@@ -6422,6 +6829,141 @@ const MyHistory = {
     const view = document.getElementById('myHistoryView');
     if (view) view.style.display = 'none';
     if (setup) setup.style.display = '';
+  },
+};
+
+// ─── Standalone Score Keeper ──────────────────
+// A self-contained score-only mode reachable from the welcome page: no
+// session, no player roster, no match history — just names typed in for
+// this one match, scored with the same rules as the in-session keeper.
+const StandaloneSK = {
+  names: {},   // id -> name
+  game: null,  // { side1: [ids], side2: [ids] }
+  scoreKeeper: null,
+
+  open() {
+    this.names = {};
+    this.game = null;
+    this.scoreKeeper = null;
+    document.getElementById('standaloneSkModal').style.display = 'flex';
+    document.body.style.overflow = 'hidden';
+    this._renderNameForm();
+  },
+
+  close() {
+    document.getElementById('standaloneSkModal').style.display = 'none';
+    document.body.style.overflow = '';
+    this.game = null;
+    this.scoreKeeper = null;
+  },
+
+  nameFor(id) { return this.names[id] || '?'; },
+
+  _renderNameForm() {
+    const el = document.getElementById('standaloneSkContent');
+    el.innerHTML = `
+      <div class="sk-setup-team">
+        <div class="sk-setup-team-label">Team 1</div>
+        <input type="text" class="setup-input" id="sa-t1p1" placeholder="Player 1 name" style="margin-bottom:6px;">
+        <input type="text" class="setup-input" id="sa-t1p2" placeholder="Player 2 name (blank for singles)">
+      </div>
+      <div class="sk-setup-team">
+        <div class="sk-setup-team-label">Team 2</div>
+        <input type="text" class="setup-input" id="sa-t2p1" placeholder="Player 1 name" style="margin-bottom:6px;">
+        <input type="text" class="setup-input" id="sa-t2p2" placeholder="Player 2 name (blank for singles)">
+      </div>
+      <p id="standaloneSkNameError" class="setup-error">Enter at least one player name for each team</p>
+      <div class="sk-setup-actions">
+        <button class="btn-cancel-score" onclick="StandaloneSK.close()">Cancel</button>
+        <button class="btn-save-score" onclick="StandaloneSK.confirmNames()">Next</button>
+      </div>
+    `;
+  },
+
+  confirmNames() {
+    const val = id => document.getElementById(id).value.trim();
+    const t1p1 = val('sa-t1p1'), t1p2 = val('sa-t1p2');
+    const t2p1 = val('sa-t2p1'), t2p2 = val('sa-t2p2');
+    const errEl = document.getElementById('standaloneSkNameError');
+    if (!t1p1 || !t2p1) { if (errEl) errEl.style.display = 'block'; return; }
+
+    this.names = {};
+    let nextId = 1;
+    const side1 = [], side2 = [];
+    this.names[nextId] = t1p1; side1.push(nextId); nextId++;
+    if (t1p2) { this.names[nextId] = t1p2; side1.push(nextId); nextId++; }
+    this.names[nextId] = t2p1; side2.push(nextId); nextId++;
+    if (t2p2) { this.names[nextId] = t2p2; side2.push(nextId); nextId++; }
+
+    this.game = { side1, side2 };
+    this._renderSetup();
+  },
+
+  _renderSetup() {
+    const el = document.getElementById('standaloneSkContent');
+    const nameFn = id => this.nameFor(id);
+    el.innerHTML = ScoreKeeperRules.renderSetup(this.game.side1, this.game.side2, nameFn, 'sa', {
+      cancel: 'StandaloneSK.close()',
+      confirm: 'StandaloneSK.confirmSetup()',
+    });
+  },
+
+  confirmSetup() {
+    const buildServers = (side, idx) => {
+      if (side.length < 2) return [side[0]];
+      const sel = document.querySelector(`input[name="sa-first-${idx}"]:checked`);
+      const firstId = sel ? parseInt(sel.value) : side[0];
+      return ScoreKeeperRules.buildServers(side, firstId);
+    };
+    const servers = { 1: buildServers(this.game.side1, 1), 2: buildServers(this.game.side2, 2) };
+    const serveFirstSel = document.querySelector('input[name="sa-servefirst"]:checked');
+    const servingSide = serveFirstSel ? parseInt(serveFirstSel.value) : 1;
+    const winTargetSel = document.querySelector('input[name="sa-wintarget"]:checked');
+    const winTarget = winTargetSel ? parseInt(winTargetSel.value) : 11;
+    this.scoreKeeper = {
+      servers,
+      servingSide,
+      firstServingSide: servingSide,
+      serverNum: 1,
+      score: { 1: 0, 2: 0 },
+      flash: null,
+      winTarget,
+      gameComplete: false,
+      winnerSide: null,
+    };
+    this._renderLive();
+  },
+
+  point(won) {
+    const sk = this.scoreKeeper;
+    if (!sk || sk.gameComplete) return;
+    ScoreKeeperRules.applyPoint(sk, won);
+    if (sk.gameComplete) { this._renderComplete(); return; }
+    this._renderLive();
+    if (sk.flash) {
+      setTimeout(() => {
+        if (this.scoreKeeper) { this.scoreKeeper.flash = null; this._renderLive(); }
+      }, 1600);
+    }
+  },
+
+  _renderLive() {
+    const el = document.getElementById('standaloneSkContent');
+    const nameFn = id => this.nameFor(id);
+    el.innerHTML = ScoreKeeperRules.renderLive(this.scoreKeeper, this.game.side1, this.game.side2, nameFn, {
+      point: won => `StandaloneSK.point(${won})`,
+      close: 'StandaloneSK.close();return false;',
+      closeLabel: 'End without saving',
+    });
+  },
+
+  _renderComplete() {
+    const el = document.getElementById('standaloneSkContent');
+    const nameFn = id => this.nameFor(id);
+    el.innerHTML = ScoreKeeperRules.renderComplete(this.scoreKeeper, this.game.side1, this.game.side2, nameFn, {
+      finish: 'StandaloneSK.close()',
+      finishLabel: 'Done',
+    });
   },
 };
 
