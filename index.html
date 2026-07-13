@@ -2510,13 +2510,19 @@ const ScoreKeeperRules = {
 
   renderLive(sk, side1, side2, nameFn, callbacks) {
     const esc = s => App.esc(s);
+    // Team positions stay fixed for the whole match (first-serving team on
+    // top) — only the color/badge/highlight move to show who's serving now,
+    // since swapping which box is on top read as confusing on side-outs.
+    const topSide = sk.firstServingSide || 1;
+    const bottomSide = topSide === 1 ? 2 : 1;
+    const topIds = topSide === 1 ? side1 : side2;
+    const bottomIds = bottomSide === 1 ? side1 : side2;
     const servingSide = sk.servingSide;
     const returningSide = servingSide === 1 ? 2 : 1;
-    const servingIds = servingSide === 1 ? side1 : side2;
-    const returningIds = servingSide === 1 ? side2 : side1;
     const servingServerId = sk.servers[servingSide][sk.serverNum - 1];
 
-    const teamBlock = (ids, isServing) => {
+    const teamBlock = (ids, side) => {
+      const isServing = side === servingSide;
       const playersHtml = ids.map(id => {
         const isCurrentServer = isServing && id === servingServerId;
         return `<div class="sk-player${isCurrentServer ? ' sk-player-serving' : ''}">${esc(nameFn(id))}${isCurrentServer ? ' <span class="sk-serving-dot">&#8226; Now Serving</span>' : ''}</div>`;
@@ -2534,9 +2540,9 @@ const ScoreKeeperRules = {
 
     return `<div class="sk-panel sk-live">
       ${sk.flash ? `<div class="sk-sideout-flash">${esc(sk.flash)}</div>` : ''}
-      ${teamBlock(servingIds, true)}
+      ${teamBlock(topIds, topSide)}
       <div class="sk-score">${scoreText}</div>
-      ${teamBlock(returningIds, false)}
+      ${teamBlock(bottomIds, bottomSide)}
       <div class="sk-actions">
         <button class="btn-save-score" onclick="${callbacks.point(true)}">Point</button>
         <button class="btn-cancel-score" onclick="${callbacks.point(false)}">No Point</button>
@@ -3100,6 +3106,7 @@ const App = {
       configured: true,
       servers,
       servingSide,
+      firstServingSide: servingSide,
       serverNum: 1,
       score: { 1: 0, 2: 0 },
       flash: null,
@@ -6916,6 +6923,7 @@ const StandaloneSK = {
     this.scoreKeeper = {
       servers,
       servingSide,
+      firstServingSide: servingSide,
       serverNum: 1,
       score: { 1: 0, 2: 0 },
       flash: null,
