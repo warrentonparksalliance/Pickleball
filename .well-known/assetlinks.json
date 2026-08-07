@@ -1,0 +1,12 @@
+[
+  {
+    "relation": ["delegate_permission/common.handle_all_urls"],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "com.warrentonparksalliance.courtmanager",
+      "sha256_cert_fingerprints": [
+        "CB:F7:02:65:82:6C:4F:6F:6D:A0:AE:B2:1D:99:45:4C:D6:A1:4C:70:07:33:38:44:CA:73:77:F7:2C:C5:A1:D5"
+      ]
+    }
+  }
+]
