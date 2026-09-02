@@ -3241,7 +3241,7 @@ const App = {
 
   _handleSelfExpired() {
     alert('Your session timed out after 12 hours. Please rejoin to continue playing.');
-    Session.leave();
+    Session._doLeave();
   },
 
   _checkSelfRemoved() {
@@ -4443,7 +4443,7 @@ ${bracketHTML}
     this._myGuests = new Set();
     this._saveMyGuests();
     this.state = this._freshState();
-    Session.leave();
+    Session._doLeave();
   },
 
   // ─── Rendering ─────────────────────────────
@@ -5129,6 +5129,11 @@ const Session = {
   _pushTimer: null,
 
   leave() {
+    if (this.id === 'offline' && !confirm('Leave this Quick Play session? It isn’t saved, so all players, scores, and courts will be lost.')) return;
+    this._doLeave();
+  },
+
+  _doLeave() {
     // Deactivate self in the session so others can still manage courts
     if (this.id !== 'offline') {
       const selfId = Onboard.selfId;
@@ -5346,7 +5351,7 @@ const Session = {
           App.state = App._freshState();
           App.render();
           alert('The session has been reset by an admin. You can rejoin right away.');
-          Session.leave();
+          Session._doLeave();
           return;
         }
         _lastResetAt = incomingReset;
@@ -5398,7 +5403,7 @@ const Session = {
           App.state = App._freshState();
           App.render();
           alert('The session has been reset by an admin. You can rejoin right away.');
-          Session.leave();
+          Session._doLeave();
           return;
         }
         if (incomingReset) _lastResetAt = incomingReset;
@@ -6336,7 +6341,7 @@ const Admin = {
     if (!this._fb) return;
     if (Session.id) {
       if (!confirm('Sign out? You will leave the current session.')) return;
-      Session.leave();
+      Session._doLeave();
     }
     await this._fb.signOut(this._fb.auth);
   },
@@ -6859,6 +6864,7 @@ const StandaloneSK = {
   },
 
   close() {
+    if (this.scoreKeeper && !this.scoreKeeper.gameComplete && !confirm('Leave Score Keeper? This game isn’t saved, so the current score will be lost.')) return;
     document.getElementById('standaloneSkModal').style.display = 'none';
     document.body.style.overflow = '';
     this.game = null;
