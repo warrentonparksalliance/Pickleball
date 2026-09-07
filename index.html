@@ -6239,6 +6239,15 @@ const Admin = {
   _isSuperAdmin: false,
   DB: 'https://pickleball-50914-default-rtdb.firebaseio.com',
 
+  // Appends the signed-in user's Firebase ID token so RTDB rules can check auth.uid / auth.token.email
+  async _authedUrl(url) {
+    if (!this._user) return url;
+    try {
+      const token = await this._user.getIdToken();
+      return url + (url.includes('?') ? '&' : '?') + 'auth=' + token;
+    } catch (e) { return url; }
+  },
+
   init() {
     const script = document.createElement('script');
     script.type = 'module';
@@ -6272,10 +6281,10 @@ const Admin = {
   async _seedSuperAdmin() {
     const key = this._emailKey('brooke@warrentonparksalliance.com');
     try {
-      const res = await fetch(`${this.DB}/superAdmins/${key}.json`);
+      const res = await fetch(await this._authedUrl(`${this.DB}/superAdmins/${key}.json`));
       const val = await res.json();
       if (!val) {
-        await fetch(`${this.DB}/superAdmins/${key}.json`, {
+        await fetch(await this._authedUrl(`${this.DB}/superAdmins/${key}.json`), {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ email: 'brooke@warrentonparksalliance.com', name: 'Brooke Terry', addedAt: Date.now() }),
@@ -6292,7 +6301,7 @@ const Admin = {
     if (!this._user?.email) { this._isSuperAdmin = false; return; }
     try {
       const key = this._emailKey(this._user.email);
-      const res = await fetch(`${this.DB}/superAdmins/${key}.json`);
+      const res = await fetch(await this._authedUrl(`${this.DB}/superAdmins/${key}.json`));
       const val = await res.json();
       this._isSuperAdmin = !!val;
     } catch(e) { this._isSuperAdmin = false; }
@@ -6300,7 +6309,7 @@ const Admin = {
 
   async _loadSuperAdmins() {
     try {
-      const res = await fetch(`${this.DB}/superAdmins.json`);
+      const res = await fetch(await this._authedUrl(`${this.DB}/superAdmins.json`));
       this._superAdmins = (await res.json()) || {};
     } catch(e) { this._superAdmins = {}; }
   },
@@ -6346,7 +6355,7 @@ const Admin = {
     email = (email || '').trim().toLowerCase();
     if (!email) return;
     const key = this._emailKey(email);
-    await fetch(`${this.DB}/superAdmins/${key}.json`, {
+    await fetch(await this._authedUrl(`${this.DB}/superAdmins/${key}.json`), {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ email, addedAt: Date.now() }),
@@ -6359,7 +6368,7 @@ const Admin = {
     email = (email || '').trim().toLowerCase();
     if (email === 'brooke@warrentonparksalliance.com') return; // protect bootstrap admin
     const key = this._emailKey(email);
-    await fetch(`${this.DB}/superAdmins/${key}.json`, { method: 'DELETE' });
+    await fetch(await this._authedUrl(`${this.DB}/superAdmins/${key}.json`), { method: 'DELETE' });
     await this._loadSuperAdmins();
     this.renderSuperAdminPanel();
   },
@@ -6437,7 +6446,7 @@ const Admin = {
 
   async _recordLogin(user) {
     if (!user?.uid) return;
-    const path = `${this.DB}/users/${user.uid}.json`;
+    const path = await this._authedUrl(`${this.DB}/users/${user.uid}.json`);
     try {
       const res = await fetch(path);
       const existing = (res.ok ? await res.json() : null) || {};
@@ -6461,7 +6470,7 @@ const Admin = {
     panel.innerHTML = '<div style="color:var(--text-muted);font-size:0.82rem;padding:8px 0;">Loading&hellip;</div>';
     try {
       const [usersRes, sessionsRes] = await Promise.all([
-        fetch(`${this.DB}/users.json`),
+        fetch(await this._authedUrl(`${this.DB}/users.json`)),
         fetch(`${this.DB}/sessions.json`),
       ]);
       const usersData = (usersRes.ok ? await usersRes.json() : null) || {};
@@ -6625,13 +6634,13 @@ const MyHistory = {
     };
 
     try {
-      await fetch(`${this.DB}/userHistory/${Admin._user.uid}/matches.json`, {
+      await fetch(await Admin._authedUrl(`${this.DB}/userHistory/${Admin._user.uid}/matches.json`), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(entry),
       });
       // Increment gamesPlayed on the user record
-      const userPath = `${this.DB}/users/${Admin._user.uid}.json`;
+      const userPath = await Admin._authedUrl(`${this.DB}/users/${Admin._user.uid}.json`);
       const ur = await fetch(userPath);
       const ud = (ur.ok ? await ur.json() : null) || {};
       await fetch(userPath, {
@@ -6657,7 +6666,7 @@ const MyHistory = {
     if (list) list.innerHTML = '<div class="history-empty">Loading...</div>';
 
     try {
-      const res = await fetch(`${this.DB}/userHistory/${Admin._user.uid}/matches.json`);
+      const res = await fetch(await Admin._authedUrl(`${this.DB}/userHistory/${Admin._user.uid}/matches.json`));
       const data = await res.json();
       this._matches = data ? Object.entries(data).map(([key, val]) => ({ ...val, _key: key })).sort((a, b) => (b.startTime || b.savedAt || 0) - (a.startTime || a.savedAt || 0)) : [];
       this._renderStats();
@@ -6825,7 +6834,7 @@ const MyHistory = {
     const wrap = document.getElementById(`swipe-${idx}`);
     if (wrap) { wrap.classList.add('removing'); }
     try {
-      await fetch(`${this.DB}/userHistory/${Admin._user.uid}/matches/${key}.json`, { method: 'DELETE' });
+      await fetch(await Admin._authedUrl(`${this.DB}/userHistory/${Admin._user.uid}/matches/${key}.json`), { method: 'DELETE' });
     } catch(e) { console.error('Failed to delete match:', e); }
     this._matches = this._matches.filter(m => m._key !== key);
     this._renderStats();
