@@ -4865,6 +4865,41 @@ ${bracketHTML}
     }
   },
 
+  // Auto-fill for a court that's already a proposed match with empty seats
+  // left over — e.g. the two seats "Keep Winners"/"Keep Last-Joined" wasn't
+  // able to fill right away because too few players were free at the time.
+  // Only fills the empty seat(s); whoever's already placed is left alone.
+  autoFillRemainingSlots(courtId) {
+    if (this._fillRemainingSlots(courtId)) {
+      this._completeAssignmentPass();
+      this.saveState();
+      this.render();
+    }
+  },
+
+  _fillRemainingSlots(courtId) {
+    const game = this.state.proposedGames[courtId];
+    if (!game) return false;
+    const needed = 4 - game.side1.length - game.side2.length;
+    if (needed <= 0) return false;
+    const onCourt = this.getPlayersOnCourts();
+    const picked = this._pickPriorityPlayers(needed, [...onCourt]);
+    if (!picked) return false;
+    const roomOn = n => 2 - game['side' + n].length;
+    for (const u of picked) {
+      if (u.type === 'pair' && roomOn(1) >= 2) {
+        game.side1.push(...u.ids);
+      } else if (u.type === 'pair' && roomOn(2) >= 2) {
+        game.side2.push(...u.ids);
+      } else {
+        for (const id of u.ids) {
+          game['side' + (roomOn(1) > 0 ? 1 : 2)].push(id);
+        }
+      }
+    }
+    return true;
+  },
+
   // ─── Proposed matches (Open Play manual review) ─────
   // Auto-assignment only proposes a match; nothing is locked in — and no
   // player leaves the queue for good — until the organizer confirms it here.
@@ -5515,6 +5550,10 @@ ${bracketHTML}
   _renderProposedCard(courtId) {
     const game = this.state.proposedGames[courtId];
     const canConfirm = game.side1.length === 2 && game.side2.length === 2;
+    const needed = 4 - game.side1.length - game.side2.length;
+    const onCourt = this.getPlayersOnCourts();
+    const eligible = this.state.players.filter(p => p.active && !onCourt.has(p.id)).length;
+    const canAutoFill = needed > 0 && eligible >= needed;
     const sideBox = (side, sideNum) => {
       const chips = side.map(id => this._renderChip(id)).join('');
       const placeholderLabel = 'Drag or tap to fill';
@@ -5537,6 +5576,7 @@ ${bracketHTML}
           <div class="court-vs">VS</div>
           ${sideBox(game.side2, 2)}
           <div class="match-action-row">
+            ${canAutoFill ? `<button class="btn-confirm-match" onclick="App.autoFillRemainingSlots(${courtId})">Auto-fill</button>` : ''}
             <button class="btn-confirm-match" ${canConfirm ? '' : 'disabled'} onclick="App.startProposedMatch(${courtId})">&#10003; Confirm</button>
           </div>
           ${canConfirm ? '' : '<div class="proposed-hint">Fill both teams to confirm the match.</div>'}
