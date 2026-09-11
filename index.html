@@ -713,6 +713,32 @@ body {
   border-radius: var(--radius-sm);
   padding: 0 12px;
 }
+.queue-subsection-label {
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-muted);
+  margin-bottom: 6px;
+}
+.queue-remove-zone {
+  margin-top: 10px;
+  padding: 10px;
+  text-align: center;
+  border: 1.5px dashed var(--border-strong);
+  border-radius: var(--radius-sm);
+  font-size: 0.8rem;
+  font-style: italic;
+  color: var(--text-muted);
+  transition: background 0.15s, border-color 0.15s, color 0.15s;
+}
+#queueRemoveZone.dnd-hover {
+  background: var(--danger-light);
+  border-color: var(--danger);
+  color: var(--danger);
+  font-style: normal;
+  font-weight: 600;
+}
 .queue-list { display: flex; flex-direction: column; gap: 0; }
 .queue-row {
   display: flex;
@@ -2146,12 +2172,29 @@ body {
         <button id="btnUndoMove" class="btn-outline" style="display:none;flex-shrink:0;padding:5px 10px;font-size:0.78rem;font-weight:600;" onclick="App.undoProposedMove()">&#8617; Undo</button>
       </div>
       <div class="section-subtitle" id="queueSubtitle" style="margin-bottom:10px;">Players waiting to be assigned to a court.</div>
+      <div class="queue-subsection-label">In Queue</div>
       <div class="queue-list-box">
-        <div id="playerList" class="queue-list dnd-target" data-loc-type="queue"></div>
+        <div id="queueActiveList" class="queue-list dnd-target" data-loc-type="queue"></div>
       </div>
-      <div id="queueHint" class="section-subtitle" style="margin-top:8px;">Use &#x23F8; to sit out temporarily or &times; to remove.</div>
+      <div id="queueWaitingWrap" style="display:none;">
+        <div class="queue-subsection-label" style="margin-top:10px;">Waiting (Sitting Out)</div>
+        <div class="queue-list-box">
+          <div id="queueWaitingList" class="queue-list dnd-target" data-loc-type="waiting"></div>
+        </div>
+      </div>
+      <div id="queueRemoveZone" class="queue-remove-zone dnd-target" data-loc-type="remove">
+        <span id="queueRemoveZoneLabel">Drag or tap here to remove a player</span>
+      </div>
+      <div id="queueHint" class="section-subtitle" style="margin-top:8px;">Drag or tap a player, then drag or tap a destination to move them between Queue, Waiting, and Remove.</div>
       <button id="rrUnlockBtn" class="btn-outline" onclick="App.isRoundRobin()?App.rrUnlockPlayers():App.bracketUnlockPlayers()" style="display:none;margin-top:8px;width:100%;color:var(--warning);border-color:var(--warning);font-size:0.82rem;">Unlock Players &amp; Reset</button>
-      <button id="btnQueueAddPlayer" class="btn-add-player" style="display:none;margin-top:10px;" onclick="App.openQueueAddPlayer()">+ Add Player</button>
+      <div id="queueAddPlayerRow" style="display:none;margin-top:10px;">
+        <p id="queueAddPlayerError" class="setup-error" style="display:none;">Enter a player name</p>
+        <div style="display:flex;gap:8px;">
+          <input type="text" class="setup-input" id="queueAddPlayerName" placeholder="Player name" style="flex:1;margin-bottom:0;" onkeydown="if(event.key==='Enter')App.submitQueueAddPlayer()">
+          <input type="number" class="setup-input" id="queueAddPlayerSkill" placeholder="Skill" min="2" max="8" step="0.01" style="width:80px;flex-shrink:0;margin-bottom:0;" onblur="App.fmtSkillInput(this)" onkeydown="if(event.key==='Enter')App.submitQueueAddPlayer()">
+          <button type="button" class="btn-add-player" style="margin-top:0;flex-shrink:0;width:auto;padding:12px 16px;" onclick="App.submitQueueAddPlayer()">+ Add Player</button>
+        </div>
+      </div>
     </div>
 
     <!-- Assign -->
@@ -2513,24 +2556,6 @@ body {
     </div>
   </div>
 
-  <!-- ── In-session: add player to queue modal ── -->
-  <div id="queueAddPlayerModal" class="hiw-overlay" style="display:none;" onclick="App.closeQueueAddPlayer(event)">
-    <div class="hiw-modal" style="max-width:360px;" onclick="event.stopPropagation()">
-      <div class="hiw-header">
-        <h2>Add Player</h2>
-        <button class="hiw-close" onclick="App.closeQueueAddPlayer()" aria-label="Close">&times;</button>
-      </div>
-      <div class="hiw-body">
-        <div style="display:flex;gap:8px;">
-          <input type="text" class="setup-input" id="queueAddPlayerName" placeholder="Player name" style="flex:1;margin-bottom:0;" onkeydown="if(event.key==='Enter')App.submitQueueAddPlayer()">
-          <input type="number" class="setup-input" id="queueAddPlayerSkill" placeholder="Skill" min="2" max="8" step="0.01" style="width:80px;flex-shrink:0;margin-bottom:0;" onblur="App.fmtSkillInput(this)" onkeydown="if(event.key==='Enter')App.submitQueueAddPlayer()">
-        </div>
-        <p id="queueAddPlayerError" class="setup-error">Enter a player name</p>
-        <button type="button" class="btn-confirm-join" style="width:100%;padding:12px;font-size:1rem;font-weight:700;" onclick="App.submitQueueAddPlayer()">+ Add Player</button>
-      </div>
-    </div>
-  </div>
-
   <footer class="app-footer">
     <div>Court Manager is a free community tool provided by <a href="https://www.warrentonparksalliance.com" target="_blank" rel="noopener">Warrenton Parks Alliance</a>, a 501(c)(3) nonprofit keeping Warrenton's parks and trails thriving.</div>
     <div><a href="https://www.warrentonparksalliance.com/ways-to-support/" target="_blank" rel="noopener">Donate</a> to support our mission.</div>
@@ -2857,29 +2882,8 @@ const App = {
   },
 
   // ─── Players ───────────────────────────────
-  // All session types add players via a modal opened from the queue's
-  // + Add Player button (Quick Play sessions skip the skill field).
-  openQueueAddPlayer() {
-    const nameEl = document.getElementById('queueAddPlayerName');
-    const skillEl = document.getElementById('queueAddPlayerSkill');
-    if (nameEl) nameEl.value = '';
-    if (skillEl) {
-      skillEl.value = '';
-      skillEl.style.display = this.state._quickPlay ? 'none' : '';
-    }
-    const errEl = document.getElementById('queueAddPlayerError');
-    if (errEl) errEl.style.display = 'none';
-    document.getElementById('queueAddPlayerModal').style.display = 'flex';
-    document.body.style.overflow = 'hidden';
-    nameEl?.focus();
-  },
-
-  closeQueueAddPlayer(event) {
-    if (event && event.target !== event.currentTarget) return;
-    document.getElementById('queueAddPlayerModal').style.display = 'none';
-    document.body.style.overflow = '';
-  },
-
+  // All session types add players via the inline name/skill fields pinned to
+  // the bottom of the queue (Quick Play sessions skip the skill field).
   submitQueueAddPlayer() {
     const nameEl = document.getElementById('queueAddPlayerName');
     const skillEl = document.getElementById('queueAddPlayerSkill');
@@ -2890,6 +2894,8 @@ const App = {
       nameEl?.focus();
       return;
     }
+    const errEl = document.getElementById('queueAddPlayerError');
+    if (errEl) errEl.style.display = 'none';
     const skill = (!this.state._quickPlay && skillEl?.value) ? parseFloat(skillEl.value) : null;
     const newId = this.state.nextId++;
     this.state.players.push({
@@ -2905,10 +2911,27 @@ const App = {
     this._saveMyGuests();
     this.saveState();
     this.render();
-    this.closeQueueAddPlayer();
+    if (nameEl) nameEl.value = '';
+    if (skillEl) skillEl.value = '';
+    nameEl?.focus();
   },
 
   _pendingRemove: null,
+
+  // Gates whether dragging/tapping a chip onto the Remove zone is allowed to
+  // surface the confirm prompt at all — mirrors the permission check inside
+  // removePlayer() itself, since the Remove zone is one shared drop target
+  // rather than a per-row button that could just be hidden for other players.
+  canRemovePlayer(id) {
+    const rr = this.isRoundRobin();
+    const tourn = this.isTournament();
+    const isLocked = (rr && this.state._rrLocked) || (tourn && this.state._bracketLocked);
+    if (isLocked) return false;
+    const isYou = id === Onboard.selfId;
+    const p = this.getPlayer(id);
+    const isMyGuest = p && !p.isLive && p.addedBy === Onboard.selfId;
+    return isYou || isMyGuest || Admin.isAdmin();
+  },
 
   confirmRemove(id) {
     this._pendingRemove = id;
@@ -2974,14 +2997,6 @@ const App = {
 
   cancelGuestEdit() {
     this._editingGuest = null;
-    this.render();
-  },
-
-  togglePlayer(id) {
-    if (this.isPlayerOnCourt(id)) return;
-    const p = this.state.players.find(p => p.id === id);
-    if (p) p.active = !p.active;
-    this.saveState();
     this.render();
   },
 
@@ -4606,9 +4621,16 @@ ${bracketHTML}
       ? (tournLocked ? 'Players are locked for this tournament.' : 'Add all players, then lock the roster to generate the bracket.')
       : 'Players waiting to be assigned to a court.';
     const qHint = document.getElementById('queueHint');
-    if (qHint) qHint.style.display = structured ? 'none' : '';
-    const qAddBtn = document.getElementById('btnQueueAddPlayer');
-    if (qAddBtn) qAddBtn.style.display = isLocked ? 'none' : '';
+    if (qHint) {
+      qHint.style.display = isLocked ? 'none' : '';
+      qHint.textContent = structured
+        ? 'Drag or tap a player, then drag or tap Remove to remove them.'
+        : 'Drag or tap a player, then drag or tap a destination to move them between Queue, Waiting, and Remove.';
+    }
+    const qAddRow = document.getElementById('queueAddPlayerRow');
+    if (qAddRow) qAddRow.style.display = isLocked ? 'none' : '';
+    const qAddSkill = document.getElementById('queueAddPlayerSkill');
+    if (qAddSkill) qAddSkill.style.display = this.state._quickPlay ? 'none' : '';
 
     // Offline sessions have no persistent identity/preferences to manage
     const isOffline = !!this.state._offline;
@@ -4688,24 +4710,40 @@ ${bracketHTML}
     if (historyBadge) historyBadge.textContent = historyCount;
   },
 
+  // Queue chips are draggable/tappable in every session type: dropping one
+  // on the Waiting section sits them out, on the Queue section rejoins them,
+  // and on the Remove zone removes them (see _movePlayer). Permission for
+  // removal is checked in _movePlayer/canRemovePlayer, not here, since the
+  // Remove zone is a single shared drop target rather than a per-row button.
   renderPlayers() {
-    const el = document.getElementById('playerList');
+    const activeEl = document.getElementById('queueActiveList');
+    const waitingWrap = document.getElementById('queueWaitingWrap');
+    const waitingEl = document.getElementById('queueWaitingList');
+    const removeZone = document.getElementById('queueRemoveZone');
+    const removeLabel = document.getElementById('queueRemoveZoneLabel');
+    const rr = this.isRoundRobin();
+    const tourn = this.isTournament();
+    const structured = rr || tourn;
+    const isLocked = (rr && this.state._rrLocked) || (tourn && this.state._bracketLocked);
+
+    if (waitingWrap) waitingWrap.style.display = structured ? 'none' : '';
+    if (removeZone) removeZone.style.display = isLocked ? 'none' : '';
+    if (removeLabel) removeLabel.textContent = this._dndEnabled()
+      ? 'Drop a player here to remove'
+      : 'Tap a player, then tap here to remove';
+
     const onCourts = this.getPlayersOnCourts();
     const queuePlayers = this.state.players.filter(p => !onCourts.has(p.id));
-    if (queuePlayers.length === 0) {
-      el.innerHTML = '<span style="display:block;padding:10px 0;color:var(--text-muted);font-size:0.85rem;font-style:italic;">No players waiting in the queue</span>';
-      return;
-    }
-    el.innerHTML = queuePlayers.map(p => {
+
+    const renderRow = (p) => {
       const skillStr = p.score != null ? App.fmtSkill(p.score) : '';
       const isYou = Onboard.selfId === p.id;
       if (this._pendingRemove === p.id) {
         const confirmLabel = isYou ? 'Leave session?' : `Remove ${this.esc(p.name)}?`;
-        const confirmAction = isYou ? `App.removePlayer(${p.id})` : `App.removePlayer(${p.id})`;
         return `<div class="queue-row">
           <div class="queue-row-confirm">
             <span>${confirmLabel}</span>
-            <button style="color:var(--danger);border-color:#fca5a5;" onclick="${confirmAction}">Yes</button>
+            <button style="color:var(--danger);border-color:#fca5a5;" onclick="App.removePlayer(${p.id})">Yes</button>
             <button style="color:var(--text-muted);border-color:var(--border);" onclick="App.cancelRemove()">No</button>
           </div>
         </div>`;
@@ -4720,7 +4758,6 @@ ${bracketHTML}
           <button class="btn-edit-cancel" onclick="App.cancelGuestEdit()">Cancel</button>
         </div>`;
       }
-      const rowClass = p.active ? 'queue-row' : 'queue-row inactive';
       const selfId = Onboard.selfId;
       const isPartner = selfId && selfId !== p.id && this.state.teams.some(t =>
         (t.p1 === selfId && t.p2 === p.id) || (t.p2 === selfId && t.p1 === p.id)
@@ -4732,27 +4769,22 @@ ${bracketHTML}
       const statusBadge = isYou ? '<span class="queue-row-you">you</span>'
         : p.isLive ? '<span class="queue-row-status user">user</span>'
         : '';
-      const rr = this.isRoundRobin();
-      const tourn = this.isTournament();
-      const structured = rr || tourn;
-      const isLocked = (rr && this.state._rrLocked) || (tourn && this.state._bracketLocked);
-      const pauseBtn = structured ? '' : (p.active
-        ? `<button class="queue-row-btn queue-row-action" onclick="App.togglePlayer(${p.id})" title="Sit out">&#x23F8;</button>`
-        : `<button class="queue-row-btn queue-row-action play" onclick="App.togglePlayer(${p.id})" title="Rejoin queue">&#x25B6;</button>`);
-      const canRemove = !isLocked && (isYou || isMyGuest || Admin.isAdmin());
-      const removeBtn = canRemove
-        ? `<button class="queue-row-btn queue-row-remove" onclick="App.confirmRemove(${p.id})" title="${isYou ? 'Leave session' : 'Remove'}">&times;</button>`
-        : '';
       const skillInline = skillStr ? `<span class="queue-row-skill">(${skillStr})</span>` : '';
-      const selected = !structured && this._tapSelection && this._tapSelection.playerId === p.id ? ' dnd-selected' : '';
-      const nameClass = structured ? 'queue-row-name' : `queue-row-name dnd-chip${selected}`;
-      const nameAttrs = structured ? '' : ` data-player-id="${p.id}"`;
-      return `<div class="${rowClass}">
-        <span class="${nameClass}"${nameAttrs}>${this.esc(p.name)}${skillInline}${editBtn}${statusBadge}${partnerBadge}</span>
-        ${pauseBtn}
-        ${removeBtn}
+      const selected = this._tapSelection && this._tapSelection.playerId === p.id ? ' dnd-selected' : '';
+      return `<div class="queue-row">
+        <span class="queue-row-name dnd-chip${selected}" data-player-id="${p.id}">${this.esc(p.name)}${skillInline}${editBtn}${statusBadge}${partnerBadge}</span>
       </div>`;
-    }).join('');
+    };
+
+    const activePlayers = queuePlayers.filter(p => p.active);
+    const waitingPlayers = queuePlayers.filter(p => !p.active);
+
+    if (activeEl) activeEl.innerHTML = activePlayers.length
+      ? activePlayers.map(renderRow).join('')
+      : '<span style="display:block;padding:10px 0;color:var(--text-muted);font-size:0.85rem;font-style:italic;">No players waiting in the queue</span>';
+    if (waitingEl) waitingEl.innerHTML = waitingPlayers.length
+      ? waitingPlayers.map(renderRow).join('')
+      : '<span style="display:block;padding:10px 0;color:var(--text-muted);font-size:0.85rem;font-style:italic;">Drag or tap a player here to sit them out</span>';
   },
 
   togglePartnerPicker() {
@@ -4963,18 +4995,41 @@ ${bracketHTML}
 
   _locFromEl(el) {
     if (!el) return null;
-    return el.dataset.locType === 'queue'
-      ? { type: 'queue' }
-      : { type: 'slot', court: Number(el.dataset.court), side: Number(el.dataset.side) };
+    const t = el.dataset.locType;
+    if (t === 'queue' || t === 'waiting' || t === 'remove') return { type: t };
+    return { type: 'slot', court: Number(el.dataset.court), side: Number(el.dataset.side) };
   },
 
   _locEq(a, b) {
     if (!a || !b || a.type !== b.type) return false;
-    return a.type === 'queue' || (a.court === b.court && a.side === b.side);
+    return a.type !== 'slot' || (a.court === b.court && a.side === b.side);
   },
 
   _movePlayer(playerId, from, to) {
     if (this._locEq(from, to)) return;
+
+    // Dropping/tapping onto Remove doesn't move the player anywhere — it
+    // just surfaces the same Yes/No confirm the row would show elsewhere.
+    if (to.type === 'remove') {
+      if (!this.canRemovePlayer(playerId)) return;
+      if (from.type === 'slot') {
+        const arr = this.state.proposedGames[from.court] && this.state.proposedGames[from.court]['side' + from.side];
+        if (arr) {
+          const idx = arr.indexOf(playerId);
+          if (idx !== -1) arr.splice(idx, 1);
+        }
+        this.saveState();
+      }
+      this.confirmRemove(playerId);
+      return;
+    }
+
+    if (to.type === 'queue' || to.type === 'waiting') {
+      const p = this.getPlayer(playerId);
+      if (!p) return;
+      p.active = (to.type === 'queue');
+    }
+
     let occupantId = null;
     if (to.type === 'slot') {
       const destArr = this.state.proposedGames[to.court] && this.state.proposedGames[to.court]['side' + to.side];
@@ -4984,7 +5039,7 @@ ${bracketHTML}
         if (occupantId == null) return; // dropped back onto its own slot
       }
     }
-    this._pushProposedUndoSnapshot();
+    if (from.type === 'slot' || to.type === 'slot') this._pushProposedUndoSnapshot();
     if (from.type === 'slot') {
       const arr = this.state.proposedGames[from.court] && this.state.proposedGames[from.court]['side' + from.side];
       if (arr) {
