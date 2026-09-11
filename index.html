@@ -2141,7 +2141,10 @@ body {
 
     <!-- Queue -->
     <div id="playersSection" class="queue-bar-wrap" style="margin-bottom:14px;">
-      <div class="section-title" id="queueTitle" style="margin-bottom:4px;">Queue</div>
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:4px;">
+        <div class="section-title" id="queueTitle">Queue</div>
+        <button id="btnUndoMove" class="btn-outline" style="display:none;flex-shrink:0;padding:5px 10px;font-size:0.78rem;font-weight:600;" onclick="App.undoProposedMove()">&#8617; Undo</button>
+      </div>
       <div class="section-subtitle" id="queueSubtitle" style="margin-bottom:10px;">Players waiting to be assigned to a court.</div>
       <div class="queue-list-box">
         <div id="playerList" class="queue-list dnd-target" data-loc-type="queue"></div>
@@ -2697,6 +2700,7 @@ const App = {
   _activeTab: 'courts',
   _dragState: null,
   _tapSelection: null,
+  _proposedUndoStack: [],
 
   // ─── Tab switching ──────────────────────────
   switchTab(tab) {
@@ -4375,12 +4379,14 @@ ${bracketHTML}
       timerResumedAt: null,
     };
     delete this.state.proposedGames[courtId];
+    this._proposedUndoStack = []; // confirming a match is final — nothing before it is undoable
     this.saveState();
     this.render();
   },
 
   cancelProposedMatch(courtId) {
     delete this.state.proposedGames[courtId];
+    this._proposedUndoStack = []; // cancelling is final too — start the next proposal with a clean slate
     this.saveState();
     this.render();
   },
@@ -4978,6 +4984,7 @@ ${bracketHTML}
         if (occupantId == null) return; // dropped back onto its own slot
       }
     }
+    this._pushProposedUndoSnapshot();
     if (from.type === 'slot') {
       const arr = this.state.proposedGames[from.court] && this.state.proposedGames[from.court]['side' + from.side];
       if (arr) {
@@ -4995,6 +5002,22 @@ ${bracketHTML}
     if (occupantId != null && from.type === 'slot' && this.state.proposedGames[from.court]) {
       this.state.proposedGames[from.court]['side' + from.side].push(occupantId);
     }
+    this.saveState();
+    this.render();
+  },
+
+  // Undo steps back through adjustments made since the last confirmed/cancelled
+  // match (startProposedMatch/cancelProposedMatch reset the stack) — not just
+  // one step back to the original auto-assignment.
+  _pushProposedUndoSnapshot() {
+    this._proposedUndoStack.push(JSON.parse(JSON.stringify(this.state.proposedGames)));
+    if (this._proposedUndoStack.length > 20) this._proposedUndoStack.shift();
+  },
+
+  undoProposedMove() {
+    if (this._proposedUndoStack.length === 0) return;
+    this.state.proposedGames = this._proposedUndoStack.pop();
+    this._tapSelection = null;
     this.saveState();
     this.render();
   },
@@ -5170,6 +5193,9 @@ ${bracketHTML}
     } else {
       controls.style.display = 'none';
     }
+
+    const btnUndo = document.getElementById('btnUndoMove');
+    if (btnUndo) btnUndo.style.display = this._proposedUndoStack.length > 0 ? '' : 'none';
   },
 
   _renderQueueRR(countEl, controls, btnAssignAll, courtSelect, matchOpts, courtLabel) {
