@@ -2436,7 +2436,7 @@ body {
       </div>
       <div id="logPastMatchPanel" class="partner-picker" style="display:none;margin-bottom:14px;">
         <div style="padding:10px 12px 0;">
-          <p style="font-size:0.78rem;color:var(--text-muted);margin:0 0 8px;line-height:1.4;">Tap 4 players in the queue who already played a match together before joining the app &mdash; the first two picked become Team A, the next two Team B. It's added below and counts toward the fairness algorithm, but isn't tied to a court or timer.</p>
+          <p style="font-size:0.78rem;color:var(--text-muted);margin:0 0 8px;line-height:1.4;">Tap 4 players who already played a match together before joining the app &mdash; the first two picked become Team A, the next two Team B. It's added below and counts toward the fairness algorithm, but isn't tied to a court or timer.</p>
         </div>
         <div class="partner-picker-list" id="logPastMatchPicker"></div>
         <div id="logPastMatchTeams" style="display:none;padding:10px 12px 0;">
@@ -5672,10 +5672,11 @@ ${bracketHTML}
 
   // ─── Log a past match (Open Play manual entry) ─────
   // Lets an organizer record a match that was already played before the
-  // group started using the app this session, using players currently in
-  // the queue. It's added to History and feeds the same opponentHistory
-  // repeat-count the assignment algorithm reads, without occupying a court,
-  // touching roundsWaited, or affecting anyone's lastActiveAt.
+  // group started using the app this session, picking from anyone active
+  // in the session (queue or already on a court). It's added to History and
+  // feeds the same opponentHistory repeat-count the assignment algorithm
+  // reads, without occupying a court, touching roundsWaited, or affecting
+  // anyone's lastActiveAt.
   _logMatchSelection: [],
 
   toggleLogPastMatch() {
@@ -5696,10 +5697,9 @@ ${bracketHTML}
   renderLogPastMatchPicker() {
     const el = document.getElementById('logPastMatchPicker');
     if (!el) return;
-    const onCourt = this.getPlayersOnCourts();
-    const eligible = this.state.players.filter(p => p.active && !onCourt.has(p.id));
+    const eligible = this.state.players.filter(p => p.active);
     el.innerHTML = eligible.length === 0
-      ? '<div style="padding:10px 12px;color:var(--text-light);font-size:0.82rem;">No players in the queue to select</div>'
+      ? '<div style="padding:10px 12px;color:var(--text-light);font-size:0.82rem;">No players to select</div>'
       : eligible.map(p => {
         const idx = this._logMatchSelection.indexOf(p.id);
         const teamLabel = idx === 0 || idx === 1 ? 'A' : idx === 2 || idx === 3 ? 'B' : '';
