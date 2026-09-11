@@ -2045,14 +2045,8 @@ body {
   #sessionSetupSection .setup-card { max-width: none; }
   /* Keep welcome / signed-in cards centered at comfortable width */
   #setupEntryOptions, #setupSignedIn { max-width: 480px; margin: 0 auto; }
-  /* Join form becomes a 2-col grid */
-  #setupJoinForm { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; align-items: start; }
-  #joinFormHeader { grid-column: 1 / -1; }
-  /* Dissolve the session-selection wrapper so its children are direct grid items */
-  #sessionSelectionBlock { display: contents; }
-  #sessionSelectionBlock > div:nth-child(1) { grid-column: 1; } /* Private */
-  #sessionSelectionBlock > div:nth-child(2) { grid-column: 2; } /* Public */
-
+  /* Join form: single column, centered at comfortable width */
+  #setupJoinForm { max-width: 480px; margin: 0 auto; }
 }
 
 @media print {
@@ -2233,25 +2227,6 @@ body {
           <button type="button" class="btn-confirm-join" id="btnJoinPrivate" onclick="Onboard.joinSavedPrivate()" disabled style="white-space:nowrap;padding:12px 18px;font-size:1rem;flex:0 0 auto;">Join</button>
         </div>
         <div id="privateConfirmInline" style="display:none;margin-bottom:8px;"></div>
-      </div>
-      <div class="setup-block">
-        <div class="section-title" style="margin-bottom:4px;">Public Session</div>
-        <div class="section-subtitle" style="margin-bottom:10px;">Select a location and tap Join to enter the rotation — courts are assigned automatically each round alongside other players there.</div>
-        <div style="display:flex;gap:8px;margin-bottom:4px;">
-          <select class="setup-input" id="publicLocationSelect" onchange="Onboard._updateJoinBtn('publicLocationSelect','btnJoinPublic')" style="flex:1;margin-bottom:0;cursor:pointer;">
-            <option value="">Select a location...</option>
-          </select>
-          <button type="button" class="btn-confirm-join" id="btnJoinPublic" onclick="Onboard.joinPublic()" disabled style="white-space:nowrap;padding:12px 18px;font-size:1rem;flex:0 0 auto;">Join</button>
-        </div>
-        <div id="publicConfirmInline" style="display:none;margin-bottom:14px;"></div>
-        <button type="button" class="btn-outline" onclick="Onboard.toggleCreatePublic()" id="btn-create-public" style="display:none;width:100%;padding:12px 14px;margin-top:8px;font-size:1rem;font-weight:700;font-family:inherit;">+ Create New</button>
-        <div id="publicCreateForm" style="display:none;margin-top:10px;padding:14px;background:var(--bg);border:1.5px solid var(--border);border-radius:var(--radius);">
-          <div style="font-size:0.78rem;font-weight:600;color:var(--text-light);margin-bottom:10px;">New Public Location</div>
-          <input type="text" class="setup-input" id="publicLocationName" placeholder="Location name" maxlength="30" style="margin-bottom:8px;">
-          <p id="publicLocationError" class="setup-error" style="display:none;">Enter a location name</p>
-          <button type="button" class="btn-confirm-join" onclick="Onboard.createPublicLocation()" style="width:100%;padding:12px;font-size:1rem;font-weight:700;">Create &amp; Join</button>
-          <div id="publicCreateConfirmInline" style="display:none;margin-top:6px;"></div>
-        </div>
       </div>
       </div><!-- /sessionSelectionBlock -->
       <!-- Share-link join button (shown when joining via share link) -->
@@ -2592,10 +2567,6 @@ body {
           <p>Sign in with Google to <strong>create a private session</strong> for your group. Share the link or session code with friends — they can join without signing in. Perfect for reserved court nights or league play.</p>
         </div>
         <div class="hiw-section">
-          <h3>🌐 Joining a Public Session</h3>
-          <p>Select your location from the drop-down and tap <strong>Join</strong>. You'll be asked for your name and an optional skill level, then added to the rotation — courts fill from there via Auto-fill or by dragging players on, prioritizing whoever's waited longest.</p>
-        </div>
-        <div class="hiw-section">
           <h3>🖥️ On Tablet &amp; Desktop</h3>
           <p>The queue stays pinned on the left so you can always see who's waiting, while court cards fill the space to the right — two columns on tablets, three across on wider screens or landscape — growing automatically as you add more courts.</p>
         </div>
@@ -2636,7 +2607,7 @@ body {
     </div>
   </div>
 
-  <!-- ── Your name/skill, asked right when joining or creating a private/public session ── -->
+  <!-- ── Your name/skill, asked right when joining or creating a private session ── -->
   <div id="selfProfileModal" class="hiw-overlay" style="display:none;" onclick="Onboard._selfProfileCancel(event)">
     <div class="hiw-modal" style="max-width:380px;" onclick="event.stopPropagation()">
       <div class="hiw-header">
@@ -5092,10 +5063,7 @@ ${bracketHTML}
   async deleteSession() {
     if (!Admin.isAdmin()) return;
     if (!Session.id) return;
-    // Public session deletion requires super admin
-    if (!Session.id.startsWith('pvt-') && !Admin.isSuperAdmin()) return;
-    const label = Session.id.startsWith('pvt-') ? 'private session' : 'public session';
-    if (!confirm(`Permanently delete this ${label}? This cannot be undone.`)) return;
+    if (!confirm('Permanently delete this private session? This cannot be undone.')) return;
     if (!confirm('Are you sure? All data will be lost and all users will be disconnected.')) return;
     try {
       await fetch(`${Session.DB}/sessions/${Session.id}.json`, { method: 'DELETE' });
@@ -6308,12 +6276,6 @@ ${bracketHTML}
 // ─── Firebase Session Sync ──────────────────────────────────────────────────
 const Session = {
   DB: 'https://pickleball-50914-default-rtdb.firebaseio.com',
-  LOCATIONS: [
-    { key: 'robinson', label: 'Robinson Park' },
-    { key: 'flpark', label: 'Fred Lindstrom Park' },
-    { key: 'lhresort', label: 'Lighthouse Resort' },
-    { key: 'test', label: 'Test' },
-  ],
   id: null,
   label: null,
   _receiving: false,
@@ -6726,7 +6688,6 @@ const Onboard = {
     const s = new URLSearchParams(window.location.search).get('s');
 
     // Populate dropdowns
-    this._populatePublicDropdown();
     this._populatePrivateDropdown();
 
     if (s) {
@@ -6741,28 +6702,23 @@ const Onboard = {
   },
 
   async _handleShareLink(s, user) {
-    const loc = Session.LOCATIONS.find(l => l.key === s.toLowerCase());
     const pvt = this._getSavedPrivateSessions().find(p => p.id === s);
-    let label = loc ? loc.label : (pvt ? pvt.name : s.replace(/^pvt-/, ''));
+    let label = pvt ? pvt.name : s.replace(/^pvt-/, '');
 
-    // For private sessions, verify passcode first
-    if (s.startsWith('pvt-')) {
-      const data = await Session._get(s);
-      this._shareLinkLoading = false;
-      // Use stored session name if available
-      if (data && data._sessionName) label = data._sessionName;
-      const isAdminOfSession = Admin._user && data && Array.isArray(data._admins) && data._admins.includes(Admin._user.uid);
-      const needsPasscode = data && data._passcode && !Admin.isSuperAdmin() && !isAdminOfSession;
-      if (needsPasscode) {
-        // Show inline passcode prompt
-        this._showSharePasscode(s, label, data._passcode, user);
-        return;
-      }
-    } else {
-      this._shareLinkLoading = false;
+    // Verify passcode first
+    const data = await Session._get(s);
+    this._shareLinkLoading = false;
+    // Use stored session name if available
+    if (data && data._sessionName) label = data._sessionName;
+    const isAdminOfSession = Admin._user && data && Array.isArray(data._admins) && data._admins.includes(Admin._user.uid);
+    const needsPasscode = data && data._passcode && !Admin.isSuperAdmin() && !isAdminOfSession;
+    if (needsPasscode) {
+      // Show inline passcode prompt
+      this._showSharePasscode(s, label, data._passcode, user);
+      return;
     }
 
-    // Passcode not needed or public session — proceed
+    // Passcode not needed — proceed
     this._shareJoinOrPrompt(s, label, user);
   },
 
@@ -6896,13 +6852,10 @@ const Onboard = {
       const firstSection = sessionBlock?.firstElementChild;
       if (firstSection) { firstSection.style.borderTop = 'none'; firstSection.style.paddingTop = '0'; firstSection.style.marginTop = '0'; }
     }
-    // Show "Create New" for public sessions (super admin only)
-    const createPublicBtn = document.getElementById('btn-create-public');
-    if (createPublicBtn) createPublicBtn.style.display = Admin.isSuperAdmin() && !isShareLink ? '' : 'none';
   },
 
   // ─── Self profile (name/skill), asked right when joining or creating a
-  // private/public session instead of always sitting on the join page ───
+  // private session instead of always sitting on the join page ───
   _selfProfileCtx: null,
 
   _promptSelfProfile(onComplete) {
@@ -6956,7 +6909,7 @@ const Onboard = {
 
   _showInlineConfirm(elId, label, onYes) {
     // Hide all other inline confirms
-    ['publicConfirmInline', 'privateConfirmInline', 'publicCreateConfirmInline'].forEach(id => {
+    ['privateConfirmInline'].forEach(id => {
       const el = document.getElementById(id);
       if (el) { el.style.display = 'none'; el.innerHTML = ''; }
     });
@@ -6977,7 +6930,7 @@ const Onboard = {
   },
 
   _inlineNo() {
-    ['publicConfirmInline', 'privateConfirmInline', 'publicCreateConfirmInline'].forEach(id => {
+    ['privateConfirmInline'].forEach(id => {
       const el = document.getElementById(id);
       if (el) { el.style.display = 'none'; el.innerHTML = ''; }
     });
@@ -6986,84 +6939,10 @@ const Onboard = {
     this._inlineYesAction = null;
   },
 
-  // ─── Public sessions ───────────────────────
   _updateJoinBtn(selId, btnId) {
     const sel = document.getElementById(selId);
     const btn = document.getElementById(btnId);
     if (btn) btn.disabled = !sel?.value;
-  },
-
-  _populatePublicDropdown() {
-    const sel = document.getElementById('publicLocationSelect');
-    if (!sel) return;
-    const hasOptions = Session.LOCATIONS.length > 0;
-    Session.LOCATIONS.forEach(loc => {
-      const opt = document.createElement('option');
-      opt.value = loc.key;
-      opt.textContent = loc.label;
-      sel.appendChild(opt);
-    });
-    if (!hasOptions) {
-      sel.options[0].textContent = 'No locations available';
-      sel.disabled = true;
-      sel.style.appearance = 'none';
-      sel.style.backgroundImage = 'none';
-    }
-    this._updateJoinBtn('publicLocationSelect', 'btnJoinPublic');
-  },
-
-  toggleCreatePublic() {
-    const form = document.getElementById('publicCreateForm');
-    if (form) form.style.display = form.style.display === 'none' ? '' : 'none';
-  },
-
-  createPublicLocation() {
-    const nameEl = document.getElementById('publicLocationName');
-    const errEl = document.getElementById('publicLocationError');
-    const name = (nameEl?.value || '').trim();
-    if (!name) {
-      if (errEl) { errEl.textContent = 'Enter a location name'; errEl.style.display = 'block'; }
-      return;
-    }
-    if (errEl) errEl.style.display = 'none';
-    const key = name.toLowerCase().replace(/[^a-z0-9]/g, '');
-    // Add to LOCATIONS so it appears in the dropdown
-    if (!Session.LOCATIONS.find(l => l.key === key)) {
-      Session.LOCATIONS.push({ key, label: name });
-      // Refresh dropdown
-      const sel = document.getElementById('publicLocationSelect');
-      if (sel) {
-        const opt = document.createElement('option');
-        opt.value = key;
-        opt.textContent = name;
-        sel.appendChild(opt);
-        sel.disabled = false;
-        sel.style.appearance = '';
-        sel.style.backgroundImage = '';
-        sel.options[0].textContent = 'Select a location...';
-      }
-    }
-    this._promptSelfProfile(() => {
-      this._pendingKey = key;
-      this._pendingLabel = name;
-      // Public locations are always Open Play, and players can be added
-      // inline from the queue card once it's created — no need to collect
-      // a roster up front.
-      this._showInlineConfirm('publicCreateConfirmInline', name, () => this.confirmJoin());
-    });
-  },
-
-  joinPublic() {
-    const sel = document.getElementById('publicLocationSelect');
-    const key = sel?.value;
-    if (!key) return;
-    const loc = Session.LOCATIONS.find(l => l.key === key);
-    if (!loc) return;
-    this._promptSelfProfile(() => {
-      this._pendingKey = key;
-      this._pendingLabel = loc.label;
-      this._showInlineConfirm('publicConfirmInline', loc.label, () => this.confirmJoin());
-    });
   },
 
   // ─── Private sessions ──────────────────────
@@ -7230,30 +7109,26 @@ const Onboard = {
     const bulkPlayers = this._pendingBulkPlayers;
     this._pendingBulkPlayers = null;
 
-    if (key.startsWith('pvt-')) {
-      if (this._pendingIsCreate) {
-        // Creating new — set passcode, name, and creator as session admin
-        this._savePrivateSession(key, label);
-        App.state._passcode = this._pendingPasscode;
-        App.state._sessionName = label;
-        App.state._admins = Admin._user ? [Admin._user.uid] : [];
-        if (this._pendingSessionType) App.state._sessionType = this._pendingSessionType;
-        await Session._connect(key, label, true, connectUser);
-      } else {
-        // Joining existing — verify passcode
-        const data = await Session._get(key);
-        const isAdminOfSession = Admin._user && data && Array.isArray(data._admins) && data._admins.includes(Admin._user.uid);
-        if (data && data._passcode && !Admin.isSuperAdmin() && !isAdminOfSession) {
-          const entered = prompt('Enter the 4-character passcode for "' + label + '":');
-          if (!entered || entered.trim().toUpperCase() !== data._passcode) {
-            alert('Incorrect passcode.');
-            return;
-          }
-        }
-        this._savePrivateSession(key, label);
-        await Session._connect(key, label, false, connectUser);
-      }
+    if (this._pendingIsCreate) {
+      // Creating new — set passcode, name, and creator as session admin
+      this._savePrivateSession(key, label);
+      App.state._passcode = this._pendingPasscode;
+      App.state._sessionName = label;
+      App.state._admins = Admin._user ? [Admin._user.uid] : [];
+      if (this._pendingSessionType) App.state._sessionType = this._pendingSessionType;
+      await Session._connect(key, label, true, connectUser);
     } else {
+      // Joining existing — verify passcode
+      const data = await Session._get(key);
+      const isAdminOfSession = Admin._user && data && Array.isArray(data._admins) && data._admins.includes(Admin._user.uid);
+      if (data && data._passcode && !Admin.isSuperAdmin() && !isAdminOfSession) {
+        const entered = prompt('Enter the 4-character passcode for "' + label + '":');
+        if (!entered || entered.trim().toUpperCase() !== data._passcode) {
+          alert('Incorrect passcode.');
+          return;
+        }
+      }
+      this._savePrivateSession(key, label);
       await Session._connect(key, label, false, connectUser);
     }
     if (bulkPlayers?.length) {
@@ -7387,7 +7262,7 @@ const Onboard = {
   },
 
   // ─── Bulk player setup (count → names/skill), used before a new session
-  // first opens: Quick Play and creating a private or public session all
+  // first opens: Quick Play and creating a private session both
   // funnel through this. ────────────────────────
   _bulkCtx: null,
 
