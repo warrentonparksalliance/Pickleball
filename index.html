@@ -5,54 +5,54 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Court Manager</title>
 <link rel="manifest" href="/manifest.json">
-<meta name="theme-color" content="#1e3d1e">
+<meta name="theme-color" content="#0e5230">
 <link rel="icon" href="/icons/icon-192.png">
 <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png">
 <style>
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
 
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
 :root {
-  --primary: #2d6a2d;
-  --primary-hover: #1e4d1e;
-  --primary-light: #e0f0e0;
-  --primary-muted: #b8d9b8;
-  --accent: #4ade80;
-  --accent-strong: #22c55e;
+  --primary: #16a34a;
+  --primary-hover: #15803d;
+  --primary-light: #dcfce7;
+  --primary-muted: #86efac;
+  --accent: #bef264;
+  --accent-strong: var(--primary);
   --danger: #ef4444;
   --danger-hover: #dc2626;
   --danger-light: #fef2f2;
   --danger-border: #fecaca;
-  --success: #059669;
+  --success: #10b981;
   --success-light: #ecfdf5;
-  --warning: #d97706;
+  --warning: #f59e0b;
   --warning-light: #fffbeb;
-  --bg: #f5f1e8;
+  --bg: #f2f6f3;
   --card: #ffffff;
-  --input-bg: #eef0f2;
-  --border: #e4e7ef;
-  --border-strong: #c7cdd9;
+  --input-bg: #eef3f0;
+  --border: #e3e9e5;
+  --border-strong: #c7d2cb;
   --text: #111827;
   --text-light: #6b7280;
   --text-muted: #9ca3af;
-  --shadow-sm: 0 1px 2px rgba(0,0,0,0.05);
-  --shadow: 0 1px 3px rgba(0,0,0,0.06), 0 2px 8px rgba(0,0,0,0.04);
-  --shadow-md: 0 4px 12px rgba(0,0,0,0.08), 0 2px 4px rgba(0,0,0,0.04);
-  --shadow-lg: 0 8px 24px rgba(0,0,0,0.1);
+  --shadow-sm: 0 1px 2px rgba(15,40,25,0.05);
+  --shadow: 0 1px 3px rgba(15,40,25,0.07), 0 2px 8px rgba(15,40,25,0.05);
+  --shadow-md: 0 4px 14px rgba(15,40,25,0.1), 0 2px 4px rgba(15,40,25,0.05);
+  --shadow-lg: 0 12px 32px rgba(15,40,25,0.14);
   --radius-sm: 6px;
   --radius: 12px;
   --radius-lg: 16px;
   --radius-full: 9999px;
-  --hover-bg: #eef5ee;
+  --hover-bg: #eaf7ee;
   --bench-bg: #fef2f2;
   --bench-text: #b91c1c;
   --pending-bg: #fffbeb;
   --pending-text: #92400e;
   --pending-border: #fbbf24;
   --tab-height: 52px;
-  --header-grad: linear-gradient(135deg, #1e3d1e 0%, #14301a 100%);
-  --tab-bg: #14301a;
+  --header-grad: linear-gradient(135deg, #06301c 0%, #146334 55%, #16a34a 100%);
+  --tab-bg: #0b3d20;
   --tab-bg-border: rgba(255,255,255,0.08);
 }
 
@@ -60,7 +60,7 @@ html { overflow-x: hidden; font-size: 18px; }
 body {
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   background: var(--bg);
-  background-image: radial-gradient(circle at top, #faf8f1 0%, var(--bg) 55%);
+  background-image: radial-gradient(circle at top, #fbfdfc 0%, var(--bg) 55%);
   background-attachment: fixed;
   color: var(--text);
   min-height: 100vh;
@@ -206,7 +206,7 @@ body {
 .header-loc-name {
   font-size: 0.88rem;
   font-weight: 600;
-  color: #bbf7d0;
+  color: #f0fdf4;
 }
 .btn-header {
   padding: 5px 12px;
