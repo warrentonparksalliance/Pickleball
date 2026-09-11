@@ -982,18 +982,18 @@ body {
   flex-direction: column;
   gap: 10px;
 }
+.assign-header-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
 .assign-controls { display: flex; flex-direction: column; gap: 10px; }
 .assign-options-row {
   display: flex;
   align-items: center;
   gap: 10px;
   flex-wrap: wrap;
-}
-.assign-option-label {
-  font-size: 0.88rem;
-  color: var(--text-light);
-  font-weight: 500;
-  white-space: nowrap;
 }
 .assign-court-select {
   padding: 6px 6px;
@@ -1017,10 +1017,49 @@ body {
 .assign-match-options label {
   display: flex;
   align-items: center;
-  gap: 5px;
+  gap: 8px;
   cursor: pointer;
   font-weight: 500;
 }
+.toggle-switch {
+  position: relative;
+  display: inline-block;
+  width: 34px;
+  height: 20px;
+  flex-shrink: 0;
+}
+.toggle-switch input {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  opacity: 0;
+  cursor: pointer;
+}
+.toggle-switch-track {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: var(--border-strong);
+  border-radius: var(--radius-full);
+  transition: background 0.15s;
+}
+.toggle-switch-track::before {
+  content: '';
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 16px;
+  height: 16px;
+  background: #fff;
+  border-radius: 50%;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.25);
+  transition: transform 0.15s;
+}
+.toggle-switch input:checked + .toggle-switch-track { background: var(--primary); }
+.toggle-switch input:checked + .toggle-switch-track::before { transform: translateX(14px); }
+.toggle-switch input:focus-visible + .toggle-switch-track { outline: 2px solid var(--primary); outline-offset: 2px; }
 .btn-assign-all {
   width: 100%;
   padding: 11px;
@@ -2198,6 +2237,27 @@ body {
   <!-- ═══════════════ TAB: COURTS ═══════════════ -->
   <div id="tabCourts" class="tab-panel active" style="display:none;">
 
+    <!-- Courts -->
+    <div class="assign-header" id="assignHeader" style="margin-bottom:14px;">
+      <div class="assign-header-top">
+        <div class="section-title" id="assignSectionTitle">Assign Courts</div>
+        <div class="assign-options-row">
+          <select id="courtCountSelect" class="assign-court-select" onchange="App.setAvailableCourts(this.value)">
+            <option value="1">1</option>
+            <option value="2">2</option>
+            <option value="3">3</option>
+            <option value="4">4</option>
+            <option value="5">5</option>
+            <option value="6">6</option>
+          </select>
+        </div>
+      </div>
+      <div class="section-subtitle" id="assignCount"></div>
+      <div class="assign-controls" id="assignControls" style="display:none;">
+        <button id="btnAssignAll" class="btn-assign-all" onclick="App.assignAll()">Assign Courts</button>
+      </div>
+    </div>
+
     <!-- Queue -->
     <div id="playersSection" class="queue-bar-wrap" style="margin-bottom:14px;">
       <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:4px;">
@@ -2206,22 +2266,28 @@ body {
       </div>
       <div class="section-subtitle" id="queueSubtitle" style="margin-bottom:10px;">Players waiting to be assigned to a court.</div>
       <div class="assign-match-options" style="margin-bottom:10px;">
-        <label><input type="checkbox" id="optSkill" onchange="App.saveState()"> Match by skill</label>
+        <label class="toggle-switch-label">
+          <span class="toggle-switch">
+            <input type="checkbox" id="optSkill" onchange="App.toggleSkillMatching()">
+            <span class="toggle-switch-track"></span>
+          </span>
+          Match by skill
+        </label>
       </div>
       <div class="queue-subsection-label">In Queue</div>
       <div class="queue-list-box">
         <div id="queueActiveList" class="queue-list dnd-target" data-loc-type="queue"></div>
-        <div id="queueDropQueue" class="queue-drop-strip dnd-target" data-loc-type="queue">Drag or tap here to move into the queue</div>
+        <div id="queueDropQueue" class="queue-drop-strip dnd-target" data-loc-type="queue">Drag or tap to enter queue</div>
       </div>
       <div id="queueWaitingWrap" style="display:none;">
         <div class="queue-subsection-label" style="margin-top:10px;">Waiting (Sitting Out)</div>
         <div class="queue-list-box">
           <div id="queueWaitingList" class="queue-list dnd-target" data-loc-type="waiting"></div>
-          <div id="queueDropWaiting" class="queue-drop-strip dnd-target" data-loc-type="waiting">Drag or tap here to sit a player out</div>
+          <div id="queueDropWaiting" class="queue-drop-strip dnd-target" data-loc-type="waiting">Drag or tap to sit out</div>
         </div>
       </div>
       <div id="queueRemoveZone" class="queue-remove-zone dnd-target" data-loc-type="remove">
-        <span id="queueRemoveZoneLabel">Drag or tap here to remove a player</span>
+        <span id="queueRemoveZoneLabel">Drag or tap to remove</span>
       </div>
       <div id="queueHint" class="section-subtitle" style="margin-top:8px;">Drag or tap a player, then drag or tap a destination to move them between Queue, Waiting, and Remove.</div>
       <button id="rrUnlockBtn" class="btn-outline" onclick="App.isRoundRobin()?App.rrUnlockPlayers():App.bracketUnlockPlayers()" style="display:none;margin-top:8px;width:100%;color:var(--warning);border-color:var(--warning);font-size:0.82rem;">Unlock Players &amp; Reset</button>
@@ -2237,28 +2303,6 @@ body {
           </select>
           <button type="button" class="btn-add-player" style="margin-top:0;flex-shrink:0;width:auto;padding:12px 16px;" onclick="App.submitQueueAddPlayer()">+ Add Player</button>
         </div>
-      </div>
-    </div>
-
-    <!-- Assign -->
-    <div class="assign-header" id="assignHeader" style="margin-bottom:14px;">
-      <div>
-        <div class="section-title" id="assignSectionTitle">Assign Courts</div>
-        <div class="section-subtitle" id="assignCount"></div>
-      </div>
-      <div class="assign-controls" id="assignControls" style="display:none;">
-        <div class="assign-options-row">
-          <span class="assign-option-label">Courts available now</span>
-          <select id="courtCountSelect" class="assign-court-select" onchange="App.setAvailableCourts(this.value)">
-            <option value="1">1</option>
-            <option value="2">2</option>
-            <option value="3">3</option>
-            <option value="4">4</option>
-            <option value="5">5</option>
-            <option value="6">6</option>
-          </select>
-        </div>
-        <button id="btnAssignAll" class="btn-assign-all" onclick="App.assignAll()">Assign Courts</button>
       </div>
     </div>
 
@@ -2884,6 +2928,14 @@ const App = {
     this.state.options.useSkill = document.getElementById('optSkill').checked;
     localStorage.setItem('courtManager', JSON.stringify(this.state));
     Session.push();
+  },
+
+  // The "Match by skill" toggle both feeds the fairness algorithm's
+  // skill-balancing and shows/hides the per-player skill badge in the
+  // queue, so flipping it needs a re-render, not just a save.
+  toggleSkillMatching() {
+    this.saveState();
+    this.renderPlayers();
   },
 
   loadState() {
@@ -4292,9 +4344,8 @@ const App = {
     this.render();
   },
 
-  _renderQueueTournament(countEl, controls, btnAssignAll, courtSelect, matchOpts, courtLabel) {
+  _renderQueueTournament(countEl, controls, btnAssignAll, courtSelect, matchOpts) {
     if (matchOpts) matchOpts.style.display = 'none';
-    if (courtLabel) courtLabel.textContent = 'Number of courts';
     // Open Play hides this button/title/note in favor of per-court Auto-fill;
     // restore them here in case the session type ever switches away from Open Play.
     if (btnAssignAll) btnAssignAll.style.display = '';
@@ -4314,6 +4365,7 @@ const App = {
         ? `${n} player${n !== 1 ? 's' : ''} &middot; need at least 4 to start`
         : `${n} player${n !== 1 ? 's' : ''} &middot; <a href="#" onclick="App.bracketLockPlayers();return false;" style="color:var(--primary);font-weight:600;">Lock Players to Generate Bracket</a>`;
       if (controls) controls.style.display = 'none';
+      if (courtSelect) courtSelect.parentElement.style.display = 'none';
     } else if (bracket.length === 0) {
       countEl.textContent = `${n} players locked`;
       if (Session.id && controls) {
@@ -4977,7 +5029,7 @@ ${bracketHTML}
 
     if (waitingWrap) waitingWrap.style.display = structured ? 'none' : '';
     if (removeZone) removeZone.style.display = isLocked ? 'none' : '';
-    if (removeLabel) removeLabel.textContent = 'Drag or tap here to remove';
+    if (removeLabel) removeLabel.textContent = 'Drag or tap to remove';
 
     const onCourts = this.getPlayersOnCourts();
     const queuePlayers = this.state.players.filter(p => !onCourts.has(p.id));
@@ -5019,7 +5071,9 @@ ${bracketHTML}
       const statusBadge = isYou ? '<span class="queue-row-you">you</span>'
         : p.isLive ? '<span class="queue-row-status user">user</span>'
         : '';
-      const skillBtn = `<button class="queue-row-skill-btn${p.skillLevel ? ' set' : ''}" onclick="App.toggleSkillPicker(${p.id})" title="Set skill level">${this.skillAbbrev(p)}</button>`;
+      const skillBtn = this.state.options.useSkill
+        ? `<button class="queue-row-skill-btn${p.skillLevel ? ' set' : ''}" onclick="App.toggleSkillPicker(${p.id})" title="Set skill level">${this.skillAbbrev(p)}</button>`
+        : '';
       const skillPicker = this._skillPickerFor === p.id ? `<div class="partner-picker" style="margin-top:0;margin-bottom:6px;">
         <div class="partner-picker-list">
           <div class="partner-picker-item" onclick="App.setPlayerSkillLevel(${p.id}, 'beginner')">Beginner</div>
@@ -5040,9 +5094,12 @@ ${bracketHTML}
     if (activeEl) activeEl.innerHTML = activePlayers.length
       ? activePlayers.map(renderRow).join('')
       : '<span style="display:block;width:100%;padding:10px 0;color:var(--text-muted);font-size:0.85rem;font-style:italic;">No players waiting in the queue</span>';
+    // No separate empty-state message here — the "Drag or tap to sit out"
+    // strip right below the (now-empty) list already covers it, and
+    // repeating the instruction inside the list too was redundant.
     if (waitingEl) waitingEl.innerHTML = waitingPlayers.length
       ? waitingPlayers.map(renderRow).join('')
-      : '<span style="display:block;width:100%;padding:10px 0;color:var(--text-muted);font-size:0.85rem;font-style:italic;">Drag or tap a player here to sit them out</span>';
+      : '';
   },
 
   togglePartnerPicker() {
@@ -5545,54 +5602,46 @@ ${bracketHTML}
     const btnAssignAll = document.getElementById('btnAssignAll');
     const courtSelect = document.getElementById('courtCountSelect');
     const matchOpts = document.querySelector('.assign-match-options');
-    const courtLabel = document.querySelector('.assign-option-label');
     if (!countEl) return;
 
     if (this.isRoundRobin()) {
-      this._renderQueueRR(countEl, controls, btnAssignAll, courtSelect, matchOpts, courtLabel);
+      this._renderQueueRR(countEl, controls, btnAssignAll, courtSelect, matchOpts);
     } else if (this.isTournament()) {
-      this._renderQueueTournament(countEl, controls, btnAssignAll, courtSelect, matchOpts, courtLabel);
+      this._renderQueueTournament(countEl, controls, btnAssignAll, courtSelect, matchOpts);
     } else {
-      this._renderQueueOpen(countEl, controls, btnAssignAll, courtSelect, matchOpts, courtLabel);
+      this._renderQueueOpen(countEl, controls, btnAssignAll, courtSelect, matchOpts);
     }
   },
 
-  _renderQueueOpen(countEl, controls, btnAssignAll, courtSelect, matchOpts, courtLabel) {
+  _renderQueueOpen(countEl, controls, btnAssignAll, courtSelect, matchOpts) {
     if (matchOpts) matchOpts.style.display = '';
-    if (courtLabel) courtLabel.textContent = 'Courts available now';
     const rrSection = document.getElementById('rrUpcomingSection');
     if (rrSection) rrSection.style.display = 'none';
     const bracketSec = document.getElementById('bracketSection');
     if (bracketSec) bracketSec.style.display = 'none';
 
     // Assignment now happens per-court (Auto-fill/drag on each court card),
-    // so this section is just the court-count picker — no bulk "N players
-    // in queue" note and no "Assign Courts" title to go with it.
+    // so this section is just the title and court-count picker — no bulk
+    // "N players in queue" note and no "Assign Courts" bulk-assign button.
     const titleEl = document.getElementById('assignSectionTitle');
     if (titleEl) titleEl.textContent = 'Courts';
     if (countEl) countEl.style.display = 'none';
+    // Bulk "Assign Courts" is replaced by per-court Auto-fill/drag on each
+    // court card (see renderCourts/_renderEmptyCourtCard) — Round Robin and
+    // Tournament still use this shared button, so hide rather than remove it.
+    if (controls) controls.style.display = 'none';
 
-    if (Session.id) {
-      controls.style.display = 'flex';
-      if (courtSelect) {
-        courtSelect.parentElement.style.display = '';
-        courtSelect.value = this.state.availableCourts || 1;
-      }
-      // Bulk "Assign Courts" is replaced by per-court Auto-fill/drag on each
-      // court card (see renderCourts/_renderEmptyCourtCard) — Round Robin and
-      // Tournament still use this shared button, so hide rather than remove it.
-      if (btnAssignAll) btnAssignAll.style.display = 'none';
-    } else {
-      controls.style.display = 'none';
+    if (courtSelect) {
+      courtSelect.parentElement.style.display = Session.id ? '' : 'none';
+      courtSelect.value = this.state.availableCourts || 1;
     }
 
     const btnUndo = document.getElementById('btnUndoMove');
     if (btnUndo) btnUndo.style.display = this._proposedUndoStack.length > 0 ? '' : 'none';
   },
 
-  _renderQueueRR(countEl, controls, btnAssignAll, courtSelect, matchOpts, courtLabel) {
+  _renderQueueRR(countEl, controls, btnAssignAll, courtSelect, matchOpts) {
     if (matchOpts) matchOpts.style.display = 'none';
-    if (courtLabel) courtLabel.textContent = 'Number of courts';
     // Open Play hides this button/title/note in favor of per-court Auto-fill;
     // restore them here in case the session type ever switches away from Open Play.
     if (btnAssignAll) btnAssignAll.style.display = '';
@@ -5612,6 +5661,7 @@ ${bracketHTML}
         ? `${n} player${n !== 1 ? 's' : ''} · need at least 4 to start`
         : `${n} player${n !== 1 ? 's' : ''} · <a href="#" onclick="App.rrLockPlayers();return false;" style="color:var(--primary);font-weight:600;">Lock Players to Generate Schedule</a>`;
       if (controls) controls.style.display = 'none';
+      if (courtSelect) courtSelect.parentElement.style.display = 'none';
     } else if (schedule.length === 0) {
       countEl.textContent = `${n} players locked`;
       if (Session.id && controls) {
