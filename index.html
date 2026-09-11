@@ -653,6 +653,25 @@ body {
 .partner-picker-item:last-child { border-bottom: none; }
 .partner-picker-item:hover { background: var(--primary-light); }
 .partner-picker-item-selected { background: var(--primary-light); font-weight: 700; }
+
+/* ── Rating fields: a button that opens an inline list (same pattern as
+   the queue's tap-to-set skill tag), never a native <select> ────── */
+.skill-field { position: relative; }
+.skill-field-btn {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+  width: 100%;
+  cursor: pointer;
+  text-align: left;
+  color: var(--text);
+  background: var(--input-bg);
+}
+.skill-field-btn.placeholder { color: var(--text-muted); }
+.skill-field-btn .skill-field-label { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.skill-field-caret { font-size: 0.65em; color: var(--text-muted); flex-shrink: 0; }
+.skill-field-menu { margin-bottom: 8px; }
 .partner-chip {
   display: flex;
   align-items: center;
@@ -1451,6 +1470,7 @@ body {
   font-size: 0.76rem;
   font-style: italic;
   color: var(--text-muted);
+  cursor: pointer;
 }
 .dnd-target.dnd-hover {
   background: var(--primary-light);
@@ -1854,18 +1874,19 @@ body {
   text-align: center;
   font-size: 0.75rem;
   color: var(--text-muted);
-  padding: 20px 10px 24px;
-  line-height: 1.7;
+  padding: 10px 10px 12px;
+  line-height: 1.4;
   margin-top: auto;
 }
+.app-footer > div + div { margin-top: 4px; }
 .app-footer a {
   color: var(--primary);
   text-decoration: none;
 }
 .app-footer a:hover { text-decoration: underline; }
 .app-footer-links {
-  margin-top: 12px;
-  padding-top: 12px;
+  margin-top: 6px;
+  padding-top: 6px;
   border-top: 1px solid var(--border);
 }
 
@@ -2325,13 +2346,22 @@ body {
         <p id="queueAddPlayerError" class="setup-error" style="display:none;">Enter a player name</p>
         <div style="display:flex;gap:8px;">
           <input type="text" class="setup-input" id="queueAddPlayerName" placeholder="Player name" style="flex:1;margin-bottom:0;" onkeydown="if(event.key==='Enter')App.submitQueueAddPlayer()">
-          <select class="setup-input" id="queueAddPlayerSkill" style="width:110px;flex-shrink:0;margin-bottom:0;">
-            <option value="" selected>Rating</option>
-            <option value="beginner">Beginner</option>
-            <option value="intermediate">Intermediate</option>
-            <option value="advanced">Advanced</option>
-          </select>
+          <div class="skill-field" id="queueAddPlayerSkillField" style="width:110px;flex-shrink:0;">
+            <button type="button" class="setup-input skill-field-btn placeholder" id="queueAddPlayerSkillBtn" style="margin-bottom:0;" onclick="App.toggleSkillField('queueAddPlayerSkill')" data-placeholder="Rating">
+              <span class="skill-field-label">Rating</span>
+              <span class="skill-field-caret">&#9662;</span>
+            </button>
+            <input type="hidden" id="queueAddPlayerSkill" value="">
+          </div>
           <button type="button" class="btn-add-player" style="margin-top:0;flex-shrink:0;width:auto;padding:12px 16px;" onclick="App.submitQueueAddPlayer()">+ Add Player</button>
+        </div>
+        <div class="partner-picker skill-field-menu" id="queueAddPlayerSkillMenu" style="display:none;">
+          <div class="partner-picker-list">
+            <div class="partner-picker-item" onclick="App.setSkillField('queueAddPlayerSkill', 'beginner')">Beginner</div>
+            <div class="partner-picker-item" onclick="App.setSkillField('queueAddPlayerSkill', 'intermediate')">Intermediate</div>
+            <div class="partner-picker-item" onclick="App.setSkillField('queueAddPlayerSkill', 'advanced')">Advanced</div>
+            <div class="partner-picker-item" onclick="App.setSkillField('queueAddPlayerSkill', '')">Clear rating</div>
+          </div>
         </div>
       </div>
       <div class="queue-subsection-label">Waiting</div>
@@ -2386,12 +2416,21 @@ body {
       <div class="settings-card-title">Your Profile</div>
       <div style="display:flex;gap:8px;margin-bottom:8px;">
         <input type="text" class="setup-input" id="settingsName" placeholder="Display name" maxlength="30" style="flex:1;min-width:0;margin-bottom:0;">
-        <select class="setup-input" id="settingsSkill" style="width:130px;flex-shrink:0;margin-bottom:0;">
-          <option value="">Rating</option>
-          <option value="beginner">Beginner</option>
-          <option value="intermediate">Intermediate</option>
-          <option value="advanced">Advanced</option>
-        </select>
+        <div class="skill-field" id="settingsSkillField" style="width:130px;flex-shrink:0;">
+          <button type="button" class="setup-input skill-field-btn placeholder" id="settingsSkillBtn" style="margin-bottom:0;" onclick="App.toggleSkillField('settingsSkill')" data-placeholder="Rating">
+            <span class="skill-field-label">Rating</span>
+            <span class="skill-field-caret">&#9662;</span>
+          </button>
+          <input type="hidden" id="settingsSkill" value="">
+        </div>
+      </div>
+      <div class="partner-picker skill-field-menu" id="settingsSkillMenu" style="display:none;">
+        <div class="partner-picker-list">
+          <div class="partner-picker-item" onclick="App.setSkillField('settingsSkill', 'beginner')">Beginner</div>
+          <div class="partner-picker-item" onclick="App.setSkillField('settingsSkill', 'intermediate')">Intermediate</div>
+          <div class="partner-picker-item" onclick="App.setSkillField('settingsSkill', 'advanced')">Advanced</div>
+          <div class="partner-picker-item" onclick="App.setSkillField('settingsSkill', '')">Clear rating</div>
+        </div>
       </div>
       <div style="display:flex;align-items:center;justify-content:flex-end;">
         <button type="button" class="btn-outline" onclick="App.saveSettings()" style="padding:12px 16px;font-size:1rem;font-weight:700;">Save</button>
@@ -2542,7 +2581,7 @@ body {
         </div>
         <div class="hiw-section">
           <h3>&#9889; Quick Play</h3>
-          <p>No sign-in needed. Tap <strong>Quick Play</strong>, pick a format — <strong>Open Play</strong>, <strong>Round Robin</strong>, or <strong>Tournament</strong> — and add your players' names. No skill levels or in-session settings to manage, and no one else can join. Use the pause (checkbox) and remove (&times;) controls to manage your roster at any time. Everything stays on your device — nothing is shared online.</p>
+          <p>No sign-in needed. Tap <strong>Quick Play</strong>, pick a format — <strong>Open Play</strong>, <strong>Round Robin</strong>, or <strong>Tournament</strong> — and add your players' names. No skill levels or in-session settings to manage, and no one else can join. Drag or tap a player onto <strong>Sitting Out</strong> to bench them, or onto <strong>Leave Session</strong> to remove them, at any time. Everything stays on your device — nothing is shared online.</p>
         </div>
         <div class="hiw-section">
           <h3>&#127955; Score Keeper</h3>
@@ -2562,7 +2601,7 @@ body {
         </div>
         <div class="hiw-section">
           <h3>🎾 Confirming &amp; Ending a Match (Open Play)</h3>
-          <p>An auto-filled or drag-filled court starts out <strong>Proposed</strong> — adjust who's on it by dragging or tapping players between the queue and the court, then tap <strong>Confirm</strong>. Nothing is final until then, and adjusting or cancelling a proposal never costs anyone their place in line. Once confirmed, tap <strong>Start</strong> on the court card to start the match timer.</p>
+          <p>An auto-filled or drag-filled court starts out <strong>Proposed</strong> — adjust who's on it by dragging or tapping players between the queue and the court, then tap <strong>Confirm</strong>. Nothing is final until then, and adjusting or cancelling a proposal never costs anyone their place in line — tap <strong>&#8617; Undo</strong> above the queue to step back through adjustments. Once confirmed, tap <strong>Start</strong> on the court card to start the match timer.</p>
           <p style="margin-top:6px;">When a match ends, choose <strong>Return All 4</strong> (send everyone back to the queue), <strong>Keep Winners</strong> (needs a score), or <strong>Keep Last-Joined</strong> (once a court has had a pair carried over before) to decide who stays on for the next match.</p>
         </div>
         <div class="hiw-section">
@@ -2576,7 +2615,22 @@ body {
         </div>
         <div class="hiw-section">
           <h3>📋 Match History</h3>
-          <p>The <strong>History</strong> tab shows all completed matches for the current session — courts, opponents, and scores. Signed-in players can also view their personal match history across all past sessions.</p>
+          <p>The <strong>History</strong> tab shows all completed matches for the current session — courts, opponents, and scores. Signed-in players can also view their personal match history across all past sessions. In Open Play, tap <strong>+ Log Past Match</strong> there to add a match your group already played before opening the app.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Fill an empty court slot: tapped with no player already selected ── -->
+  <div id="fillSlotModal" class="hiw-overlay" style="display:none;" onclick="App.closeFillSlotPicker(event)">
+    <div class="hiw-modal" style="max-width:380px;" onclick="event.stopPropagation()">
+      <div class="hiw-header">
+        <h2>Add a Player</h2>
+        <button class="hiw-close" onclick="App.closeFillSlotPicker()" aria-label="Close">&times;</button>
+      </div>
+      <div class="hiw-body">
+        <div class="partner-picker" style="margin-top:0;">
+          <div class="partner-picker-list" id="fillSlotPickerList"></div>
         </div>
       </div>
     </div>
@@ -2592,12 +2646,21 @@ body {
       <div class="hiw-body">
         <input type="text" class="setup-input" id="selfProfileName" placeholder="Your name" autocomplete="given-name" style="width:100%;" onkeydown="if(event.key==='Enter')Onboard._selfProfileSubmit()">
         <p id="selfProfileNameError" class="setup-error">Enter your name first</p>
-        <select class="setup-input" id="selfProfileSkill" style="width:100%;">
-          <option value="">Skill level (optional)</option>
-          <option value="beginner">Beginner</option>
-          <option value="intermediate">Intermediate</option>
-          <option value="advanced">Advanced</option>
-        </select>
+        <div class="skill-field" id="selfProfileSkillField" style="width:100%;">
+          <button type="button" class="setup-input skill-field-btn placeholder" id="selfProfileSkillBtn" onclick="App.toggleSkillField('selfProfileSkill')" data-placeholder="Skill level (optional)">
+            <span class="skill-field-label">Skill level (optional)</span>
+            <span class="skill-field-caret">&#9662;</span>
+          </button>
+          <input type="hidden" id="selfProfileSkill" value="">
+        </div>
+        <div class="partner-picker skill-field-menu" id="selfProfileSkillMenu" style="display:none;">
+          <div class="partner-picker-list">
+            <div class="partner-picker-item" onclick="App.setSkillField('selfProfileSkill', 'beginner')">Beginner</div>
+            <div class="partner-picker-item" onclick="App.setSkillField('selfProfileSkill', 'intermediate')">Intermediate</div>
+            <div class="partner-picker-item" onclick="App.setSkillField('selfProfileSkill', 'advanced')">Advanced</div>
+            <div class="partner-picker-item" onclick="App.setSkillField('selfProfileSkill', '')">Clear rating</div>
+          </div>
+        </div>
         <p style="font-size:0.78rem;color:var(--text-muted);margin:0;">You can update this anytime from Settings.</p>
         <div style="display:flex;gap:10px;">
           <button type="button" class="btn-outline" style="flex:1;padding:12px;font-size:1rem;font-weight:700;" onclick="Onboard._selfProfileCancel()">Cancel</button>
@@ -2900,6 +2963,7 @@ const App = {
   _dragState: null,
   _tapSelection: null,
   _proposedUndoStack: [],
+  _fillSlotTarget: null,
 
   // ─── Tab switching ──────────────────────────
   switchTab(tab) {
@@ -2940,6 +3004,7 @@ const App = {
     document.addEventListener('pointermove', e => this._onDndPointerMove(e));
     document.addEventListener('pointerup', e => this._onDndPointerUp(e));
     document.addEventListener('pointercancel', e => this._onDndPointerUp(e));
+    document.addEventListener('dblclick', e => this._onDndDblClick(e));
   },
 
   // ─── State normalization ───────────────────
@@ -3038,7 +3103,7 @@ const App = {
     const user = Onboard._savedUser();
     if (user) {
       document.getElementById('settingsName').value = user.name || '';
-      document.getElementById('settingsSkill').value = user.skillLevel || '';
+      this.setSkillField('settingsSkill', user.skillLevel || '');
     }
   },
 
@@ -3100,7 +3165,7 @@ const App = {
     this.saveState();
     this.render();
     if (nameEl) nameEl.value = '';
-    if (skillEl) skillEl.value = '';
+    this.setSkillField('queueAddPlayerSkill', '');
     // Re-focus to let a mouse/trackpad user add several names back-to-back
     // without re-clicking the field each time — but not on a touch-primary
     // device, where refocusing just pops the on-screen keyboard back open
@@ -3223,6 +3288,36 @@ const App = {
     this._skillPickerFor = null;
     this.saveState();
     this.render();
+  },
+
+  // ─── Generic rating field (button + inline list) ───
+  // Used anywhere a form needs a rating value — self-profile, settings, the
+  // inline queue add-player row, and per-row in the bulk name-entry form —
+  // instead of a native <select>, to match the queue's own skill picker.
+  // Each field is a hidden <input id="fieldId"> (read the same way a
+  // <select> would be, via .value) plus a button (#fieldIdBtn) and an
+  // inline options list (#fieldIdMenu) kept in sync here.
+  _skillFieldLabels: { beginner: 'Beginner', intermediate: 'Intermediate', advanced: 'Advanced' },
+
+  toggleSkillField(fieldId) {
+    const menu = document.getElementById(fieldId + 'Menu');
+    if (!menu) return;
+    const isOpen = menu.style.display !== 'none';
+    document.querySelectorAll('.skill-field-menu').forEach(m => { m.style.display = 'none'; });
+    menu.style.display = isOpen ? 'none' : '';
+  },
+
+  setSkillField(fieldId, value) {
+    const input = document.getElementById(fieldId);
+    if (input) input.value = value || '';
+    const btn = document.getElementById(fieldId + 'Btn');
+    if (btn) {
+      const label = btn.querySelector('.skill-field-label');
+      if (label) label.textContent = value ? this._skillFieldLabels[value] : (btn.dataset.placeholder || 'Rating');
+      btn.classList.toggle('placeholder', !value);
+    }
+    const menu = document.getElementById(fieldId + 'Menu');
+    if (menu) menu.style.display = 'none';
   },
 
   // ─── Court-lock helpers ────────────────────
@@ -4770,6 +4865,41 @@ ${bracketHTML}
     }
   },
 
+  // Auto-fill for a court that's already a proposed match with empty seats
+  // left over — e.g. the two seats "Keep Winners"/"Keep Last-Joined" wasn't
+  // able to fill right away because too few players were free at the time.
+  // Only fills the empty seat(s); whoever's already placed is left alone.
+  autoFillRemainingSlots(courtId) {
+    if (this._fillRemainingSlots(courtId)) {
+      this._completeAssignmentPass();
+      this.saveState();
+      this.render();
+    }
+  },
+
+  _fillRemainingSlots(courtId) {
+    const game = this.state.proposedGames[courtId];
+    if (!game) return false;
+    const needed = 4 - game.side1.length - game.side2.length;
+    if (needed <= 0) return false;
+    const onCourt = this.getPlayersOnCourts();
+    const picked = this._pickPriorityPlayers(needed, [...onCourt]);
+    if (!picked) return false;
+    const roomOn = n => 2 - game['side' + n].length;
+    for (const u of picked) {
+      if (u.type === 'pair' && roomOn(1) >= 2) {
+        game.side1.push(...u.ids);
+      } else if (u.type === 'pair' && roomOn(2) >= 2) {
+        game.side2.push(...u.ids);
+      } else {
+        for (const id of u.ids) {
+          game['side' + (roomOn(1) > 0 ? 1 : 2)].push(id);
+        }
+      }
+    }
+    return true;
+  },
+
   // ─── Proposed matches (Open Play manual review) ─────
   // Auto-assignment only proposes a match; nothing is locked in — and no
   // player leaves the queue for good — until the organizer confirms it here.
@@ -5007,7 +5137,7 @@ ${bracketHTML}
     }
     const qAddRow = document.getElementById('queueAddPlayerRow');
     if (qAddRow) qAddRow.style.display = isLocked ? 'none' : '';
-    const qAddSkill = document.getElementById('queueAddPlayerSkill');
+    const qAddSkill = document.getElementById('queueAddPlayerSkillField');
     if (qAddSkill) qAddSkill.style.display = this.state._quickPlay ? 'none' : '';
     // Logging a past match only makes sense for Open Play's live queue —
     // Round Robin/Tournament build matches from a locked roster/bracket instead.
@@ -5103,32 +5233,41 @@ ${bracketHTML}
     const waitingEl = document.getElementById('queueWaitingList');
     const removeZone = document.getElementById('queueRemoveZone');
     const removeZoneTitle = document.getElementById('queueRemoveZoneTitle');
-    const removeLabel = document.getElementById('queueRemoveZoneLabel');
     const rr = this.isRoundRobin();
     const tourn = this.isTournament();
     const structured = rr || tourn;
     const isLocked = (rr && this.state._rrLocked) || (tourn && this.state._bracketLocked);
 
     if (waitingWrap) waitingWrap.style.display = structured ? 'none' : '';
-    if (removeZone) removeZone.style.display = isLocked ? 'none' : '';
     if (removeZoneTitle) removeZoneTitle.style.display = isLocked ? 'none' : '';
-    if (removeLabel) removeLabel.textContent = 'Drag or tap to remove';
+
+    // The Yes/No confirm renders inside the Leave Session zone itself —
+    // where the player was just dropped/tapped — rather than back at their
+    // old row in Waiting/Sitting Out, so it appears where the click happened.
+    const pendingPlayer = this._pendingRemove != null ? this.getPlayer(this._pendingRemove) : null;
+    if (removeZone) {
+      removeZone.style.display = isLocked ? 'none' : '';
+      if (pendingPlayer) {
+        const isYou = Onboard.selfId === pendingPlayer.id;
+        const confirmLabel = isYou ? 'Leave session?' : `Remove ${this.esc(pendingPlayer.name)}?`;
+        removeZone.innerHTML = `<div class="queue-row-confirm" style="justify-content:center;">
+          <span>${confirmLabel}</span>
+          <button style="color:var(--danger);border-color:#fca5a5;" onclick="App.removePlayer(${pendingPlayer.id})">Yes</button>
+          <button style="color:var(--text-muted);border-color:var(--border);" onclick="App.cancelRemove()">No</button>
+        </div>`;
+      } else {
+        removeZone.innerHTML = `<span id="queueRemoveZoneLabel">Drag or tap to remove</span>`;
+      }
+    }
 
     const onCourts = this.getPlayersOnCourts();
     const queuePlayers = this.state.players.filter(p => !onCourts.has(p.id));
 
     const renderRow = (p) => {
       const isYou = Onboard.selfId === p.id;
-      if (this._pendingRemove === p.id) {
-        const confirmLabel = isYou ? 'Leave session?' : `Remove ${this.esc(p.name)}?`;
-        return `<div class="queue-row queue-row-full">
-          <div class="queue-row-confirm">
-            <span>${confirmLabel}</span>
-            <button style="color:var(--danger);border-color:#fca5a5;" onclick="App.removePlayer(${p.id})">Yes</button>
-            <button style="color:var(--text-muted);border-color:var(--border);" onclick="App.cancelRemove()">No</button>
-          </div>
-        </div>`;
-      }
+      // While this player's removal is pending, their row disappears from
+      // Waiting/Sitting Out — the confirm now lives in the remove zone above.
+      if (this._pendingRemove === p.id) return '';
       if (this._editingGuest === p.id) {
         // Rating isn't edited here — tapping the R/B/I/A indicator on the
         // chip itself opens the skill picker, so a second rating field in
@@ -5272,7 +5411,7 @@ ${bracketHTML}
   },
 
   _renderEmptyCourtCard(courtId) {
-    const label = 'Drag or tap to fill';
+    const label = 'Drag or tap to add';
     const sideBox = sideNum => `<div class="court-side side-${sideNum} dnd-target" data-loc-type="slot" data-court="${courtId}" data-side="${sideNum}">
       <div class="dnd-slot-empty">${label}</div>
     </div>`;
@@ -5339,8 +5478,8 @@ ${bracketHTML}
 
       let bodyHTML;
       if (isScoring) {
-        const s1Names = game.side1.map(id => { const p = this.getPlayer(id); return p ? this.esc(p.name) + (this.skillLabel(p) ? ` <span style="font-weight:400;opacity:0.7;">(${this.skillLabel(p)})</span>` : '') : '?'; }).join(' & ');
-        const s2Names = game.side2.map(id => { const p = this.getPlayer(id); return p ? this.esc(p.name) + (this.skillLabel(p) ? ` <span style="font-weight:400;opacity:0.7;">(${this.skillLabel(p)})</span>` : '') : '?'; }).join(' & ');
+        const s1Names = game.side1.map(id => { const p = this.getPlayer(id); return p ? this.esc(p.name) : '?'; }).join(' & ');
+        const s2Names = game.side2.map(id => { const p = this.getPlayer(id); return p ? this.esc(p.name) : '?'; }).join(' & ');
         bodyHTML = `<div class="score-entry">
           <div class="score-entry-gameover">GAME OVER</div>
           <div class="score-side side-1">
@@ -5411,9 +5550,13 @@ ${bracketHTML}
   _renderProposedCard(courtId) {
     const game = this.state.proposedGames[courtId];
     const canConfirm = game.side1.length === 2 && game.side2.length === 2;
+    const needed = 4 - game.side1.length - game.side2.length;
+    const onCourt = this.getPlayersOnCourts();
+    const eligible = this.state.players.filter(p => p.active && !onCourt.has(p.id)).length;
+    const canAutoFill = needed > 0 && eligible >= needed;
     const sideBox = (side, sideNum) => {
       const chips = side.map(id => this._renderChip(id)).join('');
-      const placeholderLabel = 'Drag or tap to fill';
+      const placeholderLabel = 'Drag or tap to add';
       const placeholders = Array.from({ length: 2 - side.length },
         () => `<div class="dnd-slot-empty">${placeholderLabel}</div>`).join('');
       return `<div class="court-side side-${sideNum} dnd-target" data-loc-type="slot" data-court="${courtId}" data-side="${sideNum}">
@@ -5433,6 +5576,7 @@ ${bracketHTML}
           <div class="court-vs">VS</div>
           ${sideBox(game.side2, 2)}
           <div class="match-action-row">
+            ${canAutoFill ? `<button class="btn-confirm-match" onclick="App.autoFillRemainingSlots(${courtId})">Auto-fill</button>` : ''}
             <button class="btn-confirm-match" ${canConfirm ? '' : 'disabled'} onclick="App.startProposedMatch(${courtId})">&#10003; Confirm</button>
           </div>
           ${canConfirm ? '' : '<div class="proposed-hint">Fill both teams to confirm the match.</div>'}
@@ -5446,10 +5590,11 @@ ${bracketHTML}
     if (!p) return '';
     const isYou = Onboard.selfId === playerId;
     const selected = this._tapSelection && this._tapSelection.playerId === playerId ? ' dnd-selected' : '';
-    const skillTag = this.skillLabel(p) ? ` <span style="font-weight:400;opacity:0.7;">(${this.skillLabel(p)})</span>` : '';
+    // Skill level is a queue-only detail — once someone's on a court, which
+    // team they're on already reflects any skill-based matching.
     const youBadge = isYou ? ' <span class="queue-row-you">you</span>' : '';
     const userBadge = !isYou && p.isLive ? ' <span class="queue-row-status user">user</span>' : '';
-    return `<span class="dnd-chip${selected}" data-player-id="${playerId}">${this.esc(p.name)}${skillTag}${youBadge}${userBadge}</span>`;
+    return `<span class="dnd-chip${selected}" data-player-id="${playerId}">${this.esc(p.name)}${youBadge}${userBadge}</span>`;
   },
 
   // ─── Drag & drop + tap-to-move ─────
@@ -5578,6 +5723,9 @@ ${bracketHTML}
     // No chip under the finger/cursor — if a player is already selected,
     // let a plain tap on a bare drop zone (e.g. an empty Waiting section)
     // complete the move; there's nothing there to drag onto otherwise.
+    // (Double-tapping/double-clicking an empty court slot opens a picker to
+    // fill it — see _onDndDblClick — a single tap doesn't, since that was
+    // too easy to trigger by accident while scrolling past a court card.)
     if (!this._tapSelection) return;
     const locEl = e.target.closest('[data-loc-type]');
     if (!locEl) return;
@@ -5658,6 +5806,72 @@ ${bracketHTML}
     }
   },
 
+  // Double-clicking (or double-tapping) a player already placed in a
+  // proposed court match sends them straight back to the queue — a
+  // quicker shortcut than dragging/tapping them off one at a time.
+  // Double-clicking/double-tapping an empty court slot's placeholder opens
+  // the fill picker (see openFillSlotPicker) — a single tap doesn't, since
+  // that was too easy to trigger by accident while scrolling past a card.
+  _onDndDblClick(e) {
+    const chipEl = e.target.closest('.dnd-chip');
+    if (chipEl) {
+      const slotEl = chipEl.closest('[data-loc-type="slot"]');
+      if (!slotEl) return;
+      const playerId = Number(chipEl.dataset.playerId);
+      const from = this._locFromEl(slotEl);
+      this._tapSelection = null;
+      this._movePlayer(playerId, from, { type: 'queue' });
+      return;
+    }
+    const emptySlotEl = e.target.closest('.dnd-slot-empty');
+    const slotLocEl = emptySlotEl && emptySlotEl.closest('[data-loc-type="slot"]');
+    if (!slotLocEl) return;
+    const loc = this._locFromEl(slotLocEl);
+    this.openFillSlotPicker(loc.court, loc.side);
+  },
+
+  // Double-tapping/double-clicking an empty court slot opens this — lets
+  // you start from the destination rather than always having to tap the
+  // queue chip first. Requires the double-tap (see _onDndDblClick) rather
+  // than a single tap, since a single tap was too easy to trigger by
+  // accident while scrolling past a court card.
+  openFillSlotPicker(court, side) {
+    this._fillSlotTarget = { court, side };
+    this.renderFillSlotPicker();
+    document.getElementById('fillSlotModal').style.display = 'flex';
+    document.body.style.overflow = 'hidden';
+  },
+
+  closeFillSlotPicker(event) {
+    if (event && event.target !== event.currentTarget) return;
+    document.getElementById('fillSlotModal').style.display = 'none';
+    document.body.style.overflow = '';
+    this._fillSlotTarget = null;
+  },
+
+  renderFillSlotPicker() {
+    const el = document.getElementById('fillSlotPickerList');
+    if (!el) return;
+    const onCourt = this.getPlayersOnCourts();
+    const available = this.state.players.filter(p => !onCourt.has(p.id));
+    el.innerHTML = available.length
+      ? available.map(p => {
+          const tag = p.active ? '' : ' <span style="font-weight:400;color:var(--text-muted);">(sitting out)</span>';
+          return `<div class="partner-picker-item" onclick="App.fillSlotWithPlayer(${p.id})">${this.esc(p.name)}${tag}</div>`;
+        }).join('')
+      : '<div style="padding:10px 12px;color:var(--text-light);font-size:0.82rem;">No players available</div>';
+  },
+
+  fillSlotWithPlayer(playerId) {
+    const target = this._fillSlotTarget;
+    this.closeFillSlotPicker();
+    if (!target) return;
+    const p = this.getPlayer(playerId);
+    if (!p) return;
+    const from = { type: p.active ? 'queue' : 'waiting' };
+    this._movePlayer(playerId, from, { type: 'slot', court: target.court, side: target.side });
+  },
+
   renderSide(side) {
     const isTeam = side.length === 2 && this.state.teams.some(t =>
       (t.p1 === side[0] && t.p2 === side[1]) || (t.p1 === side[1] && t.p2 === side[0])
@@ -5666,8 +5880,7 @@ ${bracketHTML}
       const p = this.getPlayer(id);
       if (!p) return '';
       const youBadge = id === Onboard.selfId ? ' <span class="queue-row-you">you</span>' : '';
-      const skillTag = this.skillLabel(p) ? ` <span style="font-weight:400;opacity:0.7;">(${this.skillLabel(p)})</span>` : '';
-      return `<span class="side-player-${align}"><span class="side-player-name">${this.esc(p.name)}${skillTag}</span>${youBadge}</span>`;
+      return `<span class="side-player-${align}"><span class="side-player-name">${this.esc(p.name)}</span>${youBadge}</span>`;
     };
     if (side.length === 1) {
       return playerHtml(side[0], 'solo');
@@ -6699,10 +6912,9 @@ const Onboard = {
     }
     this._selfProfileCtx = { onComplete };
     const nameEl = document.getElementById('selfProfileName');
-    const skillEl = document.getElementById('selfProfileSkill');
     const errEl = document.getElementById('selfProfileNameError');
     if (nameEl) nameEl.value = Admin._user?.displayName || '';
-    if (skillEl) skillEl.value = saved.skillLevel || '';
+    App.setSkillField('selfProfileSkill', saved.skillLevel || '');
     if (errEl) errEl.style.display = 'none';
     document.getElementById('selfProfileModal').style.display = 'flex';
     document.body.style.overflow = 'hidden';
@@ -7212,6 +7424,7 @@ const Onboard = {
     if (list) {
       list.innerHTML = '';
       for (let i = 1; i <= count; i++) {
+        const wrapper = document.createElement('div');
         const row = document.createElement('div');
         row.style.cssText = 'display:flex;gap:8px;';
         const nameInput = document.createElement('input');
@@ -7222,19 +7435,35 @@ const Onboard = {
         nameInput.dataset.bulkName = i;
         row.appendChild(nameInput);
         if (!quickPlay) {
-          const skillInput = document.createElement('select');
-          skillInput.className = 'setup-input';
-          skillInput.style.cssText = 'width:110px;flex-shrink:0;margin-bottom:0;';
-          skillInput.dataset.bulkSkill = i;
-          skillInput.innerHTML = `
-            <option value="">Rating</option>
-            <option value="beginner">Beginner</option>
-            <option value="intermediate">Intermediate</option>
-            <option value="advanced">Advanced</option>`;
-          row.appendChild(skillInput);
+          const fieldId = `bulkSkill_${i}`;
+          const skillWrap = document.createElement('div');
+          skillWrap.className = 'skill-field';
+          skillWrap.style.cssText = 'width:110px;flex-shrink:0;';
+          skillWrap.innerHTML = `
+            <button type="button" class="setup-input skill-field-btn placeholder" id="${fieldId}Btn" style="margin-bottom:0;" onclick="App.toggleSkillField('${fieldId}')" data-placeholder="Rating">
+              <span class="skill-field-label">Rating</span>
+              <span class="skill-field-caret">&#9662;</span>
+            </button>
+            <input type="hidden" id="${fieldId}" data-bulk-skill="${i}" value="">`;
+          row.appendChild(skillWrap);
+          const menu = document.createElement('div');
+          menu.className = 'partner-picker skill-field-menu';
+          menu.id = `${fieldId}Menu`;
+          menu.style.display = 'none';
+          menu.innerHTML = `
+            <div class="partner-picker-list">
+              <div class="partner-picker-item" onclick="App.setSkillField('${fieldId}', 'beginner')">Beginner</div>
+              <div class="partner-picker-item" onclick="App.setSkillField('${fieldId}', 'intermediate')">Intermediate</div>
+              <div class="partner-picker-item" onclick="App.setSkillField('${fieldId}', 'advanced')">Advanced</div>
+              <div class="partner-picker-item" onclick="App.setSkillField('${fieldId}', '')">Clear rating</div>
+            </div>`;
+          wrapper.appendChild(row);
+          wrapper.appendChild(menu);
+        } else {
+          wrapper.appendChild(row);
         }
         if (i === count) nameInput.onkeydown = (e) => { if (e.key === 'Enter') this._bulkSubmit(); };
-        list.appendChild(row);
+        list.appendChild(wrapper);
       }
       list.querySelector('input')?.focus();
     }

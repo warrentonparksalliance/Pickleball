@@ -105,13 +105,14 @@ footer a:hover { text-decoration: underline; }
   <p><span class="badge badge-user">user</span> — A player using the app on their own device</p>
   <p><span class="badge badge-partner">partner</span> — Your selected partner preference</p>
 </div>
-<p>Players added by someone else (rather than joining themselves) don't carry a badge — but whoever added them sees an edit (&#x270E;) icon to update their name, and a tap-to-set skill tag (<strong>R</strong> for no rating yet, or <strong>B</strong>/<strong>I</strong>/<strong>A</strong> for Beginner/Intermediate/Advanced) next to everyone's name.</p>
+<p>Players added by someone else (rather than joining themselves) don't carry a badge — but whoever added them sees an edit (&#x270E;) icon to update their name, and (when <strong>Match by skill</strong> is turned on) a tap-to-set skill tag (<strong>R</strong> for no rating yet, or <strong>B</strong>/<strong>I</strong>/<strong>A</strong> for Beginner/Intermediate/Advanced) next to everyone's name.</p>
 
+<p>The queue is organized into drag-and-drop zones rather than per-row buttons — drag a player's chip onto a zone, or on a touchscreen tap the chip then tap the destination, to move them:</p>
 <ul>
   <li><strong>+ Add Player</strong> — Add players who don't have the app, or aren't joining themselves. You can edit or remove players you added.</li>
-  <li><strong>Sit Out</strong> (&#x23F8;) — Sit out temporarily. You stay in the session but won't be assigned to courts. Anyone can sit out anyone.</li>
-  <li><strong>Play</strong> (&#x25B6;) — Rejoin the queue after sitting out.</li>
-  <li><strong>Remove</strong> (&times;) — Remove yourself (leaves the session) or players you added. Admins can remove anyone.</li>
+  <li><strong>Waiting</strong> — Players available to be assigned to a court next.</li>
+  <li><strong>Sitting Out</strong> — Drop a player here to bench them temporarily; they stay in the session but won't be assigned to courts. Anyone can sit out anyone. Drop them back on Waiting to rejoin the queue.</li>
+  <li><strong>Leave Session</strong> — Drop a player here and confirm with <strong>Yes</strong> to remove them. You can remove yourself or players you added; admins can remove anyone.</li>
 </ul>
 
 <h2>Court Assignments</h2>
@@ -123,11 +124,14 @@ footer a:hover { text-decoration: underline; }
 <h3>Open Play (default)</h3>
 <p><strong>"Courts available now"</strong> controls how many court cards are shown, whether or not a match is running on them yet.</p>
 <ol class="steps">
-  <li>On any empty court card, tap <strong>Auto-fill</strong> to pull the next players in line, or drag/tap players from the queue straight onto a court's open slots yourself.</li>
-  <li>An auto-filled or partly-filled court shows a <strong>Proposed</strong> match first — drag/tap players between the queue and the court's two sides to adjust it, then tap <strong>&#9654; Start Match</strong> to confirm it. Nothing is final, and no one's place in line is affected, until you confirm.</li>
+  <li>On any empty court card, tap <strong>Auto-fill</strong> to pull the next players in line, drag/tap players from the queue straight onto a court's open slots yourself, or double-tap/double-click an open slot directly to pick from a list of available players.</li>
+  <li>An auto-filled or partly-filled court shows a <strong>Proposed</strong> match first — drag/tap players between the queue and the court's two sides to adjust it, then tap <strong>&#10003; Confirm</strong>. Nothing is final, and no one's place in line is affected, until you confirm. Made a mistake? Tap <strong>&#8617; Undo</strong> above the queue to step back through your adjustments.</li>
   <li>Tap <strong>&#9654; Start</strong> on a confirmed court to start its timer.</li>
   <li>When a game ends, tap <strong>End</strong>, then (with or without a score) choose <strong>Return All 4</strong>, <strong>Keep Winners</strong>, or — once a court has had a pair carried over before — <strong>Keep Last-Joined</strong>, or tap <strong>Cancel</strong> to go back.</li>
 </ol>
+<div class="tip">
+  <strong>Keep Winners/Keep Last-Joined with too few players free:</strong> If there aren't enough free players to fill the other two seats the moment you choose it, the kept pair stays on the court as a Proposed match with those two seats open. An <strong>Auto-fill</strong> button appears on that card too, so once more players are free you can fill just the open seats without disturbing who's already placed.
+</div>
 
 <div class="tip">
   <strong>Fair rotation:</strong> Who gets auto-filled next isn't random — players who've been waiting the longest without playing are prioritized first, so no one gets stuck sitting out round after round.
@@ -144,7 +148,7 @@ footer a:hover { text-decoration: underline; }
 
 <h3>Match Options</h3>
 <ul>
-  <li><strong>Match by skill</strong> (on by default) — When more than one pairing is equally good at avoiding repeat matchups, breaks the tie by grouping players with similar skill levels. Repeat-avoidance itself is always on.</li>
+  <li><strong>Match by skill</strong> (off by default) — When more than one pairing is equally good at avoiding repeat matchups, breaks the tie by grouping players with similar skill levels. Repeat-avoidance itself is always on. Turning it on also reveals a tap-to-set skill tag next to each player's name in the queue.</li>
 </ul>
 
 <h2>Score Keeper</h2>
@@ -235,6 +239,7 @@ footer a:hover { text-decoration: underline; }
 <h2>Match History</h2>
 <h3>Session History</h3>
 <p>The <strong>History</strong> tab shows all completed matches in the current session with teams, scores, and match duration. Use the search bar to filter by player name, or tap <strong>My Matches</strong> to see only games you played in. Session history persists until an admin clears it.</p>
+<p>In Open Play, tap <strong>+ Log Past Match</strong> above the history table to record a match your group already played before opening the app: pick 4 players currently in the session (the first two picked become Team A, the next two Team B), optionally enter a score, and add it. It's added to history and counts toward the fairness algorithm's repeat-matchup avoidance, without being tied to a court or timer. Not available in Round Robin or Tournament, which build matches from a locked roster or bracket instead.</p>
 
 <h3>Personal Match History</h3>
 <p>If you're signed in with Google, your matches are also saved to your <strong>personal match history</strong>. This history stays even if an admin clears the session history or deletes the session. Access it from the <strong>My Match History</strong> button in your profile card on the landing page. You can search by player name and swipe left on any match to delete it. Personal match history isn't available for offline or guest sessions.</p>
