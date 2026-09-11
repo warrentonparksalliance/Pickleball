@@ -3004,6 +3004,7 @@ const App = {
     document.addEventListener('pointermove', e => this._onDndPointerMove(e));
     document.addEventListener('pointerup', e => this._onDndPointerUp(e));
     document.addEventListener('pointercancel', e => this._onDndPointerUp(e));
+    document.addEventListener('dblclick', e => this._onDndDblClick(e));
   },
 
   // ─── State normalization ───────────────────
@@ -5781,6 +5782,20 @@ ${bracketHTML}
       this._tapSelection = null;
       this._movePlayer(d.playerId, d.from, to);
     }
+  },
+
+  // Double-clicking (or double-tapping) a player already placed in a
+  // proposed court match sends them straight back to the queue — a
+  // quicker shortcut than dragging/tapping them off one at a time.
+  _onDndDblClick(e) {
+    const chipEl = e.target.closest('.dnd-chip');
+    if (!chipEl) return;
+    const slotEl = chipEl.closest('[data-loc-type="slot"]');
+    if (!slotEl) return;
+    const playerId = Number(chipEl.dataset.playerId);
+    const from = this._locFromEl(slotEl);
+    this._tapSelection = null;
+    this._movePlayer(playerId, from, { type: 'queue' });
   },
 
   // Tapping an empty court slot with nothing already selected opens this
