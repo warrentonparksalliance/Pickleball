@@ -710,7 +710,26 @@ body {
   background: var(--bg);
   border: 1px solid var(--border);
   border-radius: var(--radius-sm);
-  padding: 0 12px;
+  padding: 10px 12px;
+}
+.queue-drop-strip {
+  margin-top: 8px;
+  padding: 8px;
+  text-align: center;
+  border: 1.5px dashed var(--border-strong);
+  border-radius: var(--radius-sm);
+  font-size: 0.76rem;
+  font-style: italic;
+  color: var(--text-muted);
+  transition: background 0.15s, border-color 0.15s, color 0.15s;
+}
+#queueDropQueue.dnd-hover,
+#queueDropWaiting.dnd-hover {
+  background: var(--primary-light);
+  border-color: var(--primary);
+  color: var(--primary);
+  font-style: normal;
+  font-weight: 600;
 }
 .queue-subsection-label {
   font-size: 0.7rem;
@@ -738,29 +757,27 @@ body {
   font-style: normal;
   font-weight: 600;
 }
-.queue-list { display: flex; flex-direction: column; gap: 0; }
+.queue-list { display: flex; flex-flow: row wrap; align-items: flex-start; gap: 6px 8px; }
 .queue-row {
   display: flex;
   align-items: center;
-  gap: 8px;
-  padding: 7px 0;
-  border-bottom: 1px solid var(--border);
-  font-size: 0.9rem;
+  flex: 0 0 auto;
 }
-.queue-row:last-child { border-bottom: none; }
+.queue-row-full { flex-basis: 100%; }
 .queue-row.inactive { opacity: 0.45; background: #f0f1f4; border-radius: var(--radius-sm); margin: 0 -4px; padding-left: 4px; padding-right: 4px; }
 .queue-row-name {
-  flex: 1;
+  flex: 0 0 auto;
   min-width: 0;
   font-weight: 600;
   user-select: none;
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 4px;
   overflow: hidden;
+  font-size: 0.85rem;
 }
-.queue-row-name .side-player-name,
-.queue-row-name > span:first-child { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.queue-row-name-text { max-width: 130px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.queue-row-name .side-player-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .queue-row-you {
   font-size: 0.68rem;
   font-weight: 700;
@@ -810,7 +827,7 @@ body {
   align-items: center;
   gap: 6px;
   padding: 8px 0;
-  border-bottom: 1px solid var(--border);
+  flex-basis: 100%;
   flex-wrap: wrap;
 }
 .queue-row-edit input[type="text"],
@@ -860,16 +877,16 @@ body {
   border: none;
   color: var(--text-muted);
   cursor: pointer;
-  font-size: 0.82rem;
+  font-size: 0.76rem;
   line-height: 1;
-  padding: 4px 6px;
+  padding: 2px 4px;
   border-radius: 4px;
   transition: color 0.15s, background 0.15s;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  min-width: 26px;
-  min-height: 26px;
+  min-width: 22px;
+  min-height: 22px;
 }
 .queue-row-action { }
 .queue-row-action:hover { color: var(--warning); background: var(--warning-light); }
@@ -1329,7 +1346,7 @@ body {
   display: inline-flex;
   align-items: center;
   gap: 3px;
-  padding: 6px 12px;
+  padding: 5px 9px;
   background: var(--card);
   border: 1.5px solid var(--border-strong);
   border-radius: var(--radius-full);
@@ -1391,10 +1408,8 @@ body {
   background: var(--input-bg);
 }
 .proposed-hint { font-size: 0.78rem; color: var(--text-muted); text-align: center; margin-top: 4px; }
-@media (min-width: 769px) {
-  .dnd-chip { cursor: grab; touch-action: none; }
-  .dnd-chip.dnd-dragging { cursor: grabbing; }
-}
+.dnd-chip { cursor: grab; touch-action: none; }
+.dnd-chip.dnd-dragging { cursor: grabbing; }
 
 /* ── Sitting out ────────────────────────────── */
 .sitting-out {
@@ -2193,11 +2208,13 @@ body {
       <div class="queue-subsection-label">In Queue</div>
       <div class="queue-list-box">
         <div id="queueActiveList" class="queue-list dnd-target" data-loc-type="queue"></div>
+        <div id="queueDropQueue" class="queue-drop-strip dnd-target" data-loc-type="queue">Drag or tap here to move into the queue</div>
       </div>
       <div id="queueWaitingWrap" style="display:none;">
         <div class="queue-subsection-label" style="margin-top:10px;">Waiting (Sitting Out)</div>
         <div class="queue-list-box">
           <div id="queueWaitingList" class="queue-list dnd-target" data-loc-type="waiting"></div>
+          <div id="queueDropWaiting" class="queue-drop-strip dnd-target" data-loc-type="waiting">Drag or tap here to sit a player out</div>
         </div>
       </div>
       <div id="queueRemoveZone" class="queue-remove-zone dnd-target" data-loc-type="remove">
@@ -2803,7 +2820,6 @@ const App = {
     document.addEventListener('pointermove', e => this._onDndPointerMove(e));
     document.addEventListener('pointerup', e => this._onDndPointerUp(e));
     document.addEventListener('pointercancel', e => this._onDndPointerUp(e));
-    document.addEventListener('click', e => this._onTap(e), true);
   },
 
   // ─── State normalization ───────────────────
@@ -3056,7 +3072,7 @@ const App = {
 
   skillAbbrev(p) {
     const map = { beginner: 'B', intermediate: 'I', advanced: 'A' };
-    return (p && p.skillLevel) ? map[p.skillLevel] : 'R';
+    return (p && p.skillLevel) ? map[p.skillLevel] : 'NR';
   },
 
   // Ordinal value used for skill-balancing (advanced > intermediate > beginner);
@@ -4963,9 +4979,7 @@ ${bracketHTML}
 
     if (waitingWrap) waitingWrap.style.display = structured ? 'none' : '';
     if (removeZone) removeZone.style.display = isLocked ? 'none' : '';
-    if (removeLabel) removeLabel.textContent = this._dndEnabled()
-      ? 'Drop a player here to remove'
-      : 'Tap a player, then tap here to remove';
+    if (removeLabel) removeLabel.textContent = 'Drag or tap here to remove';
 
     const onCourts = this.getPlayersOnCourts();
     const queuePlayers = this.state.players.filter(p => !onCourts.has(p.id));
@@ -4974,7 +4988,7 @@ ${bracketHTML}
       const isYou = Onboard.selfId === p.id;
       if (this._pendingRemove === p.id) {
         const confirmLabel = isYou ? 'Leave session?' : `Remove ${this.esc(p.name)}?`;
-        return `<div class="queue-row">
+        return `<div class="queue-row queue-row-full">
           <div class="queue-row-confirm">
             <span>${confirmLabel}</span>
             <button style="color:var(--danger);border-color:#fca5a5;" onclick="App.removePlayer(${p.id})">Yes</button>
@@ -5018,7 +5032,7 @@ ${bracketHTML}
       </div>` : '';
       const selected = this._tapSelection && this._tapSelection.playerId === p.id ? ' dnd-selected' : '';
       return `<div class="queue-row">
-        <span class="queue-row-name dnd-chip${selected}" data-player-id="${p.id}">${this.esc(p.name)}${skillBtn}${editBtn}${statusBadge}${partnerBadge}</span>
+        <span class="queue-row-name dnd-chip${selected}" data-player-id="${p.id}"><span class="queue-row-name-text">${this.esc(p.name)}</span>${editBtn}${skillBtn}${statusBadge}${partnerBadge}</span>
       </div>${skillPicker}`;
     };
 
@@ -5027,10 +5041,10 @@ ${bracketHTML}
 
     if (activeEl) activeEl.innerHTML = activePlayers.length
       ? activePlayers.map(renderRow).join('')
-      : '<span style="display:block;padding:10px 0;color:var(--text-muted);font-size:0.85rem;font-style:italic;">No players waiting in the queue</span>';
+      : '<span style="display:block;width:100%;padding:10px 0;color:var(--text-muted);font-size:0.85rem;font-style:italic;">No players waiting in the queue</span>';
     if (waitingEl) waitingEl.innerHTML = waitingPlayers.length
       ? waitingPlayers.map(renderRow).join('')
-      : '<span style="display:block;padding:10px 0;color:var(--text-muted);font-size:0.85rem;font-style:italic;">Drag or tap a player here to sit them out</span>';
+      : '<span style="display:block;width:100%;padding:10px 0;color:var(--text-muted);font-size:0.85rem;font-style:italic;">Drag or tap a player here to sit them out</span>';
   },
 
   togglePartnerPicker() {
@@ -5123,7 +5137,7 @@ ${bracketHTML}
   },
 
   _renderEmptyCourtCard(courtId) {
-    const label = this._dndEnabled() ? 'Drop player here' : 'Tap to fill';
+    const label = 'Drag or tap to fill';
     const sideBox = sideNum => `<div class="court-side side-${sideNum} dnd-target" data-loc-type="slot" data-court="${courtId}" data-side="${sideNum}">
       <div class="dnd-slot-empty">${label}</div>
     </div>`;
@@ -5266,7 +5280,7 @@ ${bracketHTML}
     const canConfirm = game.side1.length === 2 && game.side2.length === 2;
     const sideBox = (side, sideNum) => {
       const chips = side.map(id => this._renderChip(id)).join('');
-      const placeholderLabel = this._dndEnabled() ? 'Drop player here' : 'Tap to fill';
+      const placeholderLabel = 'Drag or tap to fill';
       const placeholders = Array.from({ length: 2 - side.length },
         () => `<div class="dnd-slot-empty">${placeholderLabel}</div>`).join('');
       return `<div class="court-side side-${sideNum} dnd-target" data-loc-type="slot" data-court="${courtId}" data-side="${sideNum}">
@@ -5305,13 +5319,10 @@ ${bracketHTML}
     return `<span class="dnd-chip${selected}" data-player-id="${playerId}">${this.esc(p.name)}${skillTag}${youBadge}${userBadge}</span>`;
   },
 
-  // ─── Drag & drop (tablet/desktop) + tap-to-move (mobile) ─────
+  // ─── Drag & drop + tap-to-move ─────
   // Both interaction modes funnel into _movePlayer so proposed-match state
-  // stays consistent regardless of which one the organizer's device uses.
-  _dndEnabled() {
-    return window.matchMedia('(min-width: 769px)').matches;
-  },
-
+  // stays consistent regardless of which one is used, and both are always
+  // available on every device/screen size (see _onDndPointerDown/Up above).
   _locFromEl(el) {
     if (!el) return null;
     const t = el.dataset.locType;
@@ -5406,31 +5417,55 @@ ${bracketHTML}
     return !!el.closest('button, input, select, textarea');
   },
 
-  // Tablet/desktop: press-and-drag a chip onto a slot or the queue.
+  // Single pointer-event pipeline handles press-and-drag (mouse, touch, pen)
+  // and tap-to-select-then-tap-destination on every device/screen size:
+  // a pointer that moves past the threshold becomes a drag; one that doesn't
+  // is treated as a tap. This lets phones drag AND tap rather than being
+  // locked into tap-only below a viewport-width cutoff.
   _onDndPointerDown(e) {
-    if (!this._dndEnabled()) return;
     if (e.pointerType === 'mouse' && e.button !== 0) return;
     if (this._isInteractiveTarget(e.target)) return;
     const chipEl = e.target.closest('.dnd-chip');
-    if (!chipEl) return;
-    const fromEl = chipEl.closest('[data-loc-type]');
-    const from = this._locFromEl(fromEl);
-    if (!from) return;
+    if (chipEl) {
+      const fromEl = chipEl.closest('[data-loc-type]');
+      const from = this._locFromEl(fromEl);
+      if (!from) return;
+      this._dragState = {
+        playerId: Number(chipEl.dataset.playerId),
+        from,
+        startX: e.clientX, startY: e.clientY,
+        moved: false,
+        ghost: null,
+        hoverEl: null,
+        pointerId: e.pointerId,
+        sourceEl: chipEl,
+      };
+      return;
+    }
+    // No chip under the finger/cursor — if a player is already selected,
+    // let a plain tap on a bare drop zone (e.g. an empty Waiting section)
+    // complete the move; there's nothing there to drag onto otherwise.
+    if (!this._tapSelection) return;
+    const locEl = e.target.closest('[data-loc-type]');
+    if (!locEl) return;
+    const zoneTapTo = this._locFromEl(locEl);
+    if (!zoneTapTo) return;
     this._dragState = {
-      playerId: Number(chipEl.dataset.playerId),
-      from,
+      playerId: this._tapSelection.playerId,
+      from: this._tapSelection.from,
       startX: e.clientX, startY: e.clientY,
       moved: false,
       ghost: null,
       hoverEl: null,
       pointerId: e.pointerId,
-      sourceEl: chipEl,
+      sourceEl: null,
+      zoneTapTo,
     };
   },
 
   _onDndPointerMove(e) {
     const d = this._dragState;
-    if (!d || e.pointerId !== d.pointerId) return;
+    if (!d || e.pointerId !== d.pointerId || !d.sourceEl) return;
     const dx = e.clientX - d.startX, dy = e.clientY - d.startY;
     if (!d.moved) {
       if (Math.hypot(dx, dy) < 6) return;
@@ -5459,36 +5494,35 @@ ${bracketHTML}
     if (!d || e.pointerId !== d.pointerId) return;
     this._dragState = null;
     if (d.ghost) d.ghost.remove();
-    d.sourceEl.classList.remove('dnd-dragging');
+    if (d.sourceEl) d.sourceEl.classList.remove('dnd-dragging');
     if (d.hoverEl) d.hoverEl.classList.remove('dnd-hover');
-    if (!d.moved || !d.hoverEl) return;
-    const to = this._locFromEl(d.hoverEl);
-    if (to) this._movePlayer(d.playerId, d.from, to);
-  },
 
-  // Mobile: tap a chip to select it, then tap a destination.
-  _onTap(e) {
-    if (this._dndEnabled()) return;
-    if (this._isInteractiveTarget(e.target)) return;
-    const chipEl = e.target.closest('.dnd-chip');
-    const locEl = e.target.closest('[data-loc-type]');
-    if (!locEl) return;
-    const loc = this._locFromEl(locEl);
-
-    if (!this._tapSelection) {
-      if (chipEl) {
-        this._tapSelection = { playerId: Number(chipEl.dataset.playerId), from: loc };
+    if (d.zoneTapTo) {
+      this._tapSelection = null;
+      this._movePlayer(d.playerId, d.from, d.zoneTapTo);
+      return;
+    }
+    if (!d.moved) {
+      // Plain tap on a chip: first tap selects it, a second tap on a
+      // different chip moves the selected player to that chip's location,
+      // and tapping the same chip again just deselects it.
+      if (!this._tapSelection) {
+        this._tapSelection = { playerId: d.playerId, from: d.from };
         this.render();
+        return;
       }
+      const { playerId, from } = this._tapSelection;
+      this._tapSelection = null;
+      if (playerId === d.playerId) { this.render(); return; }
+      this._movePlayer(playerId, from, d.from);
       return;
     }
-    const { playerId, from } = this._tapSelection;
-    this._tapSelection = null;
-    if (chipEl && Number(chipEl.dataset.playerId) === playerId) {
-      this.render(); // tapped the same chip again — just deselect
-      return;
+    if (!d.hoverEl) return;
+    const to = this._locFromEl(d.hoverEl);
+    if (to) {
+      this._tapSelection = null;
+      this._movePlayer(d.playerId, d.from, to);
     }
-    this._movePlayer(playerId, from, loc);
   },
 
   renderSide(side) {
