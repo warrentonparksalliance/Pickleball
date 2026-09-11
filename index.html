@@ -1291,6 +1291,8 @@ body {
 /* ── Proposed match (Open Play manual review) ──── */
 .court-card.proposed { border: 1.5px dashed var(--pending-border); }
 .court-card.proposed .court-header { background: var(--warning); }
+.court-card.empty { border: 1.5px dashed var(--border-strong); box-shadow: none; }
+.court-card.empty .court-header { background: var(--bg); color: var(--text-muted); }
 .court-side.dnd-target {
   flex-direction: row;
   flex-wrap: wrap;
@@ -4164,6 +4166,9 @@ const App = {
   _renderQueueTournament(countEl, controls, btnAssignAll, courtSelect, matchOpts, courtLabel) {
     if (matchOpts) matchOpts.style.display = 'none';
     if (courtLabel) courtLabel.textContent = 'Number of courts';
+    // Open Play hides this button in favor of per-court Auto-fill; restore it
+    // here in case the session type ever switches away from Open Play.
+    if (btnAssignAll) btnAssignAll.style.display = '';
     const rrSection = document.getElementById('rrUpcomingSection');
     if (rrSection) rrSection.style.display = 'none';
 
@@ -4488,6 +4493,18 @@ ${bracketHTML}
 
     this.state.proposedGames[courtId] = { side1, side2, mode: 'doubles' };
     return true;
+  },
+
+  // Per-court "Auto-fill" button on an empty Open Play court card — the
+  // per-click analog of assignAll(), one court at a time. Each click is its
+  // own fairness pass (roundsWaited increments once per click here, same as
+  // assignAll() increments once per bulk click filling several courts).
+  autoFillCourt(courtId) {
+    if (this._assignOneCourt(courtId)) {
+      this._completeAssignmentPass();
+      this.saveState();
+      this.render();
+    }
   },
 
   // ─── Proposed matches (Open Play manual review) ─────
@@ -4931,19 +4948,66 @@ ${bracketHTML}
     }).join('');
   },
 
+  // Open Play always shows one card per court id from 1 to "Courts available
+  // now", so an organizer can auto-fill or drag onto any of them directly —
+  // plus any court beyond that count that already has a game running, so
+  // lowering the count never makes an in-progress match disappear. Round
+  // Robin/Tournament keep the old behavior (only render courts that already
+  // have a proposed/active game), since they build matches from a locked
+  // roster/bracket, not a live queue.
   renderCourts() {
     const el = document.getElementById('courtsGrid');
     const proposedIds = Object.keys(this.state.proposedGames).map(Number);
     const activeIds = Object.keys(this.state.activeGames).map(Number);
-    const allIds = [...new Set([...proposedIds, ...activeIds])].sort((a, b) => a - b);
+    const structured = this.isRoundRobin() || this.isTournament();
 
-    if (allIds.length === 0) {
-      el.innerHTML = '';
-      return;
+    let allIds;
+    if (structured) {
+      allIds = [...new Set([...proposedIds, ...activeIds])].sort((a, b) => a - b);
+      if (allIds.length === 0) { el.innerHTML = ''; return; }
+    } else {
+      const n = this.state.availableCourts || 1;
+      const idSet = new Set(Array.from({ length: n }, (_, i) => i + 1));
+      proposedIds.forEach(id => idSet.add(id));
+      activeIds.forEach(id => idSet.add(id));
+      allIds = [...idSet].sort((a, b) => a - b);
     }
 
-    el.innerHTML = allIds.map(courtId => {
-      if (this.state.proposedGames[courtId]) return this._renderProposedCard(courtId);
+    el.innerHTML = allIds.map(courtId => this._renderCourtCard(courtId)).join('');
+  },
+
+  _renderCourtCard(courtId) {
+    if (this.state.proposedGames[courtId]) return this._renderProposedCard(courtId);
+    if (this.state.activeGames[courtId]) return this._renderActiveCard(courtId);
+    return this._renderEmptyCourtCard(courtId);
+  },
+
+  _renderEmptyCourtCard(courtId) {
+    const label = this._dndEnabled() ? 'Drop player here' : 'Tap to fill';
+    const sideBox = sideNum => `<div class="court-side side-${sideNum} dnd-target" data-loc-type="slot" data-court="${courtId}" data-side="${sideNum}">
+      <div class="dnd-slot-empty">${label}</div>
+    </div>`;
+    const onCourt = this.getPlayersOnCourts();
+    const eligible = this.state.players.filter(p => p.active && !onCourt.has(p.id)).length;
+    const canAutoFill = eligible >= 4;
+    return `<div class="court-card empty">
+      <div class="court-header">
+        <span>Court ${courtId}</span>
+      </div>
+      <div class="court-body">
+        <div class="court-assignment">
+          ${sideBox(1)}
+          <div class="court-vs">VS</div>
+          ${sideBox(2)}
+          <div class="match-action-row">
+            <button class="btn-confirm-match" ${canAutoFill ? '' : 'disabled'} onclick="App.autoFillCourt(${courtId})">Auto-fill</button>
+          </div>
+        </div>
+      </div>
+    </div>`;
+  },
+
+  _renderActiveCard(courtId) {
       const game = this.state.activeGames[courtId];
       const isScoring = !!this.state.scoringGames[courtId];
       const modeBadge = '';
@@ -5028,7 +5092,6 @@ ${bracketHTML}
         </div>
         <div class="court-body">${bodyHTML}</div>
       </div>`;
-    }).join('');
   },
 
   _renderProposedCard(courtId) {
@@ -5098,7 +5161,13 @@ ${bracketHTML}
     if (this._locEq(from, to)) return;
     let occupantId = null;
     if (to.type === 'slot') {
-      const destArr = this.state.proposedGames[to.court] && this.state.proposedGames[to.court]['side' + to.side];
+      // Dropping onto a previously-empty court creates its proposed match
+      // on the fly — an empty court card has slot targets but no backing
+      // proposedGames entry until something is dropped on it.
+      if (!this.state.proposedGames[to.court]) {
+        this.state.proposedGames[to.court] = { side1: [], side2: [], mode: 'doubles' };
+      }
+      const destArr = this.state.proposedGames[to.court]['side' + to.side];
       if (!destArr) return;
       if (destArr.length >= 2) {
         occupantId = destArr.find(id => id !== playerId);
@@ -5306,11 +5375,10 @@ ${bracketHTML}
         courtSelect.parentElement.style.display = '';
         courtSelect.value = this.state.availableCourts || 1;
       }
-      if (btnAssignAll) {
-        btnAssignAll.disabled = !canAssign;
-        btnAssignAll.textContent = 'Assign Courts';
-        btnAssignAll.onclick = () => this.assignAll();
-      }
+      // Bulk "Assign Courts" is replaced by per-court Auto-fill/drag on each
+      // court card (see renderCourts/_renderEmptyCourtCard) — Round Robin and
+      // Tournament still use this shared button, so hide rather than remove it.
+      if (btnAssignAll) btnAssignAll.style.display = 'none';
     } else {
       controls.style.display = 'none';
     }
@@ -5322,6 +5390,9 @@ ${bracketHTML}
   _renderQueueRR(countEl, controls, btnAssignAll, courtSelect, matchOpts, courtLabel) {
     if (matchOpts) matchOpts.style.display = 'none';
     if (courtLabel) courtLabel.textContent = 'Number of courts';
+    // Open Play hides this button in favor of per-court Auto-fill; restore it
+    // here in case the session type ever switches away from Open Play.
+    if (btnAssignAll) btnAssignAll.style.display = '';
     const bracketSec = document.getElementById('bracketSection');
     if (bracketSec) bracketSec.style.display = 'none';
 
