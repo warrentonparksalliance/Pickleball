@@ -5411,7 +5411,7 @@ ${bracketHTML}
   },
 
   _renderEmptyCourtCard(courtId) {
-    const label = 'Drag or tap to fill';
+    const label = 'Drag or tap to add';
     const sideBox = sideNum => `<div class="court-side side-${sideNum} dnd-target" data-loc-type="slot" data-court="${courtId}" data-side="${sideNum}">
       <div class="dnd-slot-empty">${label}</div>
     </div>`;
@@ -5556,7 +5556,7 @@ ${bracketHTML}
     const canAutoFill = needed > 0 && eligible >= needed;
     const sideBox = (side, sideNum) => {
       const chips = side.map(id => this._renderChip(id)).join('');
-      const placeholderLabel = 'Drag or tap to fill';
+      const placeholderLabel = 'Drag or tap to add';
       const placeholders = Array.from({ length: 2 - side.length },
         () => `<div class="dnd-slot-empty">${placeholderLabel}</div>`).join('');
       return `<div class="court-side side-${sideNum} dnd-target" data-loc-type="slot" data-court="${courtId}" data-side="${sideNum}">
