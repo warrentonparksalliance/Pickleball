@@ -1451,6 +1451,7 @@ body {
   font-size: 0.76rem;
   font-style: italic;
   color: var(--text-muted);
+  cursor: pointer;
 }
 .dnd-target.dnd-hover {
   background: var(--primary-light);
@@ -2583,6 +2584,21 @@ body {
     </div>
   </div>
 
+  <!-- ── Fill an empty court slot: tapped with no player already selected ── -->
+  <div id="fillSlotModal" class="hiw-overlay" style="display:none;" onclick="App.closeFillSlotPicker(event)">
+    <div class="hiw-modal" style="max-width:380px;" onclick="event.stopPropagation()">
+      <div class="hiw-header">
+        <h2>Add a Player</h2>
+        <button class="hiw-close" onclick="App.closeFillSlotPicker()" aria-label="Close">&times;</button>
+      </div>
+      <div class="hiw-body">
+        <div class="partner-picker" style="margin-top:0;">
+          <div class="partner-picker-list" id="fillSlotPickerList"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <!-- ── Your name/skill, asked right when joining or creating a private/public session ── -->
   <div id="selfProfileModal" class="hiw-overlay" style="display:none;" onclick="Onboard._selfProfileCancel(event)">
     <div class="hiw-modal" style="max-width:380px;" onclick="event.stopPropagation()">
@@ -2901,6 +2917,7 @@ const App = {
   _dragState: null,
   _tapSelection: null,
   _proposedUndoStack: [],
+  _fillSlotTarget: null,
 
   // ─── Tab switching ──────────────────────────
   switchTab(tab) {
@@ -5585,10 +5602,27 @@ ${bracketHTML}
       };
       return;
     }
-    // No chip under the finger/cursor — if a player is already selected,
-    // let a plain tap on a bare drop zone (e.g. an empty Waiting section)
-    // complete the move; there's nothing there to drag onto otherwise.
-    if (!this._tapSelection) return;
+    // No chip under the finger/cursor and nothing already selected — tapping
+    // an empty court slot's placeholder opens a picker to choose who fills
+    // it, instead of requiring a queue chip to be tapped first.
+    if (!this._tapSelection) {
+      const emptySlotEl = e.target.closest('.dnd-slot-empty');
+      const slotLocEl = emptySlotEl && emptySlotEl.closest('[data-loc-type="slot"]');
+      if (slotLocEl) {
+        this._dragState = {
+          playerId: null,
+          from: null,
+          startX: e.clientX, startY: e.clientY,
+          moved: false,
+          ghost: null,
+          hoverEl: null,
+          pointerId: e.pointerId,
+          sourceEl: null,
+          openSlotPicker: this._locFromEl(slotLocEl),
+        };
+      }
+      return;
+    }
     const locEl = e.target.closest('[data-loc-type]');
     if (!locEl) return;
     const zoneTapTo = this._locFromEl(locEl);
@@ -5640,6 +5674,10 @@ ${bracketHTML}
     if (d.sourceEl) d.sourceEl.classList.remove('dnd-dragging');
     if (d.hoverEl) d.hoverEl.classList.remove('dnd-hover');
 
+    if (d.openSlotPicker) {
+      this.openFillSlotPicker(d.openSlotPicker.court, d.openSlotPicker.side);
+      return;
+    }
     if (d.zoneTapTo) {
       this._tapSelection = null;
       this._movePlayer(d.playerId, d.from, d.zoneTapTo);
@@ -5666,6 +5704,46 @@ ${bracketHTML}
       this._tapSelection = null;
       this._movePlayer(d.playerId, d.from, to);
     }
+  },
+
+  // Tapping an empty court slot with nothing already selected opens this
+  // instead of doing nothing — lets you start from the destination rather
+  // than always having to tap the queue chip first.
+  openFillSlotPicker(court, side) {
+    this._fillSlotTarget = { court, side };
+    this.renderFillSlotPicker();
+    document.getElementById('fillSlotModal').style.display = 'flex';
+    document.body.style.overflow = 'hidden';
+  },
+
+  closeFillSlotPicker(event) {
+    if (event && event.target !== event.currentTarget) return;
+    document.getElementById('fillSlotModal').style.display = 'none';
+    document.body.style.overflow = '';
+    this._fillSlotTarget = null;
+  },
+
+  renderFillSlotPicker() {
+    const el = document.getElementById('fillSlotPickerList');
+    if (!el) return;
+    const onCourt = this.getPlayersOnCourts();
+    const available = this.state.players.filter(p => !onCourt.has(p.id));
+    el.innerHTML = available.length
+      ? available.map(p => {
+          const tag = p.active ? '' : ' <span style="font-weight:400;color:var(--text-muted);">(sitting out)</span>';
+          return `<div class="partner-picker-item" onclick="App.fillSlotWithPlayer(${p.id})">${this.esc(p.name)}${tag}</div>`;
+        }).join('')
+      : '<div style="padding:10px 12px;color:var(--text-light);font-size:0.82rem;">No players available</div>';
+  },
+
+  fillSlotWithPlayer(playerId) {
+    const target = this._fillSlotTarget;
+    this.closeFillSlotPicker();
+    if (!target) return;
+    const p = this.getPlayer(playerId);
+    if (!p) return;
+    const from = { type: p.active ? 'queue' : 'waiting' };
+    this._movePlayer(playerId, from, { type: 'slot', court: target.court, side: target.side });
   },
 
   renderSide(side) {
