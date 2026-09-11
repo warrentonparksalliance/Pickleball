@@ -2141,7 +2141,10 @@ body {
 
     <!-- Queue -->
     <div id="playersSection" class="queue-bar-wrap" style="margin-bottom:14px;">
-      <div class="section-title" id="queueTitle" style="margin-bottom:4px;">Queue</div>
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:4px;">
+        <div class="section-title" id="queueTitle">Queue</div>
+        <button id="btnUndoMove" class="btn-outline" style="display:none;flex-shrink:0;padding:5px 10px;font-size:0.78rem;font-weight:600;" onclick="App.undoProposedMove()">&#8617; Undo</button>
+      </div>
       <div class="section-subtitle" id="queueSubtitle" style="margin-bottom:10px;">Players waiting to be assigned to a court.</div>
       <div class="queue-list-box">
         <div id="playerList" class="queue-list dnd-target" data-loc-type="queue"></div>
@@ -2174,7 +2177,6 @@ body {
           <label><input type="checkbox" id="optRepeats" onchange="App.saveState()"> Minimize repeats</label>
         </div>
         <button id="btnAssignAll" class="btn-assign-all" onclick="App.assignAll()">Assign Courts</button>
-        <button id="btnUndoMove" class="btn-outline" style="display:none;width:100%;margin-top:8px;" onclick="App.undoProposedMove()">&#8617; Undo Last Move</button>
       </div>
     </div>
 
