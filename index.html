@@ -459,7 +459,6 @@ body {
 }
 .confirm-identity { display: flex; align-items: baseline; gap: 8px; }
 .confirm-name { font-size: 1rem; font-weight: 700; color: var(--text); }
-.confirm-skill { font-size: 0.85rem; color: var(--text-light); }
 .btn-confirm-join {
   flex: 1;
   padding: 12px;
@@ -762,11 +761,24 @@ body {
   background: var(--primary-light);
   border: 1px solid var(--primary-muted);
 }
-.queue-row-skill {
-  font-size: 0.78rem;
-  font-weight: 400;
+.queue-row-skill-btn {
+  font-size: 0.72rem;
+  font-weight: 700;
   color: var(--text-muted);
+  background: var(--bg);
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius-full);
+  padding: 1px 7px;
+  min-width: 20px;
+  min-height: 20px;
+  line-height: 1.4;
+  flex-shrink: 0;
+  cursor: pointer;
+  font-family: inherit;
+  transition: border-color 0.15s, color 0.15s, background 0.15s;
 }
+.queue-row-skill-btn:hover { border-color: var(--primary); color: var(--primary); }
+.queue-row-skill-btn.set { color: var(--primary); border-color: var(--primary-muted); background: var(--primary-light); }
 .queue-row-edit {
   display: flex;
   align-items: center;
@@ -1203,7 +1215,6 @@ body {
   box-shadow: var(--shadow-sm);
 }
 .court-side .side-player-name { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.court-side .side-player-skill { color: var(--text-light); font-weight: 400; font-size: 0.78rem; }
 .court-side .side-amp { color: var(--text-muted); font-weight: 500; flex-shrink: 0; }
 .side-names-row .side-player-left { flex: 1; min-width: 0; display: flex; justify-content: flex-end; align-items: center; gap: 3px; }
 .side-names-row .side-player-right { flex: 1; min-width: 0; display: flex; justify-content: flex-start; align-items: center; gap: 3px; }
@@ -2213,7 +2224,12 @@ body {
       <div class="settings-card-title">Your Profile</div>
       <div style="display:flex;gap:8px;margin-bottom:8px;">
         <input type="text" class="setup-input" id="settingsName" placeholder="Display name" maxlength="30" style="flex:1;min-width:0;margin-bottom:0;">
-        <input type="number" class="setup-input" id="settingsSkill" placeholder="Skill (optional)" min="2" max="8" step="0.01" onblur="App.fmtSkillInput(this)" style="width:130px;flex-shrink:0;margin-bottom:0;">
+        <select class="setup-input" id="settingsSkill" style="width:130px;flex-shrink:0;margin-bottom:0;">
+          <option value="">Rating</option>
+          <option value="beginner">Beginner</option>
+          <option value="intermediate">Intermediate</option>
+          <option value="advanced">Advanced</option>
+        </select>
       </div>
       <div style="display:flex;align-items:center;justify-content:flex-end;">
         <button type="button" class="btn-outline" onclick="App.saveSettings()" style="padding:12px 16px;font-size:1rem;font-weight:700;">Save</button>
@@ -2380,7 +2396,12 @@ body {
       <div class="hiw-body">
         <input type="text" class="setup-input" id="selfProfileName" placeholder="Your name" autocomplete="given-name" style="width:100%;" onkeydown="if(event.key==='Enter')Onboard._selfProfileSubmit()">
         <p id="selfProfileNameError" class="setup-error">Enter your name first</p>
-        <input type="number" class="setup-input" id="selfProfileSkill" placeholder="Skill level (optional)" min="2" max="8" step="0.01" style="width:100%;" onblur="App.fmtSkillInput(this)" onkeydown="if(event.key==='Enter')Onboard._selfProfileSubmit()">
+        <select class="setup-input" id="selfProfileSkill" style="width:100%;">
+          <option value="">Skill level (optional)</option>
+          <option value="beginner">Beginner</option>
+          <option value="intermediate">Intermediate</option>
+          <option value="advanced">Advanced</option>
+        </select>
         <p style="font-size:0.78rem;color:var(--text-muted);margin:0;">You can update this anytime from Settings.</p>
         <div style="display:flex;gap:10px;">
           <button type="button" class="btn-outline" style="flex:1;padding:12px;font-size:1rem;font-weight:700;" onclick="Onboard._selfProfileCancel()">Cancel</button>
@@ -2523,7 +2544,12 @@ body {
       <div class="hiw-body">
         <div style="display:flex;gap:8px;">
           <input type="text" class="setup-input" id="queueAddPlayerName" placeholder="Player name" style="flex:1;margin-bottom:0;" onkeydown="if(event.key==='Enter')App.submitQueueAddPlayer()">
-          <input type="number" class="setup-input" id="queueAddPlayerSkill" placeholder="Skill" min="2" max="8" step="0.01" style="width:80px;flex-shrink:0;margin-bottom:0;" onblur="App.fmtSkillInput(this)" onkeydown="if(event.key==='Enter')App.submitQueueAddPlayer()">
+          <select class="setup-input" id="queueAddPlayerSkill" style="width:110px;flex-shrink:0;margin-bottom:0;">
+            <option value="" selected>Rating</option>
+            <option value="beginner">Beginner</option>
+            <option value="intermediate">Intermediate</option>
+            <option value="advanced">Advanced</option>
+          </select>
         </div>
         <p id="queueAddPlayerError" class="setup-error">Enter a player name</p>
         <button type="button" class="btn-confirm-join" style="width:100%;padding:12px;font-size:1rem;font-weight:700;" onclick="App.submitQueueAddPlayer()">+ Add Player</button>
@@ -2788,9 +2814,16 @@ const App = {
     }
     delete s.assignMode;
     delete s.courts; delete s.pendingGames; delete s.currentSittingOut; delete s.selectedPlayerId;
-    // Backfill joinedAt for players added before this field existed
+    // Backfill joinedAt for players added before this field existed. Also
+    // one-time-strip the old numeric skill rating in favor of the new
+    // Beginner/Intermediate/Advanced tier field — decided not to migrate
+    // old values, everyone re-picks a tier fresh.
     const _now = Date.now();
-    for (const p of s.players) { if (!p.joinedAt) p.joinedAt = _now; }
+    for (const p of s.players) {
+      if (!p.joinedAt) p.joinedAt = _now;
+      delete p.score;
+      if (p.skillLevel === undefined) p.skillLevel = null;
+    }
   },
 
   // ─── Persistence ───────────────────────────
@@ -2825,7 +2858,7 @@ const App = {
     const user = Onboard._savedUser();
     if (user) {
       document.getElementById('settingsName').value = user.name || '';
-      document.getElementById('settingsSkill').value = user.skill != null ? App.fmtSkill(user.skill) : '';
+      document.getElementById('settingsSkill').value = user.skillLevel || '';
     }
   },
 
@@ -2833,17 +2866,15 @@ const App = {
     const nameEl = document.getElementById('settingsName');
     const name = nameEl.value.trim();
     if (!name) { nameEl.focus(); return; }
-    App.fmtSkillInput(document.getElementById('settingsSkill'));
-    const skillRaw = document.getElementById('settingsSkill').value;
-    const skill = skillRaw ? parseFloat(parseFloat(skillRaw).toFixed(2)) : null;
+    const skillLevel = document.getElementById('settingsSkill').value || null;
 
-    try { localStorage.setItem('courtManagerUser', JSON.stringify({ name, skill })); } catch(e) {}
+    try { localStorage.setItem('courtManagerUser', JSON.stringify({ name, skillLevel })); } catch(e) {}
 
     if (Onboard.selfId != null) {
       const p = this.state.players.find(p => p.id === Onboard.selfId);
       if (p) {
         p.name = name;
-        p.score = skill;
+        p.skillLevel = skillLevel;
         this.saveState();
         this.render();
       }
@@ -2890,12 +2921,12 @@ const App = {
       nameEl?.focus();
       return;
     }
-    const skill = (!this.state._quickPlay && skillEl?.value) ? parseFloat(skillEl.value) : null;
+    const skillLevel = (!this.state._quickPlay && skillEl?.value) ? skillEl.value : null;
     const newId = this.state.nextId++;
     this.state.players.push({
       id: newId,
       name,
-      score: (skill != null && !isNaN(skill)) ? skill : null,
+      skillLevel,
       active: true,
       isLive: false,
       addedBy: Onboard.selfId,
@@ -2958,14 +2989,12 @@ const App = {
     const name = nameEl ? nameEl.value.trim() : '';
     if (!name) { if (nameEl) nameEl.focus(); return; }
     const skillEl = document.getElementById(`editGuestSkill-${id}`);
-    this.fmtSkillInput(skillEl);
-    const skillRaw = skillEl ? skillEl.value : '';
-    const skill = skillRaw ? parseFloat(parseFloat(skillRaw).toFixed(2)) : null;
+    const skillLevel = skillEl && skillEl.value ? skillEl.value : null;
 
     const p = this.state.players.find(p => p.id === id);
     if (p) {
       p.name = name;
-      p.score = skill;
+      p.skillLevel = skillLevel;
     }
     this._editingGuest = null;
     this.saveState();
@@ -2987,6 +3016,42 @@ const App = {
 
   getPlayer(id) {
     return this.state.players.find(p => p.id === id);
+  },
+
+  // ─── Skill tiers (Beginner/Intermediate/Advanced) ──
+  SKILL_LEVELS: ['beginner', 'intermediate', 'advanced'],
+
+  skillLabel(p) {
+    const map = { beginner: 'Beginner', intermediate: 'Intermediate', advanced: 'Advanced' };
+    return (p && p.skillLevel) ? map[p.skillLevel] : '';
+  },
+
+  skillAbbrev(p) {
+    const map = { beginner: 'B', intermediate: 'I', advanced: 'A' };
+    return (p && p.skillLevel) ? map[p.skillLevel] : 'R';
+  },
+
+  // Ordinal value used for skill-balancing (advanced > intermediate > beginner);
+  // unset defaults to the neutral middle value rather than skewing either way.
+  _skillValue(p) {
+    const map = { beginner: 1, intermediate: 2, advanced: 3 };
+    return (p && p.skillLevel && map[p.skillLevel]) || 2;
+  },
+
+  _skillPickerFor: null,
+
+  toggleSkillPicker(id) {
+    this._skillPickerFor = this._skillPickerFor === id ? null : id;
+    this.render();
+  },
+
+  setPlayerSkillLevel(id, level) {
+    const p = this.getPlayer(id);
+    if (!p) return;
+    p.skillLevel = level || null;
+    this._skillPickerFor = null;
+    this.saveState();
+    this.render();
   },
 
   // ─── Court-lock helpers ────────────────────
@@ -3817,12 +3882,7 @@ const App = {
 
     // Seed by combined team skill descending (if available), else by lowest player ID
     const seeded = [...units].sort((a, b) => {
-      const score = u => {
-        const p1 = this.getPlayer(u.p1), p2 = this.getPlayer(u.p2);
-        const s1 = p1 && p1.score != null ? p1.score : 0;
-        const s2 = p2 && p2.score != null ? p2.score : 0;
-        return s1 + s2;
-      };
+      const score = u => this._skillValue(this.getPlayer(u.p1)) + this._skillValue(this.getPlayer(u.p2));
       return score(b) - score(a) || Math.min(a.p1, a.p2) - Math.min(b.p1, b.p2);
     });
 
@@ -4392,7 +4452,7 @@ ${bracketHTML}
   },
 
   balanceDoublesSkill(s1, s2) {
-    const score = side => side.reduce((sum, id) => sum + (this.getPlayer(id).score || 4), 0);
+    const score = side => side.reduce((sum, id) => sum + this._skillValue(this.getPlayer(id)), 0);
     const all = [...s1, ...s2];
     let bestDiff = Math.abs(score(s1) - score(s2));
     let bestS1 = s1, bestS2 = s2;
@@ -4697,7 +4757,6 @@ ${bracketHTML}
       return;
     }
     el.innerHTML = queuePlayers.map(p => {
-      const skillStr = p.score != null ? App.fmtSkill(p.score) : '';
       const isYou = Onboard.selfId === p.id;
       if (this._pendingRemove === p.id) {
         const confirmLabel = isYou ? 'Leave session?' : `Remove ${this.esc(p.name)}?`;
@@ -4714,8 +4773,12 @@ ${bracketHTML}
         return `<div class="queue-row-edit">
           <input type="text" id="editGuestName-${p.id}" value="${this.esc(p.name)}" placeholder="Name" maxlength="30"
             onkeydown="if(event.key==='Enter')App.saveGuestEdit(${p.id})">
-          <input type="number" id="editGuestSkill-${p.id}" value="${p.score != null ? App.fmtSkill(p.score) : ''}" placeholder="Skill (optional)" min="2" max="8" step="0.01"
-            onblur="App.fmtSkillInput(this)" onkeydown="if(event.key==='Enter')App.saveGuestEdit(${p.id})">
+          <select id="editGuestSkill-${p.id}" class="setup-input">
+            <option value=""${!p.skillLevel ? ' selected' : ''}>Rating</option>
+            <option value="beginner"${p.skillLevel === 'beginner' ? ' selected' : ''}>Beginner</option>
+            <option value="intermediate"${p.skillLevel === 'intermediate' ? ' selected' : ''}>Intermediate</option>
+            <option value="advanced"${p.skillLevel === 'advanced' ? ' selected' : ''}>Advanced</option>
+          </select>
           <button class="btn-edit-save" onclick="App.saveGuestEdit(${p.id})">Save</button>
           <button class="btn-edit-cancel" onclick="App.cancelGuestEdit()">Cancel</button>
         </div>`;
@@ -4743,15 +4806,23 @@ ${bracketHTML}
       const removeBtn = canRemove
         ? `<button class="queue-row-btn queue-row-remove" onclick="App.confirmRemove(${p.id})" title="${isYou ? 'Leave session' : 'Remove'}">&times;</button>`
         : '';
-      const skillInline = skillStr ? `<span class="queue-row-skill">(${skillStr})</span>` : '';
+      const skillBtn = `<button class="queue-row-skill-btn${p.skillLevel ? ' set' : ''}" onclick="App.toggleSkillPicker(${p.id})" title="Set skill level">${this.skillAbbrev(p)}</button>`;
+      const skillPicker = this._skillPickerFor === p.id ? `<div class="partner-picker" style="margin-top:0;margin-bottom:6px;">
+        <div class="partner-picker-list">
+          <div class="partner-picker-item" onclick="App.setPlayerSkillLevel(${p.id}, 'beginner')">Beginner</div>
+          <div class="partner-picker-item" onclick="App.setPlayerSkillLevel(${p.id}, 'intermediate')">Intermediate</div>
+          <div class="partner-picker-item" onclick="App.setPlayerSkillLevel(${p.id}, 'advanced')">Advanced</div>
+          <div class="partner-picker-item" onclick="App.setPlayerSkillLevel(${p.id}, null)">Clear rating</div>
+        </div>
+      </div>` : '';
       const selected = !structured && this._tapSelection && this._tapSelection.playerId === p.id ? ' dnd-selected' : '';
       const nameClass = structured ? 'queue-row-name' : `queue-row-name dnd-chip${selected}`;
       const nameAttrs = structured ? '' : ` data-player-id="${p.id}"`;
       return `<div class="${rowClass}">
-        <span class="${nameClass}"${nameAttrs}>${this.esc(p.name)}${skillInline}${editBtn}${statusBadge}${partnerBadge}</span>
+        <span class="${nameClass}"${nameAttrs}>${this.esc(p.name)}${skillBtn}${editBtn}${statusBadge}${partnerBadge}</span>
         ${pauseBtn}
         ${removeBtn}
-      </div>`;
+      </div>${skillPicker}`;
     }).join('');
   },
 
@@ -4834,8 +4905,8 @@ ${bracketHTML}
 
       let bodyHTML;
       if (isScoring) {
-        const s1Names = game.side1.map(id => { const p = this.getPlayer(id); return p ? this.esc(p.name) + (p.score != null ? ` <span style="font-weight:400;opacity:0.7;">(${this.fmtSkill(p.score)})</span>` : '') : '?'; }).join(' & ');
-        const s2Names = game.side2.map(id => { const p = this.getPlayer(id); return p ? this.esc(p.name) + (p.score != null ? ` <span style="font-weight:400;opacity:0.7;">(${this.fmtSkill(p.score)})</span>` : '') : '?'; }).join(' & ');
+        const s1Names = game.side1.map(id => { const p = this.getPlayer(id); return p ? this.esc(p.name) + (this.skillLabel(p) ? ` <span style="font-weight:400;opacity:0.7;">(${this.skillLabel(p)})</span>` : '') : '?'; }).join(' & ');
+        const s2Names = game.side2.map(id => { const p = this.getPlayer(id); return p ? this.esc(p.name) + (this.skillLabel(p) ? ` <span style="font-weight:400;opacity:0.7;">(${this.skillLabel(p)})</span>` : '') : '?'; }).join(' & ');
         bodyHTML = `<div class="score-entry">
           <div class="score-entry-gameover">GAME OVER</div>
           <div class="score-side side-1">
@@ -4948,7 +5019,7 @@ ${bracketHTML}
     if (!p) return '';
     const isYou = Onboard.selfId === playerId;
     const selected = this._tapSelection && this._tapSelection.playerId === playerId ? ' dnd-selected' : '';
-    const skillTag = p.score != null ? ` <span style="font-weight:400;opacity:0.7;">(${this.fmtSkill(p.score)})</span>` : '';
+    const skillTag = this.skillLabel(p) ? ` <span style="font-weight:400;opacity:0.7;">(${this.skillLabel(p)})</span>` : '';
     const youBadge = isYou ? ' <span class="queue-row-you">you</span>' : '';
     const userBadge = !isYou && p.isLive ? ' <span class="queue-row-status user">user</span>' : '';
     return `<span class="dnd-chip${selected}" data-player-id="${playerId}">${this.esc(p.name)}${skillTag}${youBadge}${userBadge}</span>`;
@@ -5119,7 +5190,7 @@ ${bracketHTML}
       const p = this.getPlayer(id);
       if (!p) return '';
       const youBadge = id === Onboard.selfId ? ' <span class="queue-row-you">you</span>' : '';
-      const skillTag = p.score != null ? ` <span style="font-weight:400;opacity:0.7;">(${this.fmtSkill(p.score)})</span>` : '';
+      const skillTag = this.skillLabel(p) ? ` <span style="font-weight:400;opacity:0.7;">(${this.skillLabel(p)})</span>` : '';
       return `<span class="side-player-${align}"><span class="side-player-name">${this.esc(p.name)}${skillTag}</span>${youBadge}</span>`;
     };
     if (side.length === 1) {
@@ -5389,8 +5460,8 @@ ${bracketHTML}
     }
 
     el.innerHTML = history.map(m => {
-      const s1 = m.side1.map(id => { const p = this.getPlayer(id); return this.esc(nameFor(id)) + (p && p.score != null ? ` <span style="font-weight:400;opacity:0.7;">(${this.fmtSkill(p.score)})</span>` : ''); });
-      const s2 = m.side2.map(id => { const p = this.getPlayer(id); return this.esc(nameFor(id)) + (p && p.score != null ? ` <span style="font-weight:400;opacity:0.7;">(${this.fmtSkill(p.score)})</span>` : ''); });
+      const s1 = m.side1.map(id => { const p = this.getPlayer(id); return this.esc(nameFor(id)) + (this.skillLabel(p) ? ` <span style="font-weight:400;opacity:0.7;">(${this.skillLabel(p)})</span>` : ''); });
+      const s2 = m.side2.map(id => { const p = this.getPlayer(id); return this.esc(nameFor(id)) + (this.skillLabel(p) ? ` <span style="font-weight:400;opacity:0.7;">(${this.skillLabel(p)})</span>` : ''); });
       const hasScores = m.score1 != null && m.score2 != null;
       const s1Class = hasScores ? (m.winner === 1 ? 'winner' : m.winner === 2 ? 'loser' : '') : '';
       const s2Class = hasScores ? (m.winner === 2 ? 'winner' : m.winner === 1 ? 'loser' : '') : '';
@@ -5437,21 +5508,6 @@ ${bracketHTML}
         <span style="color:var(--text-muted);white-space:nowrap;">${date}, ${time}</span>
       </div>`;
     }).join('');
-  },
-
-  fmtSkillInput(el) {
-    if (!el) return;
-    const n = parseFloat(el.value);
-    if (isNaN(n)) return;
-    const s = n.toFixed(2).replace(/0+$/, '');
-    el.value = s.endsWith('.') ? s + '0' : s;
-  },
-
-  fmtSkill(val) {
-    const n = parseFloat(val);
-    if (isNaN(n)) return '';
-    const s = n.toFixed(2).replace(/0+$/, '');
-    return s.endsWith('.') ? s + '0' : s;
   },
 
   esc(str) {
@@ -5650,7 +5706,7 @@ const Session = {
       already.active = true;
       // Update name/skill/preferences if changed
       already.name = user.name;
-      already.score = user.skill || already.score;
+      already.skillLevel = user.skillLevel || already.skillLevel;
       if (Admin._user?.uid) already.firebaseUid = Admin._user.uid;
       already.joinedAt = Date.now();
       try { localStorage.setItem('courtManager', JSON.stringify(App.state)); } catch(e) {}
@@ -5663,7 +5719,7 @@ const Session = {
       const newPlayer = {
         id,
         name: user.name,
-        score: user.skill || null,
+        skillLevel: user.skillLevel || null,
         active: true,
         isLive: true,
         joinedAt: Date.now(),
@@ -6070,7 +6126,7 @@ const Onboard = {
     const skillEl = document.getElementById('selfProfileSkill');
     const errEl = document.getElementById('selfProfileNameError');
     if (nameEl) nameEl.value = Admin._user?.displayName || '';
-    if (skillEl) skillEl.value = saved.skill != null ? App.fmtSkill(saved.skill) : '';
+    if (skillEl) skillEl.value = saved.skillLevel || '';
     if (errEl) errEl.style.display = 'none';
     document.getElementById('selfProfileModal').style.display = 'flex';
     document.body.style.overflow = 'hidden';
@@ -6095,9 +6151,8 @@ const Onboard = {
       return;
     }
     if (errEl) errEl.style.display = 'none';
-    const skillRaw = skillEl?.value || '';
-    const skill = skillRaw ? parseFloat(parseFloat(skillRaw).toFixed(2)) : null;
-    const user = { name, skill };
+    const skillLevel = skillEl?.value || null;
+    const user = { name, skillLevel };
     try { localStorage.setItem('courtManagerUser', JSON.stringify(user)); } catch(e) {}
     document.getElementById('selfProfileModal').style.display = 'none';
     document.body.style.overflow = '';
@@ -6579,16 +6634,15 @@ const Onboard = {
         nameInput.dataset.bulkName = i;
         row.appendChild(nameInput);
         if (!quickPlay) {
-          const skillInput = document.createElement('input');
-          skillInput.type = 'number';
+          const skillInput = document.createElement('select');
           skillInput.className = 'setup-input';
-          skillInput.placeholder = 'Skill';
-          skillInput.min = '2';
-          skillInput.max = '8';
-          skillInput.step = '0.01';
-          skillInput.style.cssText = 'width:80px;flex-shrink:0;margin-bottom:0;';
+          skillInput.style.cssText = 'width:110px;flex-shrink:0;margin-bottom:0;';
           skillInput.dataset.bulkSkill = i;
-          skillInput.onblur = () => App.fmtSkillInput(skillInput);
+          skillInput.innerHTML = `
+            <option value="">Rating</option>
+            <option value="beginner">Beginner</option>
+            <option value="intermediate">Intermediate</option>
+            <option value="advanced">Advanced</option>`;
           row.appendChild(skillInput);
         }
         if (i === count) nameInput.onkeydown = (e) => { if (e.key === 'Enter') this._bulkSubmit(); };
@@ -6614,8 +6668,8 @@ const Onboard = {
       const skillEl = row.querySelector('[data-bulk-skill]');
       const name = nameEl?.value.trim();
       if (!name) return;
-      const skill = skillEl?.value ? parseFloat(skillEl.value) : null;
-      players.push({ name, skill });
+      const skillLevel = skillEl?.value || null;
+      players.push({ name, skillLevel });
     });
     const errEl = document.getElementById('bulkNamesError');
     if (!players.length) {
@@ -6631,11 +6685,11 @@ const Onboard = {
   },
 
   _pushBulkPlayers(players) {
-    (players || []).forEach(({ name, skill }) => {
+    (players || []).forEach(({ name, skillLevel }) => {
       App.state.players.push({
         id: App.state.nextId++,
         name,
-        score: (skill != null && !isNaN(skill)) ? skill : null,
+        skillLevel: skillLevel || null,
         active: true,
         isLive: false,
         addedBy: this.selfId,
