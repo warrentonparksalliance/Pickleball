@@ -3393,7 +3393,15 @@ const App = {
     // alone wouldn't catch the rotating-out side.
     const onCourtNow = this.getPlayersOnCourts();
     const picked = this._pickPriorityPlayers(2, [...onCourtNow, ...side1, ...side2]);
-    if (!picked) return; // not enough players to refill — court sits empty like any other
+    if (!picked) {
+      // Not enough queue players to fill the other side right now — keep
+      // the chosen side on the court as a proposed match (one side full,
+      // one empty) so the organizer can drag/auto-fill it once more
+      // players are free, instead of discarding "Keep Winners"/"Keep
+      // Last-Joined" and dumping the kept side back into the queue too.
+      this.state.proposedGames[courtId] = { side1: staySide, side2: [], mode: 'doubles' };
+      return;
+    }
 
     const refillPair = picked.find(u => u.type === 'pair');
     const refillIds = refillPair ? refillPair.ids : picked.flatMap(u => u.ids);
