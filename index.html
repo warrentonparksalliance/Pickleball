@@ -1009,6 +1009,7 @@ body {
 .assign-court-select:focus { outline: none; border-color: var(--primary); }
 .assign-match-options {
   display: flex;
+  justify-content: flex-end;
   gap: 16px;
   font-size: 0.82rem;
   color: var(--text-light);
@@ -2263,7 +2264,7 @@ body {
         <div class="section-title" id="queueTitle">Queue</div>
         <button id="btnUndoMove" class="btn-outline" style="display:none;flex-shrink:0;padding:5px 10px;font-size:0.78rem;font-weight:600;" onclick="App.undoProposedMove()">&#8617; Undo</button>
       </div>
-      <div class="section-subtitle" id="queueSubtitle" style="margin-bottom:10px;">Players waiting to be assigned to a court.</div>
+      <div class="section-subtitle" id="queueSubtitle" style="margin-bottom:10px;"></div>
       <div class="assign-match-options" style="margin-bottom:10px;">
         <label class="toggle-switch-label">
           <span class="toggle-switch">
@@ -2273,7 +2274,7 @@ body {
           Match by skill
         </label>
       </div>
-      <div class="queue-subsection-label">In Queue</div>
+      <div class="queue-subsection-label">Waiting</div>
       <div class="queue-list-box">
         <div id="queueActiveList" class="queue-list dnd-target" data-loc-type="queue"></div>
         <div id="queueDropQueue" class="queue-drop-strip dnd-target" data-loc-type="queue">Drag or tap to enter queue</div>
@@ -4924,11 +4925,15 @@ ${bracketHTML}
     const qTitle = document.getElementById('queueTitle');
     const qSub = document.getElementById('queueSubtitle');
     if (qTitle) qTitle.textContent = 'Queue';
-    if (qSub) qSub.textContent = rr
-      ? (rrLocked ? 'Players are locked for this round robin.' : 'Add all players, then lock the roster to generate the schedule.')
-      : tourn
-      ? (tournLocked ? 'Players are locked for this tournament.' : 'Add all players, then lock the roster to generate the bracket.')
-      : 'Players waiting to be assigned to a court.';
+    if (qSub) {
+      const subText = rr
+        ? (rrLocked ? 'Players are locked for this round robin.' : 'Add all players, then lock the roster to generate the schedule.')
+        : tourn
+        ? (tournLocked ? 'Players are locked for this tournament.' : 'Add all players, then lock the roster to generate the bracket.')
+        : '';
+      qSub.textContent = subText;
+      qSub.style.display = subText ? '' : 'none';
+    }
     const qAddRow = document.getElementById('queueAddPlayerRow');
     if (qAddRow) qAddRow.style.display = isLocked ? 'none' : '';
     const qAddSkill = document.getElementById('queueAddPlayerSkill');
@@ -6638,12 +6643,10 @@ const Onboard = {
     this._promptSelfProfile(() => {
       this._pendingKey = key;
       this._pendingLabel = name;
-      this._showInlineConfirm('publicCreateConfirmInline', name, () => {
-        this._openBulkSetup({
-          quickPlay: false,
-          onComplete: (players) => { this._pendingBulkPlayers = players; this.confirmJoin(); },
-        });
-      });
+      // Public locations are always Open Play, and players can be added
+      // inline from the queue card once it's created — no need to collect
+      // a roster up front.
+      this._showInlineConfirm('publicCreateConfirmInline', name, () => this.confirmJoin());
     });
   },
 
@@ -6791,6 +6794,13 @@ const Onboard = {
       this._pendingPasscode = passcode;
       this._pendingIsCreate = true;
       this._pendingSessionType = this._newSessionType;
+      // Open Play can add players inline from the queue card once the
+      // session starts; Round Robin/Tournament still need the roster
+      // collected up front so the schedule/bracket can be locked in.
+      if (this._newSessionType === 'open') {
+        this.confirmJoin();
+        return;
+      }
       this._openBulkSetup({
         quickPlay: false,
         onComplete: (players) => { this._pendingBulkPlayers = players; this.confirmJoin(); },
@@ -6946,6 +6956,13 @@ const Onboard = {
     const sessionType = document.querySelector('input[name="quickPlayType"]:checked')?.value || 'open';
     document.getElementById('quickPlayTypeModal').style.display = 'none';
     document.body.style.overflow = '';
+    // Open Play can add players inline from the queue card once the
+    // session starts, so skip straight in instead of asking up front —
+    // Round Robin/Tournament still need the full roster before locking it.
+    if (sessionType === 'open') {
+      this._startOfflineSession(sessionType, { quickPlay: true, players: [] });
+      return;
+    }
     this._openBulkSetup({
       quickPlay: true,
       onComplete: (players) => this._startOfflineSession(sessionType, { quickPlay: true, players }),
