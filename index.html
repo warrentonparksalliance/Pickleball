@@ -2093,6 +2093,13 @@ body {
     margin-top: 0 !important;
   }
 }
+
+/* Desktop and landscape tablets get a third court-card column alongside the queue sidebar */
+@media (min-width: 769px) and (orientation: landscape) {
+  #courtsGrid {
+    grid-template-columns: 1fr 1fr 1fr;
+  }
+}
 </style>
 </head>
 <body>
@@ -2548,6 +2555,10 @@ body {
         <div class="hiw-section">
           <h3>🌐 Joining a Public Session</h3>
           <p>Select your location from the drop-down and tap <strong>Join</strong>. You'll be asked for your name and an optional skill level, then added to the rotation — courts fill from there via Auto-fill or by dragging players on, prioritizing whoever's waited longest.</p>
+        </div>
+        <div class="hiw-section">
+          <h3>🖥️ On Tablet &amp; Desktop</h3>
+          <p>The queue stays pinned on the left so you can always see who's waiting, while court cards fill the space to the right — two columns on tablets, three across on wider screens or landscape — growing automatically as you add more courts.</p>
         </div>
         <div class="hiw-section">
           <h3>🎾 Confirming &amp; Ending a Match (Open Play)</h3>
