@@ -2185,7 +2185,6 @@ body {
         </div>
         <div class="assign-match-options">
           <label><input type="checkbox" id="optSkill" onchange="App.saveState()"> Match by skill</label>
-          <label><input type="checkbox" id="optRepeats" onchange="App.saveState()"> Minimize repeats</label>
         </div>
         <button id="btnAssignAll" class="btn-assign-all" onclick="App.assignAll()">Assign Courts</button>
       </div>
@@ -2710,9 +2709,9 @@ const App = {
   state: {
     players: [],
     teams: [],
-    options: { useSkill: true, minimizeRepeats: true },
+    options: { useSkill: true },
     opponentHistory: {},
-    sitoutCounts: {},
+    roundsWaited: {},
     round: 0,
     activeGames: {},
     scoringGames: {},
@@ -2794,8 +2793,8 @@ const App = {
       if (g && !Array.isArray(g.side2)) g.side2 = g.side2 ? Object.values(g.side2) : [];
     }
     s.opponentHistory = this._toObject(s.opponentHistory);
-    s.sitoutCounts    = this._toObject(s.sitoutCounts);
-    if (!s.options) s.options = { useSkill: false, minimizeRepeats: false };
+    s.roundsWaited    = this._toObject(s.roundsWaited);
+    if (!s.options) s.options = { useSkill: false };
     if (!s.nextId)      s.nextId      = 1;
     if (!s.nextCourtId) s.nextCourtId = 1;
     if (s.availableCourts == null) s.availableCourts = 1;
@@ -2821,6 +2820,7 @@ const App = {
     const _now = Date.now();
     for (const p of s.players) {
       if (!p.joinedAt) p.joinedAt = _now;
+      if (!p.lastActiveAt) p.lastActiveAt = p.joinedAt;
       delete p.score;
       if (p.skillLevel === undefined) p.skillLevel = null;
     }
@@ -2829,7 +2829,6 @@ const App = {
   // ─── Persistence ───────────────────────────
   saveState() {
     this.state.options.useSkill = document.getElementById('optSkill').checked;
-    this.state.options.minimizeRepeats = document.getElementById('optRepeats').checked;
     localStorage.setItem('courtManager', JSON.stringify(this.state));
     Session.push();
   },
@@ -2923,6 +2922,7 @@ const App = {
     }
     const skillLevel = (!this.state._quickPlay && skillEl?.value) ? skillEl.value : null;
     const newId = this.state.nextId++;
+    const now = Date.now();
     this.state.players.push({
       id: newId,
       name,
@@ -2930,7 +2930,8 @@ const App = {
       active: true,
       isLive: false,
       addedBy: Onboard.selfId,
-      joinedAt: Date.now(),
+      joinedAt: now,
+      lastActiveAt: now,
     });
     this._myGuests.add(newId);
     this._saveMyGuests();
@@ -3630,8 +3631,8 @@ const App = {
     }
   },
 
-  getSitoutCount(id) {
-    return this.state.sitoutCounts[id] || 0;
+  getRoundsWaited(id) {
+    return this.state.roundsWaited[id] || 0;
   },
 
   // ─── Assignment Algorithm ──────────────────
@@ -4357,6 +4358,95 @@ ${bracketHTML}
     w.document.close();
   },
 
+  // ─── Priority queue (fairness) ──────────────
+  // Ranks active, unassigned players — and locked-partner pairs, as one
+  // combined unit — by roundsWaited desc, then lastActiveAt asc (oldest
+  // first) as a tiebreak. Units are shuffled once beforehand so a remaining
+  // tie resolves randomly rather than always favoring the same player.
+  _rankedQueueUnits(allQueue) {
+    const activePairs = this.state.teams.filter(t =>
+      allQueue.some(p => p.id === t.p1) && allQueue.some(p => p.id === t.p2)
+    );
+    const pairedIds = new Set(activePairs.flatMap(t => [t.p1, t.p2]));
+    const soloPlayers = allQueue.filter(p => !pairedIds.has(p.id));
+
+    const rw = id => this.state.roundsWaited[id] || 0;
+    const la = id => this.getPlayer(id)?.lastActiveAt || 0;
+
+    const pairUnits = activePairs.map(t => ({
+      type: 'pair', ids: [t.p1, t.p2], team: t,
+      roundsWaited: (rw(t.p1) + rw(t.p2)) / 2,
+      lastActiveAt: (la(t.p1) + la(t.p2)) / 2,
+    }));
+    const soloUnits = soloPlayers.map(p => ({
+      type: 'solo', ids: [p.id],
+      roundsWaited: rw(p.id),
+      lastActiveAt: la(p.id),
+    }));
+
+    const units = this.shuffle([...pairUnits, ...soloUnits]);
+    units.sort((a, b) => {
+      if (b.roundsWaited !== a.roundsWaited) return b.roundsWaited - a.roundsWaited;
+      if (a.lastActiveAt !== b.lastActiveAt) return a.lastActiveAt - b.lastActiveAt;
+      return 0;
+    });
+    return units;
+  },
+
+  // Greedy-fills up to n seats from a ranked unit list. A unit that wouldn't
+  // fit (e.g. a locked pair when only 1 seat remains) is skipped rather than
+  // split up — it simply waits for the next fill.
+  _fillUnitsToCount(units, n) {
+    const picked = [];
+    const usedIds = new Set();
+    let total = 0;
+    for (const u of units) {
+      if (total >= n) break;
+      if (u.ids.some(id => usedIds.has(id))) continue;
+      if (total + u.ids.length > n) continue;
+      picked.push(u);
+      total += u.ids.length;
+      u.ids.forEach(id => usedIds.add(id));
+    }
+    return total === n ? picked : null;
+  },
+
+  // Shared selection core for both a fresh court (n=4) and refilling seats
+  // next to a kept pair after end-of-match rotation (n=2).
+  _pickPriorityPlayers(n, excludeIds = []) {
+    const exclude = new Set(excludeIds);
+    const allQueue = this.state.players.filter(p => p.active && !exclude.has(p.id));
+    const units = this._rankedQueueUnits(allQueue);
+    return this._fillUnitsToCount(units, n);
+  },
+
+  // Bumps roundsWaited for every active, unassigned player, then advances
+  // the round counter. Called once per fill action — whether that's a
+  // single Assign Courts click that fills several courts at once, or (once
+  // per-court auto-fill ships) a single court's fill — never once per court
+  // within a multi-court pass.
+  _completeAssignmentPass() {
+    const onCourt = this.getPlayersOnCourts();
+    for (const p of this.state.players) {
+      if (!p.active) continue;
+      if (onCourt.has(p.id)) continue;
+      this.state.roundsWaited[p.id] = (this.state.roundsWaited[p.id] || 0) + 1;
+    }
+    this.state.round++;
+  },
+
+  // Resets roundsWaited and bumps lastActiveAt for players actually
+  // confirmed into a match (Start Match) — not at proposal time, so
+  // adjusting or cancelling a proposal never costs anyone their place in line.
+  _confirmPlayersIntoMatch(ids) {
+    const now = Date.now();
+    for (const id of ids) {
+      const p = this.getPlayer(id);
+      if (p) p.lastActiveAt = now;
+      this.state.roundsWaited[id] = 0;
+    }
+  },
+
   assignAll() {
     const courtsToFill = this.state.availableCourts || 1;
     const freeCourts = this._getNextFreeCourts(courtsToFill);
@@ -4371,7 +4461,7 @@ ${bracketHTML}
     }
 
     if (anyAssigned) {
-      this.state.round++;
+      this._completeAssignmentPass();
       this.saveState();
       this.render();
     }
@@ -4379,34 +4469,13 @@ ${bracketHTML}
 
   _assignOneCourt(courtId) {
     const onCourt = this.getPlayersOnCourts();
-    const allQueue = this.state.players.filter(p => p.active && !onCourt.has(p.id));
+    const picked = this._pickPriorityPlayers(4, [...onCourt]);
+    if (!picked) return false;
 
-    const activePairs = this.state.teams.filter(t =>
-      allQueue.some(p => p.id === t.p1) && allQueue.some(p => p.id === t.p2)
-    );
-    const pairedIds = new Set(activePairs.flatMap(t => [t.p1, t.p2]));
-    const soloPlayers = allQueue.filter(p => !pairedIds.has(p.id));
+    const pickedPairs = picked.filter(u => u.type === 'pair').map(u => u.team);
+    const pickedSolos = picked.filter(u => u.type === 'solo').map(u => u.ids[0]);
 
     let side1, side2;
-
-    const shuffledPairs = this.shuffle([...activePairs]);
-    const shuffledSolos = this.shuffle(soloPlayers.map(p => p.id));
-    let pickedPairs = [], pickedSolos = [], total = 0;
-    const usedIds = new Set();
-
-    for (const pair of shuffledPairs) {
-      if (total + 2 > 4) break;
-      if (usedIds.has(pair.p1) || usedIds.has(pair.p2)) continue;
-      pickedPairs.push(pair); total += 2;
-      usedIds.add(pair.p1); usedIds.add(pair.p2);
-      if (total === 4) break;
-    }
-    for (const id of shuffledSolos) {
-      if (total >= 4) break;
-      pickedSolos.push(id); total++;
-    }
-    if (total < 4) return false;
-
     if (pickedPairs.length === 2) {
       side1 = [pickedPairs[0].p1, pickedPairs[0].p2];
       side2 = [pickedPairs[1].p1, pickedPairs[1].p2];
@@ -4414,10 +4483,7 @@ ${bracketHTML}
       side1 = [pickedPairs[0].p1, pickedPairs[0].p2];
       side2 = pickedSolos;
     } else {
-      side1 = [pickedSolos[0], pickedSolos[1]];
-      side2 = [pickedSolos[2], pickedSolos[3]];
-      if (this.state.options.useSkill) [side1, side2] = this.balanceDoublesSkill(side1, side2);
-      if (this.state.options.minimizeRepeats) [side1, side2] = this.optimizeDoublesRepeats(side1, side2);
+      [side1, side2] = this._pickBestDoublesCombo([pickedSolos[0], pickedSolos[1]], [pickedSolos[2], pickedSolos[3]]);
     }
 
     this.state.proposedGames[courtId] = { side1, side2, mode: 'doubles' };
@@ -4438,6 +4504,7 @@ ${bracketHTML}
       timerElapsed: 0,
       timerResumedAt: null,
     };
+    this._confirmPlayersIntoMatch([...game.side1, ...game.side2]);
     delete this.state.proposedGames[courtId];
     this._proposedUndoStack = []; // confirming a match is final — nothing before it is undoable
     this.saveState();
@@ -4449,29 +4516,6 @@ ${bracketHTML}
     this._proposedUndoStack = []; // cancelling is final too — start the next proposal with a clean slate
     this.saveState();
     this.render();
-  },
-
-  balanceDoublesSkill(s1, s2) {
-    const score = side => side.reduce((sum, id) => sum + this._skillValue(this.getPlayer(id)), 0);
-    const all = [...s1, ...s2];
-    let bestDiff = Math.abs(score(s1) - score(s2));
-    let bestS1 = s1, bestS2 = s2;
-
-    const combos = [
-      [[all[0], all[1]], [all[2], all[3]]],
-      [[all[0], all[2]], [all[1], all[3]]],
-      [[all[0], all[3]], [all[1], all[2]]],
-    ];
-    for (const [a, b] of combos) {
-      if (this.wouldBreakLockedTeam(a, b)) continue;
-      const diff = Math.abs(score(a) - score(b));
-      if (diff < bestDiff) {
-        bestDiff = diff;
-        bestS1 = a;
-        bestS2 = b;
-      }
-    }
-    return [bestS1, bestS2];
   },
 
   wouldBreakLockedTeam(s1, s2) {
@@ -4486,32 +4530,39 @@ ${bracketHTML}
     return false;
   },
 
-  optimizeDoublesRepeats(s1, s2) {
+  // Combines what used to be two independent passes (balanceDoublesSkill,
+  // optimizeDoublesRepeats) into one: repeat-minimization is always the
+  // primary criterion; skill-balance (when "Match by skill" is on) only
+  // breaks ties among combos that are equally good on repeats.
+  _pickBestDoublesCombo(s1, s2) {
+    const all = [...s1, ...s2];
+    const combos = [
+      [[all[0], all[1]], [all[2], all[3]]],
+      [[all[0], all[2]], [all[1], all[3]]],
+      [[all[0], all[3]], [all[1], all[2]]],
+    ].filter(([a, b]) => !this.wouldBreakLockedTeam(a, b));
+    if (combos.length === 0) return [s1, s2];
+
     const repScore = (a, b) => {
       let total = 0;
       for (const x of a) for (const y of b) total += this.getOpponentCount(x, y);
       return total;
     };
+    const scored = combos.map(([a, b]) => ({ a, b, rep: repScore(a, b) }));
+    const minRep = Math.min(...scored.map(c => c.rep));
+    const tied = scored.filter(c => c.rep === minRep);
 
-    const all = [...s1, ...s2];
-    let bestScore = repScore(s1, s2);
-    let bestS1 = s1, bestS2 = s2;
-
-    const combos = [
-      [[all[0], all[1]], [all[2], all[3]]],
-      [[all[0], all[2]], [all[1], all[3]]],
-      [[all[0], all[3]], [all[1], all[2]]],
-    ];
-    for (const [a, b] of combos) {
-      if (this.wouldBreakLockedTeam(a, b)) continue;
-      const sc = repScore(a, b);
-      if (sc < bestScore) {
-        bestScore = sc;
-        bestS1 = a;
-        bestS2 = b;
-      }
+    if (tied.length === 1 || !this.state.options.useSkill) {
+      return [tied[0].a, tied[0].b];
     }
-    return [bestS1, bestS2];
+
+    const skillScore = side => side.reduce((sum, id) => sum + this._skillValue(this.getPlayer(id)), 0);
+    let best = tied[0], bestDiff = Math.abs(skillScore(tied[0].a) - skillScore(tied[0].b));
+    for (const c of tied.slice(1)) {
+      const diff = Math.abs(skillScore(c.a) - skillScore(c.b));
+      if (diff < bestDiff) { bestDiff = diff; best = c; }
+    }
+    return [best.a, best.b];
   },
 
   crossCourtOptimize(assignments) {
@@ -4560,8 +4611,8 @@ ${bracketHTML}
   _freshState() {
     return {
       players: [], teams: [],
-      options: { useSkill: true, minimizeRepeats: true },
-      opponentHistory: {}, sitoutCounts: {}, round: 0,
+      options: { useSkill: true },
+      opponentHistory: {}, roundsWaited: {}, round: 0,
       activeGames: {}, scoringGames: {}, proposedGames: {}, roundHistory: [], nextId: 1, nextCourtId: 1,
       availableCourts: 1, adminLog: [],
     };
@@ -4587,10 +4638,10 @@ ${bracketHTML}
 
   clearHistory() {
     if (!Admin.isAdmin()) return;
-    if (!confirm('Clear all match history and sit-out counts for all users?')) return;
+    if (!confirm('Clear all match history and fairness rotation counts for all users?')) return;
     this._logAdmin('Clear History');
     this.state.opponentHistory = {};
-    this.state.sitoutCounts = {};
+    this.state.roundsWaited = {};
     this.state.roundHistory = [];
     this.state.round = 0;
     this.saveState();
@@ -4696,7 +4747,6 @@ ${bracketHTML}
     this._updateTabBadges();
 
     document.getElementById('optSkill').checked = this.state.options.useSkill;
-    document.getElementById('optRepeats').checked = this.state.options.minimizeRepeats;
 
     // Partner section: available while building the roster in any mode;
     // hidden once a round robin/tournament is locked since teams are then fixed
@@ -5709,6 +5759,7 @@ const Session = {
       already.skillLevel = user.skillLevel || already.skillLevel;
       if (Admin._user?.uid) already.firebaseUid = Admin._user.uid;
       already.joinedAt = Date.now();
+      already.lastActiveAt = already.joinedAt;
       try { localStorage.setItem('courtManager', JSON.stringify(App.state)); } catch(e) {}
       this._patch({ players: App.state.players });
       App.render();
@@ -5716,13 +5767,15 @@ const Session = {
       const id = App.state.nextId++;
       Onboard.selfId = id;
       this._saveSelfId(id);
+      const now = Date.now();
       const newPlayer = {
         id,
         name: user.name,
         skillLevel: user.skillLevel || null,
         active: true,
         isLive: true,
-        joinedAt: Date.now(),
+        joinedAt: now,
+        lastActiveAt: now,
       };
       if (Admin._user?.uid) newPlayer.firebaseUid = Admin._user.uid;
       App.state.players.push(newPlayer);
@@ -6686,6 +6739,7 @@ const Onboard = {
 
   _pushBulkPlayers(players) {
     (players || []).forEach(({ name, skillLevel }) => {
+      const now = Date.now();
       App.state.players.push({
         id: App.state.nextId++,
         name,
@@ -6693,7 +6747,8 @@ const Onboard = {
         active: true,
         isLive: false,
         addedBy: this.selfId,
-        joinedAt: Date.now(),
+        joinedAt: now,
+        lastActiveAt: now,
       });
     });
   },
