@@ -1854,18 +1854,19 @@ body {
   text-align: center;
   font-size: 0.75rem;
   color: var(--text-muted);
-  padding: 20px 10px 24px;
-  line-height: 1.7;
+  padding: 10px 10px 12px;
+  line-height: 1.4;
   margin-top: auto;
 }
+.app-footer > div + div { margin-top: 4px; }
 .app-footer a {
   color: var(--primary);
   text-decoration: none;
 }
 .app-footer a:hover { text-decoration: underline; }
 .app-footer-links {
-  margin-top: 12px;
-  padding-top: 12px;
+  margin-top: 6px;
+  padding-top: 6px;
   border-top: 1px solid var(--border);
 }
 
@@ -5103,32 +5104,41 @@ ${bracketHTML}
     const waitingEl = document.getElementById('queueWaitingList');
     const removeZone = document.getElementById('queueRemoveZone');
     const removeZoneTitle = document.getElementById('queueRemoveZoneTitle');
-    const removeLabel = document.getElementById('queueRemoveZoneLabel');
     const rr = this.isRoundRobin();
     const tourn = this.isTournament();
     const structured = rr || tourn;
     const isLocked = (rr && this.state._rrLocked) || (tourn && this.state._bracketLocked);
 
     if (waitingWrap) waitingWrap.style.display = structured ? 'none' : '';
-    if (removeZone) removeZone.style.display = isLocked ? 'none' : '';
     if (removeZoneTitle) removeZoneTitle.style.display = isLocked ? 'none' : '';
-    if (removeLabel) removeLabel.textContent = 'Drag or tap to remove';
+
+    // The Yes/No confirm renders inside the Leave Session zone itself —
+    // where the player was just dropped/tapped — rather than back at their
+    // old row in Waiting/Sitting Out, so it appears where the click happened.
+    const pendingPlayer = this._pendingRemove != null ? this.getPlayer(this._pendingRemove) : null;
+    if (removeZone) {
+      removeZone.style.display = isLocked ? 'none' : '';
+      if (pendingPlayer) {
+        const isYou = Onboard.selfId === pendingPlayer.id;
+        const confirmLabel = isYou ? 'Leave session?' : `Remove ${this.esc(pendingPlayer.name)}?`;
+        removeZone.innerHTML = `<div class="queue-row-confirm" style="justify-content:center;">
+          <span>${confirmLabel}</span>
+          <button style="color:var(--danger);border-color:#fca5a5;" onclick="App.removePlayer(${pendingPlayer.id})">Yes</button>
+          <button style="color:var(--text-muted);border-color:var(--border);" onclick="App.cancelRemove()">No</button>
+        </div>`;
+      } else {
+        removeZone.innerHTML = `<span id="queueRemoveZoneLabel">Drag or tap to remove</span>`;
+      }
+    }
 
     const onCourts = this.getPlayersOnCourts();
     const queuePlayers = this.state.players.filter(p => !onCourts.has(p.id));
 
     const renderRow = (p) => {
       const isYou = Onboard.selfId === p.id;
-      if (this._pendingRemove === p.id) {
-        const confirmLabel = isYou ? 'Leave session?' : `Remove ${this.esc(p.name)}?`;
-        return `<div class="queue-row queue-row-full">
-          <div class="queue-row-confirm">
-            <span>${confirmLabel}</span>
-            <button style="color:var(--danger);border-color:#fca5a5;" onclick="App.removePlayer(${p.id})">Yes</button>
-            <button style="color:var(--text-muted);border-color:var(--border);" onclick="App.cancelRemove()">No</button>
-          </div>
-        </div>`;
-      }
+      // While this player's removal is pending, their row disappears from
+      // Waiting/Sitting Out — the confirm now lives in the remove zone above.
+      if (this._pendingRemove === p.id) return '';
       if (this._editingGuest === p.id) {
         // Rating isn't edited here — tapping the R/B/I/A indicator on the
         // chip itself opens the skill picker, so a second rating field in
