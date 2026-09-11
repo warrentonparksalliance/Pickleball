@@ -91,7 +91,7 @@ footer a:hover { text-decoration: underline; }
   <li><strong>Private Session</strong> — Pick a session you've previously joined, or create a new one.</li>
   <li><strong>Public Session</strong> — Pick a location from the dropdown and tap Join.</li>
 </ul>
-<p>When you join or create an online session for the first time, you'll be asked for <strong>your name and optional skill level (2.0–8.0)</strong> in a small popup, then asked to confirm before you're added.</p>
+<p>When you join or create an online session for the first time, you'll be asked for <strong>your name and an optional skill level (Beginner, Intermediate, or Advanced)</strong> in a small popup, then asked to confirm before you're added.</p>
 <p>If someone sends you a link to their session, opening it lets you sign in with Google or <strong>continue as a guest</strong> to join that session directly — no account needed.</p>
 
 <div class="tip">
@@ -105,7 +105,7 @@ footer a:hover { text-decoration: underline; }
   <p><span class="badge badge-user">user</span> — A player using the app on their own device</p>
   <p><span class="badge badge-partner">partner</span> — Your selected partner preference</p>
 </div>
-<p>Players added by someone else (rather than joining themselves) don't carry a badge — but whoever added them sees an edit (&#x270E;) icon to update their name or skill.</p>
+<p>Players added by someone else (rather than joining themselves) don't carry a badge — but whoever added them sees an edit (&#x270E;) icon to update their name, and a tap-to-set skill tag (<strong>R</strong> for no rating yet, or <strong>B</strong>/<strong>I</strong>/<strong>A</strong> for Beginner/Intermediate/Advanced) next to everyone's name.</p>
 
 <ul>
   <li><strong>+ Add Player</strong> — Add players who don't have the app, or aren't joining themselves. You can edit or remove players you added.</li>
@@ -117,29 +117,30 @@ footer a:hover { text-decoration: underline; }
 <h2>Court Assignments</h2>
 
 <h3>Open Play (default)</h3>
-<p>The app automatically assigns players to courts as <strong>doubles</strong> matches.</p>
+<p><strong>"Courts available now"</strong> controls how many court cards are shown, whether or not a match is running on them yet.</p>
 <ol class="steps">
-  <li>Set <strong>"Courts available now"</strong> — how many courts to fill this press.</li>
-  <li>Tap <strong>Assign Courts</strong>. Players are randomly paired and assigned.</li>
-  <li>Tap <strong>&#9654; Start</strong> on a court to start its timer.</li>
-  <li>When a game ends, tap <strong>End</strong>, then <strong>Save</strong> (with or without a score) or <strong>Cancel</strong> to go back — those players return to the queue.</li>
-  <li>Tap Assign Courts again to fill open courts with waiting players.</li>
+  <li>On any empty court card, tap <strong>Auto-fill</strong> to pull the next players in line, or drag/tap players from the queue straight onto a court's open slots yourself.</li>
+  <li>An auto-filled or partly-filled court shows a <strong>Proposed</strong> match first — drag/tap players between the queue and the court's two sides to adjust it, then tap <strong>&#9654; Start Match</strong> to confirm it. Nothing is final, and no one's place in line is affected, until you confirm.</li>
+  <li>Tap <strong>&#9654; Start</strong> on a confirmed court to start its timer.</li>
+  <li>When a game ends, tap <strong>End</strong>, then (with or without a score) choose <strong>Return All 4</strong>, <strong>Keep Winners</strong>, or — once a court has had a pair carried over before — <strong>Keep Last-Joined</strong>, or tap <strong>Cancel</strong> to go back.</li>
 </ol>
 
+<div class="tip">
+  <strong>Fair rotation:</strong> Who gets auto-filled next isn't random — players who've been waiting the longest without playing are prioritized first, so no one gets stuck sitting out round after round.
+</div>
 <div class="tip">
   <strong>Match timer:</strong> Once started, a court shows a live elapsed timer with a <strong>Pause/Resume</strong> toggle. The final duration is saved with the match in History.
 </div>
 <div class="tip">
-  <strong>Rematch:</strong> When ending a match, check the "Rematch" box before saving to immediately start the same matchup again.
+  <strong>Rematch:</strong> When ending a match, check the "Rematch" box before choosing an end-of-match option to immediately start the same matchup again, regardless of which option you pick.
 </div>
 <div class="tip">
-  <strong>Scores are optional:</strong> Tap <strong>Save</strong> without entering a score to end the match and log it without a result — this works the same way in Open Play, Round Robin, and Tournament.
+  <strong>Scores are optional:</strong> You can end a match without entering a score and log it without a result — this works the same way in Open Play, Round Robin, and Tournament. Choosing <strong>Keep Winners</strong> with no score entered warns you first, since it can't tell who won and will pick a pair at random unless you go back and enter one.
 </div>
 
 <h3>Match Options</h3>
 <ul>
-  <li><strong>Match by skill</strong> (on by default) — Pairs players with similar skill levels.</li>
-  <li><strong>Minimize repeats</strong> (on by default) — Avoids matching players who've already played each other.</li>
+  <li><strong>Match by skill</strong> (on by default) — When more than one pairing is equally good at avoiding repeat matchups, breaks the tie by grouping players with similar skill levels. Repeat-avoidance itself is always on.</li>
 </ul>
 
 <h2>Score Keeper</h2>

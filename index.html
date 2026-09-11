@@ -459,7 +459,6 @@ body {
 }
 .confirm-identity { display: flex; align-items: baseline; gap: 8px; }
 .confirm-name { font-size: 1rem; font-weight: 700; color: var(--text); }
-.confirm-skill { font-size: 0.85rem; color: var(--text-light); }
 .btn-confirm-join {
   flex: 1;
   padding: 12px;
@@ -711,31 +710,73 @@ body {
   background: var(--bg);
   border: 1px solid var(--border);
   border-radius: var(--radius-sm);
-  padding: 0 12px;
+  padding: 10px 12px;
 }
-.queue-list { display: flex; flex-direction: column; gap: 0; }
+.queue-drop-strip {
+  margin-top: 8px;
+  padding: 8px;
+  text-align: center;
+  border: 1.5px dashed var(--border-strong);
+  border-radius: var(--radius-sm);
+  font-size: 0.76rem;
+  font-style: italic;
+  color: var(--text-muted);
+  transition: background 0.15s, border-color 0.15s, color 0.15s;
+}
+#queueDropQueue.dnd-hover,
+#queueDropWaiting.dnd-hover {
+  background: var(--primary-light);
+  border-color: var(--primary);
+  color: var(--primary);
+  font-style: normal;
+  font-weight: 600;
+}
+.queue-subsection-label {
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-muted);
+  margin-bottom: 6px;
+}
+.queue-remove-zone {
+  padding: 10px;
+  text-align: center;
+  border: 1.5px dashed var(--border-strong);
+  border-radius: var(--radius-sm);
+  font-size: 0.8rem;
+  font-style: italic;
+  color: var(--text-muted);
+  transition: background 0.15s, border-color 0.15s, color 0.15s;
+}
+#queueRemoveZone.dnd-hover {
+  background: var(--danger-light);
+  border-color: var(--danger);
+  color: var(--danger);
+  font-style: normal;
+  font-weight: 600;
+}
+.queue-list { display: flex; flex-flow: row wrap; align-items: flex-start; gap: 6px 8px; }
 .queue-row {
   display: flex;
   align-items: center;
-  gap: 8px;
-  padding: 7px 0;
-  border-bottom: 1px solid var(--border);
-  font-size: 0.9rem;
+  flex: 0 0 auto;
 }
-.queue-row:last-child { border-bottom: none; }
+.queue-row-full { flex-basis: 100%; }
 .queue-row.inactive { opacity: 0.45; background: #f0f1f4; border-radius: var(--radius-sm); margin: 0 -4px; padding-left: 4px; padding-right: 4px; }
 .queue-row-name {
-  flex: 1;
+  flex: 0 0 auto;
   min-width: 0;
   font-weight: 600;
   user-select: none;
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 4px;
   overflow: hidden;
+  font-size: 0.85rem;
 }
-.queue-row-name .side-player-name,
-.queue-row-name > span:first-child { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.queue-row-name-text { max-width: 130px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.queue-row-name .side-player-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .queue-row-you {
   font-size: 0.68rem;
   font-weight: 700;
@@ -762,17 +803,30 @@ body {
   background: var(--primary-light);
   border: 1px solid var(--primary-muted);
 }
-.queue-row-skill {
-  font-size: 0.78rem;
-  font-weight: 400;
+.queue-row-skill-btn {
+  font-size: 0.72rem;
+  font-weight: 700;
   color: var(--text-muted);
+  background: var(--bg);
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius-full);
+  padding: 1px 7px;
+  min-width: 20px;
+  min-height: 20px;
+  line-height: 1.4;
+  flex-shrink: 0;
+  cursor: pointer;
+  font-family: inherit;
+  transition: border-color 0.15s, color 0.15s, background 0.15s;
 }
+.queue-row-skill-btn:hover { border-color: var(--primary); color: var(--primary); }
+.queue-row-skill-btn.set { color: var(--primary); border-color: var(--primary-muted); background: var(--primary-light); }
 .queue-row-edit {
   display: flex;
   align-items: center;
   gap: 6px;
   padding: 8px 0;
-  border-bottom: 1px solid var(--border);
+  flex-basis: 100%;
   flex-wrap: wrap;
 }
 .queue-row-edit input[type="text"],
@@ -822,16 +876,16 @@ body {
   border: none;
   color: var(--text-muted);
   cursor: pointer;
-  font-size: 0.82rem;
+  font-size: 0.76rem;
   line-height: 1;
-  padding: 4px 6px;
+  padding: 2px 4px;
   border-radius: 4px;
   transition: color 0.15s, background 0.15s;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  min-width: 26px;
-  min-height: 26px;
+  min-width: 22px;
+  min-height: 22px;
 }
 .queue-row-action { }
 .queue-row-action:hover { color: var(--warning); background: var(--warning-light); }
@@ -927,18 +981,18 @@ body {
   flex-direction: column;
   gap: 10px;
 }
+.assign-header-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
 .assign-controls { display: flex; flex-direction: column; gap: 10px; }
 .assign-options-row {
   display: flex;
   align-items: center;
   gap: 10px;
   flex-wrap: wrap;
-}
-.assign-option-label {
-  font-size: 0.88rem;
-  color: var(--text-light);
-  font-weight: 500;
-  white-space: nowrap;
 }
 .assign-court-select {
   padding: 6px 6px;
@@ -955,6 +1009,7 @@ body {
 .assign-court-select:focus { outline: none; border-color: var(--primary); }
 .assign-match-options {
   display: flex;
+  justify-content: flex-end;
   gap: 16px;
   font-size: 0.82rem;
   color: var(--text-light);
@@ -962,10 +1017,49 @@ body {
 .assign-match-options label {
   display: flex;
   align-items: center;
-  gap: 5px;
+  gap: 8px;
   cursor: pointer;
   font-weight: 500;
 }
+.toggle-switch {
+  position: relative;
+  display: inline-block;
+  width: 34px;
+  height: 20px;
+  flex-shrink: 0;
+}
+.toggle-switch input {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  opacity: 0;
+  cursor: pointer;
+}
+.toggle-switch-track {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: var(--border-strong);
+  border-radius: var(--radius-full);
+  transition: background 0.15s;
+}
+.toggle-switch-track::before {
+  content: '';
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 16px;
+  height: 16px;
+  background: #fff;
+  border-radius: 50%;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.25);
+  transition: transform 0.15s;
+}
+.toggle-switch input:checked + .toggle-switch-track { background: var(--primary); }
+.toggle-switch input:checked + .toggle-switch-track::before { transform: translateX(14px); }
+.toggle-switch input:focus-visible + .toggle-switch-track { outline: 2px solid var(--primary); outline-offset: 2px; }
 .btn-assign-all {
   width: 100%;
   padding: 11px;
@@ -1203,7 +1297,6 @@ body {
   box-shadow: var(--shadow-sm);
 }
 .court-side .side-player-name { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.court-side .side-player-skill { color: var(--text-light); font-weight: 400; font-size: 0.78rem; }
 .court-side .side-amp { color: var(--text-muted); font-weight: 500; flex-shrink: 0; }
 .side-names-row .side-player-left { flex: 1; min-width: 0; display: flex; justify-content: flex-end; align-items: center; gap: 3px; }
 .side-names-row .side-player-right { flex: 1; min-width: 0; display: flex; justify-content: flex-start; align-items: center; gap: 3px; }
@@ -1280,6 +1373,8 @@ body {
 /* ── Proposed match (Open Play manual review) ──── */
 .court-card.proposed { border: 1.5px dashed var(--pending-border); }
 .court-card.proposed .court-header { background: var(--warning); }
+.court-card.empty { border: 1.5px dashed var(--border-strong); box-shadow: none; }
+.court-card.empty .court-header { background: var(--bg); color: var(--text-muted); }
 .court-side.dnd-target {
   flex-direction: row;
   flex-wrap: wrap;
@@ -1290,7 +1385,7 @@ body {
   display: inline-flex;
   align-items: center;
   gap: 3px;
-  padding: 6px 12px;
+  padding: 5px 9px;
   background: var(--card);
   border: 1.5px solid var(--border-strong);
   border-radius: var(--radius-full);
@@ -1352,10 +1447,8 @@ body {
   background: var(--input-bg);
 }
 .proposed-hint { font-size: 0.78rem; color: var(--text-muted); text-align: center; margin-top: 4px; }
-@media (min-width: 769px) {
-  .dnd-chip { cursor: grab; touch-action: none; }
-  .dnd-chip.dnd-dragging { cursor: grabbing; }
-}
+.dnd-chip { cursor: grab; touch-action: none; }
+.dnd-chip.dnd-dragging { cursor: grabbing; }
 
 /* ── Sitting out ────────────────────────────── */
 .sitting-out {
@@ -1430,7 +1523,12 @@ body {
   box-shadow: 0 0 0 3px var(--primary-light);
 }
 .score-buttons { display: flex; gap: 8px; margin-top: 6px; }
+.score-buttons.rotation-choices { flex-wrap: wrap; }
+.score-buttons.rotation-choices .btn-save-score,
+.score-buttons.rotation-choices .btn-cancel-score { flex: 1 1 calc(50% - 4px); }
 .score-error { font-size: 0.8rem; color: var(--danger); min-height: 1em; }
+.rotation-warn { margin-top: 6px; }
+.rotation-warn p { font-size: 0.82rem; color: var(--text-light); line-height: 1.4; margin: 0 0 8px; }
 .btn-save-score {
   flex: 1;
   padding: 10px;
@@ -2131,7 +2229,7 @@ body {
           <div class="history-stat-label">Win %</div>
         </div>
       </div>
-      <input type="text" id="myHistorySearch" class="history-search" placeholder="Search player name..." oninput="MyHistory.filter()" style="margin-bottom:10px;">
+      <input type="text" id="myHistorySearch" class="history-search" placeholder="Search players..." oninput="MyHistory.filter()" style="margin-bottom:10px;">
       <div id="myHistoryList"></div>
     </div>
   </div>
@@ -2139,30 +2237,11 @@ body {
   <!-- ═══════════════ TAB: COURTS ═══════════════ -->
   <div id="tabCourts" class="tab-panel active" style="display:none;">
 
-    <!-- Queue -->
-    <div id="playersSection" class="queue-bar-wrap" style="margin-bottom:14px;">
-      <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:4px;">
-        <div class="section-title" id="queueTitle">Queue</div>
-        <button id="btnUndoMove" class="btn-outline" style="display:none;flex-shrink:0;padding:5px 10px;font-size:0.78rem;font-weight:600;" onclick="App.undoProposedMove()">&#8617; Undo</button>
-      </div>
-      <div class="section-subtitle" id="queueSubtitle" style="margin-bottom:10px;">Players waiting to be assigned to a court.</div>
-      <div class="queue-list-box">
-        <div id="playerList" class="queue-list dnd-target" data-loc-type="queue"></div>
-      </div>
-      <div id="queueHint" class="section-subtitle" style="margin-top:8px;">Use &#x23F8; to sit out temporarily or &times; to remove.</div>
-      <button id="rrUnlockBtn" class="btn-outline" onclick="App.isRoundRobin()?App.rrUnlockPlayers():App.bracketUnlockPlayers()" style="display:none;margin-top:8px;width:100%;color:var(--warning);border-color:var(--warning);font-size:0.82rem;">Unlock Players &amp; Reset</button>
-      <button id="btnQueueAddPlayer" class="btn-add-player" style="display:none;margin-top:10px;" onclick="App.openQueueAddPlayer()">+ Add Player</button>
-    </div>
-
-    <!-- Assign -->
+    <!-- Courts -->
     <div class="assign-header" id="assignHeader" style="margin-bottom:14px;">
-      <div>
-        <div class="section-title">Assign Courts</div>
-        <div class="section-subtitle" id="assignCount"></div>
-      </div>
-      <div class="assign-controls" id="assignControls" style="display:none;">
+      <div class="assign-header-top">
+        <div class="section-title" id="assignSectionTitle">Assign Courts</div>
         <div class="assign-options-row">
-          <span class="assign-option-label">Courts available now</span>
           <select id="courtCountSelect" class="assign-court-select" onchange="App.setAvailableCourts(this.value)">
             <option value="1">1</option>
             <option value="2">2</option>
@@ -2172,12 +2251,59 @@ body {
             <option value="6">6</option>
           </select>
         </div>
-        <div class="assign-match-options">
-          <label><input type="checkbox" id="optSkill" onchange="App.saveState()"> Match by skill</label>
-          <label><input type="checkbox" id="optRepeats" onchange="App.saveState()"> Minimize repeats</label>
-        </div>
+      </div>
+      <div class="section-subtitle" id="assignCount"></div>
+      <div class="assign-controls" id="assignControls" style="display:none;">
         <button id="btnAssignAll" class="btn-assign-all" onclick="App.assignAll()">Assign Courts</button>
       </div>
+    </div>
+
+    <!-- Queue -->
+    <div id="playersSection" class="queue-bar-wrap" style="margin-bottom:14px;">
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:4px;">
+        <div class="section-title" id="queueTitle">Queue</div>
+        <button id="btnUndoMove" class="btn-outline" style="display:none;flex-shrink:0;padding:5px 10px;font-size:0.78rem;font-weight:600;" onclick="App.undoProposedMove()">&#8617; Undo</button>
+      </div>
+      <div class="section-subtitle" id="queueSubtitle" style="margin-bottom:10px;"></div>
+      <div class="assign-match-options" style="margin-bottom:10px;">
+        <label class="toggle-switch-label">
+          <span class="toggle-switch">
+            <input type="checkbox" id="optSkill" onchange="App.toggleSkillMatching()">
+            <span class="toggle-switch-track"></span>
+          </span>
+          Match by skill
+        </label>
+      </div>
+      <div id="queueAddPlayerRow" style="display:none;margin-bottom:10px;">
+        <p id="queueAddPlayerError" class="setup-error" style="display:none;">Enter a player name</p>
+        <div style="display:flex;gap:8px;">
+          <input type="text" class="setup-input" id="queueAddPlayerName" placeholder="Player name" style="flex:1;margin-bottom:0;" onkeydown="if(event.key==='Enter')App.submitQueueAddPlayer()">
+          <select class="setup-input" id="queueAddPlayerSkill" style="width:110px;flex-shrink:0;margin-bottom:0;">
+            <option value="" selected>Rating</option>
+            <option value="beginner">Beginner</option>
+            <option value="intermediate">Intermediate</option>
+            <option value="advanced">Advanced</option>
+          </select>
+          <button type="button" class="btn-add-player" style="margin-top:0;flex-shrink:0;width:auto;padding:12px 16px;" onclick="App.submitQueueAddPlayer()">+ Add Player</button>
+        </div>
+      </div>
+      <div class="queue-subsection-label">Waiting</div>
+      <div class="queue-list-box">
+        <div id="queueActiveList" class="queue-list dnd-target" data-loc-type="queue"></div>
+        <div id="queueDropQueue" class="queue-drop-strip dnd-target" data-loc-type="queue">Drag or tap to enter queue</div>
+      </div>
+      <div id="queueWaitingWrap" style="display:none;">
+        <div class="queue-subsection-label" style="margin-top:10px;">Sitting Out</div>
+        <div class="queue-list-box">
+          <div id="queueWaitingList" class="queue-list dnd-target" data-loc-type="waiting"></div>
+          <div id="queueDropWaiting" class="queue-drop-strip dnd-target" data-loc-type="waiting">Drag or tap to sit out</div>
+        </div>
+      </div>
+      <div id="queueRemoveZoneTitle" class="queue-subsection-label" style="margin-top:10px;">Leave Session</div>
+      <div id="queueRemoveZone" class="queue-remove-zone dnd-target" data-loc-type="remove">
+        <span id="queueRemoveZoneLabel">Drag or tap to remove</span>
+      </div>
+      <button id="rrUnlockBtn" class="btn-outline" onclick="App.isRoundRobin()?App.rrUnlockPlayers():App.bracketUnlockPlayers()" style="display:none;margin-top:8px;width:100%;color:var(--warning);border-color:var(--warning);font-size:0.82rem;">Unlock Players &amp; Reset</button>
     </div>
 
     <!-- Courts grid (active games) -->
@@ -2213,7 +2339,12 @@ body {
       <div class="settings-card-title">Your Profile</div>
       <div style="display:flex;gap:8px;margin-bottom:8px;">
         <input type="text" class="setup-input" id="settingsName" placeholder="Display name" maxlength="30" style="flex:1;min-width:0;margin-bottom:0;">
-        <input type="number" class="setup-input" id="settingsSkill" placeholder="Skill (optional)" min="2" max="8" step="0.01" onblur="App.fmtSkillInput(this)" style="width:130px;flex-shrink:0;margin-bottom:0;">
+        <select class="setup-input" id="settingsSkill" style="width:130px;flex-shrink:0;margin-bottom:0;">
+          <option value="">Rating</option>
+          <option value="beginner">Beginner</option>
+          <option value="intermediate">Intermediate</option>
+          <option value="advanced">Advanced</option>
+        </select>
       </div>
       <div style="display:flex;align-items:center;justify-content:flex-end;">
         <button type="button" class="btn-outline" onclick="App.saveSettings()" style="padding:12px 16px;font-size:1rem;font-weight:700;">Save</button>
@@ -2312,7 +2443,7 @@ body {
         </div>
       </div>
       <div class="history-filters" style="display:flex;gap:8px;align-items:center;">
-        <input type="text" id="historySearch" class="history-search" placeholder="Search player name..." oninput="App.renderHistory()" style="flex:1;">
+        <input type="text" id="historySearch" class="history-search" placeholder="Search players..." oninput="App.renderHistory()" style="flex:1;">
         <button type="button" class="btn-outline" id="btnFilterMyMatches" onclick="App.toggleMyMatches()" style="white-space:nowrap;padding:12px 16px;font-size:1rem;font-weight:700;">My Matches</button>
       </div>
       <div class="history-table-wrap" id="historyRounds"></div>
@@ -2351,7 +2482,12 @@ body {
         </div>
         <div class="hiw-section">
           <h3>🌐 Joining a Public Session</h3>
-          <p>Select your location from the drop-down and tap <strong>Join</strong>. You'll be asked for your name and optional skill level, then added to the rotation and courts will be assigned automatically each round.</p>
+          <p>Select your location from the drop-down and tap <strong>Join</strong>. You'll be asked for your name and an optional skill level, then added to the rotation — courts fill from there via Auto-fill or by dragging players on, prioritizing whoever's waited longest.</p>
+        </div>
+        <div class="hiw-section">
+          <h3>🎾 Confirming &amp; Ending a Match (Open Play)</h3>
+          <p>An auto-filled or drag-filled court starts out <strong>Proposed</strong> — adjust who's on it by dragging or tapping players between the queue and the court, then tap <strong>Confirm</strong>. Nothing is final until then, and adjusting or cancelling a proposal never costs anyone their place in line. Once confirmed, tap <strong>Start</strong> on the court card to start the match timer.</p>
+          <p style="margin-top:6px;">When a match ends, choose <strong>Return All 4</strong> (send everyone back to the queue), <strong>Keep Winners</strong> (needs a score), or <strong>Keep Last-Joined</strong> (once a court has had a pair carried over before) to decide who stays on for the next match.</p>
         </div>
         <div class="hiw-section">
           <h3>⚙️ Updating Your Info</h3>
@@ -2380,7 +2516,12 @@ body {
       <div class="hiw-body">
         <input type="text" class="setup-input" id="selfProfileName" placeholder="Your name" autocomplete="given-name" style="width:100%;" onkeydown="if(event.key==='Enter')Onboard._selfProfileSubmit()">
         <p id="selfProfileNameError" class="setup-error">Enter your name first</p>
-        <input type="number" class="setup-input" id="selfProfileSkill" placeholder="Skill level (optional)" min="2" max="8" step="0.01" style="width:100%;" onblur="App.fmtSkillInput(this)" onkeydown="if(event.key==='Enter')Onboard._selfProfileSubmit()">
+        <select class="setup-input" id="selfProfileSkill" style="width:100%;">
+          <option value="">Skill level (optional)</option>
+          <option value="beginner">Beginner</option>
+          <option value="intermediate">Intermediate</option>
+          <option value="advanced">Advanced</option>
+        </select>
         <p style="font-size:0.78rem;color:var(--text-muted);margin:0;">You can update this anytime from Settings.</p>
         <div style="display:flex;gap:10px;">
           <button type="button" class="btn-outline" style="flex:1;padding:12px;font-size:1rem;font-weight:700;" onclick="Onboard._selfProfileCancel()">Cancel</button>
@@ -2509,24 +2650,6 @@ body {
         <p style="font-size:0.85rem;color:var(--text-light);line-height:1.5;margin:0;">Quick Play isn&rsquo;t saved. If you leave now, all players, scores, and courts will be lost.</p>
         <button type="button" id="quickPlaySaveBtn" class="btn-confirm-join" style="width:100%;padding:12px;font-size:1rem;font-weight:700;" onclick="Session.leaveModalSaveAndContinue()">Sign in with Google to Save</button>
         <button type="button" class="btn-danger" style="width:100%;padding:12px;font-size:1rem;font-weight:700;" onclick="Session.leaveModalDiscard()">Leave Without Saving</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- ── In-session: add player to queue modal ── -->
-  <div id="queueAddPlayerModal" class="hiw-overlay" style="display:none;" onclick="App.closeQueueAddPlayer(event)">
-    <div class="hiw-modal" style="max-width:360px;" onclick="event.stopPropagation()">
-      <div class="hiw-header">
-        <h2>Add Player</h2>
-        <button class="hiw-close" onclick="App.closeQueueAddPlayer()" aria-label="Close">&times;</button>
-      </div>
-      <div class="hiw-body">
-        <div style="display:flex;gap:8px;">
-          <input type="text" class="setup-input" id="queueAddPlayerName" placeholder="Player name" style="flex:1;margin-bottom:0;" onkeydown="if(event.key==='Enter')App.submitQueueAddPlayer()">
-          <input type="number" class="setup-input" id="queueAddPlayerSkill" placeholder="Skill" min="2" max="8" step="0.01" style="width:80px;flex-shrink:0;margin-bottom:0;" onblur="App.fmtSkillInput(this)" onkeydown="if(event.key==='Enter')App.submitQueueAddPlayer()">
-        </div>
-        <p id="queueAddPlayerError" class="setup-error">Enter a player name</p>
-        <button type="button" class="btn-confirm-join" style="width:100%;padding:12px;font-size:1rem;font-weight:700;" onclick="App.submitQueueAddPlayer()">+ Add Player</button>
       </div>
     </div>
   </div>
@@ -2684,9 +2807,9 @@ const App = {
   state: {
     players: [],
     teams: [],
-    options: { useSkill: true, minimizeRepeats: true },
+    options: { useSkill: false },
     opponentHistory: {},
-    sitoutCounts: {},
+    roundsWaited: {},
     round: 0,
     activeGames: {},
     scoringGames: {},
@@ -2741,7 +2864,6 @@ const App = {
     document.addEventListener('pointermove', e => this._onDndPointerMove(e));
     document.addEventListener('pointerup', e => this._onDndPointerUp(e));
     document.addEventListener('pointercancel', e => this._onDndPointerUp(e));
-    document.addEventListener('click', e => this._onTap(e), true);
   },
 
   // ─── State normalization ───────────────────
@@ -2768,8 +2890,8 @@ const App = {
       if (g && !Array.isArray(g.side2)) g.side2 = g.side2 ? Object.values(g.side2) : [];
     }
     s.opponentHistory = this._toObject(s.opponentHistory);
-    s.sitoutCounts    = this._toObject(s.sitoutCounts);
-    if (!s.options) s.options = { useSkill: false, minimizeRepeats: false };
+    s.roundsWaited    = this._toObject(s.roundsWaited);
+    if (!s.options) s.options = { useSkill: false };
     if (!s.nextId)      s.nextId      = 1;
     if (!s.nextCourtId) s.nextCourtId = 1;
     if (s.availableCourts == null) s.availableCourts = 1;
@@ -2788,17 +2910,32 @@ const App = {
     }
     delete s.assignMode;
     delete s.courts; delete s.pendingGames; delete s.currentSittingOut; delete s.selectedPlayerId;
-    // Backfill joinedAt for players added before this field existed
+    // Backfill joinedAt for players added before this field existed. Also
+    // one-time-strip the old numeric skill rating in favor of the new
+    // Beginner/Intermediate/Advanced tier field — decided not to migrate
+    // old values, everyone re-picks a tier fresh.
     const _now = Date.now();
-    for (const p of s.players) { if (!p.joinedAt) p.joinedAt = _now; }
+    for (const p of s.players) {
+      if (!p.joinedAt) p.joinedAt = _now;
+      if (!p.lastActiveAt) p.lastActiveAt = p.joinedAt;
+      delete p.score;
+      if (p.skillLevel === undefined) p.skillLevel = null;
+    }
   },
 
   // ─── Persistence ───────────────────────────
   saveState() {
     this.state.options.useSkill = document.getElementById('optSkill').checked;
-    this.state.options.minimizeRepeats = document.getElementById('optRepeats').checked;
     localStorage.setItem('courtManager', JSON.stringify(this.state));
     Session.push();
+  },
+
+  // The "Match by skill" toggle both feeds the fairness algorithm's
+  // skill-balancing and shows/hides the per-player skill badge in the
+  // queue, so flipping it needs a re-render, not just a save.
+  toggleSkillMatching() {
+    this.saveState();
+    this.renderPlayers();
   },
 
   loadState() {
@@ -2825,7 +2962,7 @@ const App = {
     const user = Onboard._savedUser();
     if (user) {
       document.getElementById('settingsName').value = user.name || '';
-      document.getElementById('settingsSkill').value = user.skill != null ? App.fmtSkill(user.skill) : '';
+      document.getElementById('settingsSkill').value = user.skillLevel || '';
     }
   },
 
@@ -2833,17 +2970,15 @@ const App = {
     const nameEl = document.getElementById('settingsName');
     const name = nameEl.value.trim();
     if (!name) { nameEl.focus(); return; }
-    App.fmtSkillInput(document.getElementById('settingsSkill'));
-    const skillRaw = document.getElementById('settingsSkill').value;
-    const skill = skillRaw ? parseFloat(parseFloat(skillRaw).toFixed(2)) : null;
+    const skillLevel = document.getElementById('settingsSkill').value || null;
 
-    try { localStorage.setItem('courtManagerUser', JSON.stringify({ name, skill })); } catch(e) {}
+    try { localStorage.setItem('courtManagerUser', JSON.stringify({ name, skillLevel })); } catch(e) {}
 
     if (Onboard.selfId != null) {
       const p = this.state.players.find(p => p.id === Onboard.selfId);
       if (p) {
         p.name = name;
-        p.score = skill;
+        p.skillLevel = skillLevel;
         this.saveState();
         this.render();
       }
@@ -2857,29 +2992,8 @@ const App = {
   },
 
   // ─── Players ───────────────────────────────
-  // All session types add players via a modal opened from the queue's
-  // + Add Player button (Quick Play sessions skip the skill field).
-  openQueueAddPlayer() {
-    const nameEl = document.getElementById('queueAddPlayerName');
-    const skillEl = document.getElementById('queueAddPlayerSkill');
-    if (nameEl) nameEl.value = '';
-    if (skillEl) {
-      skillEl.value = '';
-      skillEl.style.display = this.state._quickPlay ? 'none' : '';
-    }
-    const errEl = document.getElementById('queueAddPlayerError');
-    if (errEl) errEl.style.display = 'none';
-    document.getElementById('queueAddPlayerModal').style.display = 'flex';
-    document.body.style.overflow = 'hidden';
-    nameEl?.focus();
-  },
-
-  closeQueueAddPlayer(event) {
-    if (event && event.target !== event.currentTarget) return;
-    document.getElementById('queueAddPlayerModal').style.display = 'none';
-    document.body.style.overflow = '';
-  },
-
+  // All session types add players via the inline name/skill fields pinned to
+  // the bottom of the queue (Quick Play sessions skip the skill field).
   submitQueueAddPlayer() {
     const nameEl = document.getElementById('queueAddPlayerName');
     const skillEl = document.getElementById('queueAddPlayerSkill');
@@ -2890,25 +3004,50 @@ const App = {
       nameEl?.focus();
       return;
     }
-    const skill = (!this.state._quickPlay && skillEl?.value) ? parseFloat(skillEl.value) : null;
+    const errEl = document.getElementById('queueAddPlayerError');
+    if (errEl) errEl.style.display = 'none';
+    const skillLevel = (!this.state._quickPlay && skillEl?.value) ? skillEl.value : null;
     const newId = this.state.nextId++;
+    const now = Date.now();
     this.state.players.push({
       id: newId,
       name,
-      score: (skill != null && !isNaN(skill)) ? skill : null,
+      skillLevel,
       active: true,
       isLive: false,
       addedBy: Onboard.selfId,
-      joinedAt: Date.now(),
+      joinedAt: now,
+      lastActiveAt: now,
     });
     this._myGuests.add(newId);
     this._saveMyGuests();
     this.saveState();
     this.render();
-    this.closeQueueAddPlayer();
+    if (nameEl) nameEl.value = '';
+    if (skillEl) skillEl.value = '';
+    // Re-focus to let a mouse/trackpad user add several names back-to-back
+    // without re-clicking the field each time — but not on a touch-primary
+    // device, where refocusing just pops the on-screen keyboard back open
+    // right after the person tapped "Add Player" to dismiss it.
+    if (window.matchMedia('(hover: hover) and (pointer: fine)').matches) nameEl?.focus();
   },
 
   _pendingRemove: null,
+
+  // Gates whether dragging/tapping a chip onto the Remove zone is allowed to
+  // surface the confirm prompt at all — mirrors the permission check inside
+  // removePlayer() itself, since the Remove zone is one shared drop target
+  // rather than a per-row button that could just be hidden for other players.
+  canRemovePlayer(id) {
+    const rr = this.isRoundRobin();
+    const tourn = this.isTournament();
+    const isLocked = (rr && this.state._rrLocked) || (tourn && this.state._bracketLocked);
+    if (isLocked) return false;
+    const isYou = id === Onboard.selfId;
+    const p = this.getPlayer(id);
+    const isMyGuest = p && !p.isLive && p.addedBy === Onboard.selfId;
+    return isYou || isMyGuest || Admin.isAdmin();
+  },
 
   confirmRemove(id) {
     this._pendingRemove = id;
@@ -2957,16 +3096,9 @@ const App = {
     const nameEl = document.getElementById(`editGuestName-${id}`);
     const name = nameEl ? nameEl.value.trim() : '';
     if (!name) { if (nameEl) nameEl.focus(); return; }
-    const skillEl = document.getElementById(`editGuestSkill-${id}`);
-    this.fmtSkillInput(skillEl);
-    const skillRaw = skillEl ? skillEl.value : '';
-    const skill = skillRaw ? parseFloat(parseFloat(skillRaw).toFixed(2)) : null;
 
     const p = this.state.players.find(p => p.id === id);
-    if (p) {
-      p.name = name;
-      p.score = skill;
-    }
+    if (p) p.name = name;
     this._editingGuest = null;
     this.saveState();
     this.render();
@@ -2977,16 +3109,44 @@ const App = {
     this.render();
   },
 
-  togglePlayer(id) {
-    if (this.isPlayerOnCourt(id)) return;
-    const p = this.state.players.find(p => p.id === id);
-    if (p) p.active = !p.active;
-    this.saveState();
+  getPlayer(id) {
+    return this.state.players.find(p => p.id === id);
+  },
+
+  // ─── Skill tiers (Beginner/Intermediate/Advanced) ──
+  SKILL_LEVELS: ['beginner', 'intermediate', 'advanced'],
+
+  skillLabel(p) {
+    const map = { beginner: 'Beginner', intermediate: 'Intermediate', advanced: 'Advanced' };
+    return (p && p.skillLevel) ? map[p.skillLevel] : '';
+  },
+
+  skillAbbrev(p) {
+    const map = { beginner: 'B', intermediate: 'I', advanced: 'A' };
+    return (p && p.skillLevel) ? map[p.skillLevel] : 'NR';
+  },
+
+  // Ordinal value used for skill-balancing (advanced > intermediate > beginner);
+  // unset defaults to the neutral middle value rather than skewing either way.
+  _skillValue(p) {
+    const map = { beginner: 1, intermediate: 2, advanced: 3 };
+    return (p && p.skillLevel && map[p.skillLevel]) || 2;
+  },
+
+  _skillPickerFor: null,
+
+  toggleSkillPicker(id) {
+    this._skillPickerFor = this._skillPickerFor === id ? null : id;
     this.render();
   },
 
-  getPlayer(id) {
-    return this.state.players.find(p => p.id === id);
+  setPlayerSkillLevel(id, level) {
+    const p = this.getPlayer(id);
+    if (!p) return;
+    p.skillLevel = level || null;
+    this._skillPickerFor = null;
+    this.saveState();
+    this.render();
   },
 
   // ─── Court-lock helpers ────────────────────
@@ -3073,7 +3233,10 @@ const App = {
     this.render();
   },
 
-  submitScore(courtId) {
+  // mode: 'all' | 'winners' | 'lastJoined' | 'rematch' — which end-of-match
+  // option the organizer picked (Open Play only; RR/Tournament always pass
+  // 'all', which behaves exactly like today's plain Save).
+  submitScore(courtId, mode = 'all') {
     const s1Input = document.getElementById(`score-s1-${courtId}`);
     const s2Input = document.getElementById(`score-s2-${courtId}`);
     const raw1 = s1Input.value.trim();
@@ -3100,13 +3263,14 @@ const App = {
     }
     const hasScores = score1 != null && score2 != null;
     const game = this.state.activeGames[courtId];
+    let winner = null;
     if (game) {
       this.recordOpponents(game.side1, game.side2);
       for (const id of [...game.side1, ...game.side2]) {
         const p = this.getPlayer(id);
         if (p) p.roundsPlayed = (p.roundsPlayed || 0) + 1;
       }
-      const winner = hasScores ? (score1 > score2 ? 1 : score2 > score1 ? 2 : 0) : null;
+      winner = hasScores ? (score1 > score2 ? 1 : score2 > score1 ? 2 : 0) : null;
       const duration = this.getTimerElapsed(game) || null;
       const histEntry = {
         round: this.state.round,
@@ -3135,10 +3299,13 @@ const App = {
       }
     }
     const courtPlayers = game ? [...(game.side1 || []), ...(game.side2 || [])] : [];
-    const rematch = this._checkRematch(courtId, game);
-    delete this.state.activeGames[courtId];
-    delete this.state.scoringGames[courtId];
-    if (rematch) this._startRematch(courtId, rematch);
+    if (mode === 'rematch' && game) {
+      delete this.state.activeGames[courtId];
+      delete this.state.scoringGames[courtId];
+      this._startRematch(courtId, { side1: [...game.side1], side2: [...game.side2], mode: game.mode });
+    } else {
+      this._rotateCourtAfterMatch(courtId, mode, winner);
+    }
     const selfExpired = this._expireStaleFromCourt(courtPlayers);
     this.saveState();
     if (selfExpired) { this._handleSelfExpired(); return; }
@@ -3147,26 +3314,109 @@ const App = {
 
   cancelScoring(courtId) {
     delete this.state.scoringGames[courtId];
+    delete this._pendingRotationWarn[courtId];
     this.saveState();
     this.render();
   },
 
-  _checkRematch(courtId, game) {
-    if (this.isRoundRobin() || this.isTournament() || !game) return null;
-    const cb = document.getElementById(`rematch-${courtId}`);
-    if (!cb || !cb.checked) return null;
-    return { side1: [...game.side1], side2: [...game.side2], mode: game.mode };
-  },
-
   _startRematch(courtId, prev) {
+    const now = Date.now();
     this.state.activeGames[courtId] = {
       side1: prev.side1,
       side2: prev.side2,
       mode: prev.mode,
-      startTime: Date.now(),
+      startTime: now,
       timerPaused: true,
       timerElapsed: 0,
       timerResumedAt: null,
+      side1JoinedAt: now,
+      side2JoinedAt: now,
+    };
+  },
+
+  // ─── End-of-match rotation choice (Open Play) ─────
+  // "Return All 4" (default), "Keep Winners" (needs a score — see
+  // chooseRotation's warn path), or "Keep Last-Joined Pair" (only offered
+  // when the two sides don't share the same side*JoinedAt, i.e. this isn't
+  // the court's first match since it was last fully cleared).
+  _pendingRotationWarn: {},
+
+  chooseRotation(courtId, mode) {
+    if (mode === 'winners' && !this._hasEnteredScore(courtId)) {
+      this._pendingRotationWarn[courtId] = true;
+      this.render();
+      return;
+    }
+    this.submitScore(courtId, mode);
+  },
+
+  cancelRotationWarn(courtId) {
+    delete this._pendingRotationWarn[courtId];
+    this.render();
+  },
+
+  confirmRotationWarnAnyway(courtId) {
+    delete this._pendingRotationWarn[courtId];
+    this.submitScore(courtId, 'winners');
+  },
+
+  _hasEnteredScore(courtId) {
+    const raw1 = document.getElementById(`score-s1-${courtId}`)?.value.trim();
+    const raw2 = document.getElementById(`score-s2-${courtId}`)?.value.trim();
+    if (!raw1 || !raw2) return false;
+    return !isNaN(parseInt(raw1)) && !isNaN(parseInt(raw2));
+  },
+
+  _rotateCourtAfterMatch(courtId, mode, winner) {
+    const game = this.state.activeGames[courtId];
+    delete this.state.activeGames[courtId];
+    delete this.state.scoringGames[courtId];
+    if (!game || (mode !== 'winners' && mode !== 'lastJoined')) return; // "all": today's behavior
+
+    const side1 = [...game.side1], side2 = [...game.side2];
+    let staySide;
+    if (mode === 'winners') {
+      staySide = winner === 1 ? side1 : winner === 2 ? side2 : this.shuffle([side1, side2])[0];
+    } else {
+      if (game.side1JoinedAt === game.side2JoinedAt) return; // not actually eligible, behave like "all"
+      staySide = game.side1JoinedAt > game.side2JoinedAt ? side1 : side2;
+    }
+
+    // Exclude everyone from *this* match (both the kept side and the side
+    // rotating out) as well as anyone already on another court — activeGames
+    // no longer lists this court (deleted above), so getPlayersOnCourts()
+    // alone wouldn't catch the rotating-out side.
+    const onCourtNow = this.getPlayersOnCourts();
+    const picked = this._pickPriorityPlayers(2, [...onCourtNow, ...side1, ...side2]);
+    if (!picked) {
+      // Not enough queue players to fill the other side right now — keep
+      // the chosen side on the court as a proposed match (one side full,
+      // one empty) so the organizer can drag/auto-fill it once more
+      // players are free, instead of discarding "Keep Winners"/"Keep
+      // Last-Joined" and dumping the kept side back into the queue too.
+      this.state.proposedGames[courtId] = { side1: staySide, side2: [], mode: 'doubles' };
+      return;
+    }
+
+    const refillPair = picked.find(u => u.type === 'pair');
+    const refillIds = refillPair ? refillPair.ids : picked.flatMap(u => u.ids);
+
+    // The kept pair and the fresh players are both "confirmed into a match"
+    // right now, same as a normal Start Match confirm — this path bypasses
+    // startProposedMatch entirely so it needs the same bookkeeping inline.
+    this._confirmPlayersIntoMatch([...staySide, ...refillIds]);
+
+    const now = Date.now();
+    this.state.activeGames[courtId] = {
+      side1: staySide === side1 ? side1 : refillIds,
+      side2: staySide === side2 ? side2 : refillIds,
+      mode: 'doubles',
+      startTime: now,
+      timerPaused: true,
+      timerElapsed: 0,
+      timerResumedAt: null,
+      side1JoinedAt: staySide === side1 ? game.side1JoinedAt : now,
+      side2JoinedAt: staySide === side2 ? game.side2JoinedAt : now,
     };
   },
 
@@ -3306,8 +3556,10 @@ const App = {
     }
 
     const courtPlayers = [...(game.side1 || []), ...(game.side2 || [])];
-    delete this.state.activeGames[courtId];
-    delete this.state.scoringGames[courtId];
+    // Score Keeper's "Finish" always returns all 4 to the queue — it always
+    // has a concrete winner, so the rotation choice/warn dialog wouldn't add
+    // anything here; 'all' keeps this path's behavior exactly as before.
+    this._rotateCourtAfterMatch(courtId, 'all', winner);
     const selfExpired = this._expireStaleFromCourt(courtPlayers);
     this.saveState();
     if (selfExpired) { this._handleSelfExpired(); return; }
@@ -3565,8 +3817,8 @@ const App = {
     }
   },
 
-  getSitoutCount(id) {
-    return this.state.sitoutCounts[id] || 0;
+  getRoundsWaited(id) {
+    return this.state.roundsWaited[id] || 0;
   },
 
   // ─── Assignment Algorithm ──────────────────
@@ -3817,12 +4069,7 @@ const App = {
 
     // Seed by combined team skill descending (if available), else by lowest player ID
     const seeded = [...units].sort((a, b) => {
-      const score = u => {
-        const p1 = this.getPlayer(u.p1), p2 = this.getPlayer(u.p2);
-        const s1 = p1 && p1.score != null ? p1.score : 0;
-        const s2 = p2 && p2.score != null ? p2.score : 0;
-        return s1 + s2;
-      };
+      const score = u => this._skillValue(this.getPlayer(u.p1)) + this._skillValue(this.getPlayer(u.p2));
       return score(b) - score(a) || Math.min(a.p1, a.p2) - Math.min(b.p1, b.p2);
     });
 
@@ -4100,9 +4347,14 @@ const App = {
     this.render();
   },
 
-  _renderQueueTournament(countEl, controls, btnAssignAll, courtSelect, matchOpts, courtLabel) {
+  _renderQueueTournament(countEl, controls, btnAssignAll, courtSelect, matchOpts) {
     if (matchOpts) matchOpts.style.display = 'none';
-    if (courtLabel) courtLabel.textContent = 'Number of courts';
+    // Open Play hides this button/title/note in favor of per-court Auto-fill;
+    // restore them here in case the session type ever switches away from Open Play.
+    if (btnAssignAll) btnAssignAll.style.display = '';
+    const titleEl = document.getElementById('assignSectionTitle');
+    if (titleEl) titleEl.textContent = 'Assign Courts';
+    if (countEl) countEl.style.display = '';
     const rrSection = document.getElementById('rrUpcomingSection');
     if (rrSection) rrSection.style.display = 'none';
 
@@ -4116,6 +4368,7 @@ const App = {
         ? `${n} player${n !== 1 ? 's' : ''} &middot; need at least 4 to start`
         : `${n} player${n !== 1 ? 's' : ''} &middot; <a href="#" onclick="App.bracketLockPlayers();return false;" style="color:var(--primary);font-weight:600;">Lock Players to Generate Bracket</a>`;
       if (controls) controls.style.display = 'none';
+      if (courtSelect) courtSelect.parentElement.style.display = 'none';
     } else if (bracket.length === 0) {
       countEl.textContent = `${n} players locked`;
       if (Session.id && controls) {
@@ -4297,6 +4550,95 @@ ${bracketHTML}
     w.document.close();
   },
 
+  // ─── Priority queue (fairness) ──────────────
+  // Ranks active, unassigned players — and locked-partner pairs, as one
+  // combined unit — by roundsWaited desc, then lastActiveAt asc (oldest
+  // first) as a tiebreak. Units are shuffled once beforehand so a remaining
+  // tie resolves randomly rather than always favoring the same player.
+  _rankedQueueUnits(allQueue) {
+    const activePairs = this.state.teams.filter(t =>
+      allQueue.some(p => p.id === t.p1) && allQueue.some(p => p.id === t.p2)
+    );
+    const pairedIds = new Set(activePairs.flatMap(t => [t.p1, t.p2]));
+    const soloPlayers = allQueue.filter(p => !pairedIds.has(p.id));
+
+    const rw = id => this.state.roundsWaited[id] || 0;
+    const la = id => this.getPlayer(id)?.lastActiveAt || 0;
+
+    const pairUnits = activePairs.map(t => ({
+      type: 'pair', ids: [t.p1, t.p2], team: t,
+      roundsWaited: (rw(t.p1) + rw(t.p2)) / 2,
+      lastActiveAt: (la(t.p1) + la(t.p2)) / 2,
+    }));
+    const soloUnits = soloPlayers.map(p => ({
+      type: 'solo', ids: [p.id],
+      roundsWaited: rw(p.id),
+      lastActiveAt: la(p.id),
+    }));
+
+    const units = this.shuffle([...pairUnits, ...soloUnits]);
+    units.sort((a, b) => {
+      if (b.roundsWaited !== a.roundsWaited) return b.roundsWaited - a.roundsWaited;
+      if (a.lastActiveAt !== b.lastActiveAt) return a.lastActiveAt - b.lastActiveAt;
+      return 0;
+    });
+    return units;
+  },
+
+  // Greedy-fills up to n seats from a ranked unit list. A unit that wouldn't
+  // fit (e.g. a locked pair when only 1 seat remains) is skipped rather than
+  // split up — it simply waits for the next fill.
+  _fillUnitsToCount(units, n) {
+    const picked = [];
+    const usedIds = new Set();
+    let total = 0;
+    for (const u of units) {
+      if (total >= n) break;
+      if (u.ids.some(id => usedIds.has(id))) continue;
+      if (total + u.ids.length > n) continue;
+      picked.push(u);
+      total += u.ids.length;
+      u.ids.forEach(id => usedIds.add(id));
+    }
+    return total === n ? picked : null;
+  },
+
+  // Shared selection core for both a fresh court (n=4) and refilling seats
+  // next to a kept pair after end-of-match rotation (n=2).
+  _pickPriorityPlayers(n, excludeIds = []) {
+    const exclude = new Set(excludeIds);
+    const allQueue = this.state.players.filter(p => p.active && !exclude.has(p.id));
+    const units = this._rankedQueueUnits(allQueue);
+    return this._fillUnitsToCount(units, n);
+  },
+
+  // Bumps roundsWaited for every active, unassigned player, then advances
+  // the round counter. Called once per fill action — whether that's a
+  // single Assign Courts click that fills several courts at once, or (once
+  // per-court auto-fill ships) a single court's fill — never once per court
+  // within a multi-court pass.
+  _completeAssignmentPass() {
+    const onCourt = this.getPlayersOnCourts();
+    for (const p of this.state.players) {
+      if (!p.active) continue;
+      if (onCourt.has(p.id)) continue;
+      this.state.roundsWaited[p.id] = (this.state.roundsWaited[p.id] || 0) + 1;
+    }
+    this.state.round++;
+  },
+
+  // Resets roundsWaited and bumps lastActiveAt for players actually
+  // confirmed into a match (Start Match) — not at proposal time, so
+  // adjusting or cancelling a proposal never costs anyone their place in line.
+  _confirmPlayersIntoMatch(ids) {
+    const now = Date.now();
+    for (const id of ids) {
+      const p = this.getPlayer(id);
+      if (p) p.lastActiveAt = now;
+      this.state.roundsWaited[id] = 0;
+    }
+  },
+
   assignAll() {
     const courtsToFill = this.state.availableCourts || 1;
     const freeCourts = this._getNextFreeCourts(courtsToFill);
@@ -4311,7 +4653,7 @@ ${bracketHTML}
     }
 
     if (anyAssigned) {
-      this.state.round++;
+      this._completeAssignmentPass();
       this.saveState();
       this.render();
     }
@@ -4319,34 +4661,13 @@ ${bracketHTML}
 
   _assignOneCourt(courtId) {
     const onCourt = this.getPlayersOnCourts();
-    const allQueue = this.state.players.filter(p => p.active && !onCourt.has(p.id));
+    const picked = this._pickPriorityPlayers(4, [...onCourt]);
+    if (!picked) return false;
 
-    const activePairs = this.state.teams.filter(t =>
-      allQueue.some(p => p.id === t.p1) && allQueue.some(p => p.id === t.p2)
-    );
-    const pairedIds = new Set(activePairs.flatMap(t => [t.p1, t.p2]));
-    const soloPlayers = allQueue.filter(p => !pairedIds.has(p.id));
+    const pickedPairs = picked.filter(u => u.type === 'pair').map(u => u.team);
+    const pickedSolos = picked.filter(u => u.type === 'solo').map(u => u.ids[0]);
 
     let side1, side2;
-
-    const shuffledPairs = this.shuffle([...activePairs]);
-    const shuffledSolos = this.shuffle(soloPlayers.map(p => p.id));
-    let pickedPairs = [], pickedSolos = [], total = 0;
-    const usedIds = new Set();
-
-    for (const pair of shuffledPairs) {
-      if (total + 2 > 4) break;
-      if (usedIds.has(pair.p1) || usedIds.has(pair.p2)) continue;
-      pickedPairs.push(pair); total += 2;
-      usedIds.add(pair.p1); usedIds.add(pair.p2);
-      if (total === 4) break;
-    }
-    for (const id of shuffledSolos) {
-      if (total >= 4) break;
-      pickedSolos.push(id); total++;
-    }
-    if (total < 4) return false;
-
     if (pickedPairs.length === 2) {
       side1 = [pickedPairs[0].p1, pickedPairs[0].p2];
       side2 = [pickedPairs[1].p1, pickedPairs[1].p2];
@@ -4354,14 +4675,23 @@ ${bracketHTML}
       side1 = [pickedPairs[0].p1, pickedPairs[0].p2];
       side2 = pickedSolos;
     } else {
-      side1 = [pickedSolos[0], pickedSolos[1]];
-      side2 = [pickedSolos[2], pickedSolos[3]];
-      if (this.state.options.useSkill) [side1, side2] = this.balanceDoublesSkill(side1, side2);
-      if (this.state.options.minimizeRepeats) [side1, side2] = this.optimizeDoublesRepeats(side1, side2);
+      [side1, side2] = this._pickBestDoublesCombo([pickedSolos[0], pickedSolos[1]], [pickedSolos[2], pickedSolos[3]]);
     }
 
     this.state.proposedGames[courtId] = { side1, side2, mode: 'doubles' };
     return true;
+  },
+
+  // Per-court "Auto-fill" button on an empty Open Play court card — the
+  // per-click analog of assignAll(), one court at a time. Each click is its
+  // own fairness pass (roundsWaited increments once per click here, same as
+  // assignAll() increments once per bulk click filling several courts).
+  autoFillCourt(courtId) {
+    if (this._assignOneCourt(courtId)) {
+      this._completeAssignmentPass();
+      this.saveState();
+      this.render();
+    }
   },
 
   // ─── Proposed matches (Open Play manual review) ─────
@@ -4370,14 +4700,20 @@ ${bracketHTML}
   startProposedMatch(courtId) {
     const game = this.state.proposedGames[courtId];
     if (!game || game.side1.length !== 2 || game.side2.length !== 2) return;
+    const now = Date.now();
     this.state.activeGames[courtId] = {
       side1: [...game.side1], side2: [...game.side2],
       mode: 'doubles',
-      startTime: Date.now(),
+      startTime: now,
       timerPaused: true,
       timerElapsed: 0,
       timerResumedAt: null,
+      // Equal on a fresh confirm — "Keep Last-Joined Pair" at end-of-match
+      // is only offered once these two diverge (i.e. after a rotation).
+      side1JoinedAt: now,
+      side2JoinedAt: now,
     };
+    this._confirmPlayersIntoMatch([...game.side1, ...game.side2]);
     delete this.state.proposedGames[courtId];
     this._proposedUndoStack = []; // confirming a match is final — nothing before it is undoable
     this.saveState();
@@ -4389,29 +4725,6 @@ ${bracketHTML}
     this._proposedUndoStack = []; // cancelling is final too — start the next proposal with a clean slate
     this.saveState();
     this.render();
-  },
-
-  balanceDoublesSkill(s1, s2) {
-    const score = side => side.reduce((sum, id) => sum + (this.getPlayer(id).score || 4), 0);
-    const all = [...s1, ...s2];
-    let bestDiff = Math.abs(score(s1) - score(s2));
-    let bestS1 = s1, bestS2 = s2;
-
-    const combos = [
-      [[all[0], all[1]], [all[2], all[3]]],
-      [[all[0], all[2]], [all[1], all[3]]],
-      [[all[0], all[3]], [all[1], all[2]]],
-    ];
-    for (const [a, b] of combos) {
-      if (this.wouldBreakLockedTeam(a, b)) continue;
-      const diff = Math.abs(score(a) - score(b));
-      if (diff < bestDiff) {
-        bestDiff = diff;
-        bestS1 = a;
-        bestS2 = b;
-      }
-    }
-    return [bestS1, bestS2];
   },
 
   wouldBreakLockedTeam(s1, s2) {
@@ -4426,32 +4739,39 @@ ${bracketHTML}
     return false;
   },
 
-  optimizeDoublesRepeats(s1, s2) {
+  // Combines what used to be two independent passes (balanceDoublesSkill,
+  // optimizeDoublesRepeats) into one: repeat-minimization is always the
+  // primary criterion; skill-balance (when "Match by skill" is on) only
+  // breaks ties among combos that are equally good on repeats.
+  _pickBestDoublesCombo(s1, s2) {
+    const all = [...s1, ...s2];
+    const combos = [
+      [[all[0], all[1]], [all[2], all[3]]],
+      [[all[0], all[2]], [all[1], all[3]]],
+      [[all[0], all[3]], [all[1], all[2]]],
+    ].filter(([a, b]) => !this.wouldBreakLockedTeam(a, b));
+    if (combos.length === 0) return [s1, s2];
+
     const repScore = (a, b) => {
       let total = 0;
       for (const x of a) for (const y of b) total += this.getOpponentCount(x, y);
       return total;
     };
+    const scored = combos.map(([a, b]) => ({ a, b, rep: repScore(a, b) }));
+    const minRep = Math.min(...scored.map(c => c.rep));
+    const tied = scored.filter(c => c.rep === minRep);
 
-    const all = [...s1, ...s2];
-    let bestScore = repScore(s1, s2);
-    let bestS1 = s1, bestS2 = s2;
-
-    const combos = [
-      [[all[0], all[1]], [all[2], all[3]]],
-      [[all[0], all[2]], [all[1], all[3]]],
-      [[all[0], all[3]], [all[1], all[2]]],
-    ];
-    for (const [a, b] of combos) {
-      if (this.wouldBreakLockedTeam(a, b)) continue;
-      const sc = repScore(a, b);
-      if (sc < bestScore) {
-        bestScore = sc;
-        bestS1 = a;
-        bestS2 = b;
-      }
+    if (tied.length === 1 || !this.state.options.useSkill) {
+      return [tied[0].a, tied[0].b];
     }
-    return [bestS1, bestS2];
+
+    const skillScore = side => side.reduce((sum, id) => sum + this._skillValue(this.getPlayer(id)), 0);
+    let best = tied[0], bestDiff = Math.abs(skillScore(tied[0].a) - skillScore(tied[0].b));
+    for (const c of tied.slice(1)) {
+      const diff = Math.abs(skillScore(c.a) - skillScore(c.b));
+      if (diff < bestDiff) { bestDiff = diff; best = c; }
+    }
+    return [best.a, best.b];
   },
 
   crossCourtOptimize(assignments) {
@@ -4500,8 +4820,8 @@ ${bracketHTML}
   _freshState() {
     return {
       players: [], teams: [],
-      options: { useSkill: true, minimizeRepeats: true },
-      opponentHistory: {}, sitoutCounts: {}, round: 0,
+      options: { useSkill: false },
+      opponentHistory: {}, roundsWaited: {}, round: 0,
       activeGames: {}, scoringGames: {}, proposedGames: {}, roundHistory: [], nextId: 1, nextCourtId: 1,
       availableCourts: 1, adminLog: [],
     };
@@ -4527,10 +4847,10 @@ ${bracketHTML}
 
   clearHistory() {
     if (!Admin.isAdmin()) return;
-    if (!confirm('Clear all match history and sit-out counts for all users?')) return;
+    if (!confirm('Clear all match history and fairness rotation counts for all users?')) return;
     this._logAdmin('Clear History');
     this.state.opponentHistory = {};
-    this.state.sitoutCounts = {};
+    this.state.roundsWaited = {};
     this.state.roundHistory = [];
     this.state.round = 0;
     this.saveState();
@@ -4600,15 +4920,19 @@ ${bracketHTML}
     const qTitle = document.getElementById('queueTitle');
     const qSub = document.getElementById('queueSubtitle');
     if (qTitle) qTitle.textContent = 'Queue';
-    if (qSub) qSub.textContent = rr
-      ? (rrLocked ? 'Players are locked for this round robin.' : 'Add all players, then lock the roster to generate the schedule.')
-      : tourn
-      ? (tournLocked ? 'Players are locked for this tournament.' : 'Add all players, then lock the roster to generate the bracket.')
-      : 'Players waiting to be assigned to a court.';
-    const qHint = document.getElementById('queueHint');
-    if (qHint) qHint.style.display = structured ? 'none' : '';
-    const qAddBtn = document.getElementById('btnQueueAddPlayer');
-    if (qAddBtn) qAddBtn.style.display = isLocked ? 'none' : '';
+    if (qSub) {
+      const subText = rr
+        ? (rrLocked ? 'Players are locked for this round robin.' : 'Add all players, then lock the roster to generate the schedule.')
+        : tourn
+        ? (tournLocked ? 'Players are locked for this tournament.' : 'Add all players, then lock the roster to generate the bracket.')
+        : '';
+      qSub.textContent = subText;
+      qSub.style.display = subText ? '' : 'none';
+    }
+    const qAddRow = document.getElementById('queueAddPlayerRow');
+    if (qAddRow) qAddRow.style.display = isLocked ? 'none' : '';
+    const qAddSkill = document.getElementById('queueAddPlayerSkill');
+    if (qAddSkill) qAddSkill.style.display = this.state._quickPlay ? 'none' : '';
 
     // Offline sessions have no persistent identity/preferences to manage
     const isOffline = !!this.state._offline;
@@ -4636,7 +4960,6 @@ ${bracketHTML}
     this._updateTabBadges();
 
     document.getElementById('optSkill').checked = this.state.options.useSkill;
-    document.getElementById('optRepeats').checked = this.state.options.minimizeRepeats;
 
     // Partner section: available while building the roster in any mode;
     // hidden once a round robin/tournament is locked since teams are then fixed
@@ -4688,39 +5011,54 @@ ${bracketHTML}
     if (historyBadge) historyBadge.textContent = historyCount;
   },
 
+  // Queue chips are draggable/tappable in every session type: dropping one
+  // on the Waiting section sits them out, on the Queue section rejoins them,
+  // and on the Remove zone removes them (see _movePlayer). Permission for
+  // removal is checked in _movePlayer/canRemovePlayer, not here, since the
+  // Remove zone is a single shared drop target rather than a per-row button.
   renderPlayers() {
-    const el = document.getElementById('playerList');
+    const activeEl = document.getElementById('queueActiveList');
+    const waitingWrap = document.getElementById('queueWaitingWrap');
+    const waitingEl = document.getElementById('queueWaitingList');
+    const removeZone = document.getElementById('queueRemoveZone');
+    const removeZoneTitle = document.getElementById('queueRemoveZoneTitle');
+    const removeLabel = document.getElementById('queueRemoveZoneLabel');
+    const rr = this.isRoundRobin();
+    const tourn = this.isTournament();
+    const structured = rr || tourn;
+    const isLocked = (rr && this.state._rrLocked) || (tourn && this.state._bracketLocked);
+
+    if (waitingWrap) waitingWrap.style.display = structured ? 'none' : '';
+    if (removeZone) removeZone.style.display = isLocked ? 'none' : '';
+    if (removeZoneTitle) removeZoneTitle.style.display = isLocked ? 'none' : '';
+    if (removeLabel) removeLabel.textContent = 'Drag or tap to remove';
+
     const onCourts = this.getPlayersOnCourts();
     const queuePlayers = this.state.players.filter(p => !onCourts.has(p.id));
-    if (queuePlayers.length === 0) {
-      el.innerHTML = '<span style="display:block;padding:10px 0;color:var(--text-muted);font-size:0.85rem;font-style:italic;">No players waiting in the queue</span>';
-      return;
-    }
-    el.innerHTML = queuePlayers.map(p => {
-      const skillStr = p.score != null ? App.fmtSkill(p.score) : '';
+
+    const renderRow = (p) => {
       const isYou = Onboard.selfId === p.id;
       if (this._pendingRemove === p.id) {
         const confirmLabel = isYou ? 'Leave session?' : `Remove ${this.esc(p.name)}?`;
-        const confirmAction = isYou ? `App.removePlayer(${p.id})` : `App.removePlayer(${p.id})`;
-        return `<div class="queue-row">
+        return `<div class="queue-row queue-row-full">
           <div class="queue-row-confirm">
             <span>${confirmLabel}</span>
-            <button style="color:var(--danger);border-color:#fca5a5;" onclick="${confirmAction}">Yes</button>
+            <button style="color:var(--danger);border-color:#fca5a5;" onclick="App.removePlayer(${p.id})">Yes</button>
             <button style="color:var(--text-muted);border-color:var(--border);" onclick="App.cancelRemove()">No</button>
           </div>
         </div>`;
       }
       if (this._editingGuest === p.id) {
+        // Rating isn't edited here — tapping the R/B/I/A indicator on the
+        // chip itself opens the skill picker, so a second rating field in
+        // this name-edit form would just be a redundant way to do the same thing.
         return `<div class="queue-row-edit">
           <input type="text" id="editGuestName-${p.id}" value="${this.esc(p.name)}" placeholder="Name" maxlength="30"
             onkeydown="if(event.key==='Enter')App.saveGuestEdit(${p.id})">
-          <input type="number" id="editGuestSkill-${p.id}" value="${p.score != null ? App.fmtSkill(p.score) : ''}" placeholder="Skill (optional)" min="2" max="8" step="0.01"
-            onblur="App.fmtSkillInput(this)" onkeydown="if(event.key==='Enter')App.saveGuestEdit(${p.id})">
           <button class="btn-edit-save" onclick="App.saveGuestEdit(${p.id})">Save</button>
           <button class="btn-edit-cancel" onclick="App.cancelGuestEdit()">Cancel</button>
         </div>`;
       }
-      const rowClass = p.active ? 'queue-row' : 'queue-row inactive';
       const selfId = Onboard.selfId;
       const isPartner = selfId && selfId !== p.id && this.state.teams.some(t =>
         (t.p1 === selfId && t.p2 === p.id) || (t.p2 === selfId && t.p1 === p.id)
@@ -4732,27 +5070,35 @@ ${bracketHTML}
       const statusBadge = isYou ? '<span class="queue-row-you">you</span>'
         : p.isLive ? '<span class="queue-row-status user">user</span>'
         : '';
-      const rr = this.isRoundRobin();
-      const tourn = this.isTournament();
-      const structured = rr || tourn;
-      const isLocked = (rr && this.state._rrLocked) || (tourn && this.state._bracketLocked);
-      const pauseBtn = structured ? '' : (p.active
-        ? `<button class="queue-row-btn queue-row-action" onclick="App.togglePlayer(${p.id})" title="Sit out">&#x23F8;</button>`
-        : `<button class="queue-row-btn queue-row-action play" onclick="App.togglePlayer(${p.id})" title="Rejoin queue">&#x25B6;</button>`);
-      const canRemove = !isLocked && (isYou || isMyGuest || Admin.isAdmin());
-      const removeBtn = canRemove
-        ? `<button class="queue-row-btn queue-row-remove" onclick="App.confirmRemove(${p.id})" title="${isYou ? 'Leave session' : 'Remove'}">&times;</button>`
+      const skillBtn = this.state.options.useSkill
+        ? `<button class="queue-row-skill-btn${p.skillLevel ? ' set' : ''}" onclick="App.toggleSkillPicker(${p.id})" title="Set skill level">${this.skillAbbrev(p)}</button>`
         : '';
-      const skillInline = skillStr ? `<span class="queue-row-skill">(${skillStr})</span>` : '';
-      const selected = !structured && this._tapSelection && this._tapSelection.playerId === p.id ? ' dnd-selected' : '';
-      const nameClass = structured ? 'queue-row-name' : `queue-row-name dnd-chip${selected}`;
-      const nameAttrs = structured ? '' : ` data-player-id="${p.id}"`;
-      return `<div class="${rowClass}">
-        <span class="${nameClass}"${nameAttrs}>${this.esc(p.name)}${skillInline}${editBtn}${statusBadge}${partnerBadge}</span>
-        ${pauseBtn}
-        ${removeBtn}
-      </div>`;
-    }).join('');
+      const skillPicker = this._skillPickerFor === p.id ? `<div class="partner-picker" style="margin-top:0;margin-bottom:6px;">
+        <div class="partner-picker-list">
+          <div class="partner-picker-item" onclick="App.setPlayerSkillLevel(${p.id}, 'beginner')">Beginner</div>
+          <div class="partner-picker-item" onclick="App.setPlayerSkillLevel(${p.id}, 'intermediate')">Intermediate</div>
+          <div class="partner-picker-item" onclick="App.setPlayerSkillLevel(${p.id}, 'advanced')">Advanced</div>
+          <div class="partner-picker-item" onclick="App.setPlayerSkillLevel(${p.id}, null)">Clear rating</div>
+        </div>
+      </div>` : '';
+      const selected = this._tapSelection && this._tapSelection.playerId === p.id ? ' dnd-selected' : '';
+      return `<div class="queue-row">
+        <span class="queue-row-name dnd-chip${selected}" data-player-id="${p.id}"><span class="queue-row-name-text">${this.esc(p.name)}</span>${editBtn}${skillBtn}${statusBadge}${partnerBadge}</span>
+      </div>${skillPicker}`;
+    };
+
+    const activePlayers = queuePlayers.filter(p => p.active);
+    const waitingPlayers = queuePlayers.filter(p => !p.active);
+
+    // No separate empty-state message in either list — the drop strip
+    // right below each (now-empty) list already states what to do, and
+    // repeating the instruction inside the list too was redundant.
+    if (activeEl) activeEl.innerHTML = activePlayers.length
+      ? activePlayers.map(renderRow).join('')
+      : '';
+    if (waitingEl) waitingEl.innerHTML = waitingPlayers.length
+      ? waitingPlayers.map(renderRow).join('')
+      : '';
   },
 
   togglePartnerPicker() {
@@ -4810,19 +5156,97 @@ ${bracketHTML}
     }).join('');
   },
 
+  // Open Play always shows one card per court id from 1 to "Courts available
+  // now", so an organizer can auto-fill or drag onto any of them directly —
+  // plus any court beyond that count that already has a game running, so
+  // lowering the count never makes an in-progress match disappear. Round
+  // Robin/Tournament keep the old behavior (only render courts that already
+  // have a proposed/active game), since they build matches from a locked
+  // roster/bracket, not a live queue.
   renderCourts() {
     const el = document.getElementById('courtsGrid');
     const proposedIds = Object.keys(this.state.proposedGames).map(Number);
     const activeIds = Object.keys(this.state.activeGames).map(Number);
-    const allIds = [...new Set([...proposedIds, ...activeIds])].sort((a, b) => a - b);
+    const structured = this.isRoundRobin() || this.isTournament();
 
-    if (allIds.length === 0) {
-      el.innerHTML = '';
-      return;
+    let allIds;
+    if (structured) {
+      allIds = [...new Set([...proposedIds, ...activeIds])].sort((a, b) => a - b);
+      if (allIds.length === 0) { el.innerHTML = ''; return; }
+    } else {
+      const n = this.state.availableCourts || 1;
+      const idSet = new Set(Array.from({ length: n }, (_, i) => i + 1));
+      proposedIds.forEach(id => idSet.add(id));
+      activeIds.forEach(id => idSet.add(id));
+      allIds = [...idSet].sort((a, b) => a - b);
     }
 
-    el.innerHTML = allIds.map(courtId => {
-      if (this.state.proposedGames[courtId]) return this._renderProposedCard(courtId);
+    el.innerHTML = allIds.map(courtId => this._renderCourtCard(courtId)).join('');
+  },
+
+  _renderCourtCard(courtId) {
+    if (this.state.proposedGames[courtId]) return this._renderProposedCard(courtId);
+    if (this.state.activeGames[courtId]) return this._renderActiveCard(courtId);
+    return this._renderEmptyCourtCard(courtId);
+  },
+
+  _renderEmptyCourtCard(courtId) {
+    const label = 'Drag or tap to fill';
+    const sideBox = sideNum => `<div class="court-side side-${sideNum} dnd-target" data-loc-type="slot" data-court="${courtId}" data-side="${sideNum}">
+      <div class="dnd-slot-empty">${label}</div>
+    </div>`;
+    const onCourt = this.getPlayersOnCourts();
+    const eligible = this.state.players.filter(p => p.active && !onCourt.has(p.id)).length;
+    const canAutoFill = eligible >= 4;
+    return `<div class="court-card empty">
+      <div class="court-header">
+        <span>Court ${courtId}</span>
+      </div>
+      <div class="court-body">
+        <div class="court-assignment">
+          ${sideBox(1)}
+          <div class="court-vs">VS</div>
+          ${sideBox(2)}
+          <div class="match-action-row">
+            <button class="btn-confirm-match" ${canAutoFill ? '' : 'disabled'} onclick="App.autoFillCourt(${courtId})">Auto-fill</button>
+          </div>
+        </div>
+      </div>
+    </div>`;
+  },
+
+  // The end-of-match action row inside a scoring card: Round Robin/Tournament
+  // keep the old single Cancel/Save row (they always "return all 4" — there's
+  // no live queue to rotate players through); Open Play instead offers Rematch
+  // plus the 3-way rotation choice, or — if "Keep Winners" was picked with no
+  // score entered — the Go Back/Continue Anyway warning in its place.
+  _renderRotationChoices(courtId, game) {
+    if (this.isRoundRobin() || this.isTournament()) {
+      return `<div class="score-buttons">
+        <button class="btn-cancel-score" onclick="App.cancelScoring(${courtId})">Cancel</button>
+        <button class="btn-save-score" onclick="App.submitScore(${courtId})">Save</button>
+      </div>`;
+    }
+    if (this._pendingRotationWarn[courtId]) {
+      return `<div class="rotation-warn">
+        <p>No score was entered, so I can't tell who won &mdash; I'll pick a pair at random unless you go back and enter one first.</p>
+        <div class="score-buttons">
+          <button class="btn-cancel-score" onclick="App.cancelRotationWarn(${courtId})">Go Back</button>
+          <button class="btn-save-score" onclick="App.confirmRotationWarnAnyway(${courtId})">Continue Anyway</button>
+        </div>
+      </div>`;
+    }
+    const canKeepLastJoined = game.side1JoinedAt !== game.side2JoinedAt;
+    return `<div class="score-buttons rotation-choices">
+      <button class="btn-cancel-score" onclick="App.cancelScoring(${courtId})">Cancel</button>
+      <button class="btn-save-score" onclick="App.chooseRotation(${courtId}, 'rematch')">Rematch</button>
+      <button class="btn-save-score" onclick="App.chooseRotation(${courtId}, 'all')">Return All 4</button>
+      <button class="btn-save-score" onclick="App.chooseRotation(${courtId}, 'winners')">Keep Winners</button>
+      ${canKeepLastJoined ? `<button class="btn-save-score" onclick="App.chooseRotation(${courtId}, 'lastJoined')">Keep Last-Joined</button>` : ''}
+    </div>`;
+  },
+
+  _renderActiveCard(courtId) {
       const game = this.state.activeGames[courtId];
       const isScoring = !!this.state.scoringGames[courtId];
       const modeBadge = '';
@@ -4834,8 +5258,8 @@ ${bracketHTML}
 
       let bodyHTML;
       if (isScoring) {
-        const s1Names = game.side1.map(id => { const p = this.getPlayer(id); return p ? this.esc(p.name) + (p.score != null ? ` <span style="font-weight:400;opacity:0.7;">(${this.fmtSkill(p.score)})</span>` : '') : '?'; }).join(' & ');
-        const s2Names = game.side2.map(id => { const p = this.getPlayer(id); return p ? this.esc(p.name) + (p.score != null ? ` <span style="font-weight:400;opacity:0.7;">(${this.fmtSkill(p.score)})</span>` : '') : '?'; }).join(' & ');
+        const s1Names = game.side1.map(id => { const p = this.getPlayer(id); return p ? this.esc(p.name) + (this.skillLabel(p) ? ` <span style="font-weight:400;opacity:0.7;">(${this.skillLabel(p)})</span>` : '') : '?'; }).join(' & ');
+        const s2Names = game.side2.map(id => { const p = this.getPlayer(id); return p ? this.esc(p.name) + (this.skillLabel(p) ? ` <span style="font-weight:400;opacity:0.7;">(${this.skillLabel(p)})</span>` : '') : '?'; }).join(' & ');
         bodyHTML = `<div class="score-entry">
           <div class="score-entry-gameover">GAME OVER</div>
           <div class="score-side side-1">
@@ -4854,14 +5278,8 @@ ${bracketHTML}
             </div>
           </div>
           <div id="score-err-${courtId}" class="score-error"></div>
-          ${!this.isRoundRobin() && !this.isTournament() ? `<label style="display:flex;align-items:center;justify-content:flex-end;gap:6px;font-size:0.82rem;color:var(--text-light);cursor:pointer;margin-top:4px;">
-            <input type="checkbox" id="rematch-${courtId}" style="accent-color:var(--primary);"> Rematch
-          </label>` : ''}
           ${this.isTournament() ? `<div style="font-size:0.75rem;color:var(--text-muted);margin-top:4px;">Bracket match &mdash; winner advances</div>` : ''}
-          <div class="score-buttons">
-            <button class="btn-cancel-score" onclick="App.cancelScoring(${courtId})">Cancel</button>
-            <button class="btn-save-score" onclick="App.submitScore(${courtId})">Save</button>
-          </div>
+          ${this._renderRotationChoices(courtId, game)}
         </div>`;
       } else {
         const timerWidget = neverStarted
@@ -4907,7 +5325,6 @@ ${bracketHTML}
         </div>
         <div class="court-body">${bodyHTML}</div>
       </div>`;
-    }).join('');
   },
 
   _renderProposedCard(courtId) {
@@ -4915,7 +5332,7 @@ ${bracketHTML}
     const canConfirm = game.side1.length === 2 && game.side2.length === 2;
     const sideBox = (side, sideNum) => {
       const chips = side.map(id => this._renderChip(id)).join('');
-      const placeholderLabel = this._dndEnabled() ? 'Drop player here' : 'Tap to fill';
+      const placeholderLabel = 'Drag or tap to fill';
       const placeholders = Array.from({ length: 2 - side.length },
         () => `<div class="dnd-slot-empty">${placeholderLabel}</div>`).join('');
       return `<div class="court-side side-${sideNum} dnd-target" data-loc-type="slot" data-court="${courtId}" data-side="${sideNum}">
@@ -4935,9 +5352,9 @@ ${bracketHTML}
           <div class="court-vs">VS</div>
           ${sideBox(game.side2, 2)}
           <div class="match-action-row">
-            <button class="btn-confirm-match" ${canConfirm ? '' : 'disabled'} onclick="App.startProposedMatch(${courtId})">&#9654; Start Match</button>
+            <button class="btn-confirm-match" ${canConfirm ? '' : 'disabled'} onclick="App.startProposedMatch(${courtId})">&#10003; Confirm</button>
           </div>
-          ${canConfirm ? '' : '<div class="proposed-hint">Fill both teams to start the match.</div>'}
+          ${canConfirm ? '' : '<div class="proposed-hint">Fill both teams to confirm the match.</div>'}
         </div>
       </div>
     </div>`;
@@ -4948,43 +5365,69 @@ ${bracketHTML}
     if (!p) return '';
     const isYou = Onboard.selfId === playerId;
     const selected = this._tapSelection && this._tapSelection.playerId === playerId ? ' dnd-selected' : '';
-    const skillTag = p.score != null ? ` <span style="font-weight:400;opacity:0.7;">(${this.fmtSkill(p.score)})</span>` : '';
+    const skillTag = this.skillLabel(p) ? ` <span style="font-weight:400;opacity:0.7;">(${this.skillLabel(p)})</span>` : '';
     const youBadge = isYou ? ' <span class="queue-row-you">you</span>' : '';
     const userBadge = !isYou && p.isLive ? ' <span class="queue-row-status user">user</span>' : '';
     return `<span class="dnd-chip${selected}" data-player-id="${playerId}">${this.esc(p.name)}${skillTag}${youBadge}${userBadge}</span>`;
   },
 
-  // ─── Drag & drop (tablet/desktop) + tap-to-move (mobile) ─────
+  // ─── Drag & drop + tap-to-move ─────
   // Both interaction modes funnel into _movePlayer so proposed-match state
-  // stays consistent regardless of which one the organizer's device uses.
-  _dndEnabled() {
-    return window.matchMedia('(min-width: 769px)').matches;
-  },
-
+  // stays consistent regardless of which one is used, and both are always
+  // available on every device/screen size (see _onDndPointerDown/Up above).
   _locFromEl(el) {
     if (!el) return null;
-    return el.dataset.locType === 'queue'
-      ? { type: 'queue' }
-      : { type: 'slot', court: Number(el.dataset.court), side: Number(el.dataset.side) };
+    const t = el.dataset.locType;
+    if (t === 'queue' || t === 'waiting' || t === 'remove') return { type: t };
+    return { type: 'slot', court: Number(el.dataset.court), side: Number(el.dataset.side) };
   },
 
   _locEq(a, b) {
     if (!a || !b || a.type !== b.type) return false;
-    return a.type === 'queue' || (a.court === b.court && a.side === b.side);
+    return a.type !== 'slot' || (a.court === b.court && a.side === b.side);
   },
 
   _movePlayer(playerId, from, to) {
     if (this._locEq(from, to)) return;
+
+    // Dropping/tapping onto Remove doesn't move the player anywhere — it
+    // just surfaces the same Yes/No confirm the row would show elsewhere.
+    if (to.type === 'remove') {
+      if (!this.canRemovePlayer(playerId)) return;
+      if (from.type === 'slot') {
+        const arr = this.state.proposedGames[from.court] && this.state.proposedGames[from.court]['side' + from.side];
+        if (arr) {
+          const idx = arr.indexOf(playerId);
+          if (idx !== -1) arr.splice(idx, 1);
+        }
+        this.saveState();
+      }
+      this.confirmRemove(playerId);
+      return;
+    }
+
+    if (to.type === 'queue' || to.type === 'waiting') {
+      const p = this.getPlayer(playerId);
+      if (!p) return;
+      p.active = (to.type === 'queue');
+    }
+
     let occupantId = null;
     if (to.type === 'slot') {
-      const destArr = this.state.proposedGames[to.court] && this.state.proposedGames[to.court]['side' + to.side];
+      // Dropping onto a previously-empty court creates its proposed match
+      // on the fly — an empty court card has slot targets but no backing
+      // proposedGames entry until something is dropped on it.
+      if (!this.state.proposedGames[to.court]) {
+        this.state.proposedGames[to.court] = { side1: [], side2: [], mode: 'doubles' };
+      }
+      const destArr = this.state.proposedGames[to.court]['side' + to.side];
       if (!destArr) return;
       if (destArr.length >= 2) {
         occupantId = destArr.find(id => id !== playerId);
         if (occupantId == null) return; // dropped back onto its own slot
       }
     }
-    this._pushProposedUndoSnapshot();
+    if (from.type === 'slot' || to.type === 'slot') this._pushProposedUndoSnapshot();
     if (from.type === 'slot') {
       const arr = this.state.proposedGames[from.court] && this.state.proposedGames[from.court]['side' + from.side];
       if (arr) {
@@ -5026,31 +5469,55 @@ ${bracketHTML}
     return !!el.closest('button, input, select, textarea');
   },
 
-  // Tablet/desktop: press-and-drag a chip onto a slot or the queue.
+  // Single pointer-event pipeline handles press-and-drag (mouse, touch, pen)
+  // and tap-to-select-then-tap-destination on every device/screen size:
+  // a pointer that moves past the threshold becomes a drag; one that doesn't
+  // is treated as a tap. This lets phones drag AND tap rather than being
+  // locked into tap-only below a viewport-width cutoff.
   _onDndPointerDown(e) {
-    if (!this._dndEnabled()) return;
     if (e.pointerType === 'mouse' && e.button !== 0) return;
     if (this._isInteractiveTarget(e.target)) return;
     const chipEl = e.target.closest('.dnd-chip');
-    if (!chipEl) return;
-    const fromEl = chipEl.closest('[data-loc-type]');
-    const from = this._locFromEl(fromEl);
-    if (!from) return;
+    if (chipEl) {
+      const fromEl = chipEl.closest('[data-loc-type]');
+      const from = this._locFromEl(fromEl);
+      if (!from) return;
+      this._dragState = {
+        playerId: Number(chipEl.dataset.playerId),
+        from,
+        startX: e.clientX, startY: e.clientY,
+        moved: false,
+        ghost: null,
+        hoverEl: null,
+        pointerId: e.pointerId,
+        sourceEl: chipEl,
+      };
+      return;
+    }
+    // No chip under the finger/cursor — if a player is already selected,
+    // let a plain tap on a bare drop zone (e.g. an empty Waiting section)
+    // complete the move; there's nothing there to drag onto otherwise.
+    if (!this._tapSelection) return;
+    const locEl = e.target.closest('[data-loc-type]');
+    if (!locEl) return;
+    const zoneTapTo = this._locFromEl(locEl);
+    if (!zoneTapTo) return;
     this._dragState = {
-      playerId: Number(chipEl.dataset.playerId),
-      from,
+      playerId: this._tapSelection.playerId,
+      from: this._tapSelection.from,
       startX: e.clientX, startY: e.clientY,
       moved: false,
       ghost: null,
       hoverEl: null,
       pointerId: e.pointerId,
-      sourceEl: chipEl,
+      sourceEl: null,
+      zoneTapTo,
     };
   },
 
   _onDndPointerMove(e) {
     const d = this._dragState;
-    if (!d || e.pointerId !== d.pointerId) return;
+    if (!d || e.pointerId !== d.pointerId || !d.sourceEl) return;
     const dx = e.clientX - d.startX, dy = e.clientY - d.startY;
     if (!d.moved) {
       if (Math.hypot(dx, dy) < 6) return;
@@ -5079,36 +5546,35 @@ ${bracketHTML}
     if (!d || e.pointerId !== d.pointerId) return;
     this._dragState = null;
     if (d.ghost) d.ghost.remove();
-    d.sourceEl.classList.remove('dnd-dragging');
+    if (d.sourceEl) d.sourceEl.classList.remove('dnd-dragging');
     if (d.hoverEl) d.hoverEl.classList.remove('dnd-hover');
-    if (!d.moved || !d.hoverEl) return;
-    const to = this._locFromEl(d.hoverEl);
-    if (to) this._movePlayer(d.playerId, d.from, to);
-  },
 
-  // Mobile: tap a chip to select it, then tap a destination.
-  _onTap(e) {
-    if (this._dndEnabled()) return;
-    if (this._isInteractiveTarget(e.target)) return;
-    const chipEl = e.target.closest('.dnd-chip');
-    const locEl = e.target.closest('[data-loc-type]');
-    if (!locEl) return;
-    const loc = this._locFromEl(locEl);
-
-    if (!this._tapSelection) {
-      if (chipEl) {
-        this._tapSelection = { playerId: Number(chipEl.dataset.playerId), from: loc };
+    if (d.zoneTapTo) {
+      this._tapSelection = null;
+      this._movePlayer(d.playerId, d.from, d.zoneTapTo);
+      return;
+    }
+    if (!d.moved) {
+      // Plain tap on a chip: first tap selects it, a second tap on a
+      // different chip moves the selected player to that chip's location,
+      // and tapping the same chip again just deselects it.
+      if (!this._tapSelection) {
+        this._tapSelection = { playerId: d.playerId, from: d.from };
         this.render();
+        return;
       }
+      const { playerId, from } = this._tapSelection;
+      this._tapSelection = null;
+      if (playerId === d.playerId) { this.render(); return; }
+      this._movePlayer(playerId, from, d.from);
       return;
     }
-    const { playerId, from } = this._tapSelection;
-    this._tapSelection = null;
-    if (chipEl && Number(chipEl.dataset.playerId) === playerId) {
-      this.render(); // tapped the same chip again — just deselect
-      return;
+    if (!d.hoverEl) return;
+    const to = this._locFromEl(d.hoverEl);
+    if (to) {
+      this._tapSelection = null;
+      this._movePlayer(d.playerId, d.from, to);
     }
-    this._movePlayer(playerId, from, loc);
   },
 
   renderSide(side) {
@@ -5119,7 +5585,7 @@ ${bracketHTML}
       const p = this.getPlayer(id);
       if (!p) return '';
       const youBadge = id === Onboard.selfId ? ' <span class="queue-row-you">you</span>' : '';
-      const skillTag = p.score != null ? ` <span style="font-weight:400;opacity:0.7;">(${this.fmtSkill(p.score)})</span>` : '';
+      const skillTag = this.skillLabel(p) ? ` <span style="font-weight:400;opacity:0.7;">(${this.skillLabel(p)})</span>` : '';
       return `<span class="side-player-${align}"><span class="side-player-name">${this.esc(p.name)}${skillTag}</span>${youBadge}</span>`;
     };
     if (side.length === 1) {
@@ -5130,77 +5596,57 @@ ${bracketHTML}
   },
 
   renderQueue() {
-    const onCourt = this.getPlayersOnCourts();
     const countEl = document.getElementById('assignCount');
     const controls = document.getElementById('assignControls');
     const btnAssignAll = document.getElementById('btnAssignAll');
     const courtSelect = document.getElementById('courtCountSelect');
     const matchOpts = document.querySelector('.assign-match-options');
-    const courtLabel = document.querySelector('.assign-option-label');
     if (!countEl) return;
 
     if (this.isRoundRobin()) {
-      this._renderQueueRR(countEl, controls, btnAssignAll, courtSelect, matchOpts, courtLabel);
+      this._renderQueueRR(countEl, controls, btnAssignAll, courtSelect, matchOpts);
     } else if (this.isTournament()) {
-      this._renderQueueTournament(countEl, controls, btnAssignAll, courtSelect, matchOpts, courtLabel);
+      this._renderQueueTournament(countEl, controls, btnAssignAll, courtSelect, matchOpts);
     } else {
-      this._renderQueueOpen(countEl, controls, btnAssignAll, courtSelect, matchOpts, courtLabel, onCourt);
+      this._renderQueueOpen(countEl, controls, btnAssignAll, courtSelect, matchOpts);
     }
   },
 
-  _renderQueueOpen(countEl, controls, btnAssignAll, courtSelect, matchOpts, courtLabel, onCourt) {
+  _renderQueueOpen(countEl, controls, btnAssignAll, courtSelect, matchOpts) {
     if (matchOpts) matchOpts.style.display = '';
-    if (courtLabel) courtLabel.textContent = 'Courts available now';
     const rrSection = document.getElementById('rrUpcomingSection');
     if (rrSection) rrSection.style.display = 'none';
     const bracketSec = document.getElementById('bracketSection');
     if (bracketSec) bracketSec.style.display = 'none';
 
-    const active = this.state.players.filter(p => p.active && !onCourt.has(p.id));
-    const activePairs = this.state.teams.filter(t =>
-      active.some(p => p.id === t.p1) && active.some(p => p.id === t.p2)
-    );
-    const pairedIds = new Set(activePairs.flatMap(t => [t.p1, t.p2]));
-    const soloActive = active.filter(p => !pairedIds.has(p.id));
-    const doublesEligible = soloActive.length + pairedIds.size;
+    // Assignment now happens per-court (Auto-fill/drag on each court card),
+    // so this section is just the title and court-count picker — no bulk
+    // "N players in queue" note and no "Assign Courts" bulk-assign button.
+    const titleEl = document.getElementById('assignSectionTitle');
+    if (titleEl) titleEl.textContent = 'Courts';
+    if (countEl) countEl.style.display = 'none';
+    // Bulk "Assign Courts" is replaced by per-court Auto-fill/drag on each
+    // court card (see renderCourts/_renderEmptyCourtCard) — Round Robin and
+    // Tournament still use this shared button, so hide rather than remove it.
+    if (controls) controls.style.display = 'none';
 
-    const n = active.length;
-    const paused = this.state.players.filter(p => !p.active && !onCourt.has(p.id)).length;
-    const canAssign = doublesEligible >= 4;
-
-    if (n === 0 && paused === 0) {
-      countEl.textContent = 'No players in queue yet';
-    } else if (n === 0 && paused > 0) {
-      countEl.textContent = `${paused} player${paused !== 1 ? 's' : ''} sitting out`;
-    } else {
-      let msg = `${n} player${n !== 1 ? 's' : ''} in queue`;
-      if (paused > 0) msg += ` · ${paused} sitting out`;
-      if (!canAssign) msg += ` · not enough players to assign`;
-      countEl.textContent = msg;
-    }
-
-    if (Session.id) {
-      controls.style.display = 'flex';
-      if (courtSelect) {
-        courtSelect.parentElement.style.display = '';
-        courtSelect.value = this.state.availableCourts || 1;
-      }
-      if (btnAssignAll) {
-        btnAssignAll.disabled = !canAssign;
-        btnAssignAll.textContent = 'Assign Courts';
-        btnAssignAll.onclick = () => this.assignAll();
-      }
-    } else {
-      controls.style.display = 'none';
+    if (courtSelect) {
+      courtSelect.parentElement.style.display = Session.id ? '' : 'none';
+      courtSelect.value = this.state.availableCourts || 1;
     }
 
     const btnUndo = document.getElementById('btnUndoMove');
     if (btnUndo) btnUndo.style.display = this._proposedUndoStack.length > 0 ? '' : 'none';
   },
 
-  _renderQueueRR(countEl, controls, btnAssignAll, courtSelect, matchOpts, courtLabel) {
+  _renderQueueRR(countEl, controls, btnAssignAll, courtSelect, matchOpts) {
     if (matchOpts) matchOpts.style.display = 'none';
-    if (courtLabel) courtLabel.textContent = 'Number of courts';
+    // Open Play hides this button/title/note in favor of per-court Auto-fill;
+    // restore them here in case the session type ever switches away from Open Play.
+    if (btnAssignAll) btnAssignAll.style.display = '';
+    const titleEl = document.getElementById('assignSectionTitle');
+    if (titleEl) titleEl.textContent = 'Assign Courts';
+    if (countEl) countEl.style.display = '';
     const bracketSec = document.getElementById('bracketSection');
     if (bracketSec) bracketSec.style.display = 'none';
 
@@ -5214,6 +5660,7 @@ ${bracketHTML}
         ? `${n} player${n !== 1 ? 's' : ''} · need at least 4 to start`
         : `${n} player${n !== 1 ? 's' : ''} · <a href="#" onclick="App.rrLockPlayers();return false;" style="color:var(--primary);font-weight:600;">Lock Players to Generate Schedule</a>`;
       if (controls) controls.style.display = 'none';
+      if (courtSelect) courtSelect.parentElement.style.display = 'none';
     } else if (schedule.length === 0) {
       countEl.textContent = `${n} players locked`;
       if (Session.id && controls) {
@@ -5389,8 +5836,8 @@ ${bracketHTML}
     }
 
     el.innerHTML = history.map(m => {
-      const s1 = m.side1.map(id => { const p = this.getPlayer(id); return this.esc(nameFor(id)) + (p && p.score != null ? ` <span style="font-weight:400;opacity:0.7;">(${this.fmtSkill(p.score)})</span>` : ''); });
-      const s2 = m.side2.map(id => { const p = this.getPlayer(id); return this.esc(nameFor(id)) + (p && p.score != null ? ` <span style="font-weight:400;opacity:0.7;">(${this.fmtSkill(p.score)})</span>` : ''); });
+      const s1 = m.side1.map(id => { const p = this.getPlayer(id); return this.esc(nameFor(id)) + (this.skillLabel(p) ? ` <span style="font-weight:400;opacity:0.7;">(${this.skillLabel(p)})</span>` : ''); });
+      const s2 = m.side2.map(id => { const p = this.getPlayer(id); return this.esc(nameFor(id)) + (this.skillLabel(p) ? ` <span style="font-weight:400;opacity:0.7;">(${this.skillLabel(p)})</span>` : ''); });
       const hasScores = m.score1 != null && m.score2 != null;
       const s1Class = hasScores ? (m.winner === 1 ? 'winner' : m.winner === 2 ? 'loser' : '') : '';
       const s2Class = hasScores ? (m.winner === 2 ? 'winner' : m.winner === 1 ? 'loser' : '') : '';
@@ -5437,21 +5884,6 @@ ${bracketHTML}
         <span style="color:var(--text-muted);white-space:nowrap;">${date}, ${time}</span>
       </div>`;
     }).join('');
-  },
-
-  fmtSkillInput(el) {
-    if (!el) return;
-    const n = parseFloat(el.value);
-    if (isNaN(n)) return;
-    const s = n.toFixed(2).replace(/0+$/, '');
-    el.value = s.endsWith('.') ? s + '0' : s;
-  },
-
-  fmtSkill(val) {
-    const n = parseFloat(val);
-    if (isNaN(n)) return '';
-    const s = n.toFixed(2).replace(/0+$/, '');
-    return s.endsWith('.') ? s + '0' : s;
   },
 
   esc(str) {
@@ -5650,9 +6082,10 @@ const Session = {
       already.active = true;
       // Update name/skill/preferences if changed
       already.name = user.name;
-      already.score = user.skill || already.score;
+      already.skillLevel = user.skillLevel || already.skillLevel;
       if (Admin._user?.uid) already.firebaseUid = Admin._user.uid;
       already.joinedAt = Date.now();
+      already.lastActiveAt = already.joinedAt;
       try { localStorage.setItem('courtManager', JSON.stringify(App.state)); } catch(e) {}
       this._patch({ players: App.state.players });
       App.render();
@@ -5660,13 +6093,15 @@ const Session = {
       const id = App.state.nextId++;
       Onboard.selfId = id;
       this._saveSelfId(id);
+      const now = Date.now();
       const newPlayer = {
         id,
         name: user.name,
-        score: user.skill || null,
+        skillLevel: user.skillLevel || null,
         active: true,
         isLive: true,
-        joinedAt: Date.now(),
+        joinedAt: now,
+        lastActiveAt: now,
       };
       if (Admin._user?.uid) newPlayer.firebaseUid = Admin._user.uid;
       App.state.players.push(newPlayer);
@@ -6070,7 +6505,7 @@ const Onboard = {
     const skillEl = document.getElementById('selfProfileSkill');
     const errEl = document.getElementById('selfProfileNameError');
     if (nameEl) nameEl.value = Admin._user?.displayName || '';
-    if (skillEl) skillEl.value = saved.skill != null ? App.fmtSkill(saved.skill) : '';
+    if (skillEl) skillEl.value = saved.skillLevel || '';
     if (errEl) errEl.style.display = 'none';
     document.getElementById('selfProfileModal').style.display = 'flex';
     document.body.style.overflow = 'hidden';
@@ -6095,9 +6530,8 @@ const Onboard = {
       return;
     }
     if (errEl) errEl.style.display = 'none';
-    const skillRaw = skillEl?.value || '';
-    const skill = skillRaw ? parseFloat(parseFloat(skillRaw).toFixed(2)) : null;
-    const user = { name, skill };
+    const skillLevel = skillEl?.value || null;
+    const user = { name, skillLevel };
     try { localStorage.setItem('courtManagerUser', JSON.stringify(user)); } catch(e) {}
     document.getElementById('selfProfileModal').style.display = 'none';
     document.body.style.overflow = '';
@@ -6201,12 +6635,10 @@ const Onboard = {
     this._promptSelfProfile(() => {
       this._pendingKey = key;
       this._pendingLabel = name;
-      this._showInlineConfirm('publicCreateConfirmInline', name, () => {
-        this._openBulkSetup({
-          quickPlay: false,
-          onComplete: (players) => { this._pendingBulkPlayers = players; this.confirmJoin(); },
-        });
-      });
+      // Public locations are always Open Play, and players can be added
+      // inline from the queue card once it's created — no need to collect
+      // a roster up front.
+      this._showInlineConfirm('publicCreateConfirmInline', name, () => this.confirmJoin());
     });
   },
 
@@ -6354,6 +6786,13 @@ const Onboard = {
       this._pendingPasscode = passcode;
       this._pendingIsCreate = true;
       this._pendingSessionType = this._newSessionType;
+      // Open Play can add players inline from the queue card once the
+      // session starts; Round Robin/Tournament still need the roster
+      // collected up front so the schedule/bracket can be locked in.
+      if (this._newSessionType === 'open') {
+        this.confirmJoin();
+        return;
+      }
       this._openBulkSetup({
         quickPlay: false,
         onComplete: (players) => { this._pendingBulkPlayers = players; this.confirmJoin(); },
@@ -6509,6 +6948,13 @@ const Onboard = {
     const sessionType = document.querySelector('input[name="quickPlayType"]:checked')?.value || 'open';
     document.getElementById('quickPlayTypeModal').style.display = 'none';
     document.body.style.overflow = '';
+    // Open Play can add players inline from the queue card once the
+    // session starts, so skip straight in instead of asking up front —
+    // Round Robin/Tournament still need the full roster before locking it.
+    if (sessionType === 'open') {
+      this._startOfflineSession(sessionType, { quickPlay: true, players: [] });
+      return;
+    }
     this._openBulkSetup({
       quickPlay: true,
       onComplete: (players) => this._startOfflineSession(sessionType, { quickPlay: true, players }),
@@ -6579,16 +7025,15 @@ const Onboard = {
         nameInput.dataset.bulkName = i;
         row.appendChild(nameInput);
         if (!quickPlay) {
-          const skillInput = document.createElement('input');
-          skillInput.type = 'number';
+          const skillInput = document.createElement('select');
           skillInput.className = 'setup-input';
-          skillInput.placeholder = 'Skill';
-          skillInput.min = '2';
-          skillInput.max = '8';
-          skillInput.step = '0.01';
-          skillInput.style.cssText = 'width:80px;flex-shrink:0;margin-bottom:0;';
+          skillInput.style.cssText = 'width:110px;flex-shrink:0;margin-bottom:0;';
           skillInput.dataset.bulkSkill = i;
-          skillInput.onblur = () => App.fmtSkillInput(skillInput);
+          skillInput.innerHTML = `
+            <option value="">Rating</option>
+            <option value="beginner">Beginner</option>
+            <option value="intermediate">Intermediate</option>
+            <option value="advanced">Advanced</option>`;
           row.appendChild(skillInput);
         }
         if (i === count) nameInput.onkeydown = (e) => { if (e.key === 'Enter') this._bulkSubmit(); };
@@ -6614,8 +7059,8 @@ const Onboard = {
       const skillEl = row.querySelector('[data-bulk-skill]');
       const name = nameEl?.value.trim();
       if (!name) return;
-      const skill = skillEl?.value ? parseFloat(skillEl.value) : null;
-      players.push({ name, skill });
+      const skillLevel = skillEl?.value || null;
+      players.push({ name, skillLevel });
     });
     const errEl = document.getElementById('bulkNamesError');
     if (!players.length) {
@@ -6631,15 +7076,17 @@ const Onboard = {
   },
 
   _pushBulkPlayers(players) {
-    (players || []).forEach(({ name, skill }) => {
+    (players || []).forEach(({ name, skillLevel }) => {
+      const now = Date.now();
       App.state.players.push({
         id: App.state.nextId++,
         name,
-        score: (skill != null && !isNaN(skill)) ? skill : null,
+        skillLevel: skillLevel || null,
         active: true,
         isLive: false,
         addedBy: this.selfId,
-        joinedAt: Date.now(),
+        joinedAt: now,
+        lastActiveAt: now,
       });
     });
   },
