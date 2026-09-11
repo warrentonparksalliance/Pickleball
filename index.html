@@ -5414,6 +5414,7 @@ ${bracketHTML}
     const label = 'Drag or tap to add';
     const sideBox = sideNum => `<div class="court-side side-${sideNum} dnd-target" data-loc-type="slot" data-court="${courtId}" data-side="${sideNum}">
       <div class="dnd-slot-empty">${label}</div>
+      <div class="dnd-slot-empty">${label}</div>
     </div>`;
     const onCourt = this.getPlayersOnCourts();
     const eligible = this.state.players.filter(p => p.active && !onCourt.has(p.id)).length;
@@ -5576,8 +5577,9 @@ ${bracketHTML}
           <div class="court-vs">VS</div>
           ${sideBox(game.side2, 2)}
           <div class="match-action-row">
-            ${canAutoFill ? `<button class="btn-confirm-match" onclick="App.autoFillRemainingSlots(${courtId})">Auto-fill</button>` : ''}
-            <button class="btn-confirm-match" ${canConfirm ? '' : 'disabled'} onclick="App.startProposedMatch(${courtId})">&#10003; Confirm</button>
+            ${canConfirm
+              ? `<button class="btn-confirm-match" onclick="App.startProposedMatch(${courtId})">&#10003; Confirm</button>`
+              : `<button class="btn-confirm-match" ${canAutoFill ? '' : 'disabled'} onclick="App.autoFillRemainingSlots(${courtId})">Auto-fill</button>`}
           </div>
           ${canConfirm ? '' : '<div class="proposed-hint">Fill both teams to confirm the match.</div>'}
         </div>
