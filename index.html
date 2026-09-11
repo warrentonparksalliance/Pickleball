@@ -5680,27 +5680,13 @@ ${bracketHTML}
       };
       return;
     }
-    // No chip under the finger/cursor and nothing already selected — tapping
-    // an empty court slot's placeholder opens a picker to choose who fills
-    // it, instead of requiring a queue chip to be tapped first.
-    if (!this._tapSelection) {
-      const emptySlotEl = e.target.closest('.dnd-slot-empty');
-      const slotLocEl = emptySlotEl && emptySlotEl.closest('[data-loc-type="slot"]');
-      if (slotLocEl) {
-        this._dragState = {
-          playerId: null,
-          from: null,
-          startX: e.clientX, startY: e.clientY,
-          moved: false,
-          ghost: null,
-          hoverEl: null,
-          pointerId: e.pointerId,
-          sourceEl: null,
-          openSlotPicker: this._locFromEl(slotLocEl),
-        };
-      }
-      return;
-    }
+    // No chip under the finger/cursor — if a player is already selected,
+    // let a plain tap on a bare drop zone (e.g. an empty Waiting section)
+    // complete the move; there's nothing there to drag onto otherwise.
+    // (Double-tapping/double-clicking an empty court slot opens a picker to
+    // fill it — see _onDndDblClick — a single tap doesn't, since that was
+    // too easy to trigger by accident while scrolling past a court card.)
+    if (!this._tapSelection) return;
     const locEl = e.target.closest('[data-loc-type]');
     if (!locEl) return;
     const zoneTapTo = this._locFromEl(locEl);
@@ -5752,10 +5738,6 @@ ${bracketHTML}
     if (d.sourceEl) d.sourceEl.classList.remove('dnd-dragging');
     if (d.hoverEl) d.hoverEl.classList.remove('dnd-hover');
 
-    if (d.openSlotPicker) {
-      this.openFillSlotPicker(d.openSlotPicker.court, d.openSlotPicker.side);
-      return;
-    }
     if (d.zoneTapTo) {
       this._tapSelection = null;
       this._movePlayer(d.playerId, d.from, d.zoneTapTo);
@@ -5787,20 +5769,32 @@ ${bracketHTML}
   // Double-clicking (or double-tapping) a player already placed in a
   // proposed court match sends them straight back to the queue — a
   // quicker shortcut than dragging/tapping them off one at a time.
+  // Double-clicking/double-tapping an empty court slot's placeholder opens
+  // the fill picker (see openFillSlotPicker) — a single tap doesn't, since
+  // that was too easy to trigger by accident while scrolling past a card.
   _onDndDblClick(e) {
     const chipEl = e.target.closest('.dnd-chip');
-    if (!chipEl) return;
-    const slotEl = chipEl.closest('[data-loc-type="slot"]');
-    if (!slotEl) return;
-    const playerId = Number(chipEl.dataset.playerId);
-    const from = this._locFromEl(slotEl);
-    this._tapSelection = null;
-    this._movePlayer(playerId, from, { type: 'queue' });
+    if (chipEl) {
+      const slotEl = chipEl.closest('[data-loc-type="slot"]');
+      if (!slotEl) return;
+      const playerId = Number(chipEl.dataset.playerId);
+      const from = this._locFromEl(slotEl);
+      this._tapSelection = null;
+      this._movePlayer(playerId, from, { type: 'queue' });
+      return;
+    }
+    const emptySlotEl = e.target.closest('.dnd-slot-empty');
+    const slotLocEl = emptySlotEl && emptySlotEl.closest('[data-loc-type="slot"]');
+    if (!slotLocEl) return;
+    const loc = this._locFromEl(slotLocEl);
+    this.openFillSlotPicker(loc.court, loc.side);
   },
 
-  // Tapping an empty court slot with nothing already selected opens this
-  // instead of doing nothing — lets you start from the destination rather
-  // than always having to tap the queue chip first.
+  // Double-tapping/double-clicking an empty court slot opens this — lets
+  // you start from the destination rather than always having to tap the
+  // queue chip first. Requires the double-tap (see _onDndDblClick) rather
+  // than a single tap, since a single tap was too easy to trigger by
+  // accident while scrolling past a court card.
   openFillSlotPicker(court, side) {
     this._fillSlotTarget = { court, side };
     this.renderFillSlotPicker();
