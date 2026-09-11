@@ -2205,6 +2205,9 @@ body {
         <button id="btnUndoMove" class="btn-outline" style="display:none;flex-shrink:0;padding:5px 10px;font-size:0.78rem;font-weight:600;" onclick="App.undoProposedMove()">&#8617; Undo</button>
       </div>
       <div class="section-subtitle" id="queueSubtitle" style="margin-bottom:10px;">Players waiting to be assigned to a court.</div>
+      <div class="assign-match-options" style="margin-bottom:10px;">
+        <label><input type="checkbox" id="optSkill" onchange="App.saveState()"> Match by skill</label>
+      </div>
       <div class="queue-subsection-label">In Queue</div>
       <div class="queue-list-box">
         <div id="queueActiveList" class="queue-list dnd-target" data-loc-type="queue"></div>
@@ -2240,7 +2243,7 @@ body {
     <!-- Assign -->
     <div class="assign-header" id="assignHeader" style="margin-bottom:14px;">
       <div>
-        <div class="section-title">Assign Courts</div>
+        <div class="section-title" id="assignSectionTitle">Assign Courts</div>
         <div class="section-subtitle" id="assignCount"></div>
       </div>
       <div class="assign-controls" id="assignControls" style="display:none;">
@@ -2254,9 +2257,6 @@ body {
             <option value="5">5</option>
             <option value="6">6</option>
           </select>
-        </div>
-        <div class="assign-match-options">
-          <label><input type="checkbox" id="optSkill" onchange="App.saveState()"> Match by skill</label>
         </div>
         <button id="btnAssignAll" class="btn-assign-all" onclick="App.assignAll()">Assign Courts</button>
       </div>
@@ -2442,7 +2442,7 @@ body {
         </div>
         <div class="hiw-section">
           <h3>🎾 Confirming &amp; Ending a Match (Open Play)</h3>
-          <p>An auto-filled or drag-filled court starts out <strong>Proposed</strong> — adjust who's on it by dragging or tapping players between the queue and the court, then tap <strong>Start Match</strong> to confirm. Nothing is final until then, and adjusting or cancelling a proposal never costs anyone their place in line.</p>
+          <p>An auto-filled or drag-filled court starts out <strong>Proposed</strong> — adjust who's on it by dragging or tapping players between the queue and the court, then tap <strong>Confirm</strong>. Nothing is final until then, and adjusting or cancelling a proposal never costs anyone their place in line. Once confirmed, tap <strong>Start</strong> on the court card to start the match timer.</p>
           <p style="margin-top:6px;">When a match ends, choose <strong>Return All 4</strong> (send everyone back to the queue), <strong>Keep Winners</strong> (needs a score), or <strong>Keep Last-Joined</strong> (once a court has had a pair carried over before) to decide who stays on for the next match.</p>
         </div>
         <div class="hiw-section">
@@ -2973,7 +2973,11 @@ const App = {
     this.render();
     if (nameEl) nameEl.value = '';
     if (skillEl) skillEl.value = '';
-    nameEl?.focus();
+    // Re-focus to let a mouse/trackpad user add several names back-to-back
+    // without re-clicking the field each time — but not on a touch-primary
+    // device, where refocusing just pops the on-screen keyboard back open
+    // right after the person tapped "Add Player" to dismiss it.
+    if (window.matchMedia('(hover: hover) and (pointer: fine)').matches) nameEl?.focus();
   },
 
   _pendingRemove: null,
@@ -3182,10 +3186,9 @@ const App = {
     this.render();
   },
 
-  // mode: 'all' | 'winners' | 'lastJoined' — which rotation choice the
-  // organizer picked (Open Play only; RR/Tournament always pass 'all',
-  // which behaves exactly like today's plain Save). Checking "Rematch"
-  // always short-circuits this regardless of mode, unchanged from before.
+  // mode: 'all' | 'winners' | 'lastJoined' | 'rematch' — which end-of-match
+  // option the organizer picked (Open Play only; RR/Tournament always pass
+  // 'all', which behaves exactly like today's plain Save).
   submitScore(courtId, mode = 'all') {
     const s1Input = document.getElementById(`score-s1-${courtId}`);
     const s2Input = document.getElementById(`score-s2-${courtId}`);
@@ -3249,11 +3252,10 @@ const App = {
       }
     }
     const courtPlayers = game ? [...(game.side1 || []), ...(game.side2 || [])] : [];
-    const rematch = this._checkRematch(courtId, game);
-    if (rematch) {
+    if (mode === 'rematch' && game) {
       delete this.state.activeGames[courtId];
       delete this.state.scoringGames[courtId];
-      this._startRematch(courtId, rematch);
+      this._startRematch(courtId, { side1: [...game.side1], side2: [...game.side2], mode: game.mode });
     } else {
       this._rotateCourtAfterMatch(courtId, mode, winner);
     }
@@ -3268,13 +3270,6 @@ const App = {
     delete this._pendingRotationWarn[courtId];
     this.saveState();
     this.render();
-  },
-
-  _checkRematch(courtId, game) {
-    if (this.isRoundRobin() || this.isTournament() || !game) return null;
-    const cb = document.getElementById(`rematch-${courtId}`);
-    if (!cb || !cb.checked) return null;
-    return { side1: [...game.side1], side2: [...game.side2], mode: game.mode };
   },
 
   _startRematch(courtId, prev) {
@@ -4300,9 +4295,12 @@ const App = {
   _renderQueueTournament(countEl, controls, btnAssignAll, courtSelect, matchOpts, courtLabel) {
     if (matchOpts) matchOpts.style.display = 'none';
     if (courtLabel) courtLabel.textContent = 'Number of courts';
-    // Open Play hides this button in favor of per-court Auto-fill; restore it
-    // here in case the session type ever switches away from Open Play.
+    // Open Play hides this button/title/note in favor of per-court Auto-fill;
+    // restore them here in case the session type ever switches away from Open Play.
     if (btnAssignAll) btnAssignAll.style.display = '';
+    const titleEl = document.getElementById('assignSectionTitle');
+    if (titleEl) titleEl.textContent = 'Assign Courts';
+    if (countEl) countEl.style.display = '';
     const rrSection = document.getElementById('rrUpcomingSection');
     if (rrSection) rrSection.style.display = 'none';
 
@@ -5163,9 +5161,9 @@ ${bracketHTML}
 
   // The end-of-match action row inside a scoring card: Round Robin/Tournament
   // keep the old single Cancel/Save row (they always "return all 4" — there's
-  // no live queue to rotate players through); Open Play instead offers the
-  // 3-way rotation choice, or — if "Keep Winners" was picked with no score
-  // entered — the Go Back/Continue Anyway warning in its place.
+  // no live queue to rotate players through); Open Play instead offers Rematch
+  // plus the 3-way rotation choice, or — if "Keep Winners" was picked with no
+  // score entered — the Go Back/Continue Anyway warning in its place.
   _renderRotationChoices(courtId, game) {
     if (this.isRoundRobin() || this.isTournament()) {
       return `<div class="score-buttons">
@@ -5185,6 +5183,7 @@ ${bracketHTML}
     const canKeepLastJoined = game.side1JoinedAt !== game.side2JoinedAt;
     return `<div class="score-buttons rotation-choices">
       <button class="btn-cancel-score" onclick="App.cancelScoring(${courtId})">Cancel</button>
+      <button class="btn-save-score" onclick="App.chooseRotation(${courtId}, 'rematch')">Rematch</button>
       <button class="btn-save-score" onclick="App.chooseRotation(${courtId}, 'all')">Return All 4</button>
       <button class="btn-save-score" onclick="App.chooseRotation(${courtId}, 'winners')">Keep Winners</button>
       ${canKeepLastJoined ? `<button class="btn-save-score" onclick="App.chooseRotation(${courtId}, 'lastJoined')">Keep Last-Joined</button>` : ''}
@@ -5223,9 +5222,6 @@ ${bracketHTML}
             </div>
           </div>
           <div id="score-err-${courtId}" class="score-error"></div>
-          ${!this.isRoundRobin() && !this.isTournament() ? `<label style="display:flex;align-items:center;justify-content:flex-end;gap:6px;font-size:0.82rem;color:var(--text-light);cursor:pointer;margin-top:4px;">
-            <input type="checkbox" id="rematch-${courtId}" style="accent-color:var(--primary);"> Rematch
-          </label>` : ''}
           ${this.isTournament() ? `<div style="font-size:0.75rem;color:var(--text-muted);margin-top:4px;">Bracket match &mdash; winner advances</div>` : ''}
           ${this._renderRotationChoices(courtId, game)}
         </div>`;
@@ -5300,9 +5296,9 @@ ${bracketHTML}
           <div class="court-vs">VS</div>
           ${sideBox(game.side2, 2)}
           <div class="match-action-row">
-            <button class="btn-confirm-match" ${canConfirm ? '' : 'disabled'} onclick="App.startProposedMatch(${courtId})">&#9654; Start Match</button>
+            <button class="btn-confirm-match" ${canConfirm ? '' : 'disabled'} onclick="App.startProposedMatch(${courtId})">&#10003; Confirm</button>
           </div>
-          ${canConfirm ? '' : '<div class="proposed-hint">Fill both teams to start the match.</div>'}
+          ${canConfirm ? '' : '<div class="proposed-hint">Fill both teams to confirm the match.</div>'}
         </div>
       </div>
     </div>`;
@@ -5544,7 +5540,6 @@ ${bracketHTML}
   },
 
   renderQueue() {
-    const onCourt = this.getPlayersOnCourts();
     const countEl = document.getElementById('assignCount');
     const controls = document.getElementById('assignControls');
     const btnAssignAll = document.getElementById('btnAssignAll');
@@ -5558,11 +5553,11 @@ ${bracketHTML}
     } else if (this.isTournament()) {
       this._renderQueueTournament(countEl, controls, btnAssignAll, courtSelect, matchOpts, courtLabel);
     } else {
-      this._renderQueueOpen(countEl, controls, btnAssignAll, courtSelect, matchOpts, courtLabel, onCourt);
+      this._renderQueueOpen(countEl, controls, btnAssignAll, courtSelect, matchOpts, courtLabel);
     }
   },
 
-  _renderQueueOpen(countEl, controls, btnAssignAll, courtSelect, matchOpts, courtLabel, onCourt) {
+  _renderQueueOpen(countEl, controls, btnAssignAll, courtSelect, matchOpts, courtLabel) {
     if (matchOpts) matchOpts.style.display = '';
     if (courtLabel) courtLabel.textContent = 'Courts available now';
     const rrSection = document.getElementById('rrUpcomingSection');
@@ -5570,28 +5565,12 @@ ${bracketHTML}
     const bracketSec = document.getElementById('bracketSection');
     if (bracketSec) bracketSec.style.display = 'none';
 
-    const active = this.state.players.filter(p => p.active && !onCourt.has(p.id));
-    const activePairs = this.state.teams.filter(t =>
-      active.some(p => p.id === t.p1) && active.some(p => p.id === t.p2)
-    );
-    const pairedIds = new Set(activePairs.flatMap(t => [t.p1, t.p2]));
-    const soloActive = active.filter(p => !pairedIds.has(p.id));
-    const doublesEligible = soloActive.length + pairedIds.size;
-
-    const n = active.length;
-    const paused = this.state.players.filter(p => !p.active && !onCourt.has(p.id)).length;
-    const canAssign = doublesEligible >= 4;
-
-    if (n === 0 && paused === 0) {
-      countEl.textContent = 'No players in queue yet';
-    } else if (n === 0 && paused > 0) {
-      countEl.textContent = `${paused} player${paused !== 1 ? 's' : ''} sitting out`;
-    } else {
-      let msg = `${n} player${n !== 1 ? 's' : ''} in queue`;
-      if (paused > 0) msg += ` · ${paused} sitting out`;
-      if (!canAssign) msg += ` · not enough players to assign`;
-      countEl.textContent = msg;
-    }
+    // Assignment now happens per-court (Auto-fill/drag on each court card),
+    // so this section is just the court-count picker — no bulk "N players
+    // in queue" note and no "Assign Courts" title to go with it.
+    const titleEl = document.getElementById('assignSectionTitle');
+    if (titleEl) titleEl.textContent = 'Courts';
+    if (countEl) countEl.style.display = 'none';
 
     if (Session.id) {
       controls.style.display = 'flex';
@@ -5614,9 +5593,12 @@ ${bracketHTML}
   _renderQueueRR(countEl, controls, btnAssignAll, courtSelect, matchOpts, courtLabel) {
     if (matchOpts) matchOpts.style.display = 'none';
     if (courtLabel) courtLabel.textContent = 'Number of courts';
-    // Open Play hides this button in favor of per-court Auto-fill; restore it
-    // here in case the session type ever switches away from Open Play.
+    // Open Play hides this button/title/note in favor of per-court Auto-fill;
+    // restore them here in case the session type ever switches away from Open Play.
     if (btnAssignAll) btnAssignAll.style.display = '';
+    const titleEl = document.getElementById('assignSectionTitle');
+    if (titleEl) titleEl.textContent = 'Assign Courts';
+    if (countEl) countEl.style.display = '';
     const bracketSec = document.getElementById('bracketSection');
     if (bracketSec) bracketSec.style.display = 'none';
 
