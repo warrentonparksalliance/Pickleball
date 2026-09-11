@@ -740,7 +740,6 @@ body {
   margin-bottom: 6px;
 }
 .queue-remove-zone {
-  margin-top: 10px;
   padding: 10px;
   text-align: center;
   border: 1.5px dashed var(--border-strong);
@@ -2280,16 +2279,16 @@ body {
         <div id="queueDropQueue" class="queue-drop-strip dnd-target" data-loc-type="queue">Drag or tap to enter queue</div>
       </div>
       <div id="queueWaitingWrap" style="display:none;">
-        <div class="queue-subsection-label" style="margin-top:10px;">Waiting (Sitting Out)</div>
+        <div class="queue-subsection-label" style="margin-top:10px;">Sitting Out</div>
         <div class="queue-list-box">
           <div id="queueWaitingList" class="queue-list dnd-target" data-loc-type="waiting"></div>
           <div id="queueDropWaiting" class="queue-drop-strip dnd-target" data-loc-type="waiting">Drag or tap to sit out</div>
         </div>
       </div>
+      <div id="queueRemoveZoneTitle" class="queue-subsection-label" style="margin-top:10px;">Leave Session</div>
       <div id="queueRemoveZone" class="queue-remove-zone dnd-target" data-loc-type="remove">
         <span id="queueRemoveZoneLabel">Drag or tap to remove</span>
       </div>
-      <div id="queueHint" class="section-subtitle" style="margin-top:8px;">Drag or tap a player, then drag or tap a destination to move them between Queue, Waiting, and Remove.</div>
       <button id="rrUnlockBtn" class="btn-outline" onclick="App.isRoundRobin()?App.rrUnlockPlayers():App.bracketUnlockPlayers()" style="display:none;margin-top:8px;width:100%;color:var(--warning);border-color:var(--warning);font-size:0.82rem;">Unlock Players &amp; Reset</button>
       <div id="queueAddPlayerRow" style="display:none;margin-top:10px;">
         <p id="queueAddPlayerError" class="setup-error" style="display:none;">Enter a player name</p>
@@ -2807,7 +2806,7 @@ const App = {
   state: {
     players: [],
     teams: [],
-    options: { useSkill: true },
+    options: { useSkill: false },
     opponentHistory: {},
     roundsWaited: {},
     round: 0,
@@ -4825,7 +4824,7 @@ ${bracketHTML}
   _freshState() {
     return {
       players: [], teams: [],
-      options: { useSkill: true },
+      options: { useSkill: false },
       opponentHistory: {}, roundsWaited: {}, round: 0,
       activeGames: {}, scoringGames: {}, proposedGames: {}, roundHistory: [], nextId: 1, nextCourtId: 1,
       availableCourts: 1, adminLog: [],
@@ -4930,13 +4929,6 @@ ${bracketHTML}
       : tourn
       ? (tournLocked ? 'Players are locked for this tournament.' : 'Add all players, then lock the roster to generate the bracket.')
       : 'Players waiting to be assigned to a court.';
-    const qHint = document.getElementById('queueHint');
-    if (qHint) {
-      qHint.style.display = isLocked ? 'none' : '';
-      qHint.textContent = structured
-        ? 'Drag or tap a player, then drag or tap Remove to remove them.'
-        : 'Drag or tap a player, then drag or tap a destination to move them between Queue, Waiting, and Remove.';
-    }
     const qAddRow = document.getElementById('queueAddPlayerRow');
     if (qAddRow) qAddRow.style.display = isLocked ? 'none' : '';
     const qAddSkill = document.getElementById('queueAddPlayerSkill');
@@ -5029,6 +5021,7 @@ ${bracketHTML}
     const waitingWrap = document.getElementById('queueWaitingWrap');
     const waitingEl = document.getElementById('queueWaitingList');
     const removeZone = document.getElementById('queueRemoveZone');
+    const removeZoneTitle = document.getElementById('queueRemoveZoneTitle');
     const removeLabel = document.getElementById('queueRemoveZoneLabel');
     const rr = this.isRoundRobin();
     const tourn = this.isTournament();
@@ -5037,6 +5030,7 @@ ${bracketHTML}
 
     if (waitingWrap) waitingWrap.style.display = structured ? 'none' : '';
     if (removeZone) removeZone.style.display = isLocked ? 'none' : '';
+    if (removeZoneTitle) removeZoneTitle.style.display = isLocked ? 'none' : '';
     if (removeLabel) removeLabel.textContent = 'Drag or tap to remove';
 
     const onCourts = this.getPlayersOnCourts();
