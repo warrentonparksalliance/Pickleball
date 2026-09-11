@@ -1443,7 +1443,12 @@ body {
   box-shadow: 0 0 0 3px var(--primary-light);
 }
 .score-buttons { display: flex; gap: 8px; margin-top: 6px; }
+.score-buttons.rotation-choices { flex-wrap: wrap; }
+.score-buttons.rotation-choices .btn-save-score,
+.score-buttons.rotation-choices .btn-cancel-score { flex: 1 1 calc(50% - 4px); }
 .score-error { font-size: 0.8rem; color: var(--danger); min-height: 1em; }
+.rotation-warn { margin-top: 6px; }
+.rotation-warn p { font-size: 0.82rem; color: var(--text-light); line-height: 1.4; margin: 0 0 8px; }
 .btn-save-score {
   flex: 1;
   padding: 10px;
@@ -2368,7 +2373,12 @@ body {
         </div>
         <div class="hiw-section">
           <h3>🌐 Joining a Public Session</h3>
-          <p>Select your location from the drop-down and tap <strong>Join</strong>. You'll be asked for your name and optional skill level, then added to the rotation and courts will be assigned automatically each round.</p>
+          <p>Select your location from the drop-down and tap <strong>Join</strong>. You'll be asked for your name and an optional skill level, then added to the rotation — courts fill from there via Auto-fill or by dragging players on, prioritizing whoever's waited longest.</p>
+        </div>
+        <div class="hiw-section">
+          <h3>🎾 Confirming &amp; Ending a Match (Open Play)</h3>
+          <p>An auto-filled or drag-filled court starts out <strong>Proposed</strong> — adjust who's on it by dragging or tapping players between the queue and the court, then tap <strong>Start Match</strong> to confirm. Nothing is final until then, and adjusting or cancelling a proposal never costs anyone their place in line.</p>
+          <p style="margin-top:6px;">When a match ends, choose <strong>Return All 4</strong> (send everyone back to the queue), <strong>Keep Winners</strong> (needs a score), or <strong>Keep Last-Joined</strong> (once a court has had a pair carried over before) to decide who stays on for the next match.</p>
         </div>
         <div class="hiw-section">
           <h3>⚙️ Updating Your Info</h3>
@@ -3141,7 +3151,11 @@ const App = {
     this.render();
   },
 
-  submitScore(courtId) {
+  // mode: 'all' | 'winners' | 'lastJoined' — which rotation choice the
+  // organizer picked (Open Play only; RR/Tournament always pass 'all',
+  // which behaves exactly like today's plain Save). Checking "Rematch"
+  // always short-circuits this regardless of mode, unchanged from before.
+  submitScore(courtId, mode = 'all') {
     const s1Input = document.getElementById(`score-s1-${courtId}`);
     const s2Input = document.getElementById(`score-s2-${courtId}`);
     const raw1 = s1Input.value.trim();
@@ -3168,13 +3182,14 @@ const App = {
     }
     const hasScores = score1 != null && score2 != null;
     const game = this.state.activeGames[courtId];
+    let winner = null;
     if (game) {
       this.recordOpponents(game.side1, game.side2);
       for (const id of [...game.side1, ...game.side2]) {
         const p = this.getPlayer(id);
         if (p) p.roundsPlayed = (p.roundsPlayed || 0) + 1;
       }
-      const winner = hasScores ? (score1 > score2 ? 1 : score2 > score1 ? 2 : 0) : null;
+      winner = hasScores ? (score1 > score2 ? 1 : score2 > score1 ? 2 : 0) : null;
       const duration = this.getTimerElapsed(game) || null;
       const histEntry = {
         round: this.state.round,
@@ -3204,9 +3219,13 @@ const App = {
     }
     const courtPlayers = game ? [...(game.side1 || []), ...(game.side2 || [])] : [];
     const rematch = this._checkRematch(courtId, game);
-    delete this.state.activeGames[courtId];
-    delete this.state.scoringGames[courtId];
-    if (rematch) this._startRematch(courtId, rematch);
+    if (rematch) {
+      delete this.state.activeGames[courtId];
+      delete this.state.scoringGames[courtId];
+      this._startRematch(courtId, rematch);
+    } else {
+      this._rotateCourtAfterMatch(courtId, mode, winner);
+    }
     const selfExpired = this._expireStaleFromCourt(courtPlayers);
     this.saveState();
     if (selfExpired) { this._handleSelfExpired(); return; }
@@ -3215,6 +3234,7 @@ const App = {
 
   cancelScoring(courtId) {
     delete this.state.scoringGames[courtId];
+    delete this._pendingRotationWarn[courtId];
     this.saveState();
     this.render();
   },
@@ -3227,14 +3247,95 @@ const App = {
   },
 
   _startRematch(courtId, prev) {
+    const now = Date.now();
     this.state.activeGames[courtId] = {
       side1: prev.side1,
       side2: prev.side2,
       mode: prev.mode,
-      startTime: Date.now(),
+      startTime: now,
       timerPaused: true,
       timerElapsed: 0,
       timerResumedAt: null,
+      side1JoinedAt: now,
+      side2JoinedAt: now,
+    };
+  },
+
+  // ─── End-of-match rotation choice (Open Play) ─────
+  // "Return All 4" (default), "Keep Winners" (needs a score — see
+  // chooseRotation's warn path), or "Keep Last-Joined Pair" (only offered
+  // when the two sides don't share the same side*JoinedAt, i.e. this isn't
+  // the court's first match since it was last fully cleared).
+  _pendingRotationWarn: {},
+
+  chooseRotation(courtId, mode) {
+    if (mode === 'winners' && !this._hasEnteredScore(courtId)) {
+      this._pendingRotationWarn[courtId] = true;
+      this.render();
+      return;
+    }
+    this.submitScore(courtId, mode);
+  },
+
+  cancelRotationWarn(courtId) {
+    delete this._pendingRotationWarn[courtId];
+    this.render();
+  },
+
+  confirmRotationWarnAnyway(courtId) {
+    delete this._pendingRotationWarn[courtId];
+    this.submitScore(courtId, 'winners');
+  },
+
+  _hasEnteredScore(courtId) {
+    const raw1 = document.getElementById(`score-s1-${courtId}`)?.value.trim();
+    const raw2 = document.getElementById(`score-s2-${courtId}`)?.value.trim();
+    if (!raw1 || !raw2) return false;
+    return !isNaN(parseInt(raw1)) && !isNaN(parseInt(raw2));
+  },
+
+  _rotateCourtAfterMatch(courtId, mode, winner) {
+    const game = this.state.activeGames[courtId];
+    delete this.state.activeGames[courtId];
+    delete this.state.scoringGames[courtId];
+    if (!game || (mode !== 'winners' && mode !== 'lastJoined')) return; // "all": today's behavior
+
+    const side1 = [...game.side1], side2 = [...game.side2];
+    let staySide;
+    if (mode === 'winners') {
+      staySide = winner === 1 ? side1 : winner === 2 ? side2 : this.shuffle([side1, side2])[0];
+    } else {
+      if (game.side1JoinedAt === game.side2JoinedAt) return; // not actually eligible, behave like "all"
+      staySide = game.side1JoinedAt > game.side2JoinedAt ? side1 : side2;
+    }
+
+    // Exclude everyone from *this* match (both the kept side and the side
+    // rotating out) as well as anyone already on another court — activeGames
+    // no longer lists this court (deleted above), so getPlayersOnCourts()
+    // alone wouldn't catch the rotating-out side.
+    const onCourtNow = this.getPlayersOnCourts();
+    const picked = this._pickPriorityPlayers(2, [...onCourtNow, ...side1, ...side2]);
+    if (!picked) return; // not enough players to refill — court sits empty like any other
+
+    const refillPair = picked.find(u => u.type === 'pair');
+    const refillIds = refillPair ? refillPair.ids : picked.flatMap(u => u.ids);
+
+    // The kept pair and the fresh players are both "confirmed into a match"
+    // right now, same as a normal Start Match confirm — this path bypasses
+    // startProposedMatch entirely so it needs the same bookkeeping inline.
+    this._confirmPlayersIntoMatch([...staySide, ...refillIds]);
+
+    const now = Date.now();
+    this.state.activeGames[courtId] = {
+      side1: staySide === side1 ? side1 : refillIds,
+      side2: staySide === side2 ? side2 : refillIds,
+      mode: 'doubles',
+      startTime: now,
+      timerPaused: true,
+      timerElapsed: 0,
+      timerResumedAt: null,
+      side1JoinedAt: staySide === side1 ? game.side1JoinedAt : now,
+      side2JoinedAt: staySide === side2 ? game.side2JoinedAt : now,
     };
   },
 
@@ -3374,8 +3475,10 @@ const App = {
     }
 
     const courtPlayers = [...(game.side1 || []), ...(game.side2 || [])];
-    delete this.state.activeGames[courtId];
-    delete this.state.scoringGames[courtId];
+    // Score Keeper's "Finish" always returns all 4 to the queue — it always
+    // has a concrete winner, so the rotation choice/warn dialog wouldn't add
+    // anything here; 'all' keeps this path's behavior exactly as before.
+    this._rotateCourtAfterMatch(courtId, 'all', winner);
     const selfExpired = this._expireStaleFromCourt(courtPlayers);
     this.saveState();
     if (selfExpired) { this._handleSelfExpired(); return; }
@@ -4513,13 +4616,18 @@ ${bracketHTML}
   startProposedMatch(courtId) {
     const game = this.state.proposedGames[courtId];
     if (!game || game.side1.length !== 2 || game.side2.length !== 2) return;
+    const now = Date.now();
     this.state.activeGames[courtId] = {
       side1: [...game.side1], side2: [...game.side2],
       mode: 'doubles',
-      startTime: Date.now(),
+      startTime: now,
       timerPaused: true,
       timerElapsed: 0,
       timerResumedAt: null,
+      // Equal on a fresh confirm — "Keep Last-Joined Pair" at end-of-match
+      // is only offered once these two diverge (i.e. after a rotation).
+      side1JoinedAt: now,
+      side2JoinedAt: now,
     };
     this._confirmPlayersIntoMatch([...game.side1, ...game.side2]);
     delete this.state.proposedGames[courtId];
@@ -5007,6 +5115,36 @@ ${bracketHTML}
     </div>`;
   },
 
+  // The end-of-match action row inside a scoring card: Round Robin/Tournament
+  // keep the old single Cancel/Save row (they always "return all 4" — there's
+  // no live queue to rotate players through); Open Play instead offers the
+  // 3-way rotation choice, or — if "Keep Winners" was picked with no score
+  // entered — the Go Back/Continue Anyway warning in its place.
+  _renderRotationChoices(courtId, game) {
+    if (this.isRoundRobin() || this.isTournament()) {
+      return `<div class="score-buttons">
+        <button class="btn-cancel-score" onclick="App.cancelScoring(${courtId})">Cancel</button>
+        <button class="btn-save-score" onclick="App.submitScore(${courtId})">Save</button>
+      </div>`;
+    }
+    if (this._pendingRotationWarn[courtId]) {
+      return `<div class="rotation-warn">
+        <p>No score was entered, so I can't tell who won &mdash; I'll pick a pair at random unless you go back and enter one first.</p>
+        <div class="score-buttons">
+          <button class="btn-cancel-score" onclick="App.cancelRotationWarn(${courtId})">Go Back</button>
+          <button class="btn-save-score" onclick="App.confirmRotationWarnAnyway(${courtId})">Continue Anyway</button>
+        </div>
+      </div>`;
+    }
+    const canKeepLastJoined = game.side1JoinedAt !== game.side2JoinedAt;
+    return `<div class="score-buttons rotation-choices">
+      <button class="btn-cancel-score" onclick="App.cancelScoring(${courtId})">Cancel</button>
+      <button class="btn-save-score" onclick="App.chooseRotation(${courtId}, 'all')">Return All 4</button>
+      <button class="btn-save-score" onclick="App.chooseRotation(${courtId}, 'winners')">Keep Winners</button>
+      ${canKeepLastJoined ? `<button class="btn-save-score" onclick="App.chooseRotation(${courtId}, 'lastJoined')">Keep Last-Joined</button>` : ''}
+    </div>`;
+  },
+
   _renderActiveCard(courtId) {
       const game = this.state.activeGames[courtId];
       const isScoring = !!this.state.scoringGames[courtId];
@@ -5043,10 +5181,7 @@ ${bracketHTML}
             <input type="checkbox" id="rematch-${courtId}" style="accent-color:var(--primary);"> Rematch
           </label>` : ''}
           ${this.isTournament() ? `<div style="font-size:0.75rem;color:var(--text-muted);margin-top:4px;">Bracket match &mdash; winner advances</div>` : ''}
-          <div class="score-buttons">
-            <button class="btn-cancel-score" onclick="App.cancelScoring(${courtId})">Cancel</button>
-            <button class="btn-save-score" onclick="App.submitScore(${courtId})">Save</button>
-          </div>
+          ${this._renderRotationChoices(courtId, game)}
         </div>`;
       } else {
         const timerWidget = neverStarted
