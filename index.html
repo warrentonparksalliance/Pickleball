@@ -621,6 +621,7 @@ body {
 }
 .partner-picker-item:last-child { border-bottom: none; }
 .partner-picker-item:hover { background: var(--primary-light); }
+.partner-picker-item-selected { background: var(--primary-light); font-weight: 700; }
 .partner-chip {
   display: flex;
   align-items: center;
@@ -2428,7 +2429,32 @@ body {
     <div class="history-section">
       <div class="history-header">
         <div class="section-title">Match History</div>
-        <button class="btn-clear-history admin-only" id="btnClearHistory" onclick="App.clearHistory()" style="display:none;">Clear History</button>
+        <div style="display:flex;gap:8px;">
+          <button class="btn-outline" id="btnLogPastMatch" onclick="App.toggleLogPastMatch()" style="display:none;padding:6px 12px;font-size:0.78rem;font-weight:600;">+ Log Past Match</button>
+          <button class="btn-clear-history admin-only" id="btnClearHistory" onclick="App.clearHistory()" style="display:none;">Clear History</button>
+        </div>
+      </div>
+      <div id="logPastMatchPanel" class="partner-picker" style="display:none;margin-bottom:14px;">
+        <div style="padding:10px 12px 0;">
+          <p style="font-size:0.78rem;color:var(--text-muted);margin:0 0 8px;line-height:1.4;">Tap 4 players who already played a match together before joining the app &mdash; the first two picked become Team A, the next two Team B. It's added below and counts toward the fairness algorithm, but isn't tied to a court or timer.</p>
+        </div>
+        <div class="partner-picker-list" id="logPastMatchPicker"></div>
+        <div id="logPastMatchTeams" style="display:none;padding:10px 12px 0;">
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;">
+            <span style="flex:1;font-size:0.82rem;font-weight:600;" id="logPastMatchTeamA"></span>
+            <input type="number" min="0" class="setup-input" id="logPastMatchScoreA" placeholder="Score" style="width:70px;margin-bottom:0;">
+          </div>
+          <div style="display:flex;align-items:center;gap:8px;">
+            <span style="flex:1;font-size:0.82rem;font-weight:600;" id="logPastMatchTeamB"></span>
+            <input type="number" min="0" class="setup-input" id="logPastMatchScoreB" placeholder="Score" style="width:70px;margin-bottom:0;">
+          </div>
+          <p style="font-size:0.72rem;color:var(--text-muted);margin:6px 0 0;">Score is optional.</p>
+        </div>
+        <p id="logPastMatchError" class="setup-error" style="display:none;margin:8px 12px 0;"></p>
+        <div style="display:flex;gap:8px;padding:10px 12px 12px;">
+          <button type="button" class="btn-outline" onclick="App.toggleLogPastMatch()" style="flex:1;padding:10px;font-size:0.85rem;">Cancel</button>
+          <button type="button" class="btn-confirm-join" id="btnSubmitLogPastMatch" onclick="App.submitLogPastMatch()" disabled style="flex:1;padding:10px;font-size:0.85rem;font-weight:700;">Add to History</button>
+        </div>
       </div>
       <div id="historyStats" class="history-stats-card" style="display:none;">
         <div class="history-stat-tile">
@@ -4933,6 +4959,11 @@ ${bracketHTML}
     if (qAddRow) qAddRow.style.display = isLocked ? 'none' : '';
     const qAddSkill = document.getElementById('queueAddPlayerSkill');
     if (qAddSkill) qAddSkill.style.display = this.state._quickPlay ? 'none' : '';
+    // Logging a past match only makes sense for Open Play's live queue —
+    // Round Robin/Tournament build matches from a locked roster/bracket instead.
+    const btnLogMatch = document.getElementById('btnLogPastMatch');
+    if (btnLogMatch) btnLogMatch.style.display = structured ? 'none' : '';
+    if (structured) this._closeLogPastMatch();
 
     // Offline sessions have no persistent identity/preferences to manage
     const isOffline = !!this.state._offline;
@@ -5639,6 +5670,122 @@ ${bracketHTML}
     if (btnUndo) btnUndo.style.display = this._proposedUndoStack.length > 0 ? '' : 'none';
   },
 
+  // ─── Log a past match (Open Play manual entry) ─────
+  // Lets an organizer record a match that was already played before the
+  // group started using the app this session, picking from anyone active
+  // in the session (queue or already on a court). It's added to History and
+  // feeds the same opponentHistory repeat-count the assignment algorithm
+  // reads, without occupying a court, touching roundsWaited, or affecting
+  // anyone's lastActiveAt.
+  _logMatchSelection: [],
+
+  toggleLogPastMatch() {
+    const panel = document.getElementById('logPastMatchPanel');
+    if (!panel) return;
+    const showing = panel.style.display !== 'none';
+    panel.style.display = showing ? 'none' : '';
+    this._logMatchSelection = [];
+    if (!showing) this.renderLogPastMatchPicker();
+  },
+
+  _closeLogPastMatch() {
+    const panel = document.getElementById('logPastMatchPanel');
+    if (panel) panel.style.display = 'none';
+    this._logMatchSelection = [];
+  },
+
+  renderLogPastMatchPicker() {
+    const el = document.getElementById('logPastMatchPicker');
+    if (!el) return;
+    const eligible = this.state.players.filter(p => p.active);
+    el.innerHTML = eligible.length === 0
+      ? '<div style="padding:10px 12px;color:var(--text-light);font-size:0.82rem;">No players to select</div>'
+      : eligible.map(p => {
+        const idx = this._logMatchSelection.indexOf(p.id);
+        const teamLabel = idx === 0 || idx === 1 ? 'A' : idx === 2 || idx === 3 ? 'B' : '';
+        const selected = idx !== -1 ? ' partner-picker-item-selected' : '';
+        return `<div class="partner-picker-item${selected}" onclick="App.toggleLogMatchPlayer(${p.id})">${this.esc(p.name)}${teamLabel ? ` <strong>&mdash; Team ${teamLabel}</strong>` : ''}</div>`;
+      }).join('');
+    this._updateLogPastMatchTeams();
+  },
+
+  toggleLogMatchPlayer(id) {
+    const sel = this._logMatchSelection;
+    const idx = sel.indexOf(id);
+    if (idx !== -1) sel.splice(idx, 1);
+    else if (sel.length < 4) sel.push(id);
+    this.renderLogPastMatchPicker();
+  },
+
+  _updateLogPastMatchTeams() {
+    const wrap = document.getElementById('logPastMatchTeams');
+    const btn = document.getElementById('btnSubmitLogPastMatch');
+    const errEl = document.getElementById('logPastMatchError');
+    if (errEl) errEl.style.display = 'none';
+    const sel = this._logMatchSelection;
+    const ready = sel.length === 4;
+    if (wrap) wrap.style.display = ready ? '' : 'none';
+    if (btn) btn.disabled = !ready;
+    if (ready) {
+      const nameFor = id => this.getPlayer(id)?.name || '?';
+      const teamAEl = document.getElementById('logPastMatchTeamA');
+      const teamBEl = document.getElementById('logPastMatchTeamB');
+      if (teamAEl) teamAEl.textContent = `${nameFor(sel[0])} & ${nameFor(sel[1])}`;
+      if (teamBEl) teamBEl.textContent = `${nameFor(sel[2])} & ${nameFor(sel[3])}`;
+    }
+  },
+
+  submitLogPastMatch() {
+    const sel = this._logMatchSelection;
+    const errEl = document.getElementById('logPastMatchError');
+    if (sel.length !== 4) return;
+    const side1 = sel.slice(0, 2);
+    const side2 = sel.slice(2, 4);
+    const rawA = (document.getElementById('logPastMatchScoreA')?.value || '').trim();
+    const rawB = (document.getElementById('logPastMatchScoreB')?.value || '').trim();
+    let score1 = null, score2 = null;
+    if (rawA !== '' || rawB !== '') {
+      score1 = parseInt(rawA);
+      score2 = parseInt(rawB);
+      if (isNaN(score1) || isNaN(score2)) {
+        if (errEl) { errEl.textContent = 'Enter a score for both teams, or leave both blank.'; errEl.style.display = ''; }
+        return;
+      }
+    }
+    this.logPastMatch(side1, side2, score1, score2);
+    this._closeLogPastMatch();
+    this.saveState();
+    this.render();
+  },
+
+  // Records the repeat-count and history entry a live match would, without
+  // any of the live-match bookkeeping (court, timer, roundsWaited).
+  logPastMatch(side1, side2, score1, score2) {
+    if (side1.length !== 2 || side2.length !== 2) return;
+    this.recordOpponents(side1, side2);
+    for (const id of [...side1, ...side2]) {
+      const p = this.getPlayer(id);
+      if (p) p.roundsPlayed = (p.roundsPlayed || 0) + 1;
+    }
+    const hasScores = score1 != null && score2 != null;
+    const winner = hasScores ? (score1 > score2 ? 1 : score2 > score1 ? 2 : 0) : null;
+    const histEntry = {
+      round: this.state.round,
+      courtId: null,
+      side1: [...side1],
+      side2: [...side2],
+      side1Names: side1.map(id => this.getPlayer(id)?.name || '?'),
+      side2Names: side2.map(id => this.getPlayer(id)?.name || '?'),
+      mode: 'doubles',
+      score1, score2, winner,
+      duration: null,
+      startTime: null,
+      manual: true,
+    };
+    this.state.roundHistory.push(histEntry);
+    MyHistory.saveMatch(histEntry);
+  },
+
   _renderQueueRR(countEl, controls, btnAssignAll, courtSelect, matchOpts) {
     if (matchOpts) matchOpts.style.display = 'none';
     // Open Play hides this button/title/note in favor of per-court Auto-fill;
@@ -5850,7 +5997,7 @@ ${bracketHTML}
         const time = d.toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' });
         dateTime = `${date}, ${time}`;
       }
-      const headerLeft = dateTime || '';
+      const headerLeft = m.manual ? 'Logged as already played' : (dateTime || '');
       const headerRight = dur ? `${dur}` : '';
       return `<div class="match-card">
         <div class="match-card-header">
