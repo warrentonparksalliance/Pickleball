@@ -2274,6 +2274,19 @@ body {
           Match by skill
         </label>
       </div>
+      <div id="queueAddPlayerRow" style="display:none;margin-bottom:10px;">
+        <p id="queueAddPlayerError" class="setup-error" style="display:none;">Enter a player name</p>
+        <div style="display:flex;gap:8px;">
+          <input type="text" class="setup-input" id="queueAddPlayerName" placeholder="Player name" style="flex:1;margin-bottom:0;" onkeydown="if(event.key==='Enter')App.submitQueueAddPlayer()">
+          <select class="setup-input" id="queueAddPlayerSkill" style="width:110px;flex-shrink:0;margin-bottom:0;">
+            <option value="" selected>Rating</option>
+            <option value="beginner">Beginner</option>
+            <option value="intermediate">Intermediate</option>
+            <option value="advanced">Advanced</option>
+          </select>
+          <button type="button" class="btn-add-player" style="margin-top:0;flex-shrink:0;width:auto;padding:12px 16px;" onclick="App.submitQueueAddPlayer()">+ Add Player</button>
+        </div>
+      </div>
       <div class="queue-subsection-label">Waiting</div>
       <div class="queue-list-box">
         <div id="queueActiveList" class="queue-list dnd-target" data-loc-type="queue"></div>
@@ -2291,19 +2304,6 @@ body {
         <span id="queueRemoveZoneLabel">Drag or tap to remove</span>
       </div>
       <button id="rrUnlockBtn" class="btn-outline" onclick="App.isRoundRobin()?App.rrUnlockPlayers():App.bracketUnlockPlayers()" style="display:none;margin-top:8px;width:100%;color:var(--warning);border-color:var(--warning);font-size:0.82rem;">Unlock Players &amp; Reset</button>
-      <div id="queueAddPlayerRow" style="display:none;margin-top:10px;">
-        <p id="queueAddPlayerError" class="setup-error" style="display:none;">Enter a player name</p>
-        <div style="display:flex;gap:8px;">
-          <input type="text" class="setup-input" id="queueAddPlayerName" placeholder="Player name" style="flex:1;margin-bottom:0;" onkeydown="if(event.key==='Enter')App.submitQueueAddPlayer()">
-          <select class="setup-input" id="queueAddPlayerSkill" style="width:110px;flex-shrink:0;margin-bottom:0;">
-            <option value="" selected>Rating</option>
-            <option value="beginner">Beginner</option>
-            <option value="intermediate">Intermediate</option>
-            <option value="advanced">Advanced</option>
-          </select>
-          <button type="button" class="btn-add-player" style="margin-top:0;flex-shrink:0;width:auto;padding:12px 16px;" onclick="App.submitQueueAddPlayer()">+ Add Player</button>
-        </div>
-      </div>
     </div>
 
     <!-- Courts grid (active games) -->
@@ -3096,14 +3096,9 @@ const App = {
     const nameEl = document.getElementById(`editGuestName-${id}`);
     const name = nameEl ? nameEl.value.trim() : '';
     if (!name) { if (nameEl) nameEl.focus(); return; }
-    const skillEl = document.getElementById(`editGuestSkill-${id}`);
-    const skillLevel = skillEl && skillEl.value ? skillEl.value : null;
 
     const p = this.state.players.find(p => p.id === id);
-    if (p) {
-      p.name = name;
-      p.skillLevel = skillLevel;
-    }
+    if (p) p.name = name;
     this._editingGuest = null;
     this.saveState();
     this.render();
@@ -5054,15 +5049,12 @@ ${bracketHTML}
         </div>`;
       }
       if (this._editingGuest === p.id) {
+        // Rating isn't edited here — tapping the R/B/I/A indicator on the
+        // chip itself opens the skill picker, so a second rating field in
+        // this name-edit form would just be a redundant way to do the same thing.
         return `<div class="queue-row-edit">
           <input type="text" id="editGuestName-${p.id}" value="${this.esc(p.name)}" placeholder="Name" maxlength="30"
             onkeydown="if(event.key==='Enter')App.saveGuestEdit(${p.id})">
-          <select id="editGuestSkill-${p.id}" class="setup-input">
-            <option value=""${!p.skillLevel ? ' selected' : ''}>Rating</option>
-            <option value="beginner"${p.skillLevel === 'beginner' ? ' selected' : ''}>Beginner</option>
-            <option value="intermediate"${p.skillLevel === 'intermediate' ? ' selected' : ''}>Intermediate</option>
-            <option value="advanced"${p.skillLevel === 'advanced' ? ' selected' : ''}>Advanced</option>
-          </select>
           <button class="btn-edit-save" onclick="App.saveGuestEdit(${p.id})">Save</button>
           <button class="btn-edit-cancel" onclick="App.cancelGuestEdit()">Cancel</button>
         </div>`;
@@ -5098,12 +5090,12 @@ ${bracketHTML}
     const activePlayers = queuePlayers.filter(p => p.active);
     const waitingPlayers = queuePlayers.filter(p => !p.active);
 
+    // No separate empty-state message in either list — the drop strip
+    // right below each (now-empty) list already states what to do, and
+    // repeating the instruction inside the list too was redundant.
     if (activeEl) activeEl.innerHTML = activePlayers.length
       ? activePlayers.map(renderRow).join('')
-      : '<span style="display:block;width:100%;padding:10px 0;color:var(--text-muted);font-size:0.85rem;font-style:italic;">No players waiting in the queue</span>';
-    // No separate empty-state message here — the "Drag or tap to sit out"
-    // strip right below the (now-empty) list already covers it, and
-    // repeating the instruction inside the list too was redundant.
+      : '';
     if (waitingEl) waitingEl.innerHTML = waitingPlayers.length
       ? waitingPlayers.map(renderRow).join('')
       : '';
