@@ -653,6 +653,25 @@ body {
 .partner-picker-item:last-child { border-bottom: none; }
 .partner-picker-item:hover { background: var(--primary-light); }
 .partner-picker-item-selected { background: var(--primary-light); font-weight: 700; }
+
+/* ── Rating fields: a button that opens an inline list (same pattern as
+   the queue's tap-to-set skill tag), never a native <select> ────── */
+.skill-field { position: relative; }
+.skill-field-btn {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+  width: 100%;
+  cursor: pointer;
+  text-align: left;
+  color: var(--text);
+  background: var(--input-bg);
+}
+.skill-field-btn.placeholder { color: var(--text-muted); }
+.skill-field-btn .skill-field-label { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.skill-field-caret { font-size: 0.65em; color: var(--text-muted); flex-shrink: 0; }
+.skill-field-menu { margin-bottom: 8px; }
 .partner-chip {
   display: flex;
   align-items: center;
@@ -2327,13 +2346,22 @@ body {
         <p id="queueAddPlayerError" class="setup-error" style="display:none;">Enter a player name</p>
         <div style="display:flex;gap:8px;">
           <input type="text" class="setup-input" id="queueAddPlayerName" placeholder="Player name" style="flex:1;margin-bottom:0;" onkeydown="if(event.key==='Enter')App.submitQueueAddPlayer()">
-          <select class="setup-input" id="queueAddPlayerSkill" style="width:110px;flex-shrink:0;margin-bottom:0;">
-            <option value="" selected>Rating</option>
-            <option value="beginner">Beginner</option>
-            <option value="intermediate">Intermediate</option>
-            <option value="advanced">Advanced</option>
-          </select>
+          <div class="skill-field" id="queueAddPlayerSkillField" style="width:110px;flex-shrink:0;">
+            <button type="button" class="setup-input skill-field-btn placeholder" id="queueAddPlayerSkillBtn" style="margin-bottom:0;" onclick="App.toggleSkillField('queueAddPlayerSkill')" data-placeholder="Rating">
+              <span class="skill-field-label">Rating</span>
+              <span class="skill-field-caret">&#9662;</span>
+            </button>
+            <input type="hidden" id="queueAddPlayerSkill" value="">
+          </div>
           <button type="button" class="btn-add-player" style="margin-top:0;flex-shrink:0;width:auto;padding:12px 16px;" onclick="App.submitQueueAddPlayer()">+ Add Player</button>
+        </div>
+        <div class="partner-picker skill-field-menu" id="queueAddPlayerSkillMenu" style="display:none;">
+          <div class="partner-picker-list">
+            <div class="partner-picker-item" onclick="App.setSkillField('queueAddPlayerSkill', 'beginner')">Beginner</div>
+            <div class="partner-picker-item" onclick="App.setSkillField('queueAddPlayerSkill', 'intermediate')">Intermediate</div>
+            <div class="partner-picker-item" onclick="App.setSkillField('queueAddPlayerSkill', 'advanced')">Advanced</div>
+            <div class="partner-picker-item" onclick="App.setSkillField('queueAddPlayerSkill', '')">Clear rating</div>
+          </div>
         </div>
       </div>
       <div class="queue-subsection-label">Waiting</div>
@@ -2388,12 +2416,21 @@ body {
       <div class="settings-card-title">Your Profile</div>
       <div style="display:flex;gap:8px;margin-bottom:8px;">
         <input type="text" class="setup-input" id="settingsName" placeholder="Display name" maxlength="30" style="flex:1;min-width:0;margin-bottom:0;">
-        <select class="setup-input" id="settingsSkill" style="width:130px;flex-shrink:0;margin-bottom:0;">
-          <option value="">Rating</option>
-          <option value="beginner">Beginner</option>
-          <option value="intermediate">Intermediate</option>
-          <option value="advanced">Advanced</option>
-        </select>
+        <div class="skill-field" id="settingsSkillField" style="width:130px;flex-shrink:0;">
+          <button type="button" class="setup-input skill-field-btn placeholder" id="settingsSkillBtn" style="margin-bottom:0;" onclick="App.toggleSkillField('settingsSkill')" data-placeholder="Rating">
+            <span class="skill-field-label">Rating</span>
+            <span class="skill-field-caret">&#9662;</span>
+          </button>
+          <input type="hidden" id="settingsSkill" value="">
+        </div>
+      </div>
+      <div class="partner-picker skill-field-menu" id="settingsSkillMenu" style="display:none;">
+        <div class="partner-picker-list">
+          <div class="partner-picker-item" onclick="App.setSkillField('settingsSkill', 'beginner')">Beginner</div>
+          <div class="partner-picker-item" onclick="App.setSkillField('settingsSkill', 'intermediate')">Intermediate</div>
+          <div class="partner-picker-item" onclick="App.setSkillField('settingsSkill', 'advanced')">Advanced</div>
+          <div class="partner-picker-item" onclick="App.setSkillField('settingsSkill', '')">Clear rating</div>
+        </div>
       </div>
       <div style="display:flex;align-items:center;justify-content:flex-end;">
         <button type="button" class="btn-outline" onclick="App.saveSettings()" style="padding:12px 16px;font-size:1rem;font-weight:700;">Save</button>
@@ -2609,12 +2646,21 @@ body {
       <div class="hiw-body">
         <input type="text" class="setup-input" id="selfProfileName" placeholder="Your name" autocomplete="given-name" style="width:100%;" onkeydown="if(event.key==='Enter')Onboard._selfProfileSubmit()">
         <p id="selfProfileNameError" class="setup-error">Enter your name first</p>
-        <select class="setup-input" id="selfProfileSkill" style="width:100%;">
-          <option value="">Skill level (optional)</option>
-          <option value="beginner">Beginner</option>
-          <option value="intermediate">Intermediate</option>
-          <option value="advanced">Advanced</option>
-        </select>
+        <div class="skill-field" id="selfProfileSkillField" style="width:100%;">
+          <button type="button" class="setup-input skill-field-btn placeholder" id="selfProfileSkillBtn" onclick="App.toggleSkillField('selfProfileSkill')" data-placeholder="Skill level (optional)">
+            <span class="skill-field-label">Skill level (optional)</span>
+            <span class="skill-field-caret">&#9662;</span>
+          </button>
+          <input type="hidden" id="selfProfileSkill" value="">
+        </div>
+        <div class="partner-picker skill-field-menu" id="selfProfileSkillMenu" style="display:none;">
+          <div class="partner-picker-list">
+            <div class="partner-picker-item" onclick="App.setSkillField('selfProfileSkill', 'beginner')">Beginner</div>
+            <div class="partner-picker-item" onclick="App.setSkillField('selfProfileSkill', 'intermediate')">Intermediate</div>
+            <div class="partner-picker-item" onclick="App.setSkillField('selfProfileSkill', 'advanced')">Advanced</div>
+            <div class="partner-picker-item" onclick="App.setSkillField('selfProfileSkill', '')">Clear rating</div>
+          </div>
+        </div>
         <p style="font-size:0.78rem;color:var(--text-muted);margin:0;">You can update this anytime from Settings.</p>
         <div style="display:flex;gap:10px;">
           <button type="button" class="btn-outline" style="flex:1;padding:12px;font-size:1rem;font-weight:700;" onclick="Onboard._selfProfileCancel()">Cancel</button>
@@ -3056,7 +3102,7 @@ const App = {
     const user = Onboard._savedUser();
     if (user) {
       document.getElementById('settingsName').value = user.name || '';
-      document.getElementById('settingsSkill').value = user.skillLevel || '';
+      this.setSkillField('settingsSkill', user.skillLevel || '');
     }
   },
 
@@ -3118,7 +3164,7 @@ const App = {
     this.saveState();
     this.render();
     if (nameEl) nameEl.value = '';
-    if (skillEl) skillEl.value = '';
+    this.setSkillField('queueAddPlayerSkill', '');
     // Re-focus to let a mouse/trackpad user add several names back-to-back
     // without re-clicking the field each time — but not on a touch-primary
     // device, where refocusing just pops the on-screen keyboard back open
@@ -3241,6 +3287,36 @@ const App = {
     this._skillPickerFor = null;
     this.saveState();
     this.render();
+  },
+
+  // ─── Generic rating field (button + inline list) ───
+  // Used anywhere a form needs a rating value — self-profile, settings, the
+  // inline queue add-player row, and per-row in the bulk name-entry form —
+  // instead of a native <select>, to match the queue's own skill picker.
+  // Each field is a hidden <input id="fieldId"> (read the same way a
+  // <select> would be, via .value) plus a button (#fieldIdBtn) and an
+  // inline options list (#fieldIdMenu) kept in sync here.
+  _skillFieldLabels: { beginner: 'Beginner', intermediate: 'Intermediate', advanced: 'Advanced' },
+
+  toggleSkillField(fieldId) {
+    const menu = document.getElementById(fieldId + 'Menu');
+    if (!menu) return;
+    const isOpen = menu.style.display !== 'none';
+    document.querySelectorAll('.skill-field-menu').forEach(m => { m.style.display = 'none'; });
+    menu.style.display = isOpen ? 'none' : '';
+  },
+
+  setSkillField(fieldId, value) {
+    const input = document.getElementById(fieldId);
+    if (input) input.value = value || '';
+    const btn = document.getElementById(fieldId + 'Btn');
+    if (btn) {
+      const label = btn.querySelector('.skill-field-label');
+      if (label) label.textContent = value ? this._skillFieldLabels[value] : (btn.dataset.placeholder || 'Rating');
+      btn.classList.toggle('placeholder', !value);
+    }
+    const menu = document.getElementById(fieldId + 'Menu');
+    if (menu) menu.style.display = 'none';
   },
 
   // ─── Court-lock helpers ────────────────────
@@ -5025,7 +5101,7 @@ ${bracketHTML}
     }
     const qAddRow = document.getElementById('queueAddPlayerRow');
     if (qAddRow) qAddRow.style.display = isLocked ? 'none' : '';
-    const qAddSkill = document.getElementById('queueAddPlayerSkill');
+    const qAddSkill = document.getElementById('queueAddPlayerSkillField');
     if (qAddSkill) qAddSkill.style.display = this.state._quickPlay ? 'none' : '';
     // Logging a past match only makes sense for Open Play's live queue —
     // Round Robin/Tournament build matches from a locked roster/bracket instead.
@@ -5366,8 +5442,8 @@ ${bracketHTML}
 
       let bodyHTML;
       if (isScoring) {
-        const s1Names = game.side1.map(id => { const p = this.getPlayer(id); return p ? this.esc(p.name) + (this.skillLabel(p) ? ` <span style="font-weight:400;opacity:0.7;">(${this.skillLabel(p)})</span>` : '') : '?'; }).join(' & ');
-        const s2Names = game.side2.map(id => { const p = this.getPlayer(id); return p ? this.esc(p.name) + (this.skillLabel(p) ? ` <span style="font-weight:400;opacity:0.7;">(${this.skillLabel(p)})</span>` : '') : '?'; }).join(' & ');
+        const s1Names = game.side1.map(id => { const p = this.getPlayer(id); return p ? this.esc(p.name) : '?'; }).join(' & ');
+        const s2Names = game.side2.map(id => { const p = this.getPlayer(id); return p ? this.esc(p.name) : '?'; }).join(' & ');
         bodyHTML = `<div class="score-entry">
           <div class="score-entry-gameover">GAME OVER</div>
           <div class="score-side side-1">
@@ -5473,10 +5549,11 @@ ${bracketHTML}
     if (!p) return '';
     const isYou = Onboard.selfId === playerId;
     const selected = this._tapSelection && this._tapSelection.playerId === playerId ? ' dnd-selected' : '';
-    const skillTag = this.skillLabel(p) ? ` <span style="font-weight:400;opacity:0.7;">(${this.skillLabel(p)})</span>` : '';
+    // Skill level is a queue-only detail — once someone's on a court, which
+    // team they're on already reflects any skill-based matching.
     const youBadge = isYou ? ' <span class="queue-row-you">you</span>' : '';
     const userBadge = !isYou && p.isLive ? ' <span class="queue-row-status user">user</span>' : '';
-    return `<span class="dnd-chip${selected}" data-player-id="${playerId}">${this.esc(p.name)}${skillTag}${youBadge}${userBadge}</span>`;
+    return `<span class="dnd-chip${selected}" data-player-id="${playerId}">${this.esc(p.name)}${youBadge}${userBadge}</span>`;
   },
 
   // ─── Drag & drop + tap-to-move ─────
@@ -5754,8 +5831,7 @@ ${bracketHTML}
       const p = this.getPlayer(id);
       if (!p) return '';
       const youBadge = id === Onboard.selfId ? ' <span class="queue-row-you">you</span>' : '';
-      const skillTag = this.skillLabel(p) ? ` <span style="font-weight:400;opacity:0.7;">(${this.skillLabel(p)})</span>` : '';
-      return `<span class="side-player-${align}"><span class="side-player-name">${this.esc(p.name)}${skillTag}</span>${youBadge}</span>`;
+      return `<span class="side-player-${align}"><span class="side-player-name">${this.esc(p.name)}</span>${youBadge}</span>`;
     };
     if (side.length === 1) {
       return playerHtml(side[0], 'solo');
@@ -6787,10 +6863,9 @@ const Onboard = {
     }
     this._selfProfileCtx = { onComplete };
     const nameEl = document.getElementById('selfProfileName');
-    const skillEl = document.getElementById('selfProfileSkill');
     const errEl = document.getElementById('selfProfileNameError');
     if (nameEl) nameEl.value = Admin._user?.displayName || '';
-    if (skillEl) skillEl.value = saved.skillLevel || '';
+    App.setSkillField('selfProfileSkill', saved.skillLevel || '');
     if (errEl) errEl.style.display = 'none';
     document.getElementById('selfProfileModal').style.display = 'flex';
     document.body.style.overflow = 'hidden';
@@ -7300,6 +7375,7 @@ const Onboard = {
     if (list) {
       list.innerHTML = '';
       for (let i = 1; i <= count; i++) {
+        const wrapper = document.createElement('div');
         const row = document.createElement('div');
         row.style.cssText = 'display:flex;gap:8px;';
         const nameInput = document.createElement('input');
@@ -7310,19 +7386,35 @@ const Onboard = {
         nameInput.dataset.bulkName = i;
         row.appendChild(nameInput);
         if (!quickPlay) {
-          const skillInput = document.createElement('select');
-          skillInput.className = 'setup-input';
-          skillInput.style.cssText = 'width:110px;flex-shrink:0;margin-bottom:0;';
-          skillInput.dataset.bulkSkill = i;
-          skillInput.innerHTML = `
-            <option value="">Rating</option>
-            <option value="beginner">Beginner</option>
-            <option value="intermediate">Intermediate</option>
-            <option value="advanced">Advanced</option>`;
-          row.appendChild(skillInput);
+          const fieldId = `bulkSkill_${i}`;
+          const skillWrap = document.createElement('div');
+          skillWrap.className = 'skill-field';
+          skillWrap.style.cssText = 'width:110px;flex-shrink:0;';
+          skillWrap.innerHTML = `
+            <button type="button" class="setup-input skill-field-btn placeholder" id="${fieldId}Btn" style="margin-bottom:0;" onclick="App.toggleSkillField('${fieldId}')" data-placeholder="Rating">
+              <span class="skill-field-label">Rating</span>
+              <span class="skill-field-caret">&#9662;</span>
+            </button>
+            <input type="hidden" id="${fieldId}" data-bulk-skill="${i}" value="">`;
+          row.appendChild(skillWrap);
+          const menu = document.createElement('div');
+          menu.className = 'partner-picker skill-field-menu';
+          menu.id = `${fieldId}Menu`;
+          menu.style.display = 'none';
+          menu.innerHTML = `
+            <div class="partner-picker-list">
+              <div class="partner-picker-item" onclick="App.setSkillField('${fieldId}', 'beginner')">Beginner</div>
+              <div class="partner-picker-item" onclick="App.setSkillField('${fieldId}', 'intermediate')">Intermediate</div>
+              <div class="partner-picker-item" onclick="App.setSkillField('${fieldId}', 'advanced')">Advanced</div>
+              <div class="partner-picker-item" onclick="App.setSkillField('${fieldId}', '')">Clear rating</div>
+            </div>`;
+          wrapper.appendChild(row);
+          wrapper.appendChild(menu);
+        } else {
+          wrapper.appendChild(row);
         }
         if (i === count) nameInput.onkeydown = (e) => { if (e.key === 'Enter') this._bulkSubmit(); };
-        list.appendChild(row);
+        list.appendChild(wrapper);
       }
       list.querySelector('input')?.focus();
     }
