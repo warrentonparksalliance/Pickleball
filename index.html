@@ -2415,6 +2415,21 @@ body {
     </div>
   </div>
 
+  <!-- ── Quick Play: leave-session warning (nothing's saved unless signed in) ── -->
+  <div id="quickPlayLeaveModal" class="hiw-overlay" style="display:none;" onclick="Session.leaveModalCancel(event)">
+    <div class="hiw-modal" style="max-width:400px;" onclick="event.stopPropagation()">
+      <div class="hiw-header">
+        <h2>Leave Quick Play?</h2>
+        <button class="hiw-close" onclick="Session.leaveModalCancel()" aria-label="Close">&times;</button>
+      </div>
+      <div class="hiw-body">
+        <p style="font-size:0.85rem;color:var(--text-light);line-height:1.5;margin:0;">Quick Play isn&rsquo;t saved. If you leave now, all players, scores, and courts will be lost.</p>
+        <button type="button" id="quickPlaySaveBtn" class="btn-confirm-join" style="width:100%;padding:12px;font-size:1rem;font-weight:700;" onclick="Session.leaveModalSaveAndContinue()">Sign in with Google to Save</button>
+        <button type="button" class="btn-danger" style="width:100%;padding:12px;font-size:1rem;font-weight:700;" onclick="Session.leaveModalDiscard()">Leave Without Saving</button>
+      </div>
+    </div>
+  </div>
+
   <!-- ── In-session: add player to queue modal ── -->
   <div id="queueAddPlayerModal" class="hiw-overlay" style="display:none;" onclick="App.closeQueueAddPlayer(event)">
     <div class="hiw-modal" style="max-width:360px;" onclick="event.stopPropagation()">
@@ -5129,8 +5144,80 @@ const Session = {
   _pushTimer: null,
 
   leave() {
-    if (this.id === 'offline' && !confirm('Leave this Quick Play session? It isn’t saved, so all players, scores, and courts will be lost.')) return;
+    if (this.id === 'offline') {
+      const btn = document.getElementById('quickPlaySaveBtn');
+      if (btn) { btn.disabled = false; btn.textContent = Admin.isSignedIn() ? 'Save to My Account' : 'Sign in with Google to Save'; }
+      document.getElementById('quickPlayLeaveModal').style.display = 'flex';
+      document.body.style.overflow = 'hidden';
+      return;
+    }
     this._doLeave();
+  },
+
+  leaveModalCancel(event) {
+    if (event && event.target !== event.currentTarget) return;
+    document.getElementById('quickPlayLeaveModal').style.display = 'none';
+    document.body.style.overflow = '';
+  },
+
+  leaveModalDiscard() {
+    this.leaveModalCancel();
+    this._doLeave();
+  },
+
+  async leaveModalSaveAndContinue() {
+    const btn = document.getElementById('quickPlaySaveBtn');
+    if (btn) { btn.disabled = true; btn.textContent = 'Signing in…'; }
+    try {
+      if (!Admin.isSignedIn()) {
+        await Admin.signIn();
+        const start = Date.now();
+        while (!Admin.isSignedIn() && Date.now() - start < 5000) {
+          await new Promise(r => setTimeout(r, 100));
+        }
+      }
+      if (!Admin.isSignedIn()) {
+        if (btn) { btn.disabled = false; btn.textContent = 'Sign in with Google to Save'; }
+        return;
+      }
+      if (btn) btn.textContent = 'Saving…';
+      await this._saveOfflineAsPrivate();
+      this.leaveModalCancel();
+    } catch(e) {
+      alert('Something went wrong saving this session. Please try again.');
+      if (btn) { btn.disabled = false; btn.textContent = 'Sign in with Google to Save'; }
+    }
+  },
+
+  async _saveOfflineAsPrivate() {
+    const now = new Date();
+    const label = `Quick Play ${now.toLocaleDateString(undefined, { month: 'short', day: 'numeric' })} ${now.toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' })}`;
+    const slug = label.toLowerCase().replace(/[^a-z0-9]/g, '') + '-' + Math.random().toString(36).slice(2, 6);
+    const id = 'pvt-' + slug;
+    const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+    let passcode = '';
+    for (let i = 0; i < 4; i++) passcode += chars[Math.floor(Math.random() * chars.length)];
+
+    App.state._sessionName = label;
+    App.state._passcode = passcode;
+    App.state._admins = Admin._user ? [Admin._user.uid] : [];
+    App.state._createdBy = { name: Admin._user?.displayName || '', email: Admin._user?.email || '', uid: Admin._user?.uid || '' };
+    App.state._createdAt = Date.now();
+    delete App.state._offline;
+    delete App.state._quickPlay;
+    App._normState();
+
+    this.id = id;
+    this.label = label;
+    this._setURL(id);
+    await this._put(App.state);
+    App.saveState();
+    App.render();
+    this._listen(null);
+    this._updateUI();
+    Onboard._savePrivateSession(id, label);
+
+    alert(`Saved! This is now the private session "${label}" (passcode ${passcode}), tied to your Google account — you can rejoin it anytime.`);
   },
 
   _doLeave() {
