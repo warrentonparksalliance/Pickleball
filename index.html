@@ -453,7 +453,10 @@ body {
   display: flex;
   align-items: center;
   gap: 10px;
-  margin: -20px -20px 16px;
+  /* -20px cancels .setup-block's padding, -1px its border, so the color
+     bleeds flush to the card's outer edge instead of leaving a hairline
+     sliver of border/background showing above it. */
+  margin: -21px -21px 16px;
   padding: 14px 20px;
   background: var(--primary);
   color: #fff;
@@ -506,7 +509,6 @@ body {
 .session-list-item {
   display: flex;
   align-items: center;
-  justify-content: space-between;
   gap: 10px;
   width: 100%;
   padding: 10px 12px;
@@ -521,7 +523,11 @@ body {
 }
 .session-list-item.session-open { border-left-color: var(--success); }
 .session-list-item.session-closed { border-left-color: var(--partner); }
+/* Two aligned columns: name grows and truncates, last-joined is a fixed
+   width so it lines up down the list regardless of how long each name is. */
 .session-list-name {
+  flex: 1 1 auto;
+  min-width: 0;
   font-weight: 600;
   font-size: 0.9rem;
   color: var(--text);
@@ -530,10 +536,14 @@ body {
   white-space: nowrap;
 }
 .session-list-joined {
+  flex: 0 0 auto;
+  width: 120px;
   font-size: 0.75rem;
   color: var(--text-muted);
+  text-align: right;
   white-space: nowrap;
-  flex-shrink: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 .setup-error { font-size: 0.78rem; color: var(--danger); margin-bottom: 8px; display: none; font-weight: 500; }
 .setup-section-label {
@@ -2165,10 +2175,16 @@ body {
   /* Session setup: full-width 3-col grid aligned with tab columns */
   #sessionSetupSection { align-items: stretch; padding: 0; }
   #sessionSetupSection .setup-card { max-width: none; }
-  /* Keep welcome / signed-in cards centered at comfortable width */
-  #setupEntryOptions, #setupSignedIn { max-width: 480px; margin: 0 auto; }
-  /* Join form: single column, centered at comfortable width */
-  #setupJoinForm { max-width: 480px; margin: 0 auto; }
+  /* Keep welcome / signed-in / join-form cards centered at a comfortable,
+     shared width — width:100% is required alongside margin:auto here,
+     since an auto cross-axis margin makes a flex item ignore stretch and
+     shrink to its own content size instead (which is why Sessions and
+     Your Account previously ended up different widths). */
+  #setupEntryOptions, #setupSignedIn, #setupJoinForm {
+    width: 100%;
+    max-width: 480px;
+    margin: 0 auto;
+  }
 }
 
 @media print {
@@ -7682,12 +7698,15 @@ const Onboard = {
     this._renderSessionList();
   },
 
+  // No "Last joined" label — the fixed-width column and muted color
+  // already read as a timestamp, and the full phrase doesn't fit
+  // alongside a session name at phone width.
   _formatLastJoined(ts) {
     if (!ts) return '';
     const d = new Date(ts);
     const date = d.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
     const time = d.toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' });
-    return `Last joined ${date}, ${time}`;
+    return `${date}, ${time}`;
   },
 
   // A list rather than a wrapped row of bubbles — colored left edge marks
@@ -7715,7 +7734,7 @@ const Onboard = {
       row.className = `session-list-item ${s.closed ? 'session-closed' : 'session-open'}`;
       row.title = s.closed ? 'Closed' : 'Open';
       const joined = this._formatLastJoined(s.lastJoined);
-      row.innerHTML = `<span class="session-list-name">${App.esc(s.name)}</span>${joined ? `<span class="session-list-joined">${App.esc(joined)}</span>` : ''}`;
+      row.innerHTML = `<span class="session-list-name">${App.esc(s.name)}</span><span class="session-list-joined">${App.esc(joined)}</span>`;
       row.onclick = () => this.joinPrivateSession(s.id, s.name);
       wrap.appendChild(row);
     });
