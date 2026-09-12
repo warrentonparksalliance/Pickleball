@@ -829,6 +829,31 @@ body {
 }
 .queue-row-full { flex-basis: 100%; }
 .queue-row.inactive { opacity: 0.45; background: #f0f1f4; border-radius: var(--radius-sm); margin: 0 -4px; padding-left: 4px; padding-right: 4px; }
+/* Two chips linked by an "&" (locked partners both waiting/sitting out —
+   see renderPlayers) stay in one flex item so wrapping never separates
+   them; the "&" itself is a drag/tap target that moves both together,
+   same pipeline as a lone chip (see _onDndPointerDown). */
+.queue-row-pair { gap: 4px; }
+.queue-pair-amp {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 20px;
+  height: 20px;
+  padding: 0 2px;
+  color: var(--text-muted);
+  font-weight: 700;
+  font-size: 0.85rem;
+  cursor: pointer;
+  user-select: none;
+  -webkit-user-select: none;
+  border-radius: var(--radius-full);
+  flex-shrink: 0;
+}
+.queue-pair-amp:hover { color: var(--primary); background: var(--primary-light); }
+.queue-pair-amp.dnd-selected { color: var(--primary); background: var(--primary-light); box-shadow: 0 0 0 2px var(--primary-light); }
+.queue-pair-amp.dnd-dragging { opacity: 0.35; }
+.queue-pair-ghost { display: flex; align-items: center; gap: 4px; }
 .queue-row-name {
   flex: 0 0 auto;
   min-width: 0;
@@ -1524,6 +1549,8 @@ body {
 .proposed-hint { font-size: 0.78rem; color: var(--text-muted); text-align: center; margin-top: 4px; }
 .dnd-chip { cursor: grab; touch-action: none; }
 .dnd-chip.dnd-dragging { cursor: grabbing; }
+.queue-pair-amp { touch-action: none; }
+.queue-pair-amp.dnd-dragging { cursor: grabbing; }
 
 /* ── Sitting out ────────────────────────────── */
 .sitting-out {
@@ -5488,8 +5515,43 @@ ${bracketHTML}
     const onCourts = this.getPlayersOnCourts();
     const queuePlayers = this.state.players.filter(p => !onCourts.has(p.id));
 
-    const renderRow = (p) => {
+    const chipSpan = (p) => {
       const isYou = Onboard.selfId === p.id;
+      const selfId = Onboard.selfId;
+      // Only the *current* partner gets the orange border — an Other
+      // Partner isn't actually being used for match-making right now.
+      const isPartner = selfId && selfId !== p.id && this.state.teams.some(t =>
+        t.current && ((t.p1 === selfId && t.p2 === p.id) || (t.p2 === selfId && t.p1 === p.id))
+      );
+      const isMyGuest = !p.isLive && p.addedBy === selfId;
+      const canEdit = isMyGuest && !isYou;
+      const editBtn = canEdit ? `<button class="queue-row-btn queue-row-action" onclick="App.editGuest(${p.id})" title="Edit guest">&#x270E;</button>` : '';
+      const skillBtn = this.state.options.useSkill
+        ? `<button class="queue-row-skill-btn${p.skillLevel ? ' set' : ''}" onclick="App.toggleSkillPicker(${p.id})" title="Set skill level">${this.skillAbbrev(p)}</button>`
+        : '';
+      const selected = this._tapSelection && this._tapSelection.playerIds.length === 1 && this._tapSelection.playerIds[0] === p.id ? ' dnd-selected' : '';
+      // Border color marks whose chip this is (green = you, orange = your
+      // partner, purple = another signed-in user) instead of a text badge —
+      // see .chip-self/.chip-partner/.chip-live.
+      const presenceClass = isYou ? ' chip-self' : isPartner ? ' chip-partner' : (p.isLive ? ' chip-live' : '');
+      return `<span class="queue-row-name dnd-chip${selected}${presenceClass}" data-player-id="${p.id}"><span class="queue-row-name-text">${this.esc(p.name)}</span>${editBtn}${skillBtn}</span>`;
+    };
+
+    const skillPickerFor = (p) => this._skillPickerFor === p.id ? `<div class="partner-picker" style="margin-top:0;margin-bottom:6px;">
+        <div class="partner-picker-list">
+          <div class="partner-picker-item" onclick="App.setPlayerSkillLevel(${p.id}, 'beginner')">Beginner</div>
+          <div class="partner-picker-item" onclick="App.setPlayerSkillLevel(${p.id}, 'intermediate')">Intermediate</div>
+          <div class="partner-picker-item" onclick="App.setPlayerSkillLevel(${p.id}, 'advanced')">Advanced</div>
+          <div class="partner-picker-item" onclick="App.setPlayerSkillLevel(${p.id}, null)">Not Rated</div>
+        </div>
+      </div>` : '';
+
+    // A player mid name-edit or removal-confirm can't join a combined pair
+    // row — that row's own content replaces the chip entirely — so those
+    // states always fall back to a solo row until they're done.
+    const canPairRow = (p) => this._pendingRemove !== p.id && this._editingGuest !== p.id;
+
+    const renderRow = (p) => {
       // While this player's removal is pending, their row disappears from
       // Waiting/Sitting Out — the confirm now lives in the remove zone above.
       if (this._pendingRemove === p.id) return '';
@@ -5504,34 +5566,40 @@ ${bracketHTML}
           <button class="btn-edit-cancel" onclick="App.cancelGuestEdit()">Cancel</button>
         </div>`;
       }
-      const selfId = Onboard.selfId;
-      // Only the *current* partner gets the orange border — an Other
-      // Partner isn't actually being used for match-making right now.
-      const isPartner = selfId && selfId !== p.id && this.state.teams.some(t =>
-        t.current && ((t.p1 === selfId && t.p2 === p.id) || (t.p2 === selfId && t.p1 === p.id))
-      );
-      const isMyGuest = !p.isLive && p.addedBy === selfId;
-      const canEdit = isMyGuest && !isYou;
-      const editBtn = canEdit ? `<button class="queue-row-btn queue-row-action" onclick="App.editGuest(${p.id})" title="Edit guest">&#x270E;</button>` : '';
-      const skillBtn = this.state.options.useSkill
-        ? `<button class="queue-row-skill-btn${p.skillLevel ? ' set' : ''}" onclick="App.toggleSkillPicker(${p.id})" title="Set skill level">${this.skillAbbrev(p)}</button>`
-        : '';
-      const skillPicker = this._skillPickerFor === p.id ? `<div class="partner-picker" style="margin-top:0;margin-bottom:6px;">
-        <div class="partner-picker-list">
-          <div class="partner-picker-item" onclick="App.setPlayerSkillLevel(${p.id}, 'beginner')">Beginner</div>
-          <div class="partner-picker-item" onclick="App.setPlayerSkillLevel(${p.id}, 'intermediate')">Intermediate</div>
-          <div class="partner-picker-item" onclick="App.setPlayerSkillLevel(${p.id}, 'advanced')">Advanced</div>
-          <div class="partner-picker-item" onclick="App.setPlayerSkillLevel(${p.id}, null)">Not Rated</div>
-        </div>
-      </div>` : '';
-      const selected = this._tapSelection && this._tapSelection.playerId === p.id ? ' dnd-selected' : '';
-      // Border color marks whose chip this is (green = you, orange = your
-      // partner, purple = another signed-in user) instead of a text badge —
-      // see .chip-self/.chip-partner/.chip-live.
-      const presenceClass = isYou ? ' chip-self' : isPartner ? ' chip-partner' : (p.isLive ? ' chip-live' : '');
-      return `<div class="queue-row">
-        <span class="queue-row-name dnd-chip${selected}${presenceClass}" data-player-id="${p.id}"><span class="queue-row-name-text">${this.esc(p.name)}</span>${editBtn}${skillBtn}</span>
-      </div>${skillPicker}`;
+      return `<div class="queue-row">${chipSpan(p)}</div>${skillPickerFor(p)}`;
+    };
+
+    // Two current partners both sitting in the same list (both waiting, or
+    // both sitting out) render as one combined row with an "&" between
+    // them, mirroring the "A & B" look on the Courts tab — the "&" is
+    // itself a drag/tap target that moves both players together (see
+    // _onDndPointerDown/_movePlayers) instead of one at a time.
+    const renderPairRow = (team, p1, p2) => {
+      const ampSelected = this._tapSelection && this._tapSelection.teamId === team.id ? ' dnd-selected' : '';
+      return `<div class="queue-row queue-row-pair">${chipSpan(p1)}<span class="queue-pair-amp${ampSelected}" data-team-id="${team.id}" data-p1="${p1.id}" data-p2="${p2.id}" title="Drag or tap to move both">&amp;</span>${chipSpan(p2)}</div>${skillPickerFor(p1)}${skillPickerFor(p2)}`;
+    };
+
+    const buildListHtml = (players) => {
+      const idsInList = new Set(players.map(p => p.id));
+      const teamOf = new Map();
+      this.state.teams.forEach(t => {
+        if (t.current && idsInList.has(t.p1) && idsInList.has(t.p2)) { teamOf.set(t.p1, t); teamOf.set(t.p2, t); }
+      });
+      const seen = new Set();
+      const parts = [];
+      for (const p of players) {
+        if (seen.has(p.id)) continue;
+        const team = teamOf.get(p.id);
+        const partner = team ? players.find(pl => pl.id === (team.p1 === p.id ? team.p2 : team.p1)) : null;
+        if (team && partner && canPairRow(p) && canPairRow(partner)) {
+          seen.add(p.id); seen.add(partner.id);
+          parts.push(renderPairRow(team, p, partner));
+        } else {
+          seen.add(p.id);
+          parts.push(renderRow(p));
+        }
+      }
+      return parts.join('');
     };
 
     const activePlayers = queuePlayers.filter(p => p.active);
@@ -5541,10 +5609,10 @@ ${bracketHTML}
     // right below each (now-empty) list already states what to do, and
     // repeating the instruction inside the list too was redundant.
     if (activeEl) activeEl.innerHTML = activePlayers.length
-      ? activePlayers.map(renderRow).join('')
+      ? buildListHtml(activePlayers)
       : '';
     if (waitingEl) waitingEl.innerHTML = waitingPlayers.length
-      ? waitingPlayers.map(renderRow).join('')
+      ? buildListHtml(waitingPlayers)
       : '';
   },
 
@@ -5868,7 +5936,7 @@ ${bracketHTML}
     const p = this.getPlayer(playerId);
     if (!p) return '';
     const isYou = Onboard.selfId === playerId;
-    const selected = this._tapSelection && this._tapSelection.playerId === playerId ? ' dnd-selected' : '';
+    const selected = this._tapSelection && this._tapSelection.playerIds.length === 1 && this._tapSelection.playerIds[0] === playerId ? ' dnd-selected' : '';
     // Skill level is a queue-only detail — once someone's on a court, which
     // team they're on already reflects any skill-based matching.
     // Border color marks whose chip this is (green = you, purple = another
@@ -5893,7 +5961,7 @@ ${bracketHTML}
     return a.type !== 'slot' || (a.court === b.court && a.side === b.side);
   },
 
-  _movePlayer(playerId, from, to) {
+  _movePlayer(playerId, from, to, opts = {}) {
     if (this._locEq(from, to)) return;
 
     // A closed session (see closeSession/openSession) is fully paused —
@@ -5938,7 +6006,7 @@ ${bracketHTML}
         if (occupantId == null) return; // dropped back onto its own slot
       }
     }
-    if (from.type === 'slot' || to.type === 'slot') this._pushProposedUndoSnapshot();
+    if (!opts.skipSnapshot && (from.type === 'slot' || to.type === 'slot')) this._pushProposedUndoSnapshot();
     if (from.type === 'slot') {
       const arr = this.state.proposedGames[from.court] && this.state.proposedGames[from.court]['side' + from.side];
       if (arr) {
@@ -5956,8 +6024,39 @@ ${bracketHTML}
     if (occupantId != null && from.type === 'slot' && this.state.proposedGames[from.court]) {
       this.state.proposedGames[from.court]['side' + from.side].push(occupantId);
     }
+    if (!opts.silent) {
+      this.saveState();
+      this.render();
+    }
+  },
+
+  // Moves a locked-partner pair together in one action — used when dragging
+  // or tapping the "&" between two partnered chips in Waiting/Sitting Out
+  // (see renderPlayers) instead of moving each player one at a time. Only
+  // lands when the destination has room for both without bumping anyone
+  // already there — a pair is never split across two different targets or
+  // swapped in over an existing occupant.
+  _movePlayers(playerIds, from, to) {
+    if (this._locEq(from, to)) return;
+    if (to.type === 'remove') return; // no bulk-remove via the pair — each player's own chip still can
+    if (this.state._closed && (to.type === 'queue' || to.type === 'slot')) return;
+    if (to.type === 'slot') {
+      const game = this.state.proposedGames[to.court];
+      const destArr = game && game['side' + to.side];
+      const occupiedByOthers = destArr ? destArr.filter(id => !playerIds.includes(id)).length : 0;
+      if (occupiedByOthers > 0) return;
+    }
+    if (from.type === 'slot' || to.type === 'slot') this._pushProposedUndoSnapshot();
+    playerIds.forEach(id => this._movePlayer(id, from, to, { silent: true, skipSnapshot: true }));
     this.saveState();
     this.render();
+  },
+
+  // Single entry point for both the drag/tap pipeline and the fill pickers —
+  // one playerId moves alone, two move together as a partner pair.
+  _moveUnit(playerIds, from, to) {
+    if (playerIds.length === 1) { this._movePlayer(playerIds[0], from, to); return; }
+    this._movePlayers(playerIds, from, to);
   },
 
   // Undo steps back through adjustments made since the last confirmed/cancelled
@@ -5988,24 +6087,33 @@ ${bracketHTML}
   _onDndPointerDown(e) {
     if (e.pointerType === 'mouse' && e.button !== 0) return;
     if (this._isInteractiveTarget(e.target)) return;
-    const chipEl = e.target.closest('.dnd-chip');
-    if (chipEl) {
-      const fromEl = chipEl.closest('[data-loc-type]');
+    // The "&" between two partnered chips (see renderPlayers) is a second
+    // kind of drag/tap source alongside a lone chip — it carries both
+    // players' ids so the whole pair moves as one unit.
+    const ampEl = e.target.closest('.queue-pair-amp');
+    const chipEl = !ampEl && e.target.closest('.dnd-chip');
+    const unitEl = ampEl || chipEl;
+    if (unitEl) {
+      const fromEl = unitEl.closest('[data-loc-type]');
       const from = this._locFromEl(fromEl);
       if (!from) return;
+      const playerIds = ampEl
+        ? [Number(ampEl.dataset.p1), Number(ampEl.dataset.p2)]
+        : [Number(chipEl.dataset.playerId)];
       this._dragState = {
-        playerId: Number(chipEl.dataset.playerId),
+        playerIds,
+        teamId: ampEl ? Number(ampEl.dataset.teamId) : null,
         from,
         startX: e.clientX, startY: e.clientY,
         moved: false,
         ghost: null,
         hoverEl: null,
         pointerId: e.pointerId,
-        sourceEl: chipEl,
+        sourceEl: unitEl,
       };
       return;
     }
-    // No chip under the finger/cursor — if a player is already selected,
+    // No chip/"&" under the finger/cursor — if a player is already selected,
     // let a plain tap on a bare drop zone (e.g. an empty Waiting section)
     // complete the move; there's nothing there to drag onto otherwise.
     // (Double-tapping/double-clicking an empty court slot opens a picker to
@@ -6017,7 +6125,8 @@ ${bracketHTML}
     const zoneTapTo = this._locFromEl(locEl);
     if (!zoneTapTo) return;
     this._dragState = {
-      playerId: this._tapSelection.playerId,
+      playerIds: this._tapSelection.playerIds,
+      teamId: this._tapSelection.teamId || null,
       from: this._tapSelection.from,
       startX: e.clientX, startY: e.clientY,
       moved: false,
@@ -6036,9 +6145,19 @@ ${bracketHTML}
     if (!d.moved) {
       if (Math.hypot(dx, dy) < 6) return;
       d.moved = true;
-      d.ghost = d.sourceEl.cloneNode(true);
-      d.ghost.classList.add('dnd-ghost');
-      d.ghost.classList.remove('dnd-selected');
+      if (d.teamId != null) {
+        // A single "&" glyph makes a poor drag preview on its own — show
+        // both partner names with it instead, same look as the queue row.
+        const p1 = this.getPlayer(d.playerIds[0]), p2 = this.getPlayer(d.playerIds[1]);
+        const wrap = document.createElement('div');
+        wrap.className = 'dnd-ghost queue-pair-ghost';
+        wrap.innerHTML = `<span class="dnd-chip">${this.esc(p1 ? p1.name : '?')}</span><span class="queue-pair-amp">&amp;</span><span class="dnd-chip">${this.esc(p2 ? p2.name : '?')}</span>`;
+        d.ghost = wrap;
+      } else {
+        d.ghost = d.sourceEl.cloneNode(true);
+        d.ghost.classList.add('dnd-ghost');
+        d.ghost.classList.remove('dnd-selected');
+      }
       document.body.appendChild(d.ghost);
       d.sourceEl.classList.add('dnd-dragging');
       d.sourceEl.setPointerCapture && d.sourceEl.setPointerCapture(e.pointerId);
@@ -6065,29 +6184,30 @@ ${bracketHTML}
 
     if (d.zoneTapTo) {
       this._tapSelection = null;
-      this._movePlayer(d.playerId, d.from, d.zoneTapTo);
+      this._moveUnit(d.playerIds, d.from, d.zoneTapTo);
       return;
     }
     if (!d.moved) {
-      // Plain tap on a chip: first tap selects it, a second tap on a
-      // different chip moves the selected player to that chip's location,
-      // and tapping the same chip again just deselects it.
+      // Plain tap on a chip or "&": first tap selects it, a second tap on
+      // a different chip/"&" moves the selected unit to that tap's
+      // location, and tapping the same chip/"&" again just deselects it.
       if (!this._tapSelection) {
-        this._tapSelection = { playerId: d.playerId, from: d.from };
+        this._tapSelection = { playerIds: d.playerIds, from: d.from, teamId: d.teamId };
         this.render();
         return;
       }
-      const { playerId, from } = this._tapSelection;
+      const { playerIds, from } = this._tapSelection;
       this._tapSelection = null;
-      if (playerId === d.playerId) { this.render(); return; }
-      this._movePlayer(playerId, from, d.from);
+      const sameUnit = playerIds.length === d.playerIds.length && playerIds.every(id => d.playerIds.includes(id));
+      if (sameUnit) { this.render(); return; }
+      this._moveUnit(playerIds, from, d.from);
       return;
     }
     if (!d.hoverEl) return;
     const to = this._locFromEl(d.hoverEl);
     if (to) {
       this._tapSelection = null;
-      this._movePlayer(d.playerId, d.from, to);
+      this._moveUnit(d.playerIds, d.from, to);
     }
   },
 
@@ -6161,14 +6281,45 @@ ${bracketHTML}
   renderFillSlotPicker() {
     const el = document.getElementById('fillSlotPickerList');
     if (!el) return;
+    const target = this._fillSlotTarget;
     const onCourt = this.getPlayersOnCourts();
     const available = this.state.players.filter(p => !onCourt.has(p.id));
-    el.innerHTML = available.length
-      ? available.map(p => {
-          const tag = p.active ? '' : ' <span style="font-weight:400;color:var(--text-muted);">(sitting out)</span>';
-          return `<div class="partner-picker-item" onclick="App.fillSlotWithPlayer(${p.id})">${this.esc(p.name)}${tag}</div>`;
-        }).join('')
-      : '<div style="padding:10px 12px;color:var(--text-light);font-size:0.82rem;">No players available</div>';
+    if (!available.length) {
+      el.innerHTML = '<div style="padding:10px 12px;color:var(--text-light);font-size:0.82rem;">No players available</div>';
+      return;
+    }
+    const tag = p => p.active ? '' : ' <span style="font-weight:400;color:var(--text-muted);">(sitting out)</span>';
+    // Only when BOTH seats on this side are still open can a current
+    // partner pair land there together — with just one seat open they'd
+    // have to split up anyway, so they're listed individually like anyone
+    // else (see _movePlayers for the same rule on a drag/tap move).
+    const game = target && this.state.proposedGames[target.court];
+    const sideArr = game ? game['side' + target.side] : [];
+    const bothOpen = !!target && sideArr.length === 0;
+
+    if (!bothOpen) {
+      el.innerHTML = available.map(p => `<div class="partner-picker-item" onclick="App.fillSlotWithPlayer(${p.id})">${this.esc(p.name)}${tag(p)}</div>`).join('');
+      return;
+    }
+
+    const availIds = new Set(available.map(p => p.id));
+    const paired = new Set();
+    const items = [];
+    for (const p of available) {
+      if (paired.has(p.id)) continue;
+      const team = this.state.teams.find(t => t.current &&
+        ((t.p1 === p.id && availIds.has(t.p2)) || (t.p2 === p.id && availIds.has(t.p1))));
+      if (team) {
+        const partnerId = team.p1 === p.id ? team.p2 : team.p1;
+        const partner = available.find(pl => pl.id === partnerId);
+        paired.add(p.id); paired.add(partnerId);
+        items.push(`<div class="partner-picker-item" onclick="App.fillSlotWithPair(${p.id}, ${partnerId})">${this.esc(p.name)} &amp; ${this.esc(partner.name)}</div>`);
+      } else {
+        paired.add(p.id);
+        items.push(`<div class="partner-picker-item" onclick="App.fillSlotWithPlayer(${p.id})">${this.esc(p.name)}${tag(p)}</div>`);
+      }
+    }
+    el.innerHTML = items.join('');
   },
 
   fillSlotWithPlayer(playerId) {
@@ -6179,6 +6330,25 @@ ${bracketHTML}
     if (!p) return;
     const from = { type: p.active ? 'queue' : 'waiting' };
     this._movePlayer(playerId, from, { type: 'slot', court: target.court, side: target.side });
+  },
+
+  // Picking a combined "A & B" option (see renderFillSlotPicker) fills both
+  // open seats on the side at once, same as dragging/tapping their "&" —
+  // only offered when the side had both seats open, so there's never
+  // anyone already there to bump.
+  fillSlotWithPair(p1Id, p2Id) {
+    const target = this._fillSlotTarget;
+    this.closeFillSlotPicker();
+    if (!target) return;
+    const p1 = this.getPlayer(p1Id), p2 = this.getPlayer(p2Id);
+    if (!p1 || !p2) return;
+    this._pushProposedUndoSnapshot();
+    [p1, p2].forEach(p => {
+      const from = { type: p.active ? 'queue' : 'waiting' };
+      this._movePlayer(p.id, from, { type: 'slot', court: target.court, side: target.side }, { silent: true, skipSnapshot: true });
+    });
+    this.saveState();
+    this.render();
   },
 
   // Double-tapping/double-clicking open space in Waiting, Sitting Out, or
