@@ -352,6 +352,21 @@ body {
   border-radius: var(--radius-sm);
 }
 .btn-outline:hover { background: var(--hover-bg); border-color: var(--border-strong); }
+.btn-icon-eye {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 30px;
+  height: 30px;
+  padding: 0;
+  background: transparent;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  color: var(--text-light);
+  cursor: pointer;
+}
+.btn-icon-eye:hover { background: var(--hover-bg); border-color: var(--border-strong); color: var(--text); }
 .btn-end-game {
   background: var(--danger-light);
   color: var(--danger);
@@ -430,6 +445,42 @@ body {
   box-shadow: var(--shadow-sm);
   padding: 20px;
 }
+/* Colored header bar flush with the card's edges — same solid-color-block
+   look as .court-header on the session/queue page, so the landing cards
+   (Sessions, Your Account) read as part of the same app. Same structure
+   .court-card/.court-header use: the card itself has no padding (so the
+   header, as its first child, is already flush with no offset to cancel),
+   and everything below the header gets its own padded body wrapper —
+   avoids the negative-margin-cancels-padding trick, which left a hairline
+   gap at some zoom/DPI levels. */
+.setup-block.has-header { padding: 0; overflow: hidden; }
+.setup-card-body { padding: 20px; }
+.setup-card-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 14px 20px;
+  background: var(--primary);
+  color: #fff;
+}
+/* Purple matches the "another signed-in user" chip color elsewhere —
+   distinct from the Sessions card's green without introducing a new hue. */
+.setup-card-header.accent-purple { background: var(--presence-live); }
+.setup-card-header-icon {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+.setup-card-header-title {
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: #fff;
+}
 .setup-section { border-bottom: 1px solid var(--border); padding-bottom: 20px; }
 .setup-section h2 {
   font-size: 1rem !important;
@@ -453,6 +504,52 @@ body {
 }
 .setup-input:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 3px var(--primary-light); }
 .setup-input::placeholder { color: var(--text-muted); font-size: 75%; }
+/* Sessions card > Your Sessions — a list rather than a wrapped row of
+   bubbles, with a colored left edge (green = open, orange = closed —
+   see App.closeSession) and the last-joined date/time on the right. */
+.session-list { display: flex; flex-direction: column; gap: 8px; }
+.session-list-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 10px 12px;
+  background: var(--card);
+  border: 1.5px solid var(--border-strong);
+  border-left-width: 4px;
+  border-radius: var(--radius-sm);
+  font-family: inherit;
+  font-size: 1rem;
+  cursor: pointer;
+  text-align: left;
+}
+.session-list-item.session-open { border-left-color: var(--success); }
+.session-list-item.session-closed { border-left-color: var(--partner); }
+/* Two aligned columns: name grows and truncates, last-joined is a fixed
+   width so it lines up down the list regardless of how long each name is. */
+.session-list-name {
+  flex: 1 1 auto;
+  min-width: 0;
+  font-weight: 600;
+  font-size: 0.9rem;
+  color: var(--text);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.session-list-joined {
+  flex: 0 0 auto;
+  /* In rem, not px, so it scales with the 0.75rem text — mobile bumps the
+     root font-size up (see the max-width:768px rule), and a fixed px
+     width was juuust narrow enough to clip the time there. */
+  width: 7rem;
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  text-align: right;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
 .setup-error { font-size: 0.78rem; color: var(--danger); margin-bottom: 8px; display: none; font-weight: 500; }
 .setup-section-label {
   font-size: 0.7rem;
@@ -829,6 +926,31 @@ body {
 }
 .queue-row-full { flex-basis: 100%; }
 .queue-row.inactive { opacity: 0.45; background: #f0f1f4; border-radius: var(--radius-sm); margin: 0 -4px; padding-left: 4px; padding-right: 4px; }
+/* Two chips linked by an "&" (locked partners both waiting/sitting out —
+   see renderPlayers) stay in one flex item so wrapping never separates
+   them; the "&" itself is a drag/tap target that moves both together,
+   same pipeline as a lone chip (see _onDndPointerDown). */
+.queue-row-pair { gap: 4px; }
+.queue-pair-amp {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 20px;
+  height: 20px;
+  padding: 0 2px;
+  color: var(--text-muted);
+  font-weight: 700;
+  font-size: 0.85rem;
+  cursor: pointer;
+  user-select: none;
+  -webkit-user-select: none;
+  border-radius: var(--radius-full);
+  flex-shrink: 0;
+}
+.queue-pair-amp:hover { color: var(--primary); background: var(--primary-light); }
+.queue-pair-amp.dnd-selected { color: var(--primary); background: var(--primary-light); box-shadow: 0 0 0 2px var(--primary-light); }
+.queue-pair-amp.dnd-dragging { opacity: 0.35; }
+.queue-pair-ghost { display: flex; align-items: center; gap: 4px; }
 .queue-row-name {
   flex: 0 0 auto;
   min-width: 0;
@@ -841,16 +963,6 @@ body {
   font-size: 0.85rem;
 }
 .queue-row-name-text { max-width: 130px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.queue-row-name .side-player-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.queue-row-you {
-  font-size: 0.68rem;
-  font-weight: 700;
-  color: var(--success);
-  background: var(--success-light);
-  padding: 1px 5px;
-  border-radius: var(--radius-full);
-  letter-spacing: 0.02em;
-}
 .queue-row-skill-btn {
   font-size: 0.72rem;
   font-weight: 700;
@@ -1352,29 +1464,12 @@ body {
   gap: 6px;
   width: 100%;
 }
-.side-partners-row {
-  display: flex;
-  justify-content: center;
-}
 .side-1, .side-2 {
   background: var(--input-bg);
   border: 1px solid var(--border);
   box-shadow: var(--shadow-sm);
 }
-.court-side .side-player-name { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .court-side .side-amp { color: var(--text-muted); font-weight: 500; flex-shrink: 0; }
-.side-names-row .side-player-left { flex: 1; min-width: 0; display: flex; justify-content: flex-end; align-items: center; gap: 3px; }
-.side-names-row .side-player-right { flex: 1; min-width: 0; display: flex; justify-content: flex-start; align-items: center; gap: 3px; }
-.court-side .side-player-solo { text-align: center; display: flex; justify-content: center; align-items: center; gap: 3px; }
-.side-partners-badge {
-  font-size: 0.68rem;
-  font-weight: 700;
-  color: #92400e;
-  background: #fef3c7;
-  padding: 1px 8px;
-  border-radius: var(--radius-full);
-  letter-spacing: 0.02em;
-}
 .court-vs {
   text-align: center;
   font-weight: 800;
@@ -1524,6 +1619,8 @@ body {
 .proposed-hint { font-size: 0.78rem; color: var(--text-muted); text-align: center; margin-top: 4px; }
 .dnd-chip { cursor: grab; touch-action: none; }
 .dnd-chip.dnd-dragging { cursor: grabbing; }
+.queue-pair-amp { touch-action: none; }
+.queue-pair-amp.dnd-dragging { cursor: grabbing; }
 
 /* ── Sitting out ────────────────────────────── */
 .sitting-out {
@@ -2083,10 +2180,16 @@ body {
   /* Session setup: full-width 3-col grid aligned with tab columns */
   #sessionSetupSection { align-items: stretch; padding: 0; }
   #sessionSetupSection .setup-card { max-width: none; }
-  /* Keep welcome / signed-in cards centered at comfortable width */
-  #setupEntryOptions, #setupSignedIn { max-width: 480px; margin: 0 auto; }
-  /* Join form: single column, centered at comfortable width */
-  #setupJoinForm { max-width: 480px; margin: 0 auto; }
+  /* Keep welcome / signed-in / join-form cards centered at a comfortable,
+     shared width — width:100% is required alongside margin:auto here,
+     since an auto cross-axis margin makes a flex item ignore stretch and
+     shrink to its own content size instead (which is why Sessions and
+     Your Account previously ended up different widths). */
+  #setupEntryOptions, #setupSignedIn, #setupJoinForm {
+    width: 100%;
+    max-width: 480px;
+    margin: 0 auto;
+  }
 }
 
 @media print {
@@ -2155,6 +2258,30 @@ body {
     grid-template-columns: 1fr 1fr 1fr;
   }
 }
+
+/* ── Settings tab layout (tablet / desktop) ────── */
+/* Profile, Partner(s), and Share Link are always the top row. Admin-only
+   cards stack a second row beneath their related card (Session Type under
+   Profile, Session Admins under Partner(s), Passcode under Share Link).
+   Danger Zone and Admin History sit outside the 3-column grid, full width
+   at the bottom of the page. */
+@media (min-width: 769px) {
+  #tabSettings {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 14px;
+    align-items: start;
+  }
+  #tabSettings .settings-card { margin-bottom: 0; }
+  #profileSection { grid-column: 1; grid-row: 1; }
+  #sessionTypeSection { grid-column: 1; grid-row: 2; }
+  #partnerSection { grid-column: 2; grid-row: 1; }
+  #manageAdminsSection { grid-column: 2; grid-row: 2; }
+  #shareLinkSection { grid-column: 3; grid-row: 1; }
+  #passcodeSection { grid-column: 3; grid-row: 2; }
+  #dangerZone { grid-column: 1 / -1; grid-row: 3; }
+  #adminLogSection { grid-column: 1 / -1; grid-row: 4; }
+}
 </style>
 </head>
 <body>
@@ -2167,12 +2294,11 @@ body {
     <h1>Court Manager</h1>
   </div>
   <div style="display:flex;align-items:center;gap:10px;">
-    <span id="adminHeaderBadge" style="display:none;"></span>
     <div class="header-right" id="headerRight" style="display:none;">
-      <div class="header-location">
+      <div class="header-location" id="headerLocation">
         <span class="session-status-dot"></span>
       </div>
-      <button class="btn-header leave" onclick="Session.leaveOrClose()" aria-label="Leave session" title="Leave session">&times;</button>
+      <button class="btn-header leave" id="btnHeaderX" onclick="Session.leaveOrClose()" aria-label="Session options" title="Session options">&times;</button>
     </div>
   </div>
 </header>
@@ -2195,11 +2321,6 @@ body {
     <button type="button" class="btn-outline" id="btnOpenSession" style="display:none;flex-shrink:0;" onclick="App.openSession()">Open Session</button>
   </div>
 
-  <!-- Super admin panel -->
-  <div id="superAdminSection" class="settings-card" style="display:none;margin-bottom:14px;">
-    <div class="settings-card-title" onclick="document.getElementById('superAdminPanel').style.display=document.getElementById('superAdminPanel').style.display==='none'?'':'none';this.querySelector('.sa-toggle').textContent=document.getElementById('superAdminPanel').style.display==='none'?'▸':'▾'" style="cursor:pointer;display:flex;justify-content:space-between;align-items:center;">Super Admin Management <span class="sa-toggle" style="font-size:0.8rem;color:var(--text-muted);">▸</span></div>
-    <div id="superAdminPanel" style="display:none;"></div>
-  </div>
   <!-- ── Session setup (shown before joining) ─── -->
   <div id="sessionSetupSection" class="setup-center">
     <div class="setup-card">
@@ -2233,23 +2354,9 @@ body {
         <div id="entryHiwDivider" style="height:1px;background:var(--border);margin:18px 0 14px;"></div>
         <button class="btn-hiw" id="btnEntryHiw" onclick="App.openHiw()">&#9654; How it Works</button>
       </div>
-      <!-- Signed-in profile card (shown for Google-signed-in users) -->
-      <div id="setupSignedIn" class="setup-block" style="display:none;">
-        <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;">
-          <div style="width:38px;height:38px;border-radius:50%;background:var(--primary-light);display:flex;align-items:center;justify-content:center;flex-shrink:0;">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--primary)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-          </div>
-          <div style="flex:1;min-width:0;">
-            <div id="signedInName" style="font-size:0.92rem;font-weight:600;color:var(--text);"></div>
-            <div style="display:flex;align-items:center;gap:6px;">
-              <span id="signedInAs" style="font-size:0.75rem;color:var(--text-muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1;min-width:0;"></span>
-              <button class="btn-admin-logout" onclick="Admin.logout()" style="font-size:0.72rem;flex-shrink:0;margin-left:8px;">sign out</button>
-            </div>
-          </div>
-        </div>
-        <button type="button" class="btn-outline" onclick="MyHistory.show()" id="btnMyHistoryProfile" style="width:100%;padding:12px;font-size:1rem;font-weight:700;">My Match History</button>
-      </div>
-      <!-- Join form (hidden until guest click or signed in) -->
+      <!-- Join form (hidden until guest click or signed in) — shown above the
+           signed-in profile card so Sessions is the first thing a returning
+           user sees. -->
       <div id="setupJoinForm" style="display:none;">
       <div id="joinFormHeader" style="display:flex;align-items:center;margin-bottom:16px;">
         <button type="button" id="btnBackToEntry" class="btn-back-entry" onclick="Onboard.backToEntry()" title="Back">&larr;</button>
@@ -2258,22 +2365,61 @@ body {
       </div>
       <!-- Session selection (hidden during share-link flow) -->
       <div id="sessionSelectionBlock">
-      <div class="setup-block">
-        <div class="section-title" style="margin-bottom:4px;">Private Session</div>
-        <div class="section-subtitle" style="margin-bottom:14px;">Create a session for your group and share the link or code with friends — they can join without signing in. Great for reserved court nights or league play.</div>
-        <button type="button" class="btn-outline" onclick="Onboard.openCreatePrivate()" id="btn-create-private" style="width:100%;padding:12px 14px;font-size:1rem;font-weight:700;font-family:inherit;">+ Create New</button>
+      <div class="setup-block has-header">
+        <div class="setup-card-header">
+          <div class="setup-card-header-icon">
+            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+          </div>
+          <div class="setup-card-header-title">Sessions</div>
+        </div>
+        <div class="setup-card-body">
+        <div class="section-subtitle" style="margin-bottom:14px;">Create a session for your group and share the link or code with friends — they can join without signing in.</div>
+        <button type="button" class="btn-outline" onclick="Onboard.toggleCreateSessionRow()" id="btn-create-private" style="width:100%;padding:12px 14px;font-size:1rem;font-weight:700;font-family:inherit;">+ Create New</button>
+        <div id="createSessionRow" style="display:none;margin-top:10px;">
+          <p id="createSessionError" class="setup-error" style="display:none;">Enter a session name</p>
+          <input type="text" class="setup-input" id="privateSessionName" placeholder="Session name" maxlength="20" style="width:100%;">
+          <div class="qp-type-group" id="sessionTypeGroup" role="radiogroup" aria-label="Session type" style="margin-bottom:8px;">
+            <label class="qp-type-option">
+              <input type="radio" name="sessionCreateType" value="open" checked onchange="Onboard.setSessionType(this.value)">
+              <span class="qp-type-label">Open Play</span>
+              <button type="button" class="qp-info-btn" aria-label="What is Open Play?" onclick="Onboard._toggleSessionTypeInfo(event, 'open')">?</button>
+            </label>
+            <label class="qp-type-option">
+              <input type="radio" name="sessionCreateType" value="roundrobin" onchange="Onboard.setSessionType(this.value)">
+              <span class="qp-type-label">Round Robin</span>
+              <button type="button" class="qp-info-btn" aria-label="What is Round Robin?" onclick="Onboard._toggleSessionTypeInfo(event, 'roundrobin')">?</button>
+            </label>
+            <label class="qp-type-option">
+              <input type="radio" name="sessionCreateType" value="tournament" onchange="Onboard.setSessionType(this.value)">
+              <span class="qp-type-label">Tournament</span>
+              <button type="button" class="qp-info-btn" aria-label="What is Tournament?" onclick="Onboard._toggleSessionTypeInfo(event, 'tournament')">?</button>
+            </label>
+          </div>
+          <div id="sessionTypeInfoPopover" class="qp-info-popover" style="display:none;">
+            <span id="sessionTypeInfoText"></span>
+            <button type="button" class="qp-info-close" onclick="Onboard._closeSessionTypeInfo()" aria-label="Close description">&times;</button>
+          </div>
+          <label class="toggle-switch-label" style="margin:10px 0;">
+            <span class="toggle-switch">
+              <input type="checkbox" id="privatePasscodeToggle" onchange="Onboard.togglePasscodeField()">
+              <span class="toggle-switch-track"></span>
+            </span>
+            Passcode required
+          </label>
+          <div id="privatePasscodeField" style="display:none;gap:8px;align-items:center;margin-bottom:10px;">
+            <input type="text" class="setup-input" id="privatePasscode" placeholder="Passcode (4 chars)" maxlength="4" style="flex:1;margin-bottom:0;text-transform:uppercase;">
+            <button type="button" class="btn-outline" onclick="Onboard.randomPasscode()" style="white-space:nowrap;padding:12px 14px;font-size:1rem;font-weight:700;">Random</button>
+          </div>
+          <button type="button" class="btn-confirm-join" style="width:100%;padding:12px;font-size:1rem;font-weight:700;" onclick="Onboard.createPrivate()">Create &amp; Join</button>
+        </div>
         <div style="display:flex;align-items:center;gap:10px;margin:14px 0 10px;">
           <div style="flex:1;height:1px;background:var(--border);"></div>
-          <span style="font-size:0.7rem;font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.05em;">Existing Sessions</span>
+          <span style="font-size:0.7rem;font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.05em;">Your Sessions</span>
           <div style="flex:1;height:1px;background:var(--border);"></div>
         </div>
-        <div style="display:flex;gap:8px;margin-bottom:4px;">
-          <select class="setup-input" id="privateSessionSelect" onchange="Onboard._updateJoinBtn('privateSessionSelect','btnJoinPrivate')" style="flex:1;margin-bottom:0;cursor:pointer;">
-            <option value="">Select a session...</option>
-          </select>
-          <button type="button" class="btn-confirm-join" id="btnJoinPrivate" onclick="Onboard.joinSavedPrivate()" disabled style="white-space:nowrap;padding:12px 18px;font-size:1rem;flex:0 0 auto;">Join</button>
-        </div>
-        <div id="privateConfirmInline" style="display:none;margin-bottom:8px;"></div>
+        <div id="privateSessionBubbles" class="session-list"></div>
+        <div id="privateSessionsEmpty" class="section-subtitle" style="display:none;">No saved sessions yet.</div>
+        </div><!-- /setup-card-body -->
       </div>
       </div><!-- /sessionSelectionBlock -->
       <!-- Share-link join button (shown when joining via share link) -->
@@ -2285,16 +2431,23 @@ body {
         <span id="sessionLoadingText">Connecting&#x2026;</span>
       </div>
       </div><!-- /setupJoinForm -->
+      <!-- Signed-in profile card (shown for Google-signed-in users) -->
+      <div id="setupSignedIn" class="setup-block has-header" style="display:none;">
+        <div class="setup-card-header accent-purple">
+          <div class="setup-card-header-icon">
+            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+          </div>
+          <div class="setup-card-header-title">Your Account</div>
+        </div>
+        <div class="setup-card-body">
+        <div style="margin-bottom:14px;min-width:0;">
+          <div id="signedInName" style="font-size:0.95rem;font-weight:600;color:var(--text);"></div>
+          <div id="signedInAs" style="font-size:0.78rem;color:var(--text-muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;"></div>
+        </div>
+        <button type="button" class="btn-outline" onclick="MyHistory.show()" id="btnMyHistoryProfile" style="width:100%;padding:12px;font-size:1rem;font-weight:700;">My Match History</button>
+        </div><!-- /setup-card-body -->
+      </div>
     </div>
-  </div>
-
-  <div id="allSessionsSection" class="settings-card" style="display:none;margin-bottom:14px;">
-    <div class="settings-card-title" onclick="(function(p,t){p.style.display=p.style.display==='none'?'':'none';t.textContent=p.style.display==='none'?'▸':'▾';})(document.getElementById('allSessionsPanel'),this.querySelector('.as-toggle'));if(document.getElementById('allSessionsPanel').style.display!=='none')Admin.renderAllSessionsPanel();" style="cursor:pointer;display:flex;justify-content:space-between;align-items:center;">All Private Sessions <span class="as-toggle" style="font-size:0.8rem;color:var(--text-muted);">▸</span></div>
-    <div id="allSessionsPanel" style="display:none;"></div>
-  </div>
-  <div id="allUsersSection" class="settings-card" style="display:none;margin-bottom:14px;">
-    <div class="settings-card-title" onclick="(function(p,t){p.style.display=p.style.display==='none'?'':'none';t.textContent=p.style.display==='none'?'▸':'▾';})(document.getElementById('allUsersPanel'),this.querySelector('.au-toggle'));if(document.getElementById('allUsersPanel').style.display!=='none')Admin.renderAllUsersPanel();" style="cursor:pointer;display:flex;justify-content:space-between;align-items:center;">All Users <span class="au-toggle" style="font-size:0.8rem;color:var(--text-muted);">▸</span></div>
-    <div id="allUsersPanel" style="display:none;"></div>
   </div>
 
   <!-- My Match History view (outside sessionSetupSection so it can be shown independently) -->
@@ -2352,57 +2505,53 @@ body {
     <div id="playersSection" class="queue-bar-wrap" style="margin-bottom:14px;">
       <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:4px;">
         <div class="section-title" id="queueTitle">Queue</div>
-        <button id="btnUndoMove" class="btn-outline" style="display:none;flex-shrink:0;padding:5px 10px;font-size:0.78rem;font-weight:600;" onclick="App.undoProposedMove()">&#8617; Undo</button>
+        <button id="btnToggleQueue" class="btn-icon-eye" title="Hide queue" onclick="App.toggleQueueVisibility()">
+          <svg id="queueEyeIcon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8Z"/><circle cx="12" cy="12" r="3"/></svg>
+        </button>
       </div>
-      <div class="section-subtitle" id="queueSubtitle" style="margin-bottom:10px;"></div>
-      <div class="assign-match-options" style="margin-bottom:10px;">
-        <label class="toggle-switch-label">
-          <span class="toggle-switch">
-            <input type="checkbox" id="optSkill" onchange="App.toggleSkillMatching()">
-            <span class="toggle-switch-track"></span>
-          </span>
-          Match by skill
-        </label>
-      </div>
-      <div id="queueAddPlayerRow" style="display:none;margin-bottom:10px;">
-        <p id="queueAddPlayerError" class="setup-error" style="display:none;">Enter a player name</p>
-        <div style="display:flex;gap:8px;">
-          <input type="text" class="setup-input" id="queueAddPlayerName" placeholder="Player name" style="flex:1;margin-bottom:0;" onkeydown="if(event.key==='Enter')App.submitQueueAddPlayer()">
-          <div class="skill-field" id="queueAddPlayerSkillField" style="width:110px;flex-shrink:0;">
-            <button type="button" class="setup-input skill-field-btn placeholder" id="queueAddPlayerSkillBtn" style="margin-bottom:0;" onclick="App.toggleSkillField('queueAddPlayerSkill')" data-placeholder="Rating">
-              <span class="skill-field-label">Rating</span>
-              <span class="skill-field-caret">&#9662;</span>
-            </button>
-            <input type="hidden" id="queueAddPlayerSkill" value="">
-          </div>
-          <button type="button" class="btn-add-player" style="margin-top:0;flex-shrink:0;width:auto;padding:12px 16px;" onclick="App.submitQueueAddPlayer()">+ Add Player</button>
+      <div id="queueBody">
+        <div style="display:flex;justify-content:flex-end;margin-bottom:4px;">
+          <button id="btnUndoMove" class="btn-outline" style="display:none;flex-shrink:0;padding:5px 10px;font-size:0.78rem;font-weight:600;" onclick="App.undoProposedMove()">&#8617; Undo</button>
         </div>
-        <div class="partner-picker skill-field-menu" id="queueAddPlayerSkillMenu" style="display:none;">
-          <div class="partner-picker-list">
-            <div class="partner-picker-item" onclick="App.setSkillField('queueAddPlayerSkill', 'beginner')">Beginner</div>
-            <div class="partner-picker-item" onclick="App.setSkillField('queueAddPlayerSkill', 'intermediate')">Intermediate</div>
-            <div class="partner-picker-item" onclick="App.setSkillField('queueAddPlayerSkill', 'advanced')">Advanced</div>
-            <div class="partner-picker-item" onclick="App.setSkillField('queueAddPlayerSkill', '')">Not Rated</div>
+        <div class="section-subtitle" id="queueSubtitle" style="margin-bottom:10px;"></div>
+        <div class="assign-match-options" style="margin-bottom:10px;">
+          <label class="toggle-switch-label">
+            <span class="toggle-switch">
+              <input type="checkbox" id="optSkill" onchange="App.toggleSkillMatching()">
+              <span class="toggle-switch-track"></span>
+            </span>
+            Match by skill
+          </label>
+        </div>
+        <div id="queueAddPlayerRow" style="display:none;margin-bottom:10px;">
+          <p id="queueAddPlayerError" class="setup-error" style="display:none;">Enter a player name</p>
+          <div style="display:flex;gap:8px;">
+            <input type="text" class="setup-input" id="queueAddPlayerName" placeholder="Player name" style="flex:1;margin-bottom:0;" onkeydown="if(event.key==='Enter')App.submitQueueAddPlayer()">
+            <button type="button" class="btn-add-player" style="margin-top:0;flex-shrink:0;width:auto;padding:12px 16px;" onclick="App.submitQueueAddPlayer()">+ Add Player</button>
           </div>
         </div>
-      </div>
-      <div class="queue-subsection-label">Waiting</div>
-      <div class="queue-list-box">
-        <div id="queueActiveList" class="queue-list dnd-target" data-loc-type="queue"></div>
-        <div id="queueDropQueue" class="queue-drop-strip dnd-target" data-loc-type="queue">Drag or tap to enter queue</div>
-      </div>
-      <div id="queueWaitingWrap" style="display:none;">
-        <div class="queue-subsection-label" style="margin-top:10px;">Sitting Out</div>
+        <div class="queue-subsection-label">Waiting</div>
         <div class="queue-list-box">
-          <div id="queueWaitingList" class="queue-list dnd-target" data-loc-type="waiting"></div>
-          <div id="queueDropWaiting" class="queue-drop-strip dnd-target" data-loc-type="waiting">Drag or tap to sit out</div>
+          <div id="queueActiveList" class="queue-list dnd-target" data-loc-type="queue"></div>
+          <div id="queueDropQueue" class="queue-drop-strip dnd-target" data-loc-type="queue">Enter Queue</div>
         </div>
+        <div id="queueWaitingWrap" style="display:none;">
+          <div class="queue-subsection-label" style="margin-top:10px;">Sitting Out</div>
+          <div class="queue-list-box">
+            <div id="queueWaitingList" class="queue-list dnd-target" data-loc-type="waiting"></div>
+            <div id="queueDropWaiting" class="queue-drop-strip dnd-target" data-loc-type="waiting">Sit Out</div>
+          </div>
+        </div>
+        <div id="queueRemoveZoneTitle" class="queue-subsection-label" style="margin-top:10px;">Leave Session</div>
+        <div id="queueRemoveZone" class="queue-remove-zone dnd-target" data-loc-type="remove">
+          <span id="queueRemoveZoneLabel">Remove</span>
+        </div>
+        <div id="queueMoveHint" class="proposed-hint" style="text-align:left;display:flex;align-items:center;gap:6px;">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+          <span>Drag or double tap players to move</span>
+        </div>
+        <button id="rrUnlockBtn" class="btn-outline" onclick="App.isRoundRobin()?App.rrUnlockPlayers():App.bracketUnlockPlayers()" style="display:none;margin-top:8px;width:100%;color:var(--warning);border-color:var(--warning);font-size:0.82rem;">Unlock Players &amp; Reset</button>
       </div>
-      <div id="queueRemoveZoneTitle" class="queue-subsection-label" style="margin-top:10px;">Leave Session</div>
-      <div id="queueRemoveZone" class="queue-remove-zone dnd-target" data-loc-type="remove">
-        <span id="queueRemoveZoneLabel">Drag or tap to remove</span>
-      </div>
-      <button id="rrUnlockBtn" class="btn-outline" onclick="App.isRoundRobin()?App.rrUnlockPlayers():App.bracketUnlockPlayers()" style="display:none;margin-top:8px;width:100%;color:var(--warning);border-color:var(--warning);font-size:0.82rem;">Unlock Players &amp; Reset</button>
     </div>
 
     <!-- Courts grid (active games) -->
@@ -2434,7 +2583,7 @@ body {
   <div id="tabSettings" class="tab-panel" style="display:none;">
 
     <!-- Profile -->
-    <div class="settings-card">
+    <div class="settings-card" id="profileSection">
       <div class="settings-card-title">Your Profile</div>
       <div style="display:flex;gap:8px;margin-bottom:8px;">
         <input type="text" class="setup-input" id="settingsName" placeholder="Display name" maxlength="30" style="flex:1;min-width:0;margin-bottom:0;">
@@ -2477,7 +2626,6 @@ body {
     <div class="settings-card" id="shareLinkSection">
       <div class="settings-card-title">Share Link</div>
       <div id="shareLinkOnlineBlock">
-        <p class="section-subtitle" style="margin-bottom:10px;">Invite others to join this session.</p>
         <div style="display:flex;gap:8px;align-items:center;">
           <input type="text" class="setup-input" id="shareLinkInput" readonly style="flex:1;margin-bottom:0;font-size:0.82rem;cursor:text;">
           <button type="button" class="btn-outline" id="btnCopyShareLink" onclick="App.copyShareLink()" style="white-space:nowrap;padding:12px 16px;font-size:1rem;font-weight:700;">Copy</button>
@@ -2609,8 +2757,9 @@ body {
           <p>Just need to track serve and score for one match? Tap <strong>Score Keeper Only</strong> on this screen for a standalone scorer &mdash; no sign-in, no session, nothing saved. Inside a session, tap <strong>Score Keeper</strong> on an active court to track serve and score live instead of entering a score manually; finishing the game records the result to history and returns players to the queue automatically.</p>
         </div>
         <div class="hiw-section">
-          <h3>🔒 Private Sessions</h3>
-          <p>Sign in with Google to <strong>create a private session</strong> for your group. Share the link or session code with friends — they can join without signing in. Perfect for reserved court nights or league play.</p>
+          <h3>🔒 Sessions</h3>
+          <p>Sign in with Google, then use the <strong>Sessions</strong> card to create a session for your group — pick a format, and turn on a passcode only if you want one. Share the link or code with friends; they can join without signing in.</p>
+          <p style="margin-top:6px;">Sessions you've joined or created show up in a list on that same card, colored green (open) or orange (closed) with when you last joined. Tapping one joins right away, straight into <strong>Sitting Out</strong>.</p>
         </div>
         <div class="hiw-section">
           <h3>🖥️ On Tablet &amp; Desktop</h3>
@@ -2633,6 +2782,10 @@ body {
         <div class="hiw-section">
           <h3>📋 Match History</h3>
           <p>The <strong>History</strong> tab shows all completed matches for the current session — courts, opponents, and scores. Signed-in players can also view their personal match history across all past sessions. In Open Play, tap <strong>+ Log Past Match</strong> there to add a match your group already played before opening the app.</p>
+        </div>
+        <div class="hiw-section">
+          <h3>🚪 Leaving, Closing &amp; Logging Out</h3>
+          <p>The <strong>&times;</strong> in the header covers all of it, whether or not you're currently in a session. In a session, it offers <strong>Leave Session</strong>, <strong>Close Session</strong> (admins only), and <strong>Log Out</strong>; outside a session, it's just <strong>Log Out</strong>.</p>
         </div>
       </div>
     </div>
@@ -2668,7 +2821,7 @@ body {
     </div>
   </div>
 
-  <!-- ── Your name/skill, asked right when joining or creating a private session ── -->
+  <!-- ── Your name, asked right when joining or creating a private session ── -->
   <div id="selfProfileModal" class="hiw-overlay" style="display:none;" onclick="Onboard._selfProfileCancel(event)">
     <div class="hiw-modal" style="max-width:380px;" onclick="event.stopPropagation()">
       <div class="hiw-header">
@@ -2678,22 +2831,7 @@ body {
       <div class="hiw-body">
         <input type="text" class="setup-input" id="selfProfileName" placeholder="Your name" autocomplete="given-name" style="width:100%;" onkeydown="if(event.key==='Enter')Onboard._selfProfileSubmit()">
         <p id="selfProfileNameError" class="setup-error">Enter your name first</p>
-        <div class="skill-field" id="selfProfileSkillField" style="width:100%;">
-          <button type="button" class="setup-input skill-field-btn placeholder" id="selfProfileSkillBtn" onclick="App.toggleSkillField('selfProfileSkill')" data-placeholder="Skill level (optional)">
-            <span class="skill-field-label">Skill level (optional)</span>
-            <span class="skill-field-caret">&#9662;</span>
-          </button>
-          <input type="hidden" id="selfProfileSkill" value="">
-        </div>
-        <div class="partner-picker skill-field-menu" id="selfProfileSkillMenu" style="display:none;">
-          <div class="partner-picker-list">
-            <div class="partner-picker-item" onclick="App.setSkillField('selfProfileSkill', 'beginner')">Beginner</div>
-            <div class="partner-picker-item" onclick="App.setSkillField('selfProfileSkill', 'intermediate')">Intermediate</div>
-            <div class="partner-picker-item" onclick="App.setSkillField('selfProfileSkill', 'advanced')">Advanced</div>
-            <div class="partner-picker-item" onclick="App.setSkillField('selfProfileSkill', '')">Not Rated</div>
-          </div>
-        </div>
-        <p style="font-size:0.78rem;color:var(--text-muted);margin:0;">You can update this anytime from Settings.</p>
+        <p style="font-size:0.78rem;color:var(--text-muted);margin:0;">You'll join as Not Rated — set a skill level anytime from Settings.</p>
         <div style="display:flex;gap:10px;">
           <button type="button" class="btn-outline" style="flex:1;padding:12px;font-size:1rem;font-weight:700;" onclick="Onboard._selfProfileCancel()">Cancel</button>
           <button type="button" class="btn-confirm-join" style="flex:1;padding:12px;font-size:1rem;font-weight:700;" onclick="Onboard._selfProfileSubmit()">Join</button>
@@ -2733,31 +2871,6 @@ body {
           <button type="button" class="qp-info-close" onclick="Onboard._closeQpInfo()" aria-label="Close description">&times;</button>
         </div>
         <button type="button" class="btn-confirm-join" style="width:100%;padding:12px;font-size:1rem;font-weight:700;" onclick="Onboard._quickPlayContinueType()">Continue</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- ── New Private Session: name, passcode, format ── -->
-  <div id="createPrivateModal" class="hiw-overlay" style="display:none;" onclick="Onboard._createPrivateCancel(event)">
-    <div class="hiw-modal" style="max-width:380px;" onclick="event.stopPropagation()">
-      <div class="hiw-header">
-        <h2>New Private Session</h2>
-        <button class="hiw-close" onclick="Onboard._createPrivateCancel()" aria-label="Close">&times;</button>
-      </div>
-      <div class="hiw-body">
-        <input type="text" class="setup-input" id="privateSessionName" placeholder="Session name" maxlength="20" style="width:100%;margin-bottom:0;">
-        <div style="display:flex;gap:8px;align-items:center;">
-          <input type="text" class="setup-input" id="privatePasscode" placeholder="Passcode (4 chars)" maxlength="4" style="flex:1;margin-bottom:0;text-transform:uppercase;">
-          <button type="button" class="btn-outline" onclick="Onboard.randomPasscode()" style="white-space:nowrap;padding:12px 14px;font-size:1rem;font-weight:700;">Random</button>
-        </div>
-        <select class="setup-input" id="selectSessionType" onchange="Onboard.setSessionType(this.value)" style="width:100%;margin-bottom:0;cursor:pointer;">
-          <option value="" disabled selected>Select session type...</option>
-          <option value="open">Open Play</option>
-          <option value="roundrobin">Round Robin</option>
-          <option value="tournament">Tournament</option>
-        </select>
-        <p id="privateSessionError" class="setup-error" style="display:none;">Enter a session name and 4-character passcode</p>
-        <button type="button" class="btn-confirm-join" style="width:100%;padding:12px;font-size:1rem;font-weight:700;" onclick="Onboard.createPrivate()">Create &amp; Join</button>
       </div>
     </div>
   </div>
@@ -2825,21 +2938,24 @@ body {
     </div>
   </div>
 
-  <!-- ── Admin tapping the header X: leave (just you) or close (everyone) ── -->
+  <!-- ── Header X: leave/close a session and/or log out, whichever apply ── -->
   <div id="leaveCloseModal" class="hiw-overlay" style="display:none;" onclick="Session._leaveCloseCancel(event)">
     <div class="hiw-modal" style="max-width:380px;" onclick="event.stopPropagation()">
       <div class="hiw-header">
-        <h2>Leave or Close Session?</h2>
+        <h2 id="leaveCloseTitle">Leave or Close Session?</h2>
         <button class="hiw-close" onclick="Session._leaveCloseCancel()" aria-label="Close">&times;</button>
       </div>
       <div class="hiw-body">
-        <div class="leave-close-option">
+        <div class="leave-close-option" id="leaveSessionOption">
           <button type="button" class="btn-outline" style="flex:1;padding:12px;font-size:1rem;font-weight:700;" onclick="Session._confirmLeave()">Leave Session</button>
           <button type="button" class="qp-info-btn" aria-label="What does Leave Session do?" onclick="Session._toggleLeaveCloseInfo(event, 'leave')">?</button>
         </div>
-        <div class="leave-close-option">
+        <div class="leave-close-option" id="closeSessionOption">
           <button type="button" class="btn-danger" style="flex:1;padding:12px;font-size:1rem;font-weight:700;" onclick="Session._confirmClose()">Close Session</button>
           <button type="button" class="qp-info-btn" aria-label="What does Close Session do?" onclick="Session._toggleLeaveCloseInfo(event, 'close')">?</button>
+        </div>
+        <div class="leave-close-option" id="logoutOption">
+          <button type="button" class="btn-outline" style="flex:1;padding:12px;font-size:1rem;font-weight:700;" onclick="Session._confirmLogout()">Log Out</button>
         </div>
         <div id="leaveCloseInfoPopover" class="qp-info-popover" style="display:none;">
           <span id="leaveCloseInfoText"></span>
@@ -2847,6 +2963,21 @@ body {
         </div>
       </div>
     </div>
+  </div>
+
+  <!-- Super admin panels — bottom of the page, main/landing view only (hidden
+       once inside a session; see Admin._updateAdminPanels). -->
+  <div id="superAdminSection" class="settings-card" style="display:none;margin-bottom:14px;">
+    <div class="settings-card-title" onclick="document.getElementById('superAdminPanel').style.display=document.getElementById('superAdminPanel').style.display==='none'?'':'none';this.querySelector('.sa-toggle').textContent=document.getElementById('superAdminPanel').style.display==='none'?'▸':'▾'" style="cursor:pointer;display:flex;justify-content:space-between;align-items:center;">Super Admin Management <span class="sa-toggle" style="font-size:0.8rem;color:var(--text-muted);">▸</span></div>
+    <div id="superAdminPanel" style="display:none;"></div>
+  </div>
+  <div id="allSessionsSection" class="settings-card" style="display:none;margin-bottom:14px;">
+    <div class="settings-card-title" onclick="(function(p,t){p.style.display=p.style.display==='none'?'':'none';t.textContent=p.style.display==='none'?'▸':'▾';})(document.getElementById('allSessionsPanel'),this.querySelector('.as-toggle'));if(document.getElementById('allSessionsPanel').style.display!=='none')Admin.renderAllSessionsPanel();" style="cursor:pointer;display:flex;justify-content:space-between;align-items:center;">All Private Sessions <span class="as-toggle" style="font-size:0.8rem;color:var(--text-muted);">▸</span></div>
+    <div id="allSessionsPanel" style="display:none;"></div>
+  </div>
+  <div id="allUsersSection" class="settings-card" style="display:none;margin-bottom:14px;">
+    <div class="settings-card-title" onclick="(function(p,t){p.style.display=p.style.display==='none'?'':'none';t.textContent=p.style.display==='none'?'▸':'▾';})(document.getElementById('allUsersPanel'),this.querySelector('.au-toggle'));if(document.getElementById('allUsersPanel').style.display!=='none')Admin.renderAllUsersPanel();" style="cursor:pointer;display:flex;justify-content:space-between;align-items:center;">All Users <span class="au-toggle" style="font-size:0.8rem;color:var(--text-muted);">▸</span></div>
+    <div id="allUsersPanel" style="display:none;"></div>
   </div>
 
   <footer class="app-footer">
@@ -3055,6 +3186,7 @@ const App = {
   init() {
     this._loadMyGuests();
     this.loadState();
+    this._applyQueueVisibility();
     this.render();
     setInterval(() => this.updateTimers(), 1000);
     document.addEventListener('pointerdown', e => this._onDndPointerDown(e));
@@ -3082,7 +3214,7 @@ const App = {
     // Backfill "current" on teams from before the Current/Other Partner
     // split existed — first team touching each player wins, so anyone with
     // more than one team ends up with exactly one current (see
-    // addTeamWithSelf/promptSwapCurrentPartner for how new teams get this).
+    // addTeamWithSelf/swapCurrentPartner for how new teams get this).
     if (s.teams.some(t => t.current === undefined)) {
       const claimed = new Set();
       for (const t of s.teams) {
@@ -3211,11 +3343,11 @@ const App = {
   },
 
   // ─── Players ───────────────────────────────
-  // All session types add players via the inline name/skill fields pinned to
-  // the bottom of the queue (Quick Play sessions skip the skill field).
+  // All session types add players via the inline name field pinned to the
+  // bottom of the queue — everyone joins Not Rated and sets their rating
+  // afterward via the NR/B/I/A chip.
   submitQueueAddPlayer() {
     const nameEl = document.getElementById('queueAddPlayerName');
-    const skillEl = document.getElementById('queueAddPlayerSkill');
     const name = nameEl?.value.trim();
     if (!name) {
       const errEl = document.getElementById('queueAddPlayerError');
@@ -3225,13 +3357,13 @@ const App = {
     }
     const errEl = document.getElementById('queueAddPlayerError');
     if (errEl) errEl.style.display = 'none';
-    const skillLevel = (!this.state._quickPlay && skillEl?.value) ? skillEl.value : null;
     const newId = this.state.nextId++;
     const now = Date.now();
     this.state.players.push({
       id: newId,
       name,
-      skillLevel,
+      // Added as Not Rated — set a rating afterward via the NR/B/I/A chip.
+      skillLevel: null,
       // A closed session (see closeSession) has everyone sitting out until
       // an admin reopens it — a newly-added player shouldn't slip into
       // Waiting and break that.
@@ -3246,12 +3378,32 @@ const App = {
     this.saveState();
     this.render();
     if (nameEl) nameEl.value = '';
-    this.setSkillField('queueAddPlayerSkill', '');
     // Re-focus to let a mouse/trackpad user add several names back-to-back
     // without re-clicking the field each time — but not on a touch-primary
     // device, where refocusing just pops the on-screen keyboard back open
     // right after the person tapped "Add Player" to dismiss it.
     if (window.matchMedia('(hover: hover) and (pointer: fine)').matches) nameEl?.focus();
+  },
+
+  // Eye icon on the Queue card — collapses everything below the title down
+  // to just that title bar. Visible by default; a plain runtime flag, not
+  // persisted, so every fresh load starts open.
+  _queueVisible: true,
+
+  toggleQueueVisibility() {
+    this._queueVisible = !this._queueVisible;
+    this._applyQueueVisibility();
+  },
+
+  _applyQueueVisibility() {
+    const body = document.getElementById('queueBody');
+    const btn = document.getElementById('btnToggleQueue');
+    const icon = document.getElementById('queueEyeIcon');
+    if (body) body.style.display = this._queueVisible ? '' : 'none';
+    if (btn) btn.title = this._queueVisible ? 'Hide queue' : 'Show queue';
+    if (icon) icon.innerHTML = this._queueVisible
+      ? '<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8Z"/><circle cx="12" cy="12" r="3"/>'
+      : '<path d="M17.94 17.94A10.94 10.94 0 0 1 12 20c-7 0-11-8-11-8a20.7 20.7 0 0 1 5.06-6.06M9.9 4.24A10.94 10.94 0 0 1 12 4c7 0 11 8 11 8a20.7 20.7 0 0 1-2.16 3.19M14.12 14.12a3 3 0 1 1-4.24-4.24"/><path d="M1 1l22 22"/>';
   },
 
   _pendingRemove: null,
@@ -3475,28 +3627,25 @@ const App = {
 
   _partnerSwapPending: null,
 
-  // Tapping an Other Partner chip proposes swapping them in as current —
-  // confirmed with a Yes/No since it demotes whoever's current now.
-  promptSwapCurrentPartner(teamId) {
-    this._partnerSwapPending = { type: 'promote', teamId };
+  // "Tap to change" strip below Current Partner (styled like the Courts
+  // tab's drag-or-tap targets) — tapping it opens a plain picker of the
+  // other partners; picking one swaps them in as current immediately and
+  // the old current partner drops back into Other Partners.
+  _partnerSwapPickerOpen: false,
+
+  togglePartnerSwapPicker() {
+    this._partnerSwapPickerOpen = !this._partnerSwapPickerOpen;
     this.render();
   },
 
-  confirmSwapCurrentPartner() {
-    const pending = this._partnerSwapPending;
-    if (!pending || pending.type !== 'promote') return;
+  swapCurrentPartner(teamId) {
     const selfId = Onboard.selfId;
     this.state.teams.forEach(t => {
-      if (t.p1 === selfId || t.p2 === selfId) t.current = (t.id === pending.teamId);
+      if (t.p1 === selfId || t.p2 === selfId) t.current = (t.id === teamId);
     });
-    this._partnerSwapPending = null;
+    this._partnerSwapPickerOpen = false;
     this._teamsLocalChange = Date.now();
     this.saveState();
-    this.render();
-  },
-
-  cancelSwapCurrentPartner() {
-    this._partnerSwapPending = null;
     this.render();
   },
 
@@ -5349,11 +5498,6 @@ ${bracketHTML}
     }
     const qAddRow = document.getElementById('queueAddPlayerRow');
     if (qAddRow) qAddRow.style.display = isLocked ? 'none' : '';
-    const qAddSkill = document.getElementById('queueAddPlayerSkillField');
-    // Open Play always sets ratings after the fact via the NR/B/I/A chip on
-    // each queue row (like Quick Play) — only Round Robin/Tournament, which
-    // build the full roster before locking it, get the field up front.
-    if (qAddSkill) qAddSkill.style.display = (this.state._quickPlay || !structured) ? 'none' : '';
     // Logging a past match only makes sense for Open Play's live queue —
     // Round Robin/Tournament build matches from a locked roster/bracket instead.
     const btnLogMatch = document.getElementById('btnLogPastMatch');
@@ -5442,6 +5586,7 @@ ${bracketHTML}
     const waitingEl = document.getElementById('queueWaitingList');
     const removeZone = document.getElementById('queueRemoveZone');
     const removeZoneTitle = document.getElementById('queueRemoveZoneTitle');
+    const moveHint = document.getElementById('queueMoveHint');
     const rr = this.isRoundRobin();
     const tourn = this.isTournament();
     const structured = rr || tourn;
@@ -5449,13 +5594,14 @@ ${bracketHTML}
 
     if (waitingWrap) waitingWrap.style.display = structured ? 'none' : '';
     if (removeZoneTitle) removeZoneTitle.style.display = isLocked ? 'none' : '';
+    if (moveHint) moveHint.style.display = isLocked ? 'none' : '';
 
     // While the session is closed (see closeSession), Waiting is frozen —
     // say so where the drop strip normally explains what dropping there does.
     const closed = !!this.state._closed;
     const dropQueue = document.getElementById('queueDropQueue');
     if (dropQueue) {
-      dropQueue.textContent = closed ? 'Session closed — waiting for an admin to reopen' : 'Drag or tap to enter queue';
+      dropQueue.textContent = closed ? 'Session closed — waiting for an admin to reopen' : 'Enter Queue';
       dropQueue.classList.toggle('dnd-target-disabled', closed);
     }
     // Waiting is always empty while closed (everyone's forced to Sitting
@@ -5477,15 +5623,50 @@ ${bracketHTML}
           <button style="color:var(--text-muted);border-color:var(--border);" onclick="App.cancelRemove()">No</button>
         </div>`;
       } else {
-        removeZone.innerHTML = `<span id="queueRemoveZoneLabel">Drag or tap to remove</span>`;
+        removeZone.innerHTML = `<span id="queueRemoveZoneLabel">Remove</span>`;
       }
     }
 
     const onCourts = this.getPlayersOnCourts();
     const queuePlayers = this.state.players.filter(p => !onCourts.has(p.id));
 
-    const renderRow = (p) => {
+    const chipSpan = (p) => {
       const isYou = Onboard.selfId === p.id;
+      const selfId = Onboard.selfId;
+      // Only the *current* partner gets the orange border — an Other
+      // Partner isn't actually being used for match-making right now.
+      const isPartner = selfId && selfId !== p.id && this.state.teams.some(t =>
+        t.current && ((t.p1 === selfId && t.p2 === p.id) || (t.p2 === selfId && t.p1 === p.id))
+      );
+      const isMyGuest = !p.isLive && p.addedBy === selfId;
+      const canEdit = isMyGuest && !isYou;
+      const editBtn = canEdit ? `<button class="queue-row-btn queue-row-action" onclick="App.editGuest(${p.id})" title="Edit guest">&#x270E;</button>` : '';
+      const skillBtn = this.state.options.useSkill
+        ? `<button class="queue-row-skill-btn${p.skillLevel ? ' set' : ''}" onclick="App.toggleSkillPicker(${p.id})" title="Set skill level">${this.skillAbbrev(p)}</button>`
+        : '';
+      const selected = this._tapSelection && this._tapSelection.playerIds.length === 1 && this._tapSelection.playerIds[0] === p.id ? ' dnd-selected' : '';
+      // Border color marks whose chip this is (green = you, orange = your
+      // partner, purple = another signed-in user) instead of a text badge —
+      // see .chip-self/.chip-partner/.chip-live.
+      const presenceClass = isYou ? ' chip-self' : isPartner ? ' chip-partner' : (p.isLive ? ' chip-live' : '');
+      return `<span class="queue-row-name dnd-chip${selected}${presenceClass}" data-player-id="${p.id}"><span class="queue-row-name-text">${this.esc(p.name)}</span>${editBtn}${skillBtn}</span>`;
+    };
+
+    const skillPickerFor = (p) => this._skillPickerFor === p.id ? `<div class="partner-picker" style="margin-top:0;margin-bottom:6px;">
+        <div class="partner-picker-list">
+          <div class="partner-picker-item" onclick="App.setPlayerSkillLevel(${p.id}, 'beginner')">Beginner</div>
+          <div class="partner-picker-item" onclick="App.setPlayerSkillLevel(${p.id}, 'intermediate')">Intermediate</div>
+          <div class="partner-picker-item" onclick="App.setPlayerSkillLevel(${p.id}, 'advanced')">Advanced</div>
+          <div class="partner-picker-item" onclick="App.setPlayerSkillLevel(${p.id}, null)">Not Rated</div>
+        </div>
+      </div>` : '';
+
+    // A player mid name-edit or removal-confirm can't join a combined pair
+    // row — that row's own content replaces the chip entirely — so those
+    // states always fall back to a solo row until they're done.
+    const canPairRow = (p) => this._pendingRemove !== p.id && this._editingGuest !== p.id;
+
+    const renderRow = (p) => {
       // While this player's removal is pending, their row disappears from
       // Waiting/Sitting Out — the confirm now lives in the remove zone above.
       if (this._pendingRemove === p.id) return '';
@@ -5500,34 +5681,40 @@ ${bracketHTML}
           <button class="btn-edit-cancel" onclick="App.cancelGuestEdit()">Cancel</button>
         </div>`;
       }
-      const selfId = Onboard.selfId;
-      // Only the *current* partner gets the orange border — an Other
-      // Partner isn't actually being used for match-making right now.
-      const isPartner = selfId && selfId !== p.id && this.state.teams.some(t =>
-        t.current && ((t.p1 === selfId && t.p2 === p.id) || (t.p2 === selfId && t.p1 === p.id))
-      );
-      const isMyGuest = !p.isLive && p.addedBy === selfId;
-      const canEdit = isMyGuest && !isYou;
-      const editBtn = canEdit ? `<button class="queue-row-btn queue-row-action" onclick="App.editGuest(${p.id})" title="Edit guest">&#x270E;</button>` : '';
-      const skillBtn = this.state.options.useSkill
-        ? `<button class="queue-row-skill-btn${p.skillLevel ? ' set' : ''}" onclick="App.toggleSkillPicker(${p.id})" title="Set skill level">${this.skillAbbrev(p)}</button>`
-        : '';
-      const skillPicker = this._skillPickerFor === p.id ? `<div class="partner-picker" style="margin-top:0;margin-bottom:6px;">
-        <div class="partner-picker-list">
-          <div class="partner-picker-item" onclick="App.setPlayerSkillLevel(${p.id}, 'beginner')">Beginner</div>
-          <div class="partner-picker-item" onclick="App.setPlayerSkillLevel(${p.id}, 'intermediate')">Intermediate</div>
-          <div class="partner-picker-item" onclick="App.setPlayerSkillLevel(${p.id}, 'advanced')">Advanced</div>
-          <div class="partner-picker-item" onclick="App.setPlayerSkillLevel(${p.id}, null)">Not Rated</div>
-        </div>
-      </div>` : '';
-      const selected = this._tapSelection && this._tapSelection.playerId === p.id ? ' dnd-selected' : '';
-      // Border color marks whose chip this is (green = you, orange = your
-      // partner, purple = another signed-in user) instead of a text badge —
-      // see .chip-self/.chip-partner/.chip-live.
-      const presenceClass = isYou ? ' chip-self' : isPartner ? ' chip-partner' : (p.isLive ? ' chip-live' : '');
-      return `<div class="queue-row">
-        <span class="queue-row-name dnd-chip${selected}${presenceClass}" data-player-id="${p.id}"><span class="queue-row-name-text">${this.esc(p.name)}</span>${editBtn}${skillBtn}</span>
-      </div>${skillPicker}`;
+      return `<div class="queue-row">${chipSpan(p)}</div>${skillPickerFor(p)}`;
+    };
+
+    // Two current partners both sitting in the same list (both waiting, or
+    // both sitting out) render as one combined row with an "&" between
+    // them, mirroring the "A & B" look on the Courts tab — the "&" is
+    // itself a drag/tap target that moves both players together (see
+    // _onDndPointerDown/_movePlayers) instead of one at a time.
+    const renderPairRow = (team, p1, p2) => {
+      const ampSelected = this._tapSelection && this._tapSelection.teamId === team.id ? ' dnd-selected' : '';
+      return `<div class="queue-row queue-row-pair">${chipSpan(p1)}<span class="queue-pair-amp${ampSelected}" data-team-id="${team.id}" data-p1="${p1.id}" data-p2="${p2.id}" title="Drag or tap to move both">&amp;</span>${chipSpan(p2)}</div>${skillPickerFor(p1)}${skillPickerFor(p2)}`;
+    };
+
+    const buildListHtml = (players) => {
+      const idsInList = new Set(players.map(p => p.id));
+      const teamOf = new Map();
+      this.state.teams.forEach(t => {
+        if (t.current && idsInList.has(t.p1) && idsInList.has(t.p2)) { teamOf.set(t.p1, t); teamOf.set(t.p2, t); }
+      });
+      const seen = new Set();
+      const parts = [];
+      for (const p of players) {
+        if (seen.has(p.id)) continue;
+        const team = teamOf.get(p.id);
+        const partner = team ? players.find(pl => pl.id === (team.p1 === p.id ? team.p2 : team.p1)) : null;
+        if (team && partner && canPairRow(p) && canPairRow(partner)) {
+          seen.add(p.id); seen.add(partner.id);
+          parts.push(renderPairRow(team, p, partner));
+        } else {
+          seen.add(p.id);
+          parts.push(renderRow(p));
+        }
+      }
+      return parts.join('');
     };
 
     const activePlayers = queuePlayers.filter(p => p.active);
@@ -5537,10 +5724,10 @@ ${bracketHTML}
     // right below each (now-empty) list already states what to do, and
     // repeating the instruction inside the list too was redundant.
     if (activeEl) activeEl.innerHTML = activePlayers.length
-      ? activePlayers.map(renderRow).join('')
+      ? buildListHtml(activePlayers)
       : '';
     if (waitingEl) waitingEl.innerHTML = waitingPlayers.length
-      ? waitingPlayers.map(renderRow).join('')
+      ? buildListHtml(waitingPlayers)
       : '';
   },
 
@@ -5581,6 +5768,7 @@ ${bracketHTML}
       display.innerHTML = '';
       if (btn) btn.style.display = 'none';
       this._partnerSwapPending = null;
+      this._partnerSwapPickerOpen = false;
       return;
     }
     if (btn) btn.style.display = '';
@@ -5588,6 +5776,7 @@ ${bracketHTML}
     if (btn) btn.textContent = selfTeams.length > 0 ? '+ Add Another Partner' : '+ Add Partner';
     if (selfTeams.length === 0) {
       this._partnerSwapPending = null;
+      this._partnerSwapPickerOpen = false;
       display.innerHTML = '<div style="color:var(--text-muted);font-size:0.82rem;margin-bottom:8px;">No partners selected</div>';
       return;
     }
@@ -5595,16 +5784,18 @@ ${bracketHTML}
     const nameFor = t => this.esc(this.getPlayer(t.p1 === selfId ? t.p2 : t.p1)?.name || '?');
     // Current Partner gets the same orange border as on the Courts tab;
     // Other Partners get a yellow border instead, so the two are never
-    // mistaken for each other at a glance.
-    const chip = (t, opts = {}) => `<span class="dnd-chip ${opts.other ? 'chip-partner-other' : 'chip-partner'}" data-team-id="${t.id}"${opts.onclick ? ` onclick="${opts.onclick}" title="Tap to make current partner" style="cursor:pointer;"` : ''}>
+    // mistaken for each other at a glance. Neither chip is tappable itself —
+    // swapping who's current happens through the picker below instead.
+    const chip = (t, opts = {}) => `<span class="dnd-chip ${opts.other ? 'chip-partner-other' : 'chip-partner'}" data-team-id="${t.id}">
         <span class="queue-row-name-text">${nameFor(t)}</span>
-        <button class="partner-chip-remove" onclick="${opts.stopPropagation ? 'event.stopPropagation();' : ''}App.requestRemovePartner(${t.id})" title="Remove partner">&times;</button>
+        <button class="partner-chip-remove" onclick="App.requestRemovePartner(${t.id})" title="Remove partner">&times;</button>
       </span>`;
 
     // Just one partner: no Current/Other split needed — same as the queue
     // only splitting into Waiting/Sitting Out once there's someone to split.
     if (selfTeams.length === 1) {
       this._partnerSwapPending = null;
+      this._partnerSwapPickerOpen = false;
       display.innerHTML = `<div class="partner-section-box">${chip(selfTeams[0])}</div>`;
       return;
     }
@@ -5615,6 +5806,19 @@ ${bracketHTML}
 
     let html = `<div class="queue-subsection-label">Current Partner</div>
       <div class="partner-section-box">${chip(currentTeam)}</div>`;
+
+    // Dedicated strip to swap who's current, styled like the Courts tab's
+    // drag-or-tap targets — tapping it opens a plain list of the other
+    // partners, and picking one makes them current right away (the old
+    // current partner drops back into Other Partners automatically).
+    html += `<div class="queue-drop-strip" style="cursor:pointer;" onclick="App.togglePartnerSwapPicker()">Tap to change</div>`;
+    if (this._partnerSwapPickerOpen) {
+      html += `<div class="partner-picker" style="margin-top:8px;">
+        <div class="partner-picker-list">${otherTeams.map(t =>
+          `<div class="partner-picker-item" onclick="App.swapCurrentPartner(${t.id})">${nameFor(t)}</div>`
+        ).join('')}</div>
+      </div>`;
+    }
 
     if (pending && pending.type === 'removeCurrent' && pending.teamId === currentTeam.id) {
       html += `<div class="partner-swap-prompt">
@@ -5627,16 +5831,7 @@ ${bracketHTML}
     }
 
     html += `<div class="queue-subsection-label" style="margin-top:10px;">Other Partners</div>
-      <div class="partner-section-box">${otherTeams.map(t => {
-        if (pending && pending.type === 'promote' && pending.teamId === t.id) {
-          return `<div class="queue-row-confirm">
-            <span>Make ${nameFor(t)} current?</span>
-            <button onclick="App.confirmSwapCurrentPartner()">Yes</button>
-            <button onclick="App.cancelSwapCurrentPartner()">No</button>
-          </div>`;
-        }
-        return chip(t, { onclick: `App.promptSwapCurrentPartner(${t.id})`, stopPropagation: true, other: true });
-      }).join('')}</div>`;
+      <div class="partner-section-box">${otherTeams.map(t => chip(t, { other: true })).join('')}</div>`;
 
     display.innerHTML = html;
   },
@@ -5676,7 +5871,7 @@ ${bracketHTML}
   },
 
   _renderEmptyCourtCard(courtId) {
-    const label = 'Drag or tap to add';
+    const label = 'Add';
     const sideBox = sideNum => `<div class="court-side side-${sideNum} dnd-target" data-loc-type="slot" data-court="${courtId}" data-side="${sideNum}">
       <div class="dnd-slot-empty">${label}</div>
       <div class="dnd-slot-empty">${label}</div>
@@ -5822,7 +6017,7 @@ ${bracketHTML}
     const canAutoFill = needed > 0 && eligible >= needed;
     const sideBox = (side, sideNum) => {
       const chips = side.map(id => this._renderChip(id)).join('');
-      const placeholderLabel = 'Drag or tap to add';
+      const placeholderLabel = 'Add';
       const placeholders = Array.from({ length: 2 - side.length },
         () => `<div class="dnd-slot-empty">${placeholderLabel}</div>`).join('');
       return `<div class="court-side side-${sideNum} dnd-target" data-loc-type="slot" data-court="${courtId}" data-side="${sideNum}">
@@ -5856,12 +6051,17 @@ ${bracketHTML}
     const p = this.getPlayer(playerId);
     if (!p) return '';
     const isYou = Onboard.selfId === playerId;
-    const selected = this._tapSelection && this._tapSelection.playerId === playerId ? ' dnd-selected' : '';
+    const selfId = Onboard.selfId;
+    const isPartner = selfId && selfId !== playerId && this.state.teams.some(t =>
+      t.current && ((t.p1 === selfId && t.p2 === playerId) || (t.p2 === selfId && t.p1 === playerId))
+    );
+    const selected = this._tapSelection && this._tapSelection.playerIds.length === 1 && this._tapSelection.playerIds[0] === playerId ? ' dnd-selected' : '';
     // Skill level is a queue-only detail — once someone's on a court, which
     // team they're on already reflects any skill-based matching.
-    // Border color marks whose chip this is (green = you, purple = another
-    // signed-in user) instead of a text badge — see .chip-self/.chip-live.
-    const presenceClass = isYou ? ' chip-self' : (p.isLive ? ' chip-live' : '');
+    // Border color marks whose chip this is (green = you, orange = your
+    // partner, purple = another signed-in user) instead of a text badge —
+    // see .chip-self/.chip-partner/.chip-live.
+    const presenceClass = isYou ? ' chip-self' : isPartner ? ' chip-partner' : (p.isLive ? ' chip-live' : '');
     return `<span class="dnd-chip${selected}${presenceClass}" data-player-id="${playerId}">${this.esc(p.name)}</span>`;
   },
 
@@ -5881,7 +6081,7 @@ ${bracketHTML}
     return a.type !== 'slot' || (a.court === b.court && a.side === b.side);
   },
 
-  _movePlayer(playerId, from, to) {
+  _movePlayer(playerId, from, to, opts = {}) {
     if (this._locEq(from, to)) return;
 
     // A closed session (see closeSession/openSession) is fully paused —
@@ -5926,7 +6126,7 @@ ${bracketHTML}
         if (occupantId == null) return; // dropped back onto its own slot
       }
     }
-    if (from.type === 'slot' || to.type === 'slot') this._pushProposedUndoSnapshot();
+    if (!opts.skipSnapshot && (from.type === 'slot' || to.type === 'slot')) this._pushProposedUndoSnapshot();
     if (from.type === 'slot') {
       const arr = this.state.proposedGames[from.court] && this.state.proposedGames[from.court]['side' + from.side];
       if (arr) {
@@ -5944,8 +6144,39 @@ ${bracketHTML}
     if (occupantId != null && from.type === 'slot' && this.state.proposedGames[from.court]) {
       this.state.proposedGames[from.court]['side' + from.side].push(occupantId);
     }
+    if (!opts.silent) {
+      this.saveState();
+      this.render();
+    }
+  },
+
+  // Moves a locked-partner pair together in one action — used when dragging
+  // or tapping the "&" between two partnered chips in Waiting/Sitting Out
+  // (see renderPlayers) instead of moving each player one at a time. Only
+  // lands when the destination has room for both without bumping anyone
+  // already there — a pair is never split across two different targets or
+  // swapped in over an existing occupant.
+  _movePlayers(playerIds, from, to) {
+    if (this._locEq(from, to)) return;
+    if (to.type === 'remove') return; // no bulk-remove via the pair — each player's own chip still can
+    if (this.state._closed && (to.type === 'queue' || to.type === 'slot')) return;
+    if (to.type === 'slot') {
+      const game = this.state.proposedGames[to.court];
+      const destArr = game && game['side' + to.side];
+      const occupiedByOthers = destArr ? destArr.filter(id => !playerIds.includes(id)).length : 0;
+      if (occupiedByOthers > 0) return;
+    }
+    if (from.type === 'slot' || to.type === 'slot') this._pushProposedUndoSnapshot();
+    playerIds.forEach(id => this._movePlayer(id, from, to, { silent: true, skipSnapshot: true }));
     this.saveState();
     this.render();
+  },
+
+  // Single entry point for both the drag/tap pipeline and the fill pickers —
+  // one playerId moves alone, two move together as a partner pair.
+  _moveUnit(playerIds, from, to) {
+    if (playerIds.length === 1) { this._movePlayer(playerIds[0], from, to); return; }
+    this._movePlayers(playerIds, from, to);
   },
 
   // Undo steps back through adjustments made since the last confirmed/cancelled
@@ -5976,24 +6207,33 @@ ${bracketHTML}
   _onDndPointerDown(e) {
     if (e.pointerType === 'mouse' && e.button !== 0) return;
     if (this._isInteractiveTarget(e.target)) return;
-    const chipEl = e.target.closest('.dnd-chip');
-    if (chipEl) {
-      const fromEl = chipEl.closest('[data-loc-type]');
+    // The "&" between two partnered chips (see renderPlayers) is a second
+    // kind of drag/tap source alongside a lone chip — it carries both
+    // players' ids so the whole pair moves as one unit.
+    const ampEl = e.target.closest('.queue-pair-amp');
+    const chipEl = !ampEl && e.target.closest('.dnd-chip');
+    const unitEl = ampEl || chipEl;
+    if (unitEl) {
+      const fromEl = unitEl.closest('[data-loc-type]');
       const from = this._locFromEl(fromEl);
       if (!from) return;
+      const playerIds = ampEl
+        ? [Number(ampEl.dataset.p1), Number(ampEl.dataset.p2)]
+        : [Number(chipEl.dataset.playerId)];
       this._dragState = {
-        playerId: Number(chipEl.dataset.playerId),
+        playerIds,
+        teamId: ampEl ? Number(ampEl.dataset.teamId) : null,
         from,
         startX: e.clientX, startY: e.clientY,
         moved: false,
         ghost: null,
         hoverEl: null,
         pointerId: e.pointerId,
-        sourceEl: chipEl,
+        sourceEl: unitEl,
       };
       return;
     }
-    // No chip under the finger/cursor — if a player is already selected,
+    // No chip/"&" under the finger/cursor — if a player is already selected,
     // let a plain tap on a bare drop zone (e.g. an empty Waiting section)
     // complete the move; there's nothing there to drag onto otherwise.
     // (Double-tapping/double-clicking an empty court slot opens a picker to
@@ -6005,7 +6245,8 @@ ${bracketHTML}
     const zoneTapTo = this._locFromEl(locEl);
     if (!zoneTapTo) return;
     this._dragState = {
-      playerId: this._tapSelection.playerId,
+      playerIds: this._tapSelection.playerIds,
+      teamId: this._tapSelection.teamId || null,
       from: this._tapSelection.from,
       startX: e.clientX, startY: e.clientY,
       moved: false,
@@ -6024,9 +6265,19 @@ ${bracketHTML}
     if (!d.moved) {
       if (Math.hypot(dx, dy) < 6) return;
       d.moved = true;
-      d.ghost = d.sourceEl.cloneNode(true);
-      d.ghost.classList.add('dnd-ghost');
-      d.ghost.classList.remove('dnd-selected');
+      if (d.teamId != null) {
+        // A single "&" glyph makes a poor drag preview on its own — show
+        // both partner names with it instead, same look as the queue row.
+        const p1 = this.getPlayer(d.playerIds[0]), p2 = this.getPlayer(d.playerIds[1]);
+        const wrap = document.createElement('div');
+        wrap.className = 'dnd-ghost queue-pair-ghost';
+        wrap.innerHTML = `<span class="dnd-chip">${this.esc(p1 ? p1.name : '?')}</span><span class="queue-pair-amp">&amp;</span><span class="dnd-chip">${this.esc(p2 ? p2.name : '?')}</span>`;
+        d.ghost = wrap;
+      } else {
+        d.ghost = d.sourceEl.cloneNode(true);
+        d.ghost.classList.add('dnd-ghost');
+        d.ghost.classList.remove('dnd-selected');
+      }
       document.body.appendChild(d.ghost);
       d.sourceEl.classList.add('dnd-dragging');
       d.sourceEl.setPointerCapture && d.sourceEl.setPointerCapture(e.pointerId);
@@ -6053,29 +6304,30 @@ ${bracketHTML}
 
     if (d.zoneTapTo) {
       this._tapSelection = null;
-      this._movePlayer(d.playerId, d.from, d.zoneTapTo);
+      this._moveUnit(d.playerIds, d.from, d.zoneTapTo);
       return;
     }
     if (!d.moved) {
-      // Plain tap on a chip: first tap selects it, a second tap on a
-      // different chip moves the selected player to that chip's location,
-      // and tapping the same chip again just deselects it.
+      // Plain tap on a chip or "&": first tap selects it, a second tap on
+      // a different chip/"&" moves the selected unit to that tap's
+      // location, and tapping the same chip/"&" again just deselects it.
       if (!this._tapSelection) {
-        this._tapSelection = { playerId: d.playerId, from: d.from };
+        this._tapSelection = { playerIds: d.playerIds, from: d.from, teamId: d.teamId };
         this.render();
         return;
       }
-      const { playerId, from } = this._tapSelection;
+      const { playerIds, from } = this._tapSelection;
       this._tapSelection = null;
-      if (playerId === d.playerId) { this.render(); return; }
-      this._movePlayer(playerId, from, d.from);
+      const sameUnit = playerIds.length === d.playerIds.length && playerIds.every(id => d.playerIds.includes(id));
+      if (sameUnit) { this.render(); return; }
+      this._moveUnit(playerIds, from, d.from);
       return;
     }
     if (!d.hoverEl) return;
     const to = this._locFromEl(d.hoverEl);
     if (to) {
       this._tapSelection = null;
-      this._movePlayer(d.playerId, d.from, to);
+      this._moveUnit(d.playerIds, d.from, to);
     }
   },
 
@@ -6149,14 +6401,45 @@ ${bracketHTML}
   renderFillSlotPicker() {
     const el = document.getElementById('fillSlotPickerList');
     if (!el) return;
+    const target = this._fillSlotTarget;
     const onCourt = this.getPlayersOnCourts();
     const available = this.state.players.filter(p => !onCourt.has(p.id));
-    el.innerHTML = available.length
-      ? available.map(p => {
-          const tag = p.active ? '' : ' <span style="font-weight:400;color:var(--text-muted);">(sitting out)</span>';
-          return `<div class="partner-picker-item" onclick="App.fillSlotWithPlayer(${p.id})">${this.esc(p.name)}${tag}</div>`;
-        }).join('')
-      : '<div style="padding:10px 12px;color:var(--text-light);font-size:0.82rem;">No players available</div>';
+    if (!available.length) {
+      el.innerHTML = '<div style="padding:10px 12px;color:var(--text-light);font-size:0.82rem;">No players available</div>';
+      return;
+    }
+    const tag = p => p.active ? '' : ' <span style="font-weight:400;color:var(--text-muted);">(sitting out)</span>';
+    // Only when BOTH seats on this side are still open can a current
+    // partner pair land there together — with just one seat open they'd
+    // have to split up anyway, so they're listed individually like anyone
+    // else (see _movePlayers for the same rule on a drag/tap move).
+    const game = target && this.state.proposedGames[target.court];
+    const sideArr = game ? game['side' + target.side] : [];
+    const bothOpen = !!target && sideArr.length === 0;
+
+    if (!bothOpen) {
+      el.innerHTML = available.map(p => `<div class="partner-picker-item" onclick="App.fillSlotWithPlayer(${p.id})">${this.esc(p.name)}${tag(p)}</div>`).join('');
+      return;
+    }
+
+    const availIds = new Set(available.map(p => p.id));
+    const paired = new Set();
+    const items = [];
+    for (const p of available) {
+      if (paired.has(p.id)) continue;
+      const team = this.state.teams.find(t => t.current &&
+        ((t.p1 === p.id && availIds.has(t.p2)) || (t.p2 === p.id && availIds.has(t.p1))));
+      if (team) {
+        const partnerId = team.p1 === p.id ? team.p2 : team.p1;
+        const partner = available.find(pl => pl.id === partnerId);
+        paired.add(p.id); paired.add(partnerId);
+        items.push(`<div class="partner-picker-item" onclick="App.fillSlotWithPair(${p.id}, ${partnerId})">${this.esc(p.name)} &amp; ${this.esc(partner.name)}</div>`);
+      } else {
+        paired.add(p.id);
+        items.push(`<div class="partner-picker-item" onclick="App.fillSlotWithPlayer(${p.id})">${this.esc(p.name)}${tag(p)}</div>`);
+      }
+    }
+    el.innerHTML = items.join('');
   },
 
   fillSlotWithPlayer(playerId) {
@@ -6167,6 +6450,25 @@ ${bracketHTML}
     if (!p) return;
     const from = { type: p.active ? 'queue' : 'waiting' };
     this._movePlayer(playerId, from, { type: 'slot', court: target.court, side: target.side });
+  },
+
+  // Picking a combined "A & B" option (see renderFillSlotPicker) fills both
+  // open seats on the side at once, same as dragging/tapping their "&" —
+  // only offered when the side had both seats open, so there's never
+  // anyone already there to bump.
+  fillSlotWithPair(p1Id, p2Id) {
+    const target = this._fillSlotTarget;
+    this.closeFillSlotPicker();
+    if (!target) return;
+    const p1 = this.getPlayer(p1Id), p2 = this.getPlayer(p2Id);
+    if (!p1 || !p2) return;
+    this._pushProposedUndoSnapshot();
+    [p1, p2].forEach(p => {
+      const from = { type: p.active ? 'queue' : 'waiting' };
+      this._movePlayer(p.id, from, { type: 'slot', court: target.court, side: target.side }, { silent: true, skipSnapshot: true });
+    });
+    this.saveState();
+    this.render();
   },
 
   // Double-tapping/double-clicking open space in Waiting, Sitting Out, or
@@ -6237,21 +6539,15 @@ ${bracketHTML}
     this._movePlayer(playerId, from, { type: target });
   },
 
+  // Same bubble-and-border chip used everywhere else (queue, proposed
+  // match) instead of "you"/"partners" text badges — green border = you,
+  // orange = your current partner, purple = another signed-in user (see
+  // _renderChip), so an active match reads the same way at a glance.
   renderSide(side) {
-    const isTeam = side.length === 2 && this.state.teams.some(t =>
-      (t.p1 === side[0] && t.p2 === side[1]) || (t.p1 === side[1] && t.p2 === side[0])
-    );
-    const playerHtml = (id, align) => {
-      const p = this.getPlayer(id);
-      if (!p) return '';
-      const youBadge = id === Onboard.selfId ? ' <span class="queue-row-you">you</span>' : '';
-      return `<span class="side-player-${align}"><span class="side-player-name">${this.esc(p.name)}</span>${youBadge}</span>`;
-    };
     if (side.length === 1) {
-      return playerHtml(side[0], 'solo');
+      return this._renderChip(side[0]);
     }
-    const partnersBadge = isTeam ? '<div class="side-partners-row"><span class="side-partners-badge">partners</span></div>' : '';
-    return `<div class="side-names-row">${playerHtml(side[0], 'left')}<span class="side-amp">&amp;</span>${playerHtml(side[1], 'right')}</div>${partnersBadge}`;
+    return `<div class="side-names-row">${this._renderChip(side[0])}<span class="side-amp">&amp;</span>${this._renderChip(side[1])}</div>`;
   },
 
   renderQueue() {
@@ -6619,8 +6915,8 @@ ${bracketHTML}
         }
         return `<div class="history-session-closed">Session closed${when ? ' &mdash; ' + when : ''}</div>`;
       }
-      const s1 = m.side1.map(id => { const p = this.getPlayer(id); return this.esc(nameFor(id)) + (this.skillLabel(p) ? ` <span style="font-weight:400;opacity:0.7;">(${this.skillLabel(p)})</span>` : ''); });
-      const s2 = m.side2.map(id => { const p = this.getPlayer(id); return this.esc(nameFor(id)) + (this.skillLabel(p) ? ` <span style="font-weight:400;opacity:0.7;">(${this.skillLabel(p)})</span>` : ''); });
+      const s1 = m.side1.map(id => { const p = this.getPlayer(id); return this.esc(nameFor(id)) + (p && p.skillLevel ? ` <span style="font-weight:400;opacity:0.7;">(${this.skillAbbrev(p)})</span>` : ''); });
+      const s2 = m.side2.map(id => { const p = this.getPlayer(id); return this.esc(nameFor(id)) + (p && p.skillLevel ? ` <span style="font-weight:400;opacity:0.7;">(${this.skillAbbrev(p)})</span>` : ''); });
       const hasScores = m.score1 != null && m.score2 != null;
       const s1Class = hasScores ? (m.winner === 1 ? 'winner' : m.winner === 2 ? 'loser' : '') : '';
       const s2Class = hasScores ? (m.winner === 2 ? 'winner' : m.winner === 1 ? 'loser' : '') : '';
@@ -6685,17 +6981,34 @@ const Session = {
   _sse: null,
   _pushTimer: null,
 
-  // Header X button. A non-admin (or an offline Quick Play session, which
-  // has no one else to leave "open" for) just leaves, same as always. An
-  // admin of a real session gets asked whether they mean to leave (just
-  // themselves) or close the session (everyone — see App.closeSession).
+  // Header X button. An offline Quick Play session (which has no one else
+  // to leave "open" for, and offers its own save-or-discard prompt) just
+  // leaves, same as always. Otherwise this opens one modal offering
+  // whichever of Leave Session / Close Session (admins of a real session
+  // only) / Log Out (signed-in users only) apply — including, when not in
+  // a session at all, just Log Out.
   leaveOrClose() {
-    if (this.id !== 'offline' && Admin.isAdmin()) {
-      document.getElementById('leaveCloseModal').style.display = 'flex';
-      document.body.style.overflow = 'hidden';
+    if (this.id === 'offline') {
+      this.leave();
       return;
     }
-    this.leave();
+    this._openLeaveCloseModal();
+  },
+
+  _openLeaveCloseModal() {
+    const inSession = !!this.id;
+    const canClose = inSession && Admin.isAdmin();
+    const canLogout = Admin.isSignedIn();
+    const title = document.getElementById('leaveCloseTitle');
+    const leaveOpt = document.getElementById('leaveSessionOption');
+    const closeOpt = document.getElementById('closeSessionOption');
+    const logoutOpt = document.getElementById('logoutOption');
+    if (title) title.textContent = inSession ? 'Leave or Close Session?' : 'Log Out?';
+    if (leaveOpt) leaveOpt.style.display = inSession ? '' : 'none';
+    if (closeOpt) closeOpt.style.display = canClose ? '' : 'none';
+    if (logoutOpt) logoutOpt.style.display = canLogout ? '' : 'none';
+    document.getElementById('leaveCloseModal').style.display = 'flex';
+    document.body.style.overflow = 'hidden';
   },
 
   _leaveCloseCancel(event) {
@@ -6713,6 +7026,11 @@ const Session = {
   _confirmClose() {
     this._leaveCloseCancel();
     App.closeSession();
+  },
+
+  _confirmLogout() {
+    this._leaveCloseCancel();
+    Admin.logout();
   },
 
   _leaveCloseInfo: {
@@ -6879,7 +7197,7 @@ const Session = {
       this._receiving = false;
     } catch(e) { /* always continue to show UI */ }
     this._setLoading(false);
-    this._listen(user);
+    this._listen(user, isNew);
     this._updateUI();
   },
 
@@ -6893,7 +7211,7 @@ const Session = {
     btns.forEach(b => b.disabled = on);
   },
 
-  _addSelf(user) {
+  _addSelf(user, isNew) {
     // Try to find existing player: first by persisted selfId, then by name
     const savedId = this._getSavedSelfId();
     let already = savedId != null ? App.state.players.find(p => p.id === savedId) : null;
@@ -6912,9 +7230,10 @@ const Session = {
       Onboard.selfId = already.id;
       this._saveSelfId(already.id);
       already.isLive = true;
-      // A closed session (see App.closeSession) keeps everyone sitting out
-      // until an admin reopens it — rejoining shouldn't bypass that.
-      already.active = !App.state._closed;
+      // Creating a session drops you into the queue (unless it's already
+      // closed — see App.closeSession); joining an existing one always
+      // lands you in Sitting Out instead.
+      already.active = isNew ? !App.state._closed : false;
       // Update name/skill/preferences if changed
       already.name = user.name;
       already.skillLevel = user.skillLevel || already.skillLevel;
@@ -6933,7 +7252,7 @@ const Session = {
         id,
         name: user.name,
         skillLevel: user.skillLevel || null,
-        active: !App.state._closed,
+        active: isNew ? !App.state._closed : false,
         isLive: true,
         joinedAt: now,
         lastActiveAt: now,
@@ -7011,7 +7330,7 @@ const Session = {
     } catch(e) { /* silent */ }
   },
 
-  _listen(pendingUser) {
+  _listen(pendingUser, isNew) {
     if (this._sse) this._sse.close();
     const src = new EventSource(this._url());
     this._sse = src;
@@ -7019,7 +7338,7 @@ const Session = {
     const addSelfOnce = () => {
       if (!selfAdded && pendingUser) {
         selfAdded = true;
-        this._addSelf(pendingUser);
+        this._addSelf(pendingUser, isNew);
       }
     };
     let _lastResetAt = App.state._resetAt || 0;
@@ -7114,13 +7433,11 @@ const Session = {
   },
 
   _updateUI() {
-    const headerRight = document.getElementById('headerRight');
     const headerLocName = document.getElementById('headerLocName');
     const setup = document.getElementById('sessionSetupSection');
     const tabBar = document.getElementById('tabBar');
 
     if (this.id) {
-      headerRight.style.display = 'flex';
       if (headerLocName) headerLocName.textContent = this.label || this.id;
       if (setup) setup.style.display = 'none';
       const histView = document.getElementById('myHistoryView');
@@ -7128,10 +7445,24 @@ const Session = {
       App._showTabs();
       App.updateShareLink();
     } else {
-      headerRight.style.display = 'none';
       if (setup) setup.style.display = '';
       App._hideTabs();
     }
+    this._updateHeaderX();
+    // Super admin's landing-page-only panels — hide once inside a session.
+    Admin._updateAdminPanels();
+  },
+
+  // Header X: visible whenever there's a session to leave/close, or a
+  // signed-in user who can log out (see leaveOrClose). The pulsing status
+  // dot only means anything while actually connected to a session.
+  _updateHeaderX() {
+    const headerRight = document.getElementById('headerRight');
+    const headerLoc = document.getElementById('headerLocation');
+    if (!headerRight) return;
+    const inSession = !!this.id;
+    headerRight.style.display = (inSession || Admin.isSignedIn()) ? 'flex' : 'none';
+    if (headerLoc) headerLoc.style.display = inSession ? '' : 'none';
   },
 };
 
@@ -7148,8 +7479,8 @@ const Onboard = {
     const user = this._savedUser();
     const s = new URLSearchParams(window.location.search).get('s');
 
-    // Populate dropdowns
-    this._populatePrivateDropdown();
+    // Populate the saved-sessions list
+    this._renderSessionList();
 
     if (s) {
       // Set loading flag immediately to prevent _updateUI from showing entry options
@@ -7315,8 +7646,9 @@ const Onboard = {
     }
   },
 
-  // ─── Self profile (name/skill), asked right when joining or creating a
-  // private session instead of always sitting on the join page ───
+  // ─── Self profile (name only — see _selfProfileSubmit), asked right when
+  // joining or creating a private session instead of always sitting on the
+  // join page ───
   _selfProfileCtx: null,
 
   _promptSelfProfile(onComplete) {
@@ -7330,7 +7662,6 @@ const Onboard = {
     const nameEl = document.getElementById('selfProfileName');
     const errEl = document.getElementById('selfProfileNameError');
     if (nameEl) nameEl.value = Admin._user?.displayName || '';
-    App.setSkillField('selfProfileSkill', saved.skillLevel || '');
     if (errEl) errEl.style.display = 'none';
     document.getElementById('selfProfileModal').style.display = 'flex';
     document.body.style.overflow = 'hidden';
@@ -7346,7 +7677,6 @@ const Onboard = {
 
   _selfProfileSubmit() {
     const nameEl = document.getElementById('selfProfileName');
-    const skillEl = document.getElementById('selfProfileSkill');
     const errEl = document.getElementById('selfProfileNameError');
     const name = nameEl ? nameEl.value.trim() : '';
     if (!name) {
@@ -7355,7 +7685,9 @@ const Onboard = {
       return;
     }
     if (errEl) errEl.style.display = 'none';
-    const skillLevel = skillEl?.value || null;
+    // Only the name is asked here — everyone joins as Not Rated and sets a
+    // skill level later via Settings or the NR/B/I/A chip, same as Quick Play.
+    const skillLevel = this._savedUser()?.skillLevel ?? null;
     const user = { name, skillLevel };
     try { localStorage.setItem('courtManagerUser', JSON.stringify(user)); } catch(e) {}
     document.getElementById('selfProfileModal').style.display = 'none';
@@ -7368,44 +7700,6 @@ const Onboard = {
   _pendingKey: null,
   _pendingLabel: null,
 
-  _showInlineConfirm(elId, label, onYes) {
-    // Hide all other inline confirms
-    ['privateConfirmInline'].forEach(id => {
-      const el = document.getElementById(id);
-      if (el) { el.style.display = 'none'; el.innerHTML = ''; }
-    });
-    const el = document.getElementById(elId);
-    if (!el) return;
-    el.style.display = '';
-    el.innerHTML = `<div class="queue-row-confirm" style="padding:8px 0;color:var(--primary);">
-      <span style="font-size:0.85rem;">Join <strong>${App.esc(label)}</strong>?</span>
-      <button style="color:var(--primary);border-color:var(--primary-muted);font-size:0.82rem;padding:4px 12px;border:1.5px solid;border-radius:6px;background:var(--primary-light);cursor:pointer;font-family:inherit;font-weight:600;" onclick="Onboard._inlineYes()">Yes</button>
-      <button style="color:var(--text-muted);border-color:var(--border);font-size:0.82rem;padding:4px 12px;border:1.5px solid;border-radius:6px;background:transparent;cursor:pointer;font-family:inherit;" onclick="Onboard._inlineNo()">No</button>
-    </div>`;
-    this._inlineYesAction = onYes;
-  },
-
-  _inlineYes() {
-    if (this._inlineYesAction) this._inlineYesAction();
-    this._inlineYesAction = null;
-  },
-
-  _inlineNo() {
-    ['privateConfirmInline'].forEach(id => {
-      const el = document.getElementById(id);
-      if (el) { el.style.display = 'none'; el.innerHTML = ''; }
-    });
-    this._pendingKey = null;
-    this._pendingLabel = null;
-    this._inlineYesAction = null;
-  },
-
-  _updateJoinBtn(selId, btnId) {
-    const sel = document.getElementById(selId);
-    const btn = document.getElementById(btnId);
-    if (btn) btn.disabled = !sel?.value;
-  },
-
   // ─── Private sessions ──────────────────────
   _getSavedPrivateSessions() {
     try { return JSON.parse(localStorage.getItem('pj_privateSessions')) || []; } catch(e) { return []; }
@@ -7413,43 +7707,53 @@ const Onboard = {
 
   _savePrivateSession(id, name) {
     const sessions = this._getSavedPrivateSessions().filter(s => s.id !== id);
-    sessions.unshift({ id, name });
+    sessions.unshift({ id, name, lastJoined: Date.now() });
     try { localStorage.setItem('pj_privateSessions', JSON.stringify(sessions.slice(0, 20))); } catch(e) {}
-    this._populatePrivateDropdown();
+    this._renderSessionList();
   },
 
-  async _populatePrivateDropdown() {
-    const sel = document.getElementById('privateSessionSelect');
-    if (!sel) return;
-    // Keep the placeholder, clear the rest
-    while (sel.options.length > 1) sel.remove(1);
+  // No "Last joined" label — the fixed-width column and muted color
+  // already read as a timestamp, and the full phrase doesn't fit
+  // alongside a session name at phone width. Sessions saved before this
+  // field existed have no recorded time yet — show a dash rather than
+  // leaving the column blank, so every row keeps the same two-column look.
+  _formatLastJoined(ts) {
+    if (!ts) return '—';
+    const d = new Date(ts);
+    const date = d.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+    const time = d.toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' });
+    return `${date}, ${time}`;
+  },
+
+  // A list rather than a wrapped row of bubbles — colored left edge marks
+  // open (green) vs. an admin-closed session (orange, see App.closeSession),
+  // and each row shows when this device last joined it.
+  async _renderSessionList() {
+    const wrap = document.getElementById('privateSessionBubbles');
+    const empty = document.getElementById('privateSessionsEmpty');
+    if (!wrap) return;
 
     let sessions;
     if (Admin.isSuperAdmin()) {
       sessions = await this._fetchAllPrivateSessions();
     } else {
-      sessions = this._getSavedPrivateSessions();
+      const saved = this._getSavedPrivateSessions();
+      const data = await Promise.all(saved.map(s => Session._get(s.id)));
+      sessions = saved.map((s, i) => ({ id: s.id, name: s.name, closed: !!data[i]?._closed, lastJoined: s.lastJoined }));
     }
 
-    if (sessions.length === 0) {
-      sel.options[0].textContent = 'No saved sessions';
-      sel.disabled = true;
-      sel.style.appearance = 'none';
-      sel.style.backgroundImage = 'none';
-    } else {
-      sel.options[0].textContent = 'Select a session...';
-      sel.disabled = false;
-      sel.style.appearance = '';
-      sel.style.backgroundImage = '';
-      sessions.forEach(s => {
-        const opt = document.createElement('option');
-        opt.value = s.id;
-        opt.textContent = s.name;
-        sel.appendChild(opt);
-      });
-    }
-    sel.value = '';
-    this._updateJoinBtn('privateSessionSelect', 'btnJoinPrivate');
+    wrap.innerHTML = '';
+    if (empty) empty.style.display = sessions.length === 0 ? '' : 'none';
+    sessions.forEach(s => {
+      const row = document.createElement('button');
+      row.type = 'button';
+      row.className = `session-list-item ${s.closed ? 'session-closed' : 'session-open'}`;
+      row.title = s.closed ? 'Closed' : 'Open';
+      const joined = this._formatLastJoined(s.lastJoined);
+      row.innerHTML = `<span class="session-list-name">${App.esc(s.name)}</span><span class="session-list-joined">${App.esc(joined)}</span>`;
+      row.onclick = () => this.joinPrivateSession(s.id, s.name);
+      wrap.appendChild(row);
+    });
   },
 
   async _fetchAllPrivateSessions() {
@@ -7458,56 +7762,93 @@ const Onboard = {
       const all = await res.json();
       if (!all) return [];
       const savedMap = {};
-      this._getSavedPrivateSessions().forEach(s => { savedMap[s.id] = s.name; });
+      this._getSavedPrivateSessions().forEach(s => { savedMap[s.id] = s; });
       return Object.entries(all)
-        .filter(([k, v]) => k.startsWith('pvt-') && v && typeof v === 'object' && v._passcode)
-        .map(([k, v]) => ({ id: k, name: savedMap[k] || v._sessionName || k.replace(/^pvt-/, '') }));
+        .filter(([k, v]) => k.startsWith('pvt-') && v && typeof v === 'object')
+        .map(([k, v]) => ({
+          id: k,
+          name: savedMap[k]?.name || v._sessionName || k.replace(/^pvt-/, ''),
+          closed: !!v._closed,
+          lastJoined: savedMap[k]?.lastJoined,
+        }));
     } catch(e) { return []; }
   },
 
-  joinSavedPrivate() {
-    const sel = document.getElementById('privateSessionSelect');
-    const id = sel?.value;
-    if (!id) return;
-    // Look up from localStorage first, fall back to the dropdown's display text
-    const saved = this._getSavedPrivateSessions().find(s => s.id === id);
-    const label = saved ? saved.name : sel.options[sel.selectedIndex]?.textContent || id;
-    this._promptSelfProfile(() => {
-      this._pendingKey = id;
-      this._pendingLabel = label;
-      this._showInlineConfirm('privateConfirmInline', label, () => this.confirmJoin());
-    });
+  // Tapping a session in the list joins right away — no name/skill prompt
+  // (the signed-in Google name is used, see confirmJoin) and no extra
+  // confirm step. New joiners land in Sitting Out, not the queue (_addSelf).
+  joinPrivateSession(id, label) {
+    this._pendingKey = id;
+    this._pendingLabel = label;
+    this.confirmJoin();
   },
 
-  _newSessionType: '',
+  _newSessionType: 'open',
 
   setSessionType(type) {
     this._newSessionType = type;
   },
 
-  openCreatePrivate() {
+  // Same radio + "?" tooltip pattern as the Quick Play type picker (see
+  // _toggleQpInfo/_qpTypeInfo) — a separate popover/radio group so the two
+  // pickers, which can both exist in the DOM at once, don't share state.
+  _toggleSessionTypeInfo(event, type) {
+    event.preventDefault();
+    event.stopPropagation();
+    const popover = document.getElementById('sessionTypeInfoPopover');
+    const text = document.getElementById('sessionTypeInfoText');
+    if (popover.style.display !== 'none' && text.dataset.type === type) {
+      this._closeSessionTypeInfo();
+      return;
+    }
+    text.textContent = this._qpTypeInfo[type] || '';
+    text.dataset.type = type;
+    const option = event.currentTarget.closest('.qp-type-option');
+    if (option) option.insertAdjacentElement('afterend', popover);
+    popover.style.display = 'flex';
+  },
+
+  _closeSessionTypeInfo() {
+    const popover = document.getElementById('sessionTypeInfoPopover');
+    if (popover) popover.style.display = 'none';
+  },
+
+  togglePasscodeField() {
+    const on = !!document.getElementById('privatePasscodeToggle')?.checked;
+    const field = document.getElementById('privatePasscodeField');
+    if (field) field.style.display = on ? 'flex' : 'none';
+    if (!on) {
+      const codeEl = document.getElementById('privatePasscode');
+      if (codeEl) codeEl.value = '';
+    }
+  },
+
+  // "+ Create New" expands an inline form (name, type, passcode toggle) in
+  // place, the same pattern as the queue's inline Add Player row, instead
+  // of opening a modal.
+  toggleCreateSessionRow() {
     if (!Admin.isSignedIn()) {
       alert('Sign in with Google to create private sessions and to save your preferences. Use the back arrow and choose "Sign in with Google".');
       return;
     }
-    this._newSessionType = '';
+    const row = document.getElementById('createSessionRow');
+    if (!row) return;
+    if (row.style.display !== 'none') { row.style.display = 'none'; this._closeSessionTypeInfo(); return; }
+    this._newSessionType = 'open';
     const nameEl = document.getElementById('privateSessionName');
     const codeEl = document.getElementById('privatePasscode');
-    const sel = document.getElementById('selectSessionType');
-    const errEl = document.getElementById('privateSessionError');
+    const toggleEl = document.getElementById('privatePasscodeToggle');
+    const openRadio = document.querySelector('input[name="sessionCreateType"][value="open"]');
+    const errEl = document.getElementById('createSessionError');
     if (nameEl) nameEl.value = '';
     if (codeEl) codeEl.value = '';
-    if (sel) sel.selectedIndex = 0;
+    if (toggleEl) toggleEl.checked = false;
+    if (openRadio) openRadio.checked = true;
     if (errEl) errEl.style.display = 'none';
-    document.getElementById('createPrivateModal').style.display = 'flex';
-    document.body.style.overflow = 'hidden';
+    this._closeSessionTypeInfo();
+    this.togglePasscodeField();
+    row.style.display = '';
     nameEl?.focus();
-  },
-
-  _createPrivateCancel(event) {
-    if (event && event.target !== event.currentTarget) return;
-    document.getElementById('createPrivateModal').style.display = 'none';
-    document.body.style.overflow = '';
   },
 
   randomPasscode() {
@@ -7520,17 +7861,24 @@ const Onboard = {
   createPrivate() {
     const nameEl = document.getElementById('privateSessionName');
     const codeEl = document.getElementById('privatePasscode');
-    const errEl = document.getElementById('privateSessionError');
+    const toggleEl = document.getElementById('privatePasscodeToggle');
+    const errEl = document.getElementById('createSessionError');
     const sessionName = (nameEl?.value || '').trim();
-    const passcode = (codeEl?.value || '').trim().toUpperCase();
-    if (!sessionName || passcode.length !== 4 || !this._newSessionType) {
-      if (errEl) { errEl.textContent = 'Enter a session name, 4-character passcode, and select a session type'; errEl.style.display = 'block'; }
+    const passcodeRequired = !!toggleEl?.checked;
+    const passcode = passcodeRequired ? (codeEl?.value || '').trim().toUpperCase() : '';
+    if (!sessionName || (passcodeRequired && passcode.length !== 4)) {
+      if (errEl) {
+        errEl.textContent = passcodeRequired
+          ? 'Enter a session name and a 4-character passcode'
+          : 'Enter a session name';
+        errEl.style.display = 'block';
+      }
       return;
     }
     if (errEl) errEl.style.display = 'none';
     const id = 'pvt-' + sessionName.toLowerCase().replace(/[^a-z0-9]/g, '');
     this._savePrivateSession(id, sessionName);
-    document.getElementById('createPrivateModal').style.display = 'none';
+    document.getElementById('createSessionRow').style.display = 'none';
     this._promptSelfProfile(() => {
       this._pendingKey = id;
       this._pendingLabel = sessionName;
@@ -7556,17 +7904,16 @@ const Onboard = {
     const key = this._pendingKey;
     const label = this._pendingLabel;
     if (!key || !label) return;
-    const user = this._savedUser();
+    // Signed-in users joining a saved session may never have gone through
+    // the name/skill prompt — fall back to their Google display name so
+    // tapping a session in the list can join without asking for anything.
+    let user = this._savedUser();
+    if (!user && Admin._user?.displayName) {
+      user = { name: Admin._user.displayName, skillLevel: null };
+      try { localStorage.setItem('courtManagerUser', JSON.stringify(user)); } catch(e) {}
+    }
     if (!user) return;
 
-    // Super admin: ask if joining as player or admin only
-    let adminOnly = false;
-    if (Admin.isSuperAdmin() && !this._pendingIsCreate) {
-      const choice = prompt('Join as:\n1 — Player (added to queue)\n2 — Admin only (observe & manage)\n\nEnter 1 or 2:');
-      if (!choice) return;
-      adminOnly = choice.trim() === '2';
-    }
-    const connectUser = adminOnly ? null : user;
     const bulkPlayers = this._pendingBulkPlayers;
     this._pendingBulkPlayers = null;
 
@@ -7577,7 +7924,7 @@ const Onboard = {
       App.state._sessionName = label;
       App.state._admins = Admin._user ? [Admin._user.uid] : [];
       if (this._pendingSessionType) App.state._sessionType = this._pendingSessionType;
-      await Session._connect(key, label, true, connectUser);
+      await Session._connect(key, label, true, user);
     } else {
       // Joining existing — verify passcode
       const data = await Session._get(key);
@@ -7590,7 +7937,7 @@ const Onboard = {
         }
       }
       this._savePrivateSession(key, label);
-      await Session._connect(key, label, false, connectUser);
+      await Session._connect(key, label, false, user);
     }
     if (bulkPlayers?.length) {
       this._pushBulkPlayers(bulkPlayers);
@@ -7612,11 +7959,10 @@ const Onboard = {
   showStep() {
     const setup = document.getElementById('sessionSetupSection');
     if (setup) setup.style.display = '';
-    const pvtModal = document.getElementById('createPrivateModal');
-    if (pvtModal) pvtModal.style.display = 'none';
+    const createRow = document.getElementById('createSessionRow');
+    if (createRow) createRow.style.display = 'none';
     const sharePasscode = document.getElementById('sharePasscodePrompt');
     if (sharePasscode) sharePasscode.style.display = 'none';
-    this._inlineNo();
     this._pendingKey = null;
     this._pendingLabel = null;
     this._pendingPasscode = null;
@@ -7624,7 +7970,7 @@ const Onboard = {
     this._shareLink = null;
     this._sharePending = null;
     this._shareLinkLoading = false;
-    this._populatePrivateDropdown();
+    this._renderSessionList();
     // No pending share link — restore the default landing page (Quick Play included)
     // and stop offering guest join, which is only for a specific shared link
     const heading = document.getElementById('entryHeading');
@@ -7757,7 +8103,8 @@ const Onboard = {
       return;
     }
     if (errEl) errEl.style.display = 'none';
-    const quickPlay = !!this._bulkCtx?.quickPlay;
+    // Everyone is added as Not Rated and sets a skill level afterward via
+    // the NR/B/I/A chip, so this roster form only asks for names.
     const list = document.getElementById('bulkNamesList');
     if (list) {
       list.innerHTML = '';
@@ -7772,34 +8119,7 @@ const Onboard = {
         nameInput.style.cssText = 'flex:1;margin-bottom:0;';
         nameInput.dataset.bulkName = i;
         row.appendChild(nameInput);
-        if (!quickPlay) {
-          const fieldId = `bulkSkill_${i}`;
-          const skillWrap = document.createElement('div');
-          skillWrap.className = 'skill-field';
-          skillWrap.style.cssText = 'width:110px;flex-shrink:0;';
-          skillWrap.innerHTML = `
-            <button type="button" class="setup-input skill-field-btn placeholder" id="${fieldId}Btn" style="margin-bottom:0;" onclick="App.toggleSkillField('${fieldId}')" data-placeholder="Rating">
-              <span class="skill-field-label">Rating</span>
-              <span class="skill-field-caret">&#9662;</span>
-            </button>
-            <input type="hidden" id="${fieldId}" data-bulk-skill="${i}" value="">`;
-          row.appendChild(skillWrap);
-          const menu = document.createElement('div');
-          menu.className = 'partner-picker skill-field-menu';
-          menu.id = `${fieldId}Menu`;
-          menu.style.display = 'none';
-          menu.innerHTML = `
-            <div class="partner-picker-list">
-              <div class="partner-picker-item" onclick="App.setSkillField('${fieldId}', 'beginner')">Beginner</div>
-              <div class="partner-picker-item" onclick="App.setSkillField('${fieldId}', 'intermediate')">Intermediate</div>
-              <div class="partner-picker-item" onclick="App.setSkillField('${fieldId}', 'advanced')">Advanced</div>
-              <div class="partner-picker-item" onclick="App.setSkillField('${fieldId}', '')">Not Rated</div>
-            </div>`;
-          wrapper.appendChild(row);
-          wrapper.appendChild(menu);
-        } else {
-          wrapper.appendChild(row);
-        }
+        wrapper.appendChild(row);
         if (i === count) nameInput.onkeydown = (e) => { if (e.key === 'Enter') this._bulkSubmit(); };
         list.appendChild(wrapper);
       }
@@ -7820,11 +8140,9 @@ const Onboard = {
     const players = [];
     rows.forEach(row => {
       const nameEl = row.querySelector('[data-bulk-name]');
-      const skillEl = row.querySelector('[data-bulk-skill]');
       const name = nameEl?.value.trim();
       if (!name) return;
-      const skillLevel = skillEl?.value || null;
-      players.push({ name, skillLevel });
+      players.push({ name, skillLevel: null });
     });
     const errEl = document.getElementById('bulkNamesError');
     if (!players.length) {
@@ -7979,10 +8297,9 @@ const Admin = {
 
   async logout() {
     if (!this._fb) return;
-    if (Session.id) {
-      if (!confirm('Sign out? You will leave the current session.')) return;
-      Session._doLeave();
-    }
+    // Reached only via the header X's Log Out option, which is already an
+    // explicit, deliberate choice alongside Leave/Close — no extra confirm.
+    if (Session.id) Session._doLeave();
     await this._fb.signOut(this._fb.auth);
   },
 
@@ -8208,29 +8525,27 @@ const Admin = {
         if (signedInAs) signedInAs.innerHTML = '';
       }
     }
-    // Refresh private dropdown (super admin may see all sessions)
-    Onboard._populatePrivateDropdown();
-    // Super admin panel
+    // Refresh the sessions list (super admin may see all sessions)
+    Onboard._renderSessionList();
+    this._updateAdminPanels();
+    // Header X — signing in makes it available even outside a session
+    // (Log Out only, since there's nothing to leave/close — see leaveOrClose).
+    Session._updateHeaderX();
+  },
+
+  // Super Admin Management / All Private Sessions / All Users — main
+  // landing page only, hidden once inside a session (Session.id set).
+  _updateAdminPanels() {
+    const show = this.isSuperAdmin() && !Session.id;
     const superSection = document.getElementById('superAdminSection');
     if (superSection) {
-      superSection.style.display = isSuperAdmin ? '' : 'none';
-      if (isSuperAdmin) this.renderSuperAdminPanel();
+      superSection.style.display = show ? '' : 'none';
+      if (show) this.renderSuperAdminPanel();
     }
     const allSessionsSection = document.getElementById('allSessionsSection');
-    if (allSessionsSection) allSessionsSection.style.display = isSuperAdmin ? '' : 'none';
+    if (allSessionsSection) allSessionsSection.style.display = show ? '' : 'none';
     const allUsersSection = document.getElementById('allUsersSection');
-    if (allUsersSection) allUsersSection.style.display = isSuperAdmin ? '' : 'none';
-    // Header badge
-    const badge = document.getElementById('adminHeaderBadge');
-    if (badge) {
-      if (isAdmin) {
-        badge.style.display = 'flex';
-        badge.innerHTML = `<button class="btn-admin-logout" onclick="Admin.logout()">logout</button>`;
-      } else {
-        badge.style.display = 'none';
-        badge.innerHTML = '';
-      }
-    }
+    if (allUsersSection) allUsersSection.style.display = show ? '' : 'none';
   },
 };
 

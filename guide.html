@@ -38,11 +38,12 @@ li { margin-bottom: 6px; }
 }
 .badge {
   display: inline-block; font-size: 0.7rem; font-weight: 700;
-  padding: 2px 8px; border-radius: 9999px; vertical-align: middle;
+  padding: 2px 10px; border-radius: 9999px; vertical-align: middle;
+  background: #fff;
 }
-.badge-you { color: #059669; background: #ecfdf5; }
-.badge-user { color: #15803d; background: #dcfce7; border: 1px solid #86efac; }
-.badge-partner { color: #92400e; background: #fef3c7; }
+.badge-you { color: #059669; border: 2px solid #10b981; }
+.badge-partner { color: #c2410c; border: 2px solid #f97316; }
+.badge-live { color: #6d28d9; border: 2px solid #8b5cf6; }
 .tip {
   background: #fffbeb; border-left: 3px solid #fbbf24;
   padding: 10px 14px; border-radius: 0 8px 8px 0;
@@ -79,29 +80,31 @@ footer a:hover { text-decoration: underline; }
   <li><strong>&#127955; Score Keeper Only</strong> — Skip sessions entirely and just track serve and score for one match. No sign-in, no roster, nothing saved.</li>
   <li><strong>Sign in with Google</strong> — Unlocks full features: create and manage private sessions, save your preferences across devices, and keep a personal match history.</li>
 </ul>
-<p>Opening a link someone shared with you to a specific session takes you to a focused screen for that session instead of the general landing page — it's headed <strong>"Join [session name]"</strong>, hides Quick Play (since it starts an unrelated offline session), and narrows your choice to <strong>Sign in with Google</strong> (to save your preferences and track match history) or <strong>Continue as Guest</strong> (just your name and an optional skill level, nothing saved).</p>
+<p>Opening a link someone shared with you to a specific session takes you to a focused screen for that session instead of the general landing page — it's headed <strong>"Join [session name]"</strong>, hides Quick Play (since it starts an unrelated offline session), and narrows your choice to <strong>Sign in with Google</strong> (to save your preferences and track match history) or <strong>Continue as Guest</strong> (just your name — nothing else to fill in, and nothing saved).</p>
 <p>You can also tap <strong>How it Works</strong> at the bottom of the entry screen for a short in-app overview at any time.</p>
 
 <h3>Quick Play</h3>
 <p>Tap <strong>Quick Play</strong>, choose a format — <strong>Open Play</strong>, <strong>Round Robin</strong>, or <strong>Tournament</strong> — then enter how many players are starting and each player's name (skill level is skipped for speed). Tap <strong>Start Playing</strong> and you're straight into that offline session — entirely offline and local to this device. Nobody else can join it, there's no Settings tab, and nothing is shared online.</p>
 
 <h3>Joining a Session (online)</h3>
-<p>After you sign in with Google, you'll land on the <strong>Join a Session</strong> screen, where you can pick a <strong>Private Session</strong> you've previously joined, or create a new one.</p>
-<p>When you join or create an online session for the first time, you'll be asked for <strong>your name and an optional skill level (Beginner, Intermediate, or Advanced)</strong> in a small popup, then asked to confirm before you're added.</p>
+<p>After you sign in with Google, you'll land on the <strong>Join a Session</strong> screen. The <strong>Sessions</strong> card there is the first thing you see (above your account info) — it lists every private session you've previously joined or created, each row colored green (open) or orange (an admin has closed it) with the date and time you last joined it on the right.</p>
+<p>Tapping a session in that list joins it immediately — no extra confirmation step. You're added right into <strong>Sitting Out</strong> rather than the active queue, so you don't disrupt matches already in progress; move yourself into <strong>Waiting</strong> whenever you're ready to play.</p>
+<p>The first time you join or create anything online — a private session, or someone's shared link — you'll be asked for just <strong>your name</strong> in a small popup (skipped entirely if you already have a saved name). There's no skill level to set here; everyone starts as <strong>Not Rated</strong> and can set a rating afterward from the Settings tab or by tapping their own NR/B/I/A chip in the queue.</p>
 <p>If someone sends you a link to their session, opening it lets you sign in with Google or <strong>continue as a guest</strong> to join that session directly — no account needed.</p>
 
 <div class="tip">
-  <strong>Tip:</strong> If you sign in with Google, your name, skill level, and preferences are saved automatically and pre-filled next time. Guests are asked fresh each time and nothing is saved.
+  <strong>Tip:</strong> If you sign in with Google, your name and preferences (including any skill level you set later in Settings) are saved automatically and pre-filled next time. Guests are asked fresh each time and nothing is saved.
 </div>
 
 <h2>The Queue</h2>
 <div class="card">
-  <div class="card-title">Player Badges</div>
-  <p><span class="badge badge-you">you</span> — That's you in the list</p>
-  <p><span class="badge badge-user">user</span> — A player using the app on their own device</p>
-  <p><span class="badge badge-partner">partner</span> — Your selected partner preference</p>
+  <div class="card-title">Player Chips</div>
+  <p><span class="badge badge-you">green border</span> — That's you in the list</p>
+  <p><span class="badge badge-partner">orange border</span> — Your selected partner</p>
+  <p><span class="badge badge-live">purple border</span> — Another signed-in user (not you or your partner)</p>
+  <p><span class="badge" style="border:2px solid #d1d5db;color:#6b7280;">no border</span> — Added by someone else and hasn't joined on their own device yet</p>
 </div>
-<p>Players added by someone else (rather than joining themselves) don't carry a badge — but whoever added them sees an edit (&#x270E;) icon to update their name, and (when <strong>Match by skill</strong> is turned on) a tap-to-set skill tag (<strong>R</strong> for no rating yet, or <strong>B</strong>/<strong>I</strong>/<strong>A</strong> for Beginner/Intermediate/Advanced) next to everyone's name.</p>
+<p>Whoever added a player (rather than that player joining themselves) sees an edit (&#x270E;) icon to update their name. When <strong>Match by skill</strong> is turned on, an <strong>NR/B/I/A</strong> chip also appears next to everyone's name to set a skill level — <strong>NR</strong> (Not Rated) is where every player starts, whether they joined themselves or were added by someone else. Match cards use these same colored-border chips instead of separate text labels.</p>
 
 <p>The queue is organized into drag-and-drop zones rather than per-row buttons — drag a player's chip onto a zone, or on a touchscreen tap the chip then tap the destination, to move them:</p>
 <ul>
@@ -168,6 +171,9 @@ footer a:hover { text-decoration: underline; }
 <p>The standalone Score Keeper Only mode doesn't save anything — closing it or tapping Done at the end just closes the scorer.</p>
 
 <h2>Partner Preferences</h2>
+<div class="tip">
+  <strong>On tablet &amp; desktop:</strong> The Settings tab lays its cards out in three columns instead of one — Profile, Partner(s), and Share Link across the top row, with any admin-only cards (Session Type, Session Admins, Passcode) stacked directly under the related card above them. Danger Zone and Admin History sit below all three columns, full width.
+</div>
 <p>In the <strong>Settings</strong> tab under <strong>Your Partner(s)</strong>:</p>
 <ul>
   <li>Tap <strong>+ Add Partner</strong> and select a player.</li>
@@ -181,8 +187,8 @@ footer a:hover { text-decoration: underline; }
 <h2>Share Link</h2>
 <p>Every online session has a <strong>Share Link</strong> in the Settings tab. Copy it and send to friends to invite them to your session. When someone opens a share link:</p>
 <ul>
-  <li>For private sessions, they'll be asked for the <strong>passcode</strong> first.</li>
-  <li>They can then sign in with Google or join as a guest, enter their info, and they're in.</li>
+  <li>If the session has a passcode, they'll be asked for it first.</li>
+  <li>They can then sign in with Google or join as a guest, enter their name, and they're in.</li>
 </ul>
 <p>Share links aren't available for offline sessions — those never leave your device.</p>
 
@@ -190,15 +196,16 @@ footer a:hover { text-decoration: underline; }
 <p>For games at home, tournaments, or groups that want their own space:</p>
 <ol class="steps">
   <li><strong>Sign in with Google</strong> on the landing page (required to create).</li>
-  <li>From the Join a Session screen, tap <strong>+ Create New</strong> under Private Session.</li>
-  <li>Enter a <strong>session name</strong> and a <strong>4-character passcode</strong> (or tap Random to generate one).</li>
-  <li>Choose <strong>Open Play</strong>, <strong>Round Robin</strong>, or <strong>Tournament</strong> from the session type dropdown.</li>
-  <li>Tap <strong>Create &amp; Join</strong>, confirm, then enter the starting player count and names — you're placed straight into the new session with your roster ready.</li>
-  <li>Share the link with friends — they'll need the passcode to join. The session creator and super admins skip the passcode.</li>
+  <li>On the <strong>Sessions</strong> card, tap <strong>+ Create New</strong> — it expands an inline form rather than opening a popup.</li>
+  <li>Enter a <strong>session name</strong>.</li>
+  <li>Pick <strong>Open Play</strong>, <strong>Round Robin</strong>, or <strong>Tournament</strong> from the radio buttons (defaults to Open Play) — tap the <strong>?</strong> next to any option for what it means.</li>
+  <li>Flip on <strong>Passcode required</strong> only if you want one; when it's on, enter a <strong>4-character passcode</strong> or tap Random to generate one. Leave it off and anyone with the link can join without one.</li>
+  <li>Tap <strong>Create &amp; Join</strong> — for Open Play you're placed straight into the new session; Round Robin and Tournament ask for the starting player count and names first, since the roster needs to exist before it can be locked.</li>
+  <li>Share the link with friends — if you set a passcode, they'll need it to join (the creator and super admins always skip it). The new session also appears in your own Sessions list from then on.</li>
 </ol>
 
 <div class="tip">
-  <strong>Passcode:</strong> Admins can view the session passcode in the Settings tab (click "Show" to reveal it). Share it with players who need to join.
+  <strong>Passcode:</strong> If the session has one, admins can view it in the Settings tab (click "Show" to reveal it). Share it with players who need to join. Sessions created without a passcode won't show one here.
 </div>
 
 <h3>Round Robin Mode</h3>
@@ -248,15 +255,23 @@ footer a:hover { text-decoration: underline; }
   <li>All <strong>online</strong> session data syncs in real-time across everyone's devices. Offline (Quick Play) sessions stay on the one device that started them.</li>
   <li>Court assignments, scores, and queue changes appear instantly for all users in an online session.</li>
   <li>If you leave a session, your court assignments stay active for others to manage.</li>
-  <li>Share the URL or use the <strong>Share Link</strong> in Settings to invite others — they'll need the session passcode to join.</li>
+  <li>Share the URL or use the <strong>Share Link</strong> in Settings to invite others — they'll need the passcode to join if the session has one.</li>
   <li>Session data <strong>persists</strong> until an admin resets or deletes it — it won't disappear on its own.</li>
 </ul>
+
+<h2>Leaving, Closing &amp; Logging Out</h2>
+<p>The <strong>&times;</strong> in the top-right corner of the header is always there once you're signed in, whether or not you're currently in a session, and covers all of it:</p>
+<ul>
+  <li><strong>In a session</strong> — tapping it offers <strong>Leave Session</strong> (just you exit; the session stays open for everyone else), <strong>Close Session</strong> (admins only — moves everyone to Sitting Out and freezes the queue until an admin reopens it), and <strong>Log Out</strong>.</li>
+  <li><strong>Not in a session</strong> — for example, sitting on the Join a Session screen — tapping it offers <strong>Log Out</strong> only, since there's nothing to leave or close yet.</li>
+</ul>
+<p>Choosing <strong>Log Out</strong> while you're in a session leaves that session first, then signs you out.</p>
 
 <h2>Admin Features</h2>
 <p>There are two types of admins:</p>
 <ul>
   <li><strong>Session Admin</strong> — The person who created a session. Automatically gets admin for that session. Other signed-in users can be promoted to session admin from Settings.</li>
-  <li><strong>Super Admin</strong> — Can manage any private session, see all private sessions, delete any session, and add/remove other super admins. Super admins also get an "All Private Sessions" and "All Users" panel above the join screen.</li>
+  <li><strong>Super Admin</strong> — Can manage any private session, see all private sessions, delete any session, and add/remove other super admins. Super admins also get "Super Admin Management," "All Private Sessions," and "All Users" panels at the very bottom of the landing page — they're hidden once you're inside a session.</li>
 </ul>
 
 <h3>Managing Session Admins</h3>
@@ -268,7 +283,7 @@ footer a:hover { text-decoration: underline; }
 </ul>
 
 <h3>Managing Super Admins</h3>
-<p>Existing super admins see a <strong>Super Admin Management</strong> panel on the landing screen (above the join options) where they can add or remove other super admins by email.</p>
+<p>Existing super admins see a <strong>Super Admin Management</strong> panel at the bottom of the landing page (below the Sessions and Your Account cards, only while you're not in a session) where they can add or remove other super admins by email.</p>
 
 <h3>Admin Actions</h3>
 <p>Admins can:</p>
@@ -283,7 +298,7 @@ footer a:hover { text-decoration: underline; }
 </ul>
 
 <div class="tip">
-  <strong>Super Admins</strong> can join any session as "Admin only" (observe and manage without being added to the player queue) or as a regular player.
+  <strong>Super Admins</strong> join a session the same way everyone else does — straight in as a regular player, landing in Sitting Out. There's no separate "admin only" / observer-only option; they just have admin controls available once they're in.
 </div>
 
 <footer>
