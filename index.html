@@ -3097,6 +3097,13 @@ const App = {
       if (g && !Array.isArray(g.side1)) g.side1 = g.side1 ? Object.values(g.side1) : [];
       if (g && !Array.isArray(g.side2)) g.side2 = g.side2 ? Object.values(g.side2) : [];
     }
+    // Self-heal sessions from before setSessionType cleared proposedGames on
+    // a type switch: Round Robin/Tournament never create proposed matches of
+    // their own, so any left over here are stale and were hiding their
+    // players from the queue (getPlayersOnCourts() still counted them).
+    if (s._sessionType && s._sessionType !== 'open' && Object.keys(s.proposedGames).length) {
+      s.proposedGames = {};
+    }
     s.opponentHistory = this._toObject(s.opponentHistory);
     s.roundsWaited    = this._toObject(s.roundsWaited);
     if (!s.options) s.options = { useSkill: false };
@@ -4234,6 +4241,15 @@ const App = {
     this.state._sessionType = type || 'open';
     this.state.activeGames = {};
     this.state.scoringGames = {};
+    // Proposed (not-yet-confirmed) matches must be cleared too — otherwise
+    // whoever was sitting in one stays wrongly counted as "on a court" by
+    // getPlayersOnCourts() forever, vanishing from the queue while still
+    // counted in raw roster counts elsewhere (e.g. Round Robin/
+    // Tournament's own "N players" summary), with no way back short of
+    // removing them from the session entirely.
+    this.state.proposedGames = {};
+    this._proposedUndoStack = [];
+    this._tapSelection = null;
     this.state._rrSchedule = [];
     this.state._rrCurrentRound = 0;
     this.state._rrLocked = false;
