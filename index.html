@@ -445,6 +445,37 @@ body {
   box-shadow: var(--shadow-sm);
   padding: 20px;
 }
+/* Colored header bar bleeding to the card's edges — same solid-color-block
+   look as .court-header on the session/queue page, so the landing cards
+   (Sessions, Your Account) read as part of the same app. */
+.setup-block.has-header { overflow: hidden; }
+.setup-card-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: -20px -20px 16px;
+  padding: 14px 20px;
+  background: var(--primary);
+  color: #fff;
+}
+/* Purple matches the "another signed-in user" chip color elsewhere —
+   distinct from the Sessions card's green without introducing a new hue. */
+.setup-card-header.accent-purple { background: var(--presence-live); }
+.setup-card-header-icon {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+.setup-card-header-title {
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: #fff;
+}
 .setup-section { border-bottom: 1px solid var(--border); padding-bottom: 20px; }
 .setup-section h2 {
   font-size: 1rem !important;
@@ -2313,19 +2344,39 @@ body {
       </div>
       <!-- Session selection (hidden during share-link flow) -->
       <div id="sessionSelectionBlock">
-      <div class="setup-block">
-        <div class="section-title" style="margin-bottom:4px;">Sessions</div>
+      <div class="setup-block has-header">
+        <div class="setup-card-header">
+          <div class="setup-card-header-icon">
+            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+          </div>
+          <div class="setup-card-header-title">Sessions</div>
+        </div>
         <div class="section-subtitle" style="margin-bottom:14px;">Create a session for your group and share the link or code with friends — they can join without signing in.</div>
         <button type="button" class="btn-outline" onclick="Onboard.toggleCreateSessionRow()" id="btn-create-private" style="width:100%;padding:12px 14px;font-size:1rem;font-weight:700;font-family:inherit;">+ Create New</button>
         <div id="createSessionRow" style="display:none;margin-top:10px;">
-          <p id="createSessionError" class="setup-error" style="display:none;">Enter a session name and select a session type</p>
+          <p id="createSessionError" class="setup-error" style="display:none;">Enter a session name</p>
           <input type="text" class="setup-input" id="privateSessionName" placeholder="Session name" maxlength="20" style="width:100%;">
-          <select class="setup-input" id="selectSessionType" onchange="Onboard.setSessionType(this.value)" style="width:100%;cursor:pointer;">
-            <option value="" disabled selected>Select session type...</option>
-            <option value="open">Open Play</option>
-            <option value="roundrobin">Round Robin</option>
-            <option value="tournament">Tournament</option>
-          </select>
+          <div class="qp-type-group" id="sessionTypeGroup" role="radiogroup" aria-label="Session type" style="margin-bottom:8px;">
+            <label class="qp-type-option">
+              <input type="radio" name="sessionCreateType" value="open" checked onchange="Onboard.setSessionType(this.value)">
+              <span class="qp-type-label">Open Play</span>
+              <button type="button" class="qp-info-btn" aria-label="What is Open Play?" onclick="Onboard._toggleSessionTypeInfo(event, 'open')">?</button>
+            </label>
+            <label class="qp-type-option">
+              <input type="radio" name="sessionCreateType" value="roundrobin" onchange="Onboard.setSessionType(this.value)">
+              <span class="qp-type-label">Round Robin</span>
+              <button type="button" class="qp-info-btn" aria-label="What is Round Robin?" onclick="Onboard._toggleSessionTypeInfo(event, 'roundrobin')">?</button>
+            </label>
+            <label class="qp-type-option">
+              <input type="radio" name="sessionCreateType" value="tournament" onchange="Onboard.setSessionType(this.value)">
+              <span class="qp-type-label">Tournament</span>
+              <button type="button" class="qp-info-btn" aria-label="What is Tournament?" onclick="Onboard._toggleSessionTypeInfo(event, 'tournament')">?</button>
+            </label>
+          </div>
+          <div id="sessionTypeInfoPopover" class="qp-info-popover" style="display:none;">
+            <span id="sessionTypeInfoText"></span>
+            <button type="button" class="qp-info-close" onclick="Onboard._closeSessionTypeInfo()" aria-label="Close description">&times;</button>
+          </div>
           <label class="toggle-switch-label" style="margin:10px 0;">
             <span class="toggle-switch">
               <input type="checkbox" id="privatePasscodeToggle" onchange="Onboard.togglePasscodeField()">
@@ -2358,17 +2409,16 @@ body {
       </div>
       </div><!-- /setupJoinForm -->
       <!-- Signed-in profile card (shown for Google-signed-in users) -->
-      <div id="setupSignedIn" class="setup-block" style="display:none;">
-        <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;">
-          <div style="width:38px;height:38px;border-radius:50%;background:var(--primary-light);display:flex;align-items:center;justify-content:center;flex-shrink:0;">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--primary)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+      <div id="setupSignedIn" class="setup-block has-header" style="display:none;">
+        <div class="setup-card-header accent-purple">
+          <div class="setup-card-header-icon">
+            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
           </div>
-          <div style="flex:1;min-width:0;">
-            <div id="signedInName" style="font-size:0.92rem;font-weight:600;color:var(--text);"></div>
-            <div style="display:flex;align-items:center;gap:6px;">
-              <span id="signedInAs" style="font-size:0.75rem;color:var(--text-muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1;min-width:0;"></span>
-            </div>
-          </div>
+          <div class="setup-card-header-title">Your Account</div>
+        </div>
+        <div style="margin-bottom:14px;min-width:0;">
+          <div id="signedInName" style="font-size:0.95rem;font-weight:600;color:var(--text);"></div>
+          <div id="signedInAs" style="font-size:0.78rem;color:var(--text-muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;"></div>
         </div>
         <button type="button" class="btn-outline" onclick="MyHistory.show()" id="btnMyHistoryProfile" style="width:100%;padding:12px;font-size:1rem;font-weight:700;">My Match History</button>
       </div>
@@ -7698,10 +7748,34 @@ const Onboard = {
     this.confirmJoin();
   },
 
-  _newSessionType: '',
+  _newSessionType: 'open',
 
   setSessionType(type) {
     this._newSessionType = type;
+  },
+
+  // Same radio + "?" tooltip pattern as the Quick Play type picker (see
+  // _toggleQpInfo/_qpTypeInfo) — a separate popover/radio group so the two
+  // pickers, which can both exist in the DOM at once, don't share state.
+  _toggleSessionTypeInfo(event, type) {
+    event.preventDefault();
+    event.stopPropagation();
+    const popover = document.getElementById('sessionTypeInfoPopover');
+    const text = document.getElementById('sessionTypeInfoText');
+    if (popover.style.display !== 'none' && text.dataset.type === type) {
+      this._closeSessionTypeInfo();
+      return;
+    }
+    text.textContent = this._qpTypeInfo[type] || '';
+    text.dataset.type = type;
+    const option = event.currentTarget.closest('.qp-type-option');
+    if (option) option.insertAdjacentElement('afterend', popover);
+    popover.style.display = 'flex';
+  },
+
+  _closeSessionTypeInfo() {
+    const popover = document.getElementById('sessionTypeInfoPopover');
+    if (popover) popover.style.display = 'none';
   },
 
   togglePasscodeField() {
@@ -7724,18 +7798,19 @@ const Onboard = {
     }
     const row = document.getElementById('createSessionRow');
     if (!row) return;
-    if (row.style.display !== 'none') { row.style.display = 'none'; return; }
-    this._newSessionType = '';
+    if (row.style.display !== 'none') { row.style.display = 'none'; this._closeSessionTypeInfo(); return; }
+    this._newSessionType = 'open';
     const nameEl = document.getElementById('privateSessionName');
     const codeEl = document.getElementById('privatePasscode');
     const toggleEl = document.getElementById('privatePasscodeToggle');
-    const sel = document.getElementById('selectSessionType');
+    const openRadio = document.querySelector('input[name="sessionCreateType"][value="open"]');
     const errEl = document.getElementById('createSessionError');
     if (nameEl) nameEl.value = '';
     if (codeEl) codeEl.value = '';
     if (toggleEl) toggleEl.checked = false;
-    if (sel) sel.selectedIndex = 0;
+    if (openRadio) openRadio.checked = true;
     if (errEl) errEl.style.display = 'none';
+    this._closeSessionTypeInfo();
     this.togglePasscodeField();
     row.style.display = '';
     nameEl?.focus();
@@ -7756,11 +7831,11 @@ const Onboard = {
     const sessionName = (nameEl?.value || '').trim();
     const passcodeRequired = !!toggleEl?.checked;
     const passcode = passcodeRequired ? (codeEl?.value || '').trim().toUpperCase() : '';
-    if (!sessionName || !this._newSessionType || (passcodeRequired && passcode.length !== 4)) {
+    if (!sessionName || (passcodeRequired && passcode.length !== 4)) {
       if (errEl) {
         errEl.textContent = passcodeRequired
-          ? 'Enter a session name, 4-character passcode, and select a session type'
-          : 'Enter a session name and select a session type';
+          ? 'Enter a session name and a 4-character passcode'
+          : 'Enter a session name';
         errEl.style.display = 'block';
       }
       return;
