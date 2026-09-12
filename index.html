@@ -468,6 +468,42 @@ body {
 }
 .setup-input:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 3px var(--primary-light); }
 .setup-input::placeholder { color: var(--text-muted); font-size: 75%; }
+/* Sessions card > Your Sessions — a list rather than a wrapped row of
+   bubbles, with a colored left edge (green = open, orange = closed —
+   see App.closeSession) and the last-joined date/time on the right. */
+.session-list { display: flex; flex-direction: column; gap: 8px; }
+.session-list-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  width: 100%;
+  padding: 10px 12px;
+  background: var(--card);
+  border: 1.5px solid var(--border-strong);
+  border-left-width: 4px;
+  border-radius: var(--radius-sm);
+  font-family: inherit;
+  font-size: 1rem;
+  cursor: pointer;
+  text-align: left;
+}
+.session-list-item.session-open { border-left-color: var(--success); }
+.session-list-item.session-closed { border-left-color: var(--partner); }
+.session-list-name {
+  font-weight: 600;
+  font-size: 0.9rem;
+  color: var(--text);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.session-list-joined {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  white-space: nowrap;
+  flex-shrink: 0;
+}
 .setup-error { font-size: 0.78rem; color: var(--danger); margin-bottom: 8px; display: none; font-weight: 500; }
 .setup-section-label {
   font-size: 0.7rem;
@@ -1481,11 +1517,6 @@ body {
 /* Other Partners (Settings > Your Partner(s), not currently used for
    match-making) get a yellow border instead of the current partner's orange. */
 .dnd-chip.chip-partner-other { border-color: var(--partner-other); }
-/* Session bubbles (Join a Session > Your Sessions) reuse the chip shape —
-   green marks an open session, orange a closed one. */
-.dnd-chip.chip-session-open { border-color: var(--success); }
-.dnd-chip.chip-session-closed { border-color: var(--partner); }
-.dnd-chip.chip-session-btn { cursor: pointer; background: var(--card); font-family: inherit; }
 .dnd-chip.dnd-selected {
   border-color: var(--primary);
   background: var(--primary-light);
@@ -2211,12 +2242,11 @@ body {
     <h1>Court Manager</h1>
   </div>
   <div style="display:flex;align-items:center;gap:10px;">
-    <span id="adminHeaderBadge" style="display:none;"></span>
     <div class="header-right" id="headerRight" style="display:none;">
-      <div class="header-location">
+      <div class="header-location" id="headerLocation">
         <span class="session-status-dot"></span>
       </div>
-      <button class="btn-header leave" onclick="Session.leaveOrClose()" aria-label="Leave session" title="Leave session">&times;</button>
+      <button class="btn-header leave" id="btnHeaderX" onclick="Session.leaveOrClose()" aria-label="Session options" title="Session options">&times;</button>
     </div>
   </div>
 </header>
@@ -2314,7 +2344,7 @@ body {
           <span style="font-size:0.7rem;font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.05em;">Your Sessions</span>
           <div style="flex:1;height:1px;background:var(--border);"></div>
         </div>
-        <div id="privateSessionBubbles" style="display:flex;flex-wrap:wrap;gap:8px;"></div>
+        <div id="privateSessionBubbles" class="session-list"></div>
         <div id="privateSessionsEmpty" class="section-subtitle" style="display:none;">No saved sessions yet.</div>
       </div>
       </div><!-- /sessionSelectionBlock -->
@@ -2337,7 +2367,6 @@ body {
             <div id="signedInName" style="font-size:0.92rem;font-weight:600;color:var(--text);"></div>
             <div style="display:flex;align-items:center;gap:6px;">
               <span id="signedInAs" style="font-size:0.75rem;color:var(--text-muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1;min-width:0;"></span>
-              <button class="btn-admin-logout" onclick="Admin.logout()" style="font-size:0.72rem;flex-shrink:0;margin-left:8px;">sign out</button>
             </div>
           </div>
         </div>
@@ -2829,21 +2858,24 @@ body {
     </div>
   </div>
 
-  <!-- ── Admin tapping the header X: leave (just you) or close (everyone) ── -->
+  <!-- ── Header X: leave/close a session and/or log out, whichever apply ── -->
   <div id="leaveCloseModal" class="hiw-overlay" style="display:none;" onclick="Session._leaveCloseCancel(event)">
     <div class="hiw-modal" style="max-width:380px;" onclick="event.stopPropagation()">
       <div class="hiw-header">
-        <h2>Leave or Close Session?</h2>
+        <h2 id="leaveCloseTitle">Leave or Close Session?</h2>
         <button class="hiw-close" onclick="Session._leaveCloseCancel()" aria-label="Close">&times;</button>
       </div>
       <div class="hiw-body">
-        <div class="leave-close-option">
+        <div class="leave-close-option" id="leaveSessionOption">
           <button type="button" class="btn-outline" style="flex:1;padding:12px;font-size:1rem;font-weight:700;" onclick="Session._confirmLeave()">Leave Session</button>
           <button type="button" class="qp-info-btn" aria-label="What does Leave Session do?" onclick="Session._toggleLeaveCloseInfo(event, 'leave')">?</button>
         </div>
-        <div class="leave-close-option">
+        <div class="leave-close-option" id="closeSessionOption">
           <button type="button" class="btn-danger" style="flex:1;padding:12px;font-size:1rem;font-weight:700;" onclick="Session._confirmClose()">Close Session</button>
           <button type="button" class="qp-info-btn" aria-label="What does Close Session do?" onclick="Session._toggleLeaveCloseInfo(event, 'close')">?</button>
+        </div>
+        <div class="leave-close-option" id="logoutOption">
+          <button type="button" class="btn-outline" style="flex:1;padding:12px;font-size:1rem;font-weight:700;" onclick="Session._confirmLogout()">Log Out</button>
         </div>
         <div id="leaveCloseInfoPopover" class="qp-info-popover" style="display:none;">
           <span id="leaveCloseInfoText"></span>
@@ -6869,17 +6901,34 @@ const Session = {
   _sse: null,
   _pushTimer: null,
 
-  // Header X button. A non-admin (or an offline Quick Play session, which
-  // has no one else to leave "open" for) just leaves, same as always. An
-  // admin of a real session gets asked whether they mean to leave (just
-  // themselves) or close the session (everyone — see App.closeSession).
+  // Header X button. An offline Quick Play session (which has no one else
+  // to leave "open" for, and offers its own save-or-discard prompt) just
+  // leaves, same as always. Otherwise this opens one modal offering
+  // whichever of Leave Session / Close Session (admins of a real session
+  // only) / Log Out (signed-in users only) apply — including, when not in
+  // a session at all, just Log Out.
   leaveOrClose() {
-    if (this.id !== 'offline' && Admin.isAdmin()) {
-      document.getElementById('leaveCloseModal').style.display = 'flex';
-      document.body.style.overflow = 'hidden';
+    if (this.id === 'offline') {
+      this.leave();
       return;
     }
-    this.leave();
+    this._openLeaveCloseModal();
+  },
+
+  _openLeaveCloseModal() {
+    const inSession = !!this.id;
+    const canClose = inSession && Admin.isAdmin();
+    const canLogout = Admin.isSignedIn();
+    const title = document.getElementById('leaveCloseTitle');
+    const leaveOpt = document.getElementById('leaveSessionOption');
+    const closeOpt = document.getElementById('closeSessionOption');
+    const logoutOpt = document.getElementById('logoutOption');
+    if (title) title.textContent = inSession ? 'Leave or Close Session?' : 'Log Out?';
+    if (leaveOpt) leaveOpt.style.display = inSession ? '' : 'none';
+    if (closeOpt) closeOpt.style.display = canClose ? '' : 'none';
+    if (logoutOpt) logoutOpt.style.display = canLogout ? '' : 'none';
+    document.getElementById('leaveCloseModal').style.display = 'flex';
+    document.body.style.overflow = 'hidden';
   },
 
   _leaveCloseCancel(event) {
@@ -6897,6 +6946,11 @@ const Session = {
   _confirmClose() {
     this._leaveCloseCancel();
     App.closeSession();
+  },
+
+  _confirmLogout() {
+    this._leaveCloseCancel();
+    Admin.logout();
   },
 
   _leaveCloseInfo: {
@@ -7299,13 +7353,11 @@ const Session = {
   },
 
   _updateUI() {
-    const headerRight = document.getElementById('headerRight');
     const headerLocName = document.getElementById('headerLocName');
     const setup = document.getElementById('sessionSetupSection');
     const tabBar = document.getElementById('tabBar');
 
     if (this.id) {
-      headerRight.style.display = 'flex';
       if (headerLocName) headerLocName.textContent = this.label || this.id;
       if (setup) setup.style.display = 'none';
       const histView = document.getElementById('myHistoryView');
@@ -7313,12 +7365,24 @@ const Session = {
       App._showTabs();
       App.updateShareLink();
     } else {
-      headerRight.style.display = 'none';
       if (setup) setup.style.display = '';
       App._hideTabs();
     }
+    this._updateHeaderX();
     // Super admin's landing-page-only panels — hide once inside a session.
     Admin._updateAdminPanels();
+  },
+
+  // Header X: visible whenever there's a session to leave/close, or a
+  // signed-in user who can log out (see leaveOrClose). The pulsing status
+  // dot only means anything while actually connected to a session.
+  _updateHeaderX() {
+    const headerRight = document.getElementById('headerRight');
+    const headerLoc = document.getElementById('headerLocation');
+    if (!headerRight) return;
+    const inSession = !!this.id;
+    headerRight.style.display = (inSession || Admin.isSignedIn()) ? 'flex' : 'none';
+    if (headerLoc) headerLoc.style.display = inSession ? '' : 'none';
   },
 };
 
@@ -7335,8 +7399,8 @@ const Onboard = {
     const user = this._savedUser();
     const s = new URLSearchParams(window.location.search).get('s');
 
-    // Populate saved-session bubbles
-    this._renderSessionBubbles();
+    // Populate the saved-sessions list
+    this._renderSessionList();
 
     if (s) {
       // Set loading flag immediately to prevent _updateUI from showing entry options
@@ -7563,14 +7627,23 @@ const Onboard = {
 
   _savePrivateSession(id, name) {
     const sessions = this._getSavedPrivateSessions().filter(s => s.id !== id);
-    sessions.unshift({ id, name });
+    sessions.unshift({ id, name, lastJoined: Date.now() });
     try { localStorage.setItem('pj_privateSessions', JSON.stringify(sessions.slice(0, 20))); } catch(e) {}
-    this._renderSessionBubbles();
+    this._renderSessionList();
   },
 
-  // Session bubbles replace the old dropdown — green border for an open
-  // session, orange for one an admin has closed (see App.closeSession).
-  async _renderSessionBubbles() {
+  _formatLastJoined(ts) {
+    if (!ts) return '';
+    const d = new Date(ts);
+    const date = d.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+    const time = d.toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' });
+    return `Last joined ${date}, ${time}`;
+  },
+
+  // A list rather than a wrapped row of bubbles — colored left edge marks
+  // open (green) vs. an admin-closed session (orange, see App.closeSession),
+  // and each row shows when this device last joined it.
+  async _renderSessionList() {
     const wrap = document.getElementById('privateSessionBubbles');
     const empty = document.getElementById('privateSessionsEmpty');
     if (!wrap) return;
@@ -7581,19 +7654,20 @@ const Onboard = {
     } else {
       const saved = this._getSavedPrivateSessions();
       const data = await Promise.all(saved.map(s => Session._get(s.id)));
-      sessions = saved.map((s, i) => ({ id: s.id, name: s.name, closed: !!data[i]?._closed }));
+      sessions = saved.map((s, i) => ({ id: s.id, name: s.name, closed: !!data[i]?._closed, lastJoined: s.lastJoined }));
     }
 
     wrap.innerHTML = '';
     if (empty) empty.style.display = sessions.length === 0 ? '' : 'none';
     sessions.forEach(s => {
-      const chip = document.createElement('button');
-      chip.type = 'button';
-      chip.className = `dnd-chip chip-session-btn ${s.closed ? 'chip-session-closed' : 'chip-session-open'}`;
-      chip.title = s.closed ? 'Closed' : 'Open';
-      chip.textContent = s.name;
-      chip.onclick = () => this.joinPrivateSession(s.id, s.name);
-      wrap.appendChild(chip);
+      const row = document.createElement('button');
+      row.type = 'button';
+      row.className = `session-list-item ${s.closed ? 'session-closed' : 'session-open'}`;
+      row.title = s.closed ? 'Closed' : 'Open';
+      const joined = this._formatLastJoined(s.lastJoined);
+      row.innerHTML = `<span class="session-list-name">${App.esc(s.name)}</span>${joined ? `<span class="session-list-joined">${App.esc(joined)}</span>` : ''}`;
+      row.onclick = () => this.joinPrivateSession(s.id, s.name);
+      wrap.appendChild(row);
     });
   },
 
@@ -7603,16 +7677,21 @@ const Onboard = {
       const all = await res.json();
       if (!all) return [];
       const savedMap = {};
-      this._getSavedPrivateSessions().forEach(s => { savedMap[s.id] = s.name; });
+      this._getSavedPrivateSessions().forEach(s => { savedMap[s.id] = s; });
       return Object.entries(all)
         .filter(([k, v]) => k.startsWith('pvt-') && v && typeof v === 'object')
-        .map(([k, v]) => ({ id: k, name: savedMap[k] || v._sessionName || k.replace(/^pvt-/, ''), closed: !!v._closed }));
+        .map(([k, v]) => ({
+          id: k,
+          name: savedMap[k]?.name || v._sessionName || k.replace(/^pvt-/, ''),
+          closed: !!v._closed,
+          lastJoined: savedMap[k]?.lastJoined,
+        }));
     } catch(e) { return []; }
   },
 
-  // Tapping a session bubble joins right away — no name/skill prompt (the
-  // signed-in Google name is used, see confirmJoin) and no extra confirm
-  // step. New joiners land in Sitting Out rather than the queue (_addSelf).
+  // Tapping a session in the list joins right away — no name/skill prompt
+  // (the signed-in Google name is used, see confirmJoin) and no extra
+  // confirm step. New joiners land in Sitting Out, not the queue (_addSelf).
   joinPrivateSession(id, label) {
     this._pendingKey = id;
     this._pendingLabel = label;
@@ -7717,7 +7796,7 @@ const Onboard = {
     if (!key || !label) return;
     // Signed-in users joining a saved session may never have gone through
     // the name/skill prompt — fall back to their Google display name so
-    // tapping a session bubble can join without asking for anything.
+    // tapping a session in the list can join without asking for anything.
     let user = this._savedUser();
     if (!user && Admin._user?.displayName) {
       user = { name: Admin._user.displayName, skillLevel: null };
@@ -7725,14 +7804,6 @@ const Onboard = {
     }
     if (!user) return;
 
-    // Super admin: ask if joining as player or admin only
-    let adminOnly = false;
-    if (Admin.isSuperAdmin() && !this._pendingIsCreate) {
-      const choice = prompt('Join as:\n1 — Player (added to queue)\n2 — Admin only (observe & manage)\n\nEnter 1 or 2:');
-      if (!choice) return;
-      adminOnly = choice.trim() === '2';
-    }
-    const connectUser = adminOnly ? null : user;
     const bulkPlayers = this._pendingBulkPlayers;
     this._pendingBulkPlayers = null;
 
@@ -7743,7 +7814,7 @@ const Onboard = {
       App.state._sessionName = label;
       App.state._admins = Admin._user ? [Admin._user.uid] : [];
       if (this._pendingSessionType) App.state._sessionType = this._pendingSessionType;
-      await Session._connect(key, label, true, connectUser);
+      await Session._connect(key, label, true, user);
     } else {
       // Joining existing — verify passcode
       const data = await Session._get(key);
@@ -7756,7 +7827,7 @@ const Onboard = {
         }
       }
       this._savePrivateSession(key, label);
-      await Session._connect(key, label, false, connectUser);
+      await Session._connect(key, label, false, user);
     }
     if (bulkPlayers?.length) {
       this._pushBulkPlayers(bulkPlayers);
@@ -7789,7 +7860,7 @@ const Onboard = {
     this._shareLink = null;
     this._sharePending = null;
     this._shareLinkLoading = false;
-    this._renderSessionBubbles();
+    this._renderSessionList();
     // No pending share link — restore the default landing page (Quick Play included)
     // and stop offering guest join, which is only for a specific shared link
     const heading = document.getElementById('entryHeading');
@@ -8116,10 +8187,9 @@ const Admin = {
 
   async logout() {
     if (!this._fb) return;
-    if (Session.id) {
-      if (!confirm('Sign out? You will leave the current session.')) return;
-      Session._doLeave();
-    }
+    // Reached only via the header X's Log Out option, which is already an
+    // explicit, deliberate choice alongside Leave/Close — no extra confirm.
+    if (Session.id) Session._doLeave();
     await this._fb.signOut(this._fb.auth);
   },
 
@@ -8345,20 +8415,12 @@ const Admin = {
         if (signedInAs) signedInAs.innerHTML = '';
       }
     }
-    // Refresh session bubbles (super admin may see all sessions)
-    Onboard._renderSessionBubbles();
+    // Refresh the sessions list (super admin may see all sessions)
+    Onboard._renderSessionList();
     this._updateAdminPanels();
-    // Header badge
-    const badge = document.getElementById('adminHeaderBadge');
-    if (badge) {
-      if (isAdmin) {
-        badge.style.display = 'flex';
-        badge.innerHTML = `<button class="btn-admin-logout" onclick="Admin.logout()">logout</button>`;
-      } else {
-        badge.style.display = 'none';
-        badge.innerHTML = '';
-      }
-    }
+    // Header X — signing in makes it available even outside a session
+    // (Log Out only, since there's nothing to leave/close — see leaveOrClose).
+    Session._updateHeaderX();
   },
 
   // Super Admin Management / All Private Sessions / All Users — main
