@@ -2647,10 +2647,24 @@ body {
     <!-- Session passcode (admin only, private sessions) -->
     <div class="settings-card admin-only" id="passcodeSection" style="display:none;">
       <div class="settings-card-title">Session Passcode</div>
-      <div style="display:flex;align-items:center;gap:8px;">
+      <label class="toggle-switch-label" style="margin:0 0 10px;">
+        <span class="toggle-switch">
+          <input type="checkbox" id="passcodeRequiredToggle" onchange="App.togglePasscodeRequired()">
+          <span class="toggle-switch-track"></span>
+        </span>
+        Require passcode
+      </label>
+      <div id="passcodeValueRow" style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
         <span id="passcodeDisplay" style="font-size:0.95rem;font-weight:700;letter-spacing:0.15em;">****</span>
         <button type="button" class="btn-outline" onclick="App.togglePasscode()" id="btnTogglePasscode" style="padding:12px 16px;font-size:1rem;font-weight:700;">Show</button>
+        <button type="button" class="btn-outline" onclick="App.toggleEditPasscode()" id="btnEditPasscode" style="padding:12px 16px;font-size:1rem;font-weight:700;">Edit passcode</button>
       </div>
+      <div id="editPasscodeRow" style="display:none;gap:8px;align-items:center;margin-top:10px;">
+        <input type="text" class="setup-input" id="editPasscodeInput" placeholder="New passcode (4 chars)" maxlength="4" style="flex:1;margin-bottom:0;text-transform:uppercase;">
+        <button type="button" class="btn-outline" onclick="App.randomEditPasscode()" style="white-space:nowrap;padding:12px 14px;font-size:1rem;font-weight:700;">Random</button>
+        <button type="button" class="btn-confirm-join" onclick="App.saveEditedPasscode()" style="white-space:nowrap;padding:12px 16px;font-size:1rem;font-weight:700;">Save</button>
+      </div>
+      <p id="editPasscodeError" class="setup-error" style="display:none;">Enter a 4-character passcode</p>
     </div>
 
     <!-- Manage Admins (admin only) -->
@@ -2965,6 +2979,36 @@ body {
     </div>
   </div>
 
+  <!-- ── Admin: choose whether existing participants must re-enter a changed passcode ── -->
+  <div id="passcodeReentryModal" class="hiw-overlay" style="display:none;">
+    <div class="hiw-modal" style="max-width:420px;" onclick="event.stopPropagation()">
+      <div class="hiw-header">
+        <h2>Passcode Changed</h2>
+      </div>
+      <div class="hiw-body">
+        <p style="font-size:0.85rem;color:var(--text-light);line-height:1.5;margin:0 0 12px;">You've changed the passcode for this session. Should existing participants be required to re-enter the new code to stay in the session?</p>
+        <button type="button" class="btn-confirm-join" style="width:100%;padding:12px;font-size:1rem;font-weight:700;" onclick="App._confirmPasscodeReentry(true)">Yes, require re-entry</button>
+        <button type="button" class="btn-outline" style="width:100%;padding:12px;font-size:1rem;font-weight:700;margin-top:8px;" onclick="App._confirmPasscodeReentry(false)">No, keep them in</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Existing participant: passcode changed since they last verified ── -->
+  <div id="passcodeGateModal" class="hiw-overlay" style="display:none;">
+    <div class="hiw-modal" style="max-width:380px;" onclick="event.stopPropagation()">
+      <div class="hiw-header">
+        <h2>Enter Passcode</h2>
+      </div>
+      <div class="hiw-body">
+        <p style="font-size:0.85rem;color:var(--text-light);line-height:1.5;margin:0 0 12px;">The passcode for this session has changed. Enter the new passcode to keep using this session.</p>
+        <input type="text" class="setup-input" id="passcodeGateInput" placeholder="4-character passcode" maxlength="4" style="text-transform:uppercase;text-align:center;" onkeydown="if(event.key==='Enter')Session._submitPasscodeGate()">
+        <p id="passcodeGateError" class="setup-error" style="display:none;">Incorrect passcode</p>
+        <button type="button" class="btn-confirm-join" style="width:100%;padding:12px;font-size:1rem;font-weight:700;margin-top:4px;" onclick="Session._submitPasscodeGate()">Continue</button>
+        <button type="button" class="btn-outline" style="width:100%;padding:12px;font-size:1rem;font-weight:700;margin-top:8px;" onclick="Session.leaveOrClose()">Leave Session</button>
+      </div>
+    </div>
+  </div>
+
   <!-- Super admin panels — bottom of the page, main/landing view only (hidden
        once inside a session; see Admin._updateAdminPanels). -->
   <div id="superAdminSection" class="settings-card" style="display:none;margin-bottom:14px;">
@@ -3248,6 +3292,8 @@ const App = {
     if (s.availableCourts == null) s.availableCourts = 1;
     if (!Array.isArray(s.adminLog)) s.adminLog = [];
     if (!Array.isArray(s._admins)) s._admins = s._admins ? Object.values(s._admins) : [];
+    if (s._passcodeRequired === undefined) s._passcodeRequired = !!s._passcode;
+    if (s._passcodeVersion == null) s._passcodeVersion = 0;
     if (!Array.isArray(s._rrSchedule)) s._rrSchedule = s._rrSchedule ? Object.values(s._rrSchedule) : [];
     // Fix Firebase array conversion on schedule game arrays
     for (const round of s._rrSchedule) {
@@ -3271,6 +3317,7 @@ const App = {
       if (!p.lastActiveAt) p.lastActiveAt = p.joinedAt;
       delete p.score;
       if (p.skillLevel === undefined) p.skillLevel = null;
+      if (p.passcodeVersion === undefined) p.passcodeVersion = s._passcodeVersion;
     }
   },
 
@@ -4353,8 +4400,93 @@ const App = {
     this._passcodeVisible = !this._passcodeVisible;
     const display = document.getElementById('passcodeDisplay');
     const btn = document.getElementById('btnTogglePasscode');
-    if (display) display.textContent = this._passcodeVisible ? (this.state._passcode || '—') : '****';
+    if (display) display.textContent = this._passcodeVisible ? (this.state._passcode || '—') : (this.state._passcode ? '****' : '—');
     if (btn) btn.textContent = this._passcodeVisible ? 'Hide' : 'Show';
+  },
+
+  // ─── Passcode requirement toggle + edit (admin, private sessions) ──
+  togglePasscodeRequired() {
+    const toggle = document.getElementById('passcodeRequiredToggle');
+    const on = !!toggle?.checked;
+    if (on && !this.state._passcode) {
+      // Nothing to require yet — make them set one first before this persists.
+      // saveEditedPasscode turns _passcodeRequired on once they do.
+      this._passcodeEditIntent = 'enable';
+      this.toggleEditPasscode(true);
+      return;
+    }
+    this.state._passcodeRequired = on;
+    this.saveState();
+    this.render();
+  },
+
+  toggleEditPasscode(force) {
+    const row = document.getElementById('editPasscodeRow');
+    if (!row) return;
+    const show = force === true ? true : force === false ? false : row.style.display === 'none';
+    if (show && this._passcodeEditIntent !== 'enable') this._passcodeEditIntent = 'edit';
+    row.style.display = show ? 'flex' : 'none';
+    const err = document.getElementById('editPasscodeError');
+    if (err) err.style.display = 'none';
+    const input = document.getElementById('editPasscodeInput');
+    if (input) input.value = '';
+    if (show) {
+      input?.focus();
+    } else {
+      // Closed without saving — resync the toggle to what's actually persisted
+      const toggle = document.getElementById('passcodeRequiredToggle');
+      if (toggle) toggle.checked = !!this.state._passcodeRequired;
+      this._passcodeEditIntent = null;
+    }
+  },
+
+  randomEditPasscode() {
+    const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+    let code = '';
+    for (let i = 0; i < 4; i++) code += chars[Math.floor(Math.random() * chars.length)];
+    document.getElementById('editPasscodeInput').value = code;
+  },
+
+  saveEditedPasscode() {
+    if (!Admin.isAdmin()) return;
+    const input = document.getElementById('editPasscodeInput');
+    const err = document.getElementById('editPasscodeError');
+    const code = (input?.value || '').trim().toUpperCase();
+    if (code.length !== 4) {
+      if (err) { err.textContent = 'Enter a 4-character passcode'; err.style.display = 'block'; }
+      return;
+    }
+    if (err) err.style.display = 'none';
+    const changed = code !== this.state._passcode;
+    this._pendingPasscodeValue = code;
+    // Admins bypass the passcode entirely, so only non-admin participants
+    // already in the roster are affected by a re-entry requirement
+    const admins = this.state._admins || [];
+    const hasNonAdminParticipants = this.state.players.some(p => !(p.firebaseUid && admins.includes(p.firebaseUid)));
+    if (changed && hasNonAdminParticipants) {
+      // Existing participants — let the admin decide whether they must re-enter
+      document.getElementById('passcodeReentryModal').style.display = 'flex';
+      document.body.style.overflow = 'hidden';
+      return;
+    }
+    this._applyPasscodeChange(false);
+  },
+
+  _confirmPasscodeReentry(requireReentry) {
+    document.getElementById('passcodeReentryModal').style.display = 'none';
+    document.body.style.overflow = '';
+    this._applyPasscodeChange(requireReentry);
+  },
+
+  _applyPasscodeChange(requireReentry) {
+    this.state._passcode = this._pendingPasscodeValue;
+    this._pendingPasscodeValue = null;
+    if (this._passcodeEditIntent === 'enable') this.state._passcodeRequired = true;
+    if (requireReentry) this.state._passcodeVersion = (this.state._passcodeVersion || 0) + 1;
+    this.saveState();
+    this.toggleEditPasscode(false);
+    this._passcodeVisible = false;
+    this.render();
   },
 
   updateShareLink() {
@@ -5555,6 +5687,12 @@ ${bracketHTML}
       passcodeSection.style.display = (isPvt && Admin.isAdmin()) ? '' : 'none';
       // Reset visibility when switching sessions
       if (!isPvt) { this._passcodeVisible = false; }
+      const reqToggle = document.getElementById('passcodeRequiredToggle');
+      if (reqToggle) reqToggle.checked = !!this.state._passcodeRequired;
+      const display = document.getElementById('passcodeDisplay');
+      if (display) display.textContent = this._passcodeVisible ? (this.state._passcode || '—') : (this.state._passcode ? '****' : '—');
+      const editBtn = document.getElementById('btnEditPasscode');
+      if (editBtn) editBtn.textContent = this.state._passcode ? 'Edit passcode' : 'Set passcode';
     }
 
     // Show delete session button for private sessions
@@ -7240,6 +7378,8 @@ const Session = {
       if (Admin._user?.uid) already.firebaseUid = Admin._user.uid;
       already.joinedAt = Date.now();
       already.lastActiveAt = already.joinedAt;
+      already.passcodeVersion = Onboard._pendingPasscodeVersion != null ? Onboard._pendingPasscodeVersion : App.state._passcodeVersion;
+      Onboard._pendingPasscodeVersion = null;
       try { localStorage.setItem('courtManager', JSON.stringify(App.state)); } catch(e) {}
       this._patch({ players: App.state.players });
       App.render();
@@ -7256,7 +7396,9 @@ const Session = {
         isLive: true,
         joinedAt: now,
         lastActiveAt: now,
+        passcodeVersion: Onboard._pendingPasscodeVersion != null ? Onboard._pendingPasscodeVersion : App.state._passcodeVersion,
       };
+      Onboard._pendingPasscodeVersion = null;
       if (Admin._user?.uid) newPlayer.firebaseUid = Admin._user.uid;
       App.state.players.push(newPlayer);
       try { localStorage.setItem('courtManager', JSON.stringify(App.state)); } catch(e) {}
@@ -7396,6 +7538,7 @@ const Session = {
         App.render();
         this._receiving = false;
         addSelfOnce();
+        this._checkPasscodeGate();
       } catch(err) { /* ignore */ }
     });
 
@@ -7421,8 +7564,60 @@ const Session = {
         App._normState();
         App.render();
         this._receiving = false;
+        this._checkPasscodeGate();
       } catch(err) { /* ignore */ }
     });
+  },
+
+  // A live tab stays connected through a passcode change (only new
+  // join/reconnect flows re-check it there — see Onboard._needsPasscodeEntry),
+  // so re-check here too on every state sync and block interaction with a
+  // re-entry prompt if this participant hasn't verified the current version.
+  _checkPasscodeGate() {
+    if (!this.id || this.id === 'offline') return;
+    if (Admin.isAdmin() || Admin.isSuperAdmin()) return;
+    if (!App.state._passcodeRequired || !App.state._passcode) { this._closePasscodeGate(); return; }
+    const version = App.state._passcodeVersion || 0;
+    const self = App.state.players.find(p => p.id === Onboard.selfId);
+    if (!self) return;
+    if ((self.passcodeVersion || 0) >= version) { this._closePasscodeGate(); return; }
+    this._openPasscodeGate();
+  },
+
+  _openPasscodeGate() {
+    const modal = document.getElementById('passcodeGateModal');
+    if (!modal || modal.style.display === 'flex') return;
+    modal.style.display = 'flex';
+    document.body.style.overflow = 'hidden';
+    const err = document.getElementById('passcodeGateError');
+    if (err) err.style.display = 'none';
+    const input = document.getElementById('passcodeGateInput');
+    if (input) { input.value = ''; input.focus(); }
+  },
+
+  _closePasscodeGate() {
+    const modal = document.getElementById('passcodeGateModal');
+    if (modal && modal.style.display !== 'none') {
+      modal.style.display = 'none';
+      document.body.style.overflow = '';
+    }
+  },
+
+  _submitPasscodeGate() {
+    const input = document.getElementById('passcodeGateInput');
+    const err = document.getElementById('passcodeGateError');
+    const entered = (input?.value || '').trim().toUpperCase();
+    if (entered !== App.state._passcode) {
+      if (err) err.style.display = 'block';
+      if (input) { input.value = ''; input.focus(); }
+      return;
+    }
+    const self = App.state.players.find(p => p.id === Onboard.selfId);
+    if (self) {
+      self.passcodeVersion = App.state._passcodeVersion || 0;
+      this._patch({ players: App.state.players });
+    }
+    this._closePasscodeGate();
   },
 
   _setURL(id) {
@@ -7493,6 +7688,24 @@ const Onboard = {
     }
   },
 
+  // A returning participant who already verified the passcode currently in
+  // effect (matched by name, same heuristic Session._addSelf uses) shouldn't
+  // be asked again unless an admin has since changed the code and chosen to
+  // require re-entry — see App._confirmPasscodeReentry.
+  _playerRecordFor(data, user) {
+    if (!user || !Array.isArray(data?.players)) return null;
+    return data.players.find(p => p.name.toLowerCase() === user.name.toLowerCase()) || null;
+  },
+
+  _needsPasscodeEntry(data, user, isAdminOfSession) {
+    if (!data || !data._passcodeRequired || !data._passcode) return false;
+    if (Admin.isSuperAdmin() || isAdminOfSession) return false;
+    const version = data._passcodeVersion || 0;
+    const rec = this._playerRecordFor(data, user);
+    if (rec && (rec.passcodeVersion || 0) >= version) return false;
+    return true;
+  },
+
   async _handleShareLink(s, user) {
     const pvt = this._getSavedPrivateSessions().find(p => p.id === s);
     let label = pvt ? pvt.name : s.replace(/^pvt-/, '');
@@ -7503,18 +7716,19 @@ const Onboard = {
     // Use stored session name if available
     if (data && data._sessionName) label = data._sessionName;
     const isAdminOfSession = Admin._user && data && Array.isArray(data._admins) && data._admins.includes(Admin._user.uid);
-    const needsPasscode = data && data._passcode && !Admin.isSuperAdmin() && !isAdminOfSession;
-    if (needsPasscode) {
+    if (this._needsPasscodeEntry(data, user, isAdminOfSession)) {
       // Show inline passcode prompt
-      this._showSharePasscode(s, label, data._passcode, user);
+      this._showSharePasscode(s, label, data._passcode, user, data._passcodeVersion || 0);
       return;
     }
 
-    // Passcode not needed — proceed
+    // Passcode not needed — mark them caught up so they aren't asked again
+    // until the next actual change
+    this._pendingPasscodeVersion = data ? (data._passcodeVersion || 0) : 0;
     this._shareJoinOrPrompt(s, label, user);
   },
 
-  _showSharePasscode(sessionId, label, correctPasscode, user) {
+  _showSharePasscode(sessionId, label, correctPasscode, user, passcodeVersion) {
     const setup = document.getElementById('sessionSetupSection');
     const card = setup?.querySelector('.setup-card');
     if (!card) return;
@@ -7545,7 +7759,7 @@ const Onboard = {
     `;
     document.getElementById('sharePasscodeInput')?.focus();
 
-    this._sharePending = { sessionId, label, correctPasscode, user };
+    this._sharePending = { sessionId, label, correctPasscode, user, passcodeVersion };
   },
 
   _verifySharePasscode() {
@@ -7558,7 +7772,8 @@ const Onboard = {
       return;
     }
     if (err) err.style.display = 'none';
-    const { sessionId, label, user } = this._sharePending;
+    const { sessionId, label, user, passcodeVersion } = this._sharePending;
+    this._pendingPasscodeVersion = passcodeVersion || 0;
     this._sharePending = null;
     const passcodeDiv = document.getElementById('sharePasscodePrompt');
     if (passcodeDiv) passcodeDiv.style.display = 'none';
@@ -7929,13 +8144,14 @@ const Onboard = {
       // Joining existing — verify passcode
       const data = await Session._get(key);
       const isAdminOfSession = Admin._user && data && Array.isArray(data._admins) && data._admins.includes(Admin._user.uid);
-      if (data && data._passcode && !Admin.isSuperAdmin() && !isAdminOfSession) {
+      if (this._needsPasscodeEntry(data, user, isAdminOfSession)) {
         const entered = prompt('Enter the 4-character passcode for "' + label + '":');
         if (!entered || entered.trim().toUpperCase() !== data._passcode) {
           alert('Incorrect passcode.');
           return;
         }
       }
+      this._pendingPasscodeVersion = data ? (data._passcodeVersion || 0) : 0;
       this._savePrivateSession(key, label);
       await Session._connect(key, label, false, user);
     }
@@ -7953,6 +8169,7 @@ const Onboard = {
     this._pendingKey = null;
     this._pendingLabel = null;
     this._pendingPasscode = null;
+    this._pendingPasscodeVersion = null;
     this._pendingIsCreate = false;
   },
 
