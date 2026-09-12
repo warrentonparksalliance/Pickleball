@@ -2335,7 +2335,7 @@ body {
             <div class="partner-picker-item" onclick="App.setSkillField('queueAddPlayerSkill', 'beginner')">Beginner</div>
             <div class="partner-picker-item" onclick="App.setSkillField('queueAddPlayerSkill', 'intermediate')">Intermediate</div>
             <div class="partner-picker-item" onclick="App.setSkillField('queueAddPlayerSkill', 'advanced')">Advanced</div>
-            <div class="partner-picker-item" onclick="App.setSkillField('queueAddPlayerSkill', '')">Clear rating</div>
+            <div class="partner-picker-item" onclick="App.setSkillField('queueAddPlayerSkill', '')">Not Rated</div>
           </div>
         </div>
       </div>
@@ -2404,7 +2404,7 @@ body {
           <div class="partner-picker-item" onclick="App.setSkillField('settingsSkill', 'beginner')">Beginner</div>
           <div class="partner-picker-item" onclick="App.setSkillField('settingsSkill', 'intermediate')">Intermediate</div>
           <div class="partner-picker-item" onclick="App.setSkillField('settingsSkill', 'advanced')">Advanced</div>
-          <div class="partner-picker-item" onclick="App.setSkillField('settingsSkill', '')">Clear rating</div>
+          <div class="partner-picker-item" onclick="App.setSkillField('settingsSkill', '')">Not Rated</div>
         </div>
       </div>
       <div style="display:flex;align-items:center;justify-content:flex-end;">
@@ -2629,7 +2629,7 @@ body {
             <div class="partner-picker-item" onclick="App.setSkillField('selfProfileSkill', 'beginner')">Beginner</div>
             <div class="partner-picker-item" onclick="App.setSkillField('selfProfileSkill', 'intermediate')">Intermediate</div>
             <div class="partner-picker-item" onclick="App.setSkillField('selfProfileSkill', 'advanced')">Advanced</div>
-            <div class="partner-picker-item" onclick="App.setSkillField('selfProfileSkill', '')">Clear rating</div>
+            <div class="partner-picker-item" onclick="App.setSkillField('selfProfileSkill', '')">Not Rated</div>
           </div>
         </div>
         <p style="font-size:0.78rem;color:var(--text-muted);margin:0;">You can update this anytime from Settings.</p>
@@ -5106,7 +5106,10 @@ ${bracketHTML}
     const qAddRow = document.getElementById('queueAddPlayerRow');
     if (qAddRow) qAddRow.style.display = isLocked ? 'none' : '';
     const qAddSkill = document.getElementById('queueAddPlayerSkillField');
-    if (qAddSkill) qAddSkill.style.display = this.state._quickPlay ? 'none' : '';
+    // Open Play always sets ratings after the fact via the NR/B/I/A chip on
+    // each queue row (like Quick Play) — only Round Robin/Tournament, which
+    // build the full roster before locking it, get the field up front.
+    if (qAddSkill) qAddSkill.style.display = (this.state._quickPlay || !structured) ? 'none' : '';
     // Logging a past match only makes sense for Open Play's live queue —
     // Round Robin/Tournament build matches from a locked roster/bracket instead.
     const btnLogMatch = document.getElementById('btnLogPastMatch');
@@ -5266,7 +5269,7 @@ ${bracketHTML}
           <div class="partner-picker-item" onclick="App.setPlayerSkillLevel(${p.id}, 'beginner')">Beginner</div>
           <div class="partner-picker-item" onclick="App.setPlayerSkillLevel(${p.id}, 'intermediate')">Intermediate</div>
           <div class="partner-picker-item" onclick="App.setPlayerSkillLevel(${p.id}, 'advanced')">Advanced</div>
-          <div class="partner-picker-item" onclick="App.setPlayerSkillLevel(${p.id}, null)">Clear rating</div>
+          <div class="partner-picker-item" onclick="App.setPlayerSkillLevel(${p.id}, null)">Not Rated</div>
         </div>
       </div>` : '';
       const selected = this._tapSelection && this._tapSelection.playerId === p.id ? ' dnd-selected' : '';
@@ -7332,7 +7335,7 @@ const Onboard = {
               <div class="partner-picker-item" onclick="App.setSkillField('${fieldId}', 'beginner')">Beginner</div>
               <div class="partner-picker-item" onclick="App.setSkillField('${fieldId}', 'intermediate')">Intermediate</div>
               <div class="partner-picker-item" onclick="App.setSkillField('${fieldId}', 'advanced')">Advanced</div>
-              <div class="partner-picker-item" onclick="App.setSkillField('${fieldId}', '')">Clear rating</div>
+              <div class="partner-picker-item" onclick="App.setSkillField('${fieldId}', '')">Not Rated</div>
             </div>`;
           wrapper.appendChild(row);
           wrapper.appendChild(menu);
