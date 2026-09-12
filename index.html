@@ -2607,6 +2607,21 @@ body {
     </div>
   </div>
 
+  <!-- ── Double-tap Waiting/Sitting Out to pull a player from the other list ── -->
+  <div id="fillQueueModal" class="hiw-overlay" style="display:none;" onclick="App.closeFillQueuePicker(event)">
+    <div class="hiw-modal" style="max-width:380px;" onclick="event.stopPropagation()">
+      <div class="hiw-header">
+        <h2 id="fillQueueModalTitle">Move a Player</h2>
+        <button class="hiw-close" onclick="App.closeFillQueuePicker()" aria-label="Close">&times;</button>
+      </div>
+      <div class="hiw-body">
+        <div class="partner-picker" style="margin-top:0;">
+          <div class="partner-picker-list" id="fillQueuePickerList"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <!-- ── Your name/skill, asked right when joining or creating a private session ── -->
   <div id="selfProfileModal" class="hiw-overlay" style="display:none;" onclick="Onboard._selfProfileCancel(event)">
     <div class="hiw-modal" style="max-width:380px;" onclick="event.stopPropagation()">
@@ -2935,6 +2950,7 @@ const App = {
   _tapSelection: null,
   _proposedUndoStack: [],
   _fillSlotTarget: null,
+  _fillQueueTarget: null,
 
   // ─── Tab switching ──────────────────────────
   switchTab(tab) {
@@ -5783,24 +5799,44 @@ ${bracketHTML}
   // proposed court match sends them straight back to the queue — a
   // quicker shortcut than dragging/tapping them off one at a time.
   // Double-clicking/double-tapping an empty court slot's placeholder opens
-  // the fill picker (see openFillSlotPicker) — a single tap doesn't, since
-  // that was too easy to trigger by accident while scrolling past a card.
+  // the fill picker (see openFillSlotPicker), and doing the same anywhere
+  // in the Waiting or Sitting Out list opens a picker for pulling a player
+  // in from the other list (see openFillQueuePicker) — a single tap doesn't
+  // trigger either, since that was too easy to trigger by accident while
+  // scrolling past a card.
   _onDndDblClick(e) {
+    // Double-clicking a button/input/menu item (rating chip, guest name-edit
+    // field, skill picker) should just do whatever that control already does
+    // on click — not also fall through into opening a fill picker underneath it.
+    if (e.target.closest('button, input, select, textarea, .partner-picker-item, .queue-row-edit')) return;
     const chipEl = e.target.closest('.dnd-chip');
     if (chipEl) {
       const slotEl = chipEl.closest('[data-loc-type="slot"]');
-      if (!slotEl) return;
-      const playerId = Number(chipEl.dataset.playerId);
-      const from = this._locFromEl(slotEl);
-      this._tapSelection = null;
-      this._movePlayer(playerId, from, { type: 'queue' });
-      return;
+      if (slotEl) {
+        const playerId = Number(chipEl.dataset.playerId);
+        const from = this._locFromEl(slotEl);
+        this._tapSelection = null;
+        this._movePlayer(playerId, from, { type: 'queue' });
+        return;
+      }
+      // A chip inside Waiting/Sitting Out has no special double-click
+      // behavior of its own — fall through so double-clicking a chip
+      // still opens that list's fill picker below, same as empty space.
+    } else {
+      const emptySlotEl = e.target.closest('.dnd-slot-empty');
+      const slotLocEl = emptySlotEl && emptySlotEl.closest('[data-loc-type="slot"]');
+      if (slotLocEl) {
+        const loc = this._locFromEl(slotLocEl);
+        this.openFillSlotPicker(loc.court, loc.side);
+        return;
+      }
     }
-    const emptySlotEl = e.target.closest('.dnd-slot-empty');
-    const slotLocEl = emptySlotEl && emptySlotEl.closest('[data-loc-type="slot"]');
-    if (!slotLocEl) return;
-    const loc = this._locFromEl(slotLocEl);
-    this.openFillSlotPicker(loc.court, loc.side);
+    // Double-clicking/double-tapping anywhere in the Waiting or Sitting Out
+    // list opens a picker of players from the *other* list — a quicker way
+    // to pull someone across than dragging/tapping them one at a time.
+    // See openFillQueuePicker.
+    const queueZoneEl = e.target.closest('[data-loc-type="queue"], [data-loc-type="waiting"]');
+    if (queueZoneEl) this.openFillQueuePicker(queueZoneEl.dataset.locType);
   },
 
   // Double-tapping/double-clicking an empty court slot opens this — lets
@@ -5843,6 +5879,53 @@ ${bracketHTML}
     if (!p) return;
     const from = { type: p.active ? 'queue' : 'waiting' };
     this._movePlayer(playerId, from, { type: 'slot', court: target.court, side: target.side });
+  },
+
+  // Double-tapping/double-clicking open space in Waiting or Sitting Out
+  // opens this — a picker of players from the *other* list (only; a player
+  // already in Waiting has no reason to appear in a picker for pulling
+  // someone INTO Waiting). Players on a court or in a proposed match are
+  // never listed here — they'd need to come off there first — but that's
+  // just the existing getPlayersOnCourts() filter, nothing to explain to
+  // the user, they simply won't show up.
+  openFillQueuePicker(zoneType) {
+    this._fillQueueTarget = zoneType;
+    const titleEl = document.getElementById('fillQueueModalTitle');
+    if (titleEl) titleEl.textContent = zoneType === 'queue' ? 'Add from Sitting Out' : 'Add from Waiting';
+    this.renderFillQueuePicker();
+    document.getElementById('fillQueueModal').style.display = 'flex';
+    document.body.style.overflow = 'hidden';
+  },
+
+  closeFillQueuePicker(event) {
+    if (event && event.target !== event.currentTarget) return;
+    document.getElementById('fillQueueModal').style.display = 'none';
+    document.body.style.overflow = '';
+    this._fillQueueTarget = null;
+  },
+
+  renderFillQueuePicker() {
+    const el = document.getElementById('fillQueuePickerList');
+    if (!el) return;
+    const target = this._fillQueueTarget;
+    const onCourt = this.getPlayersOnCourts();
+    // Target 'queue' (Waiting) pulls from players currently sitting out,
+    // and vice versa — never from the list already being double-tapped.
+    const wantActive = target === 'waiting';
+    const available = this.state.players.filter(p => !onCourt.has(p.id) && !!p.active === wantActive);
+    el.innerHTML = available.length
+      ? available.map(p => `<div class="partner-picker-item" onclick="App.fillQueueWithPlayer(${p.id})">${this.esc(p.name)}</div>`).join('')
+      : `<div style="padding:10px 12px;color:var(--text-light);font-size:0.82rem;">No players available</div>`;
+  },
+
+  fillQueueWithPlayer(playerId) {
+    const target = this._fillQueueTarget;
+    this.closeFillQueuePicker();
+    if (!target) return;
+    const p = this.getPlayer(playerId);
+    if (!p) return;
+    const from = { type: p.active ? 'queue' : 'waiting' };
+    this._movePlayer(playerId, from, { type: target });
   },
 
   renderSide(side) {
