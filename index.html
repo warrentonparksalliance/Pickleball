@@ -2389,19 +2389,20 @@ body {
       <div class="queue-subsection-label">Waiting</div>
       <div class="queue-list-box">
         <div id="queueActiveList" class="queue-list dnd-target" data-loc-type="queue"></div>
-        <div id="queueDropQueue" class="queue-drop-strip dnd-target" data-loc-type="queue">Drag or tap to enter queue</div>
+        <div id="queueDropQueue" class="queue-drop-strip dnd-target" data-loc-type="queue">Enter Queue</div>
       </div>
       <div id="queueWaitingWrap" style="display:none;">
         <div class="queue-subsection-label" style="margin-top:10px;">Sitting Out</div>
         <div class="queue-list-box">
           <div id="queueWaitingList" class="queue-list dnd-target" data-loc-type="waiting"></div>
-          <div id="queueDropWaiting" class="queue-drop-strip dnd-target" data-loc-type="waiting">Drag or tap to sit out</div>
+          <div id="queueDropWaiting" class="queue-drop-strip dnd-target" data-loc-type="waiting">Sit Out</div>
         </div>
       </div>
       <div id="queueRemoveZoneTitle" class="queue-subsection-label" style="margin-top:10px;">Leave Session</div>
       <div id="queueRemoveZone" class="queue-remove-zone dnd-target" data-loc-type="remove">
-        <span id="queueRemoveZoneLabel">Drag or tap to remove</span>
+        <span id="queueRemoveZoneLabel">Remove</span>
       </div>
+      <div id="queueMoveHint" class="proposed-hint">Drag or double tap players to move</div>
       <button id="rrUnlockBtn" class="btn-outline" onclick="App.isRoundRobin()?App.rrUnlockPlayers():App.bracketUnlockPlayers()" style="display:none;margin-top:8px;width:100%;color:var(--warning);border-color:var(--warning);font-size:0.82rem;">Unlock Players &amp; Reset</button>
     </div>
 
@@ -2477,7 +2478,6 @@ body {
     <div class="settings-card" id="shareLinkSection">
       <div class="settings-card-title">Share Link</div>
       <div id="shareLinkOnlineBlock">
-        <p class="section-subtitle" style="margin-bottom:10px;">Invite others to join this session.</p>
         <div style="display:flex;gap:8px;align-items:center;">
           <input type="text" class="setup-input" id="shareLinkInput" readonly style="flex:1;margin-bottom:0;font-size:0.82rem;cursor:text;">
           <button type="button" class="btn-outline" id="btnCopyShareLink" onclick="App.copyShareLink()" style="white-space:nowrap;padding:12px 16px;font-size:1rem;font-weight:700;">Copy</button>
@@ -5444,6 +5444,7 @@ ${bracketHTML}
     const waitingEl = document.getElementById('queueWaitingList');
     const removeZone = document.getElementById('queueRemoveZone');
     const removeZoneTitle = document.getElementById('queueRemoveZoneTitle');
+    const moveHint = document.getElementById('queueMoveHint');
     const rr = this.isRoundRobin();
     const tourn = this.isTournament();
     const structured = rr || tourn;
@@ -5451,13 +5452,14 @@ ${bracketHTML}
 
     if (waitingWrap) waitingWrap.style.display = structured ? 'none' : '';
     if (removeZoneTitle) removeZoneTitle.style.display = isLocked ? 'none' : '';
+    if (moveHint) moveHint.style.display = isLocked ? 'none' : '';
 
     // While the session is closed (see closeSession), Waiting is frozen —
     // say so where the drop strip normally explains what dropping there does.
     const closed = !!this.state._closed;
     const dropQueue = document.getElementById('queueDropQueue');
     if (dropQueue) {
-      dropQueue.textContent = closed ? 'Session closed — waiting for an admin to reopen' : 'Drag or tap to enter queue';
+      dropQueue.textContent = closed ? 'Session closed — waiting for an admin to reopen' : 'Enter Queue';
       dropQueue.classList.toggle('dnd-target-disabled', closed);
     }
     // Waiting is always empty while closed (everyone's forced to Sitting
@@ -5479,7 +5481,7 @@ ${bracketHTML}
           <button style="color:var(--text-muted);border-color:var(--border);" onclick="App.cancelRemove()">No</button>
         </div>`;
       } else {
-        removeZone.innerHTML = `<span id="queueRemoveZoneLabel">Drag or tap to remove</span>`;
+        removeZone.innerHTML = `<span id="queueRemoveZoneLabel">Remove</span>`;
       }
     }
 
@@ -5686,7 +5688,7 @@ ${bracketHTML}
   },
 
   _renderEmptyCourtCard(courtId) {
-    const label = 'Drag or tap to add';
+    const label = 'Add';
     const sideBox = sideNum => `<div class="court-side side-${sideNum} dnd-target" data-loc-type="slot" data-court="${courtId}" data-side="${sideNum}">
       <div class="dnd-slot-empty">${label}</div>
       <div class="dnd-slot-empty">${label}</div>
@@ -5832,7 +5834,7 @@ ${bracketHTML}
     const canAutoFill = needed > 0 && eligible >= needed;
     const sideBox = (side, sideNum) => {
       const chips = side.map(id => this._renderChip(id)).join('');
-      const placeholderLabel = 'Drag or tap to add';
+      const placeholderLabel = 'Add';
       const placeholders = Array.from({ length: 2 - side.length },
         () => `<div class="dnd-slot-empty">${placeholderLabel}</div>`).join('');
       return `<div class="court-side side-${sideNum} dnd-target" data-loc-type="slot" data-court="${courtId}" data-side="${sideNum}">
