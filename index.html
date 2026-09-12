@@ -7714,9 +7714,11 @@ const Onboard = {
 
   // No "Last joined" label — the fixed-width column and muted color
   // already read as a timestamp, and the full phrase doesn't fit
-  // alongside a session name at phone width.
+  // alongside a session name at phone width. Sessions saved before this
+  // field existed have no recorded time yet — show a dash rather than
+  // leaving the column blank, so every row keeps the same two-column look.
   _formatLastJoined(ts) {
-    if (!ts) return '';
+    if (!ts) return '—';
     const d = new Date(ts);
     const date = d.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
     const time = d.toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' });
