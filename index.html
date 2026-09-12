@@ -3212,7 +3212,8 @@ const App = {
 
   // ─── Players ───────────────────────────────
   // All session types add players via the inline name/skill fields pinned to
-  // the bottom of the queue (Quick Play sessions skip the skill field).
+  // the bottom of the queue (Quick Play and private sessions skip the skill
+  // field — players are added Not Rated and set their rating via the chip).
   submitQueueAddPlayer() {
     const nameEl = document.getElementById('queueAddPlayerName');
     const skillEl = document.getElementById('queueAddPlayerSkill');
@@ -3225,7 +3226,8 @@ const App = {
     }
     const errEl = document.getElementById('queueAddPlayerError');
     if (errEl) errEl.style.display = 'none';
-    const skillLevel = (!this.state._quickPlay && skillEl?.value) ? skillEl.value : null;
+    const isPvt = Session.id && Session.id.startsWith('pvt-');
+    const skillLevel = (!this.state._quickPlay && !isPvt && skillEl?.value) ? skillEl.value : null;
     const newId = this.state.nextId++;
     const now = Date.now();
     this.state.players.push({
@@ -5353,7 +5355,10 @@ ${bracketHTML}
     // Open Play always sets ratings after the fact via the NR/B/I/A chip on
     // each queue row (like Quick Play) — only Round Robin/Tournament, which
     // build the full roster before locking it, get the field up front.
-    if (qAddSkill) qAddSkill.style.display = (this.state._quickPlay || !structured) ? 'none' : '';
+    // Private sessions always behave like Quick Play here too: players are
+    // added as Not Rated and change their rating via the chip afterward.
+    const isPvtSkill = Session.id && Session.id.startsWith('pvt-');
+    if (qAddSkill) qAddSkill.style.display = (this.state._quickPlay || isPvtSkill || !structured) ? 'none' : '';
     // Logging a past match only makes sense for Open Play's live queue —
     // Round Robin/Tournament build matches from a locked roster/bracket instead.
     const btnLogMatch = document.getElementById('btnLogPastMatch');
@@ -7546,6 +7551,10 @@ const Onboard = {
       }
       this._openBulkSetup({
         quickPlay: false,
+        // Private sessions set ratings the same way Quick Play does: everyone
+        // starts Not Rated and changes it later via the NR/B/I/A chip, so the
+        // bulk roster form skips the up-front rating dropdown too.
+        noSkill: true,
         onComplete: (players) => { this._pendingBulkPlayers = players; this.confirmJoin(); },
       });
     });
@@ -7758,6 +7767,7 @@ const Onboard = {
     }
     if (errEl) errEl.style.display = 'none';
     const quickPlay = !!this._bulkCtx?.quickPlay;
+    const noSkill = quickPlay || !!this._bulkCtx?.noSkill;
     const list = document.getElementById('bulkNamesList');
     if (list) {
       list.innerHTML = '';
@@ -7772,7 +7782,7 @@ const Onboard = {
         nameInput.style.cssText = 'flex:1;margin-bottom:0;';
         nameInput.dataset.bulkName = i;
         row.appendChild(nameInput);
-        if (!quickPlay) {
+        if (!noSkill) {
           const fieldId = `bulkSkill_${i}`;
           const skillWrap = document.createElement('div');
           skillWrap.className = 'skill-field';
