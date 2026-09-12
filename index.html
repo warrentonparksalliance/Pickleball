@@ -2423,7 +2423,10 @@ body {
         <div id="queueRemoveZone" class="queue-remove-zone dnd-target" data-loc-type="remove">
           <span id="queueRemoveZoneLabel">Remove</span>
         </div>
-        <div id="queueMoveHint" class="proposed-hint">Drag or double tap players to move</div>
+        <div id="queueMoveHint" class="proposed-hint" style="text-align:left;display:flex;align-items:center;gap:6px;">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+          <span>Drag or double tap players to move</span>
+        </div>
         <button id="rrUnlockBtn" class="btn-outline" onclick="App.isRoundRobin()?App.rrUnlockPlayers():App.bracketUnlockPlayers()" style="display:none;margin-top:8px;width:100%;color:var(--warning);border-color:var(--warning);font-size:0.82rem;">Unlock Players &amp; Reset</button>
       </div>
     </div>
@@ -3521,10 +3524,10 @@ const App = {
 
   _partnerSwapPending: null,
 
-  // "Double tap to change" strip below Current Partner (styled like the
-  // Courts tab's drag-or-tap targets) — tapping it opens a plain picker of
-  // the other partners; picking one swaps them in as current immediately
-  // and the old current partner drops back into Other Partners.
+  // "Tap to change" strip below Current Partner (styled like the Courts
+  // tab's drag-or-tap targets) — tapping it opens a plain picker of the
+  // other partners; picking one swaps them in as current immediately and
+  // the old current partner drops back into Other Partners.
   _partnerSwapPickerOpen: false,
 
   togglePartnerSwapPicker() {
@@ -5713,7 +5716,7 @@ ${bracketHTML}
     // drag-or-tap targets — tapping it opens a plain list of the other
     // partners, and picking one makes them current right away (the old
     // current partner drops back into Other Partners automatically).
-    html += `<div class="queue-drop-strip" style="cursor:pointer;" onclick="App.togglePartnerSwapPicker()">Double tap to change</div>`;
+    html += `<div class="queue-drop-strip" style="cursor:pointer;" onclick="App.togglePartnerSwapPicker()">Tap to change</div>`;
     if (this._partnerSwapPickerOpen) {
       html += `<div class="partner-picker" style="margin-top:8px;">
         <div class="partner-picker-list">${otherTeams.map(t =>
