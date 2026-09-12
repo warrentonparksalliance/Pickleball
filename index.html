@@ -27,6 +27,7 @@
   --success: #10b981;
   --success-light: #ecfdf5;
   --presence-live: #8b5cf6;
+  --partner: #f97316;
   --warning: #f59e0b;
   --warning-light: #fffbeb;
   --bg: #f2f6f3;
@@ -683,20 +684,11 @@ body {
 .skill-field-btn .skill-field-label { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .skill-field-caret { font-size: 0.65em; color: var(--text-muted); flex-shrink: 0; }
 .skill-field-menu { margin-bottom: 8px; }
-.partner-chip {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 8px 12px;
-  border-radius: var(--radius-sm);
-  background: var(--primary-light);
-  border: 1px solid var(--primary-muted);
-  font-size: 0.85rem;
-  font-weight: 500;
-  margin-bottom: 6px;
-}
-.partner-chip .partner-chip-name { flex: 1; }
-.partner-chip .partner-chip-remove {
+/* Your Partner(s) card: same bubble as the queue/court chips (orange
+   border — see .chip-partner), just not draggable. */
+#partnerDisplay { display: flex; flex-flow: row wrap; gap: 6px 8px; margin-bottom: 8px; }
+#partnerDisplay .dnd-chip { cursor: default; }
+.partner-chip-remove {
   background: none;
   border: none;
   color: var(--text-muted);
@@ -705,16 +697,7 @@ body {
   padding: 0 2px;
   line-height: 1;
 }
-.partner-chip .partner-chip-remove:hover { color: var(--danger); }
-.queue-partner-badge {
-  font-size: 0.68rem;
-  font-weight: 700;
-  color: #92400e;
-  background: #fef3c7;
-  padding: 1px 5px;
-  border-radius: var(--radius-full);
-  letter-spacing: 0.02em;
-}
+.partner-chip-remove:hover { color: var(--danger); }
 .settings-actions {
   display: flex;
   gap: 8px;
@@ -1464,9 +1447,11 @@ body {
   -webkit-user-select: none;
 }
 /* Border color marks who a chip belongs to — green for the current
-   person, purple for another signed-in user — instead of a text badge. */
+   person, purple for another signed-in user, orange for your partner —
+   instead of a text badge. */
 .dnd-chip.chip-self { border-color: var(--success); }
 .dnd-chip.chip-live { border-color: var(--presence-live); }
+.dnd-chip.chip-partner { border-color: var(--partner); }
 .dnd-chip.dnd-selected {
   border-color: var(--primary);
   background: var(--primary-light);
@@ -2462,7 +2447,6 @@ body {
     <div class="settings-card" id="partnerSection">
       <div class="settings-card-title">Your Partner(s)</div>
       <div id="partnerOnlineBlock">
-        <p class="section-subtitle" id="partnerSubtitle" style="margin-bottom:10px;">When both you and a partner are in the queue, you'll be placed on the same side in doubles. If a partner isn't available, you'll be assigned normally.</p>
         <div id="partnerDisplay"></div>
         <button class="btn-add-partner" id="btnAddPartner" onclick="App.togglePartnerPicker()">+ Add Partner</button>
         <div class="partner-picker" id="partnerPicker" style="display:none;">
@@ -3358,6 +3342,11 @@ const App = {
   // <select> would be, via .value) plus a button (#fieldIdBtn) and an
   // inline options list (#fieldIdMenu) kept in sync here.
   _skillFieldLabels: { beginner: 'Beginner', intermediate: 'Intermediate', advanced: 'Advanced' },
+  _skillFieldAbbrevs: { beginner: 'B', intermediate: 'I', advanced: 'A' },
+  // The session settings rating field shows only the abbreviation once
+  // collapsed (matching the NR/B/I/A chip elsewhere) instead of the full
+  // word every other rating field uses.
+  _skillFieldAbbrevOnly: new Set(['settingsSkill']),
 
   toggleSkillField(fieldId) {
     const menu = document.getElementById(fieldId + 'Menu');
@@ -3373,7 +3362,13 @@ const App = {
     const btn = document.getElementById(fieldId + 'Btn');
     if (btn) {
       const label = btn.querySelector('.skill-field-label');
-      if (label) label.textContent = value ? this._skillFieldLabels[value] : (btn.dataset.placeholder || 'Rating');
+      if (label) {
+        if (this._skillFieldAbbrevOnly.has(fieldId)) {
+          label.textContent = value ? this._skillFieldAbbrevs[value] : 'NR';
+        } else {
+          label.textContent = value ? this._skillFieldLabels[value] : (btn.dataset.placeholder || 'Rating');
+        }
+      }
       btn.classList.toggle('placeholder', !value);
     }
     const menu = document.getElementById(fieldId + 'Menu');
@@ -5276,12 +5271,6 @@ ${bracketHTML}
     // hidden once a round robin/tournament is locked since teams are then fixed
     const partnerSection = document.getElementById('partnerSection');
     if (partnerSection) partnerSection.style.display = (structured && isLocked) ? 'none' : '';
-    const partnerSubtitle = document.getElementById('partnerSubtitle');
-    if (partnerSubtitle) {
-      partnerSubtitle.textContent = structured
-        ? `Add a partner and you'll be teamed together for the whole ${rr ? 'round robin' : 'tournament'}. Anyone without a partner is randomly paired with another player once the roster is locked.`
-        : `When both you and a partner are in the queue, you'll be placed on the same side in doubles. If a partner isn't available, you'll be assigned normally.`;
-    }
 
     // Show unlock button for admin in round robin or tournament
     const unlockBtn = document.getElementById('rrUnlockBtn');
@@ -5395,7 +5384,6 @@ ${bracketHTML}
       const isPartner = selfId && selfId !== p.id && this.state.teams.some(t =>
         (t.p1 === selfId && t.p2 === p.id) || (t.p2 === selfId && t.p1 === p.id)
       );
-      const partnerBadge = isPartner ? '<span class="queue-partner-badge">partner</span>' : '';
       const isMyGuest = !p.isLive && p.addedBy === selfId;
       const canEdit = isMyGuest && !isYou;
       const editBtn = canEdit ? `<button class="queue-row-btn queue-row-action" onclick="App.editGuest(${p.id})" title="Edit guest">&#x270E;</button>` : '';
@@ -5411,11 +5399,12 @@ ${bracketHTML}
         </div>
       </div>` : '';
       const selected = this._tapSelection && this._tapSelection.playerId === p.id ? ' dnd-selected' : '';
-      // Border color marks whose chip this is (green = you, purple = another
-      // signed-in user) instead of a text badge — see .chip-self/.chip-live.
-      const presenceClass = isYou ? ' chip-self' : (p.isLive ? ' chip-live' : '');
+      // Border color marks whose chip this is (green = you, orange = your
+      // partner, purple = another signed-in user) instead of a text badge —
+      // see .chip-self/.chip-partner/.chip-live.
+      const presenceClass = isYou ? ' chip-self' : isPartner ? ' chip-partner' : (p.isLive ? ' chip-live' : '');
       return `<div class="queue-row">
-        <span class="queue-row-name dnd-chip${selected}${presenceClass}" data-player-id="${p.id}"><span class="queue-row-name-text">${this.esc(p.name)}</span>${editBtn}${skillBtn}${partnerBadge}</span>
+        <span class="queue-row-name dnd-chip${selected}${presenceClass}" data-player-id="${p.id}"><span class="queue-row-name-text">${this.esc(p.name)}</span>${editBtn}${skillBtn}</span>
       </div>${skillPicker}`;
     };
 
@@ -5481,10 +5470,10 @@ ${bracketHTML}
     display.innerHTML = selfTeams.map(t => {
       const partnerId = t.p1 === selfId ? t.p2 : t.p1;
       const p = this.getPlayer(partnerId);
-      return `<div class="partner-chip">
-        <span class="partner-chip-name">${this.esc(p?.name || '?')}</span>
+      return `<span class="dnd-chip chip-partner">
+        <span class="queue-row-name-text">${this.esc(p?.name || '?')}</span>
         <button class="partner-chip-remove" onclick="App.removeTeam(${t.id})" title="Remove partner">&times;</button>
-      </div>`;
+      </span>`;
     }).join('');
   },
 
