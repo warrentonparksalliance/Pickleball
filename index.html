@@ -2411,22 +2411,7 @@ body {
           <p id="queueAddPlayerError" class="setup-error" style="display:none;">Enter a player name</p>
           <div style="display:flex;gap:8px;">
             <input type="text" class="setup-input" id="queueAddPlayerName" placeholder="Player name" style="flex:1;margin-bottom:0;" onkeydown="if(event.key==='Enter')App.submitQueueAddPlayer()">
-            <div class="skill-field" id="queueAddPlayerSkillField" style="width:110px;flex-shrink:0;">
-              <button type="button" class="setup-input skill-field-btn placeholder" id="queueAddPlayerSkillBtn" style="margin-bottom:0;" onclick="App.toggleSkillField('queueAddPlayerSkill')" data-placeholder="Rating">
-                <span class="skill-field-label">Rating</span>
-                <span class="skill-field-caret">&#9662;</span>
-              </button>
-              <input type="hidden" id="queueAddPlayerSkill" value="">
-            </div>
             <button type="button" class="btn-add-player" style="margin-top:0;flex-shrink:0;width:auto;padding:12px 16px;" onclick="App.submitQueueAddPlayer()">+ Add Player</button>
-          </div>
-          <div class="partner-picker skill-field-menu" id="queueAddPlayerSkillMenu" style="display:none;">
-            <div class="partner-picker-list">
-              <div class="partner-picker-item" onclick="App.setSkillField('queueAddPlayerSkill', 'beginner')">Beginner</div>
-              <div class="partner-picker-item" onclick="App.setSkillField('queueAddPlayerSkill', 'intermediate')">Intermediate</div>
-              <div class="partner-picker-item" onclick="App.setSkillField('queueAddPlayerSkill', 'advanced')">Advanced</div>
-              <div class="partner-picker-item" onclick="App.setSkillField('queueAddPlayerSkill', '')">Not Rated</div>
-            </div>
           </div>
         </div>
         <div class="queue-subsection-label">Waiting</div>
@@ -2715,7 +2700,7 @@ body {
     </div>
   </div>
 
-  <!-- ── Your name/skill, asked right when joining or creating a private session ── -->
+  <!-- ── Your name, asked right when joining or creating a private session ── -->
   <div id="selfProfileModal" class="hiw-overlay" style="display:none;" onclick="Onboard._selfProfileCancel(event)">
     <div class="hiw-modal" style="max-width:380px;" onclick="event.stopPropagation()">
       <div class="hiw-header">
@@ -2725,22 +2710,7 @@ body {
       <div class="hiw-body">
         <input type="text" class="setup-input" id="selfProfileName" placeholder="Your name" autocomplete="given-name" style="width:100%;" onkeydown="if(event.key==='Enter')Onboard._selfProfileSubmit()">
         <p id="selfProfileNameError" class="setup-error">Enter your name first</p>
-        <div class="skill-field" id="selfProfileSkillField" style="width:100%;">
-          <button type="button" class="setup-input skill-field-btn placeholder" id="selfProfileSkillBtn" onclick="App.toggleSkillField('selfProfileSkill')" data-placeholder="Skill level (optional)">
-            <span class="skill-field-label">Skill level (optional)</span>
-            <span class="skill-field-caret">&#9662;</span>
-          </button>
-          <input type="hidden" id="selfProfileSkill" value="">
-        </div>
-        <div class="partner-picker skill-field-menu" id="selfProfileSkillMenu" style="display:none;">
-          <div class="partner-picker-list">
-            <div class="partner-picker-item" onclick="App.setSkillField('selfProfileSkill', 'beginner')">Beginner</div>
-            <div class="partner-picker-item" onclick="App.setSkillField('selfProfileSkill', 'intermediate')">Intermediate</div>
-            <div class="partner-picker-item" onclick="App.setSkillField('selfProfileSkill', 'advanced')">Advanced</div>
-            <div class="partner-picker-item" onclick="App.setSkillField('selfProfileSkill', '')">Not Rated</div>
-          </div>
-        </div>
-        <p style="font-size:0.78rem;color:var(--text-muted);margin:0;">You can update this anytime from Settings.</p>
+        <p style="font-size:0.78rem;color:var(--text-muted);margin:0;">You'll join as Not Rated — set a skill level anytime from Settings.</p>
         <div style="display:flex;gap:10px;">
           <button type="button" class="btn-outline" style="flex:1;padding:12px;font-size:1rem;font-weight:700;" onclick="Onboard._selfProfileCancel()">Cancel</button>
           <button type="button" class="btn-confirm-join" style="flex:1;padding:12px;font-size:1rem;font-weight:700;" onclick="Onboard._selfProfileSubmit()">Join</button>
@@ -3234,12 +3204,11 @@ const App = {
   },
 
   // ─── Players ───────────────────────────────
-  // All session types add players via the inline name/skill fields pinned to
-  // the bottom of the queue (Quick Play and private sessions skip the skill
-  // field — players are added Not Rated and set their rating via the chip).
+  // All session types add players via the inline name field pinned to the
+  // bottom of the queue — everyone joins Not Rated and sets their rating
+  // afterward via the NR/B/I/A chip.
   submitQueueAddPlayer() {
     const nameEl = document.getElementById('queueAddPlayerName');
-    const skillEl = document.getElementById('queueAddPlayerSkill');
     const name = nameEl?.value.trim();
     if (!name) {
       const errEl = document.getElementById('queueAddPlayerError');
@@ -3249,14 +3218,13 @@ const App = {
     }
     const errEl = document.getElementById('queueAddPlayerError');
     if (errEl) errEl.style.display = 'none';
-    const isPvt = Session.id && Session.id.startsWith('pvt-');
-    const skillLevel = (!this.state._quickPlay && !isPvt && skillEl?.value) ? skillEl.value : null;
     const newId = this.state.nextId++;
     const now = Date.now();
     this.state.players.push({
       id: newId,
       name,
-      skillLevel,
+      // Added as Not Rated — set a rating afterward via the NR/B/I/A chip.
+      skillLevel: null,
       // A closed session (see closeSession) has everyone sitting out until
       // an admin reopens it — a newly-added player shouldn't slip into
       // Waiting and break that.
@@ -3271,7 +3239,6 @@ const App = {
     this.saveState();
     this.render();
     if (nameEl) nameEl.value = '';
-    this.setSkillField('queueAddPlayerSkill', '');
     // Re-focus to let a mouse/trackpad user add several names back-to-back
     // without re-clicking the field each time — but not on a touch-primary
     // device, where refocusing just pops the on-screen keyboard back open
@@ -5392,14 +5359,6 @@ ${bracketHTML}
     }
     const qAddRow = document.getElementById('queueAddPlayerRow');
     if (qAddRow) qAddRow.style.display = isLocked ? 'none' : '';
-    const qAddSkill = document.getElementById('queueAddPlayerSkillField');
-    // Open Play always sets ratings after the fact via the NR/B/I/A chip on
-    // each queue row (like Quick Play) — only Round Robin/Tournament, which
-    // build the full roster before locking it, get the field up front.
-    // Private sessions always behave like Quick Play here too: players are
-    // added as Not Rated and change their rating via the chip afterward.
-    const isPvtSkill = Session.id && Session.id.startsWith('pvt-');
-    if (qAddSkill) qAddSkill.style.display = (this.state._quickPlay || isPvtSkill || !structured) ? 'none' : '';
     // Logging a past match only makes sense for Open Play's live queue —
     // Round Robin/Tournament build matches from a locked roster/bracket instead.
     const btnLogMatch = document.getElementById('btnLogPastMatch');
@@ -7514,8 +7473,9 @@ const Onboard = {
     }
   },
 
-  // ─── Self profile (name/skill), asked right when joining or creating a
-  // private session instead of always sitting on the join page ───
+  // ─── Self profile (name only — see _selfProfileSubmit), asked right when
+  // joining or creating a private session instead of always sitting on the
+  // join page ───
   _selfProfileCtx: null,
 
   _promptSelfProfile(onComplete) {
@@ -7529,7 +7489,6 @@ const Onboard = {
     const nameEl = document.getElementById('selfProfileName');
     const errEl = document.getElementById('selfProfileNameError');
     if (nameEl) nameEl.value = Admin._user?.displayName || '';
-    App.setSkillField('selfProfileSkill', saved.skillLevel || '');
     if (errEl) errEl.style.display = 'none';
     document.getElementById('selfProfileModal').style.display = 'flex';
     document.body.style.overflow = 'hidden';
@@ -7545,7 +7504,6 @@ const Onboard = {
 
   _selfProfileSubmit() {
     const nameEl = document.getElementById('selfProfileName');
-    const skillEl = document.getElementById('selfProfileSkill');
     const errEl = document.getElementById('selfProfileNameError');
     const name = nameEl ? nameEl.value.trim() : '';
     if (!name) {
@@ -7554,7 +7512,9 @@ const Onboard = {
       return;
     }
     if (errEl) errEl.style.display = 'none';
-    const skillLevel = skillEl?.value || null;
+    // Only the name is asked here — everyone joins as Not Rated and sets a
+    // skill level later via Settings or the NR/B/I/A chip, same as Quick Play.
+    const skillLevel = this._savedUser()?.skillLevel ?? null;
     const user = { name, skillLevel };
     try { localStorage.setItem('courtManagerUser', JSON.stringify(user)); } catch(e) {}
     document.getElementById('selfProfileModal').style.display = 'none';
@@ -7716,10 +7676,6 @@ const Onboard = {
       }
       this._openBulkSetup({
         quickPlay: false,
-        // Private sessions set ratings the same way Quick Play does: everyone
-        // starts Not Rated and changes it later via the NR/B/I/A chip, so the
-        // bulk roster form skips the up-front rating dropdown too.
-        noSkill: true,
         onComplete: (players) => { this._pendingBulkPlayers = players; this.confirmJoin(); },
       });
     });
@@ -7937,8 +7893,8 @@ const Onboard = {
       return;
     }
     if (errEl) errEl.style.display = 'none';
-    const quickPlay = !!this._bulkCtx?.quickPlay;
-    const noSkill = quickPlay || !!this._bulkCtx?.noSkill;
+    // Everyone is added as Not Rated and sets a skill level afterward via
+    // the NR/B/I/A chip, so this roster form only asks for names.
     const list = document.getElementById('bulkNamesList');
     if (list) {
       list.innerHTML = '';
@@ -7953,34 +7909,7 @@ const Onboard = {
         nameInput.style.cssText = 'flex:1;margin-bottom:0;';
         nameInput.dataset.bulkName = i;
         row.appendChild(nameInput);
-        if (!noSkill) {
-          const fieldId = `bulkSkill_${i}`;
-          const skillWrap = document.createElement('div');
-          skillWrap.className = 'skill-field';
-          skillWrap.style.cssText = 'width:110px;flex-shrink:0;';
-          skillWrap.innerHTML = `
-            <button type="button" class="setup-input skill-field-btn placeholder" id="${fieldId}Btn" style="margin-bottom:0;" onclick="App.toggleSkillField('${fieldId}')" data-placeholder="Rating">
-              <span class="skill-field-label">Rating</span>
-              <span class="skill-field-caret">&#9662;</span>
-            </button>
-            <input type="hidden" id="${fieldId}" data-bulk-skill="${i}" value="">`;
-          row.appendChild(skillWrap);
-          const menu = document.createElement('div');
-          menu.className = 'partner-picker skill-field-menu';
-          menu.id = `${fieldId}Menu`;
-          menu.style.display = 'none';
-          menu.innerHTML = `
-            <div class="partner-picker-list">
-              <div class="partner-picker-item" onclick="App.setSkillField('${fieldId}', 'beginner')">Beginner</div>
-              <div class="partner-picker-item" onclick="App.setSkillField('${fieldId}', 'intermediate')">Intermediate</div>
-              <div class="partner-picker-item" onclick="App.setSkillField('${fieldId}', 'advanced')">Advanced</div>
-              <div class="partner-picker-item" onclick="App.setSkillField('${fieldId}', '')">Not Rated</div>
-            </div>`;
-          wrapper.appendChild(row);
-          wrapper.appendChild(menu);
-        } else {
-          wrapper.appendChild(row);
-        }
+        wrapper.appendChild(row);
         if (i === count) nameInput.onkeydown = (e) => { if (e.key === 'Enter') this._bulkSubmit(); };
         list.appendChild(wrapper);
       }
@@ -8001,11 +7930,9 @@ const Onboard = {
     const players = [];
     rows.forEach(row => {
       const nameEl = row.querySelector('[data-bulk-name]');
-      const skillEl = row.querySelector('[data-bulk-skill]');
       const name = nameEl?.value.trim();
       if (!name) return;
-      const skillLevel = skillEl?.value || null;
-      players.push({ name, skillLevel });
+      players.push({ name, skillLevel: null });
     });
     const errEl = document.getElementById('bulkNamesError');
     if (!players.length) {
