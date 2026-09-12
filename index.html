@@ -445,18 +445,20 @@ body {
   box-shadow: var(--shadow-sm);
   padding: 20px;
 }
-/* Colored header bar bleeding to the card's edges — same solid-color-block
+/* Colored header bar flush with the card's edges — same solid-color-block
    look as .court-header on the session/queue page, so the landing cards
-   (Sessions, Your Account) read as part of the same app. */
-.setup-block.has-header { overflow: hidden; }
+   (Sessions, Your Account) read as part of the same app. Same structure
+   .court-card/.court-header use: the card itself has no padding (so the
+   header, as its first child, is already flush with no offset to cancel),
+   and everything below the header gets its own padded body wrapper —
+   avoids the negative-margin-cancels-padding trick, which left a hairline
+   gap at some zoom/DPI levels. */
+.setup-block.has-header { padding: 0; overflow: hidden; }
+.setup-card-body { padding: 20px; }
 .setup-card-header {
   display: flex;
   align-items: center;
   gap: 10px;
-  /* -20px cancels .setup-block's padding, -1px its border, so the color
-     bleeds flush to the card's outer edge instead of leaving a hairline
-     sliver of border/background showing above it. */
-  margin: -21px -21px 16px;
   padding: 14px 20px;
   background: var(--primary);
   color: #fff;
@@ -537,7 +539,10 @@ body {
 }
 .session-list-joined {
   flex: 0 0 auto;
-  width: 120px;
+  /* In rem, not px, so it scales with the 0.75rem text — mobile bumps the
+     root font-size up (see the max-width:768px rule), and a fixed px
+     width was juuust narrow enough to clip the time there. */
+  width: 7rem;
   font-size: 0.75rem;
   color: var(--text-muted);
   text-align: right;
@@ -2367,6 +2372,7 @@ body {
           </div>
           <div class="setup-card-header-title">Sessions</div>
         </div>
+        <div class="setup-card-body">
         <div class="section-subtitle" style="margin-bottom:14px;">Create a session for your group and share the link or code with friends — they can join without signing in.</div>
         <button type="button" class="btn-outline" onclick="Onboard.toggleCreateSessionRow()" id="btn-create-private" style="width:100%;padding:12px 14px;font-size:1rem;font-weight:700;font-family:inherit;">+ Create New</button>
         <div id="createSessionRow" style="display:none;margin-top:10px;">
@@ -2413,6 +2419,7 @@ body {
         </div>
         <div id="privateSessionBubbles" class="session-list"></div>
         <div id="privateSessionsEmpty" class="section-subtitle" style="display:none;">No saved sessions yet.</div>
+        </div><!-- /setup-card-body -->
       </div>
       </div><!-- /sessionSelectionBlock -->
       <!-- Share-link join button (shown when joining via share link) -->
@@ -2432,11 +2439,13 @@ body {
           </div>
           <div class="setup-card-header-title">Your Account</div>
         </div>
+        <div class="setup-card-body">
         <div style="margin-bottom:14px;min-width:0;">
           <div id="signedInName" style="font-size:0.95rem;font-weight:600;color:var(--text);"></div>
           <div id="signedInAs" style="font-size:0.78rem;color:var(--text-muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;"></div>
         </div>
         <button type="button" class="btn-outline" onclick="MyHistory.show()" id="btnMyHistoryProfile" style="width:100%;padding:12px;font-size:1rem;font-weight:700;">My Match History</button>
+        </div><!-- /setup-card-body -->
       </div>
     </div>
   </div>
