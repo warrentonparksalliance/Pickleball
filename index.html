@@ -2175,6 +2175,30 @@ body {
     grid-template-columns: 1fr 1fr 1fr;
   }
 }
+
+/* ── Settings tab layout (tablet / desktop) ────── */
+/* Profile, Partner(s), and Share Link are always the top row. Admin-only
+   cards stack a second row beneath their related card (Session Type under
+   Profile, Session Admins under Partner(s), Passcode under Share Link).
+   Danger Zone and Admin History sit outside the 3-column grid, full width
+   at the bottom of the page. */
+@media (min-width: 769px) {
+  #tabSettings {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 14px;
+    align-items: start;
+  }
+  #tabSettings .settings-card { margin-bottom: 0; }
+  #profileSection { grid-column: 1; grid-row: 1; }
+  #sessionTypeSection { grid-column: 1; grid-row: 2; }
+  #partnerSection { grid-column: 2; grid-row: 1; }
+  #manageAdminsSection { grid-column: 2; grid-row: 2; }
+  #shareLinkSection { grid-column: 3; grid-row: 1; }
+  #passcodeSection { grid-column: 3; grid-row: 2; }
+  #dangerZone { grid-column: 1 / -1; grid-row: 3; }
+  #adminLogSection { grid-column: 1 / -1; grid-row: 4; }
+}
 </style>
 </head>
 <body>
@@ -2455,7 +2479,7 @@ body {
   <div id="tabSettings" class="tab-panel" style="display:none;">
 
     <!-- Profile -->
-    <div class="settings-card">
+    <div class="settings-card" id="profileSection">
       <div class="settings-card-title">Your Profile</div>
       <div style="display:flex;gap:8px;margin-bottom:8px;">
         <input type="text" class="setup-input" id="settingsName" placeholder="Display name" maxlength="30" style="flex:1;min-width:0;margin-bottom:0;">
