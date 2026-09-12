@@ -26,6 +26,9 @@
   --danger-border: #fecaca;
   --success: #10b981;
   --success-light: #ecfdf5;
+  --presence-live: #8b5cf6;
+  --partner: #f97316;
+  --partner-other: #eab308;
   --warning: #f59e0b;
   --warning-light: #fffbeb;
   --bg: #f2f6f3;
@@ -222,7 +225,17 @@ body {
   transition: background 0.15s, color 0.15s;
 }
 .btn-header:hover { background: rgba(255,255,255,0.15); color: #fff; }
-.btn-header.leave { color: #f87171; }
+.btn-header.leave {
+  color: #f87171;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  font-size: 1.3rem;
+  line-height: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
 .btn-header.leave:hover { background: rgba(248,113,113,0.15); }
 
 /* ── Tab Bar ────────────────────────────────── */
@@ -672,20 +685,23 @@ body {
 .skill-field-btn .skill-field-label { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .skill-field-caret { font-size: 0.65em; color: var(--text-muted); flex-shrink: 0; }
 .skill-field-menu { margin-bottom: 8px; }
-.partner-chip {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 8px 12px;
+/* Your Partner(s) card: same bubble as the queue/court chips (orange
+   border — see .chip-partner), just not draggable. Once there's more than
+   one partner, they split into Current Partner / Other Partners, same
+   shape as the queue's Waiting/Sitting Out split. */
+#partnerDisplay { margin-bottom: 8px; }
+#partnerDisplay .dnd-chip { cursor: default; }
+.partner-section-box { display: flex; flex-flow: row wrap; gap: 6px 8px; margin-bottom: 8px; }
+.partner-swap-prompt {
+  background: var(--hover-bg);
+  border: 1px solid var(--border);
   border-radius: var(--radius-sm);
-  background: var(--primary-light);
-  border: 1px solid var(--primary-muted);
+  padding: 8px 10px;
+  margin-bottom: 8px;
   font-size: 0.85rem;
-  font-weight: 500;
-  margin-bottom: 6px;
 }
-.partner-chip .partner-chip-name { flex: 1; }
-.partner-chip .partner-chip-remove {
+.partner-swap-prompt-text { margin-bottom: 6px; font-weight: 600; color: var(--text); }
+.partner-chip-remove {
   background: none;
   border: none;
   color: var(--text-muted);
@@ -694,16 +710,7 @@ body {
   padding: 0 2px;
   line-height: 1;
 }
-.partner-chip .partner-chip-remove:hover { color: var(--danger); }
-.queue-partner-badge {
-  font-size: 0.68rem;
-  font-weight: 700;
-  color: #92400e;
-  background: #fef3c7;
-  padding: 1px 5px;
-  border-radius: var(--radius-full);
-  letter-spacing: 0.02em;
-}
+.partner-chip-remove:hover { color: var(--danger); }
 .settings-actions {
   display: flex;
   gap: 8px;
@@ -782,6 +789,13 @@ body {
   font-style: normal;
   font-weight: 600;
 }
+/* Waiting is frozen while the session is closed (see App.closeSession) —
+   the drop strip stops looking/acting like a drop target. */
+.dnd-target-disabled {
+  pointer-events: none;
+  opacity: 0.6;
+  cursor: default;
+}
 .queue-subsection-label {
   font-size: 0.7rem;
   font-weight: 700;
@@ -836,23 +850,6 @@ body {
   padding: 1px 5px;
   border-radius: var(--radius-full);
   letter-spacing: 0.02em;
-}
-.queue-row-status {
-  font-size: 0.62rem;
-  font-weight: 700;
-  padding: 1px 5px;
-  border-radius: var(--radius-full);
-  letter-spacing: 0.02em;
-}
-.queue-row-status.guest {
-  color: var(--text-muted);
-  background: var(--hover-bg);
-  border: 1px solid var(--border);
-}
-.queue-row-status.user {
-  color: var(--primary);
-  background: var(--primary-light);
-  border: 1px solid var(--primary-muted);
 }
 .queue-row-skill-btn {
   font-size: 0.72rem;
@@ -1258,6 +1255,23 @@ body {
 }
 .qp-info-close:hover { color: var(--text); }
 
+/* ── Leave/Close session chooser (admin tapping the header X) ── */
+.leave-close-option { display: flex; align-items: center; gap: 8px; }
+.session-closed-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  background: var(--pending-bg);
+  border: 1px solid var(--pending-border);
+  color: var(--pending-text);
+  padding: 10px 14px;
+  border-radius: var(--radius-sm);
+  font-size: 0.85rem;
+  font-weight: 600;
+  margin-bottom: 14px;
+}
+
 /* ── Courts grid ────────────────────────────── */
 .courts-grid { display: flex; flex-direction: column; gap: 12px; }
 
@@ -1445,6 +1459,15 @@ body {
   user-select: none;
   -webkit-user-select: none;
 }
+/* Border color marks who a chip belongs to — green for the current
+   person, purple for another signed-in user, orange for your partner —
+   instead of a text badge. */
+.dnd-chip.chip-self { border-color: var(--success); }
+.dnd-chip.chip-live { border-color: var(--presence-live); }
+.dnd-chip.chip-partner { border-color: var(--partner); }
+/* Other Partners (Settings > Your Partner(s), not currently used for
+   match-making) get a yellow border instead of the current partner's orange. */
+.dnd-chip.chip-partner-other { border-color: var(--partner-other); }
 .dnd-chip.dnd-selected {
   border-color: var(--primary);
   background: var(--primary-light);
@@ -1842,6 +1865,23 @@ body {
   min-width: 40px;
 }
 .history-empty { padding: 8px 0; font-size: 0.82rem; color: var(--text-muted); font-style: italic; }
+.history-session-closed {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 0;
+  font-size: 0.76rem;
+  font-weight: 700;
+  color: var(--text-muted);
+  text-align: center;
+  justify-content: center;
+}
+.history-session-closed::before, .history-session-closed::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--border-strong);
+}
 .btn-my-matches-active { background: var(--primary) !important; color: white !important; border-color: var(--primary) !important; }
 .swipe-wrap { position: relative; overflow: hidden; border-radius: var(--radius); }
 .swipe-wrap .match-card { position: relative; z-index: 1; transition: transform 0.2s ease; touch-action: pan-y; }
@@ -2132,7 +2172,7 @@ body {
       <div class="header-location">
         <span class="session-status-dot"></span>
       </div>
-      <button class="btn-header leave" onclick="Session.leave()">Leave Session</button>
+      <button class="btn-header leave" onclick="Session.leaveOrClose()" aria-label="Leave session" title="Leave session">&times;</button>
     </div>
   </div>
 </header>
@@ -2147,6 +2187,13 @@ body {
 </nav>
 
 <div class="page-wrap">
+
+  <!-- Shown while an admin has closed the session (see App.closeSession) —
+       everyone's sitting out and the queue is frozen until it's reopened. -->
+  <div id="sessionClosedBanner" class="session-closed-banner" style="display:none;">
+    <span>This session is closed. Everyone's sitting out until an admin reopens it.</span>
+    <button type="button" class="btn-outline" id="btnOpenSession" style="display:none;flex-shrink:0;" onclick="App.openSession()">Open Session</button>
+  </div>
 
   <!-- Super admin panel -->
   <div id="superAdminSection" class="settings-card" style="display:none;margin-bottom:14px;">
@@ -2335,7 +2382,7 @@ body {
             <div class="partner-picker-item" onclick="App.setSkillField('queueAddPlayerSkill', 'beginner')">Beginner</div>
             <div class="partner-picker-item" onclick="App.setSkillField('queueAddPlayerSkill', 'intermediate')">Intermediate</div>
             <div class="partner-picker-item" onclick="App.setSkillField('queueAddPlayerSkill', 'advanced')">Advanced</div>
-            <div class="partner-picker-item" onclick="App.setSkillField('queueAddPlayerSkill', '')">Clear rating</div>
+            <div class="partner-picker-item" onclick="App.setSkillField('queueAddPlayerSkill', '')">Not Rated</div>
           </div>
         </div>
       </div>
@@ -2404,7 +2451,7 @@ body {
           <div class="partner-picker-item" onclick="App.setSkillField('settingsSkill', 'beginner')">Beginner</div>
           <div class="partner-picker-item" onclick="App.setSkillField('settingsSkill', 'intermediate')">Intermediate</div>
           <div class="partner-picker-item" onclick="App.setSkillField('settingsSkill', 'advanced')">Advanced</div>
-          <div class="partner-picker-item" onclick="App.setSkillField('settingsSkill', '')">Clear rating</div>
+          <div class="partner-picker-item" onclick="App.setSkillField('settingsSkill', '')">Not Rated</div>
         </div>
       </div>
       <div style="display:flex;align-items:center;justify-content:flex-end;">
@@ -2416,7 +2463,6 @@ body {
     <div class="settings-card" id="partnerSection">
       <div class="settings-card-title">Your Partner(s)</div>
       <div id="partnerOnlineBlock">
-        <p class="section-subtitle" id="partnerSubtitle" style="margin-bottom:10px;">When both you and a partner are in the queue, you'll be placed on the same side in doubles. If a partner isn't available, you'll be assigned normally.</p>
         <div id="partnerDisplay"></div>
         <button class="btn-add-partner" id="btnAddPartner" onclick="App.togglePartnerPicker()">+ Add Partner</button>
         <div class="partner-picker" id="partnerPicker" style="display:none;">
@@ -2607,6 +2653,21 @@ body {
     </div>
   </div>
 
+  <!-- ── Double-tap Waiting/Sitting Out/Leave Session to pick a player ── -->
+  <div id="fillQueueModal" class="hiw-overlay" style="display:none;" onclick="App.closeFillQueuePicker(event)">
+    <div class="hiw-modal" style="max-width:380px;" onclick="event.stopPropagation()">
+      <div class="hiw-header">
+        <h2 id="fillQueueModalTitle">Move a Player</h2>
+        <button class="hiw-close" onclick="App.closeFillQueuePicker()" aria-label="Close">&times;</button>
+      </div>
+      <div class="hiw-body">
+        <div class="partner-picker" style="margin-top:0;">
+          <div class="partner-picker-list" id="fillQueuePickerList"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <!-- ── Your name/skill, asked right when joining or creating a private session ── -->
   <div id="selfProfileModal" class="hiw-overlay" style="display:none;" onclick="Onboard._selfProfileCancel(event)">
     <div class="hiw-modal" style="max-width:380px;" onclick="event.stopPropagation()">
@@ -2629,7 +2690,7 @@ body {
             <div class="partner-picker-item" onclick="App.setSkillField('selfProfileSkill', 'beginner')">Beginner</div>
             <div class="partner-picker-item" onclick="App.setSkillField('selfProfileSkill', 'intermediate')">Intermediate</div>
             <div class="partner-picker-item" onclick="App.setSkillField('selfProfileSkill', 'advanced')">Advanced</div>
-            <div class="partner-picker-item" onclick="App.setSkillField('selfProfileSkill', '')">Clear rating</div>
+            <div class="partner-picker-item" onclick="App.setSkillField('selfProfileSkill', '')">Not Rated</div>
           </div>
         </div>
         <p style="font-size:0.78rem;color:var(--text-muted);margin:0;">You can update this anytime from Settings.</p>
@@ -2760,6 +2821,30 @@ body {
         <p style="font-size:0.85rem;color:var(--text-light);line-height:1.5;margin:0;">Quick Play isn&rsquo;t saved. If you leave now, all players, scores, and courts will be lost.</p>
         <button type="button" id="quickPlaySaveBtn" class="btn-confirm-join" style="width:100%;padding:12px;font-size:1rem;font-weight:700;" onclick="Session.leaveModalSaveAndContinue()">Sign in with Google to Save</button>
         <button type="button" class="btn-danger" style="width:100%;padding:12px;font-size:1rem;font-weight:700;" onclick="Session.leaveModalDiscard()">Leave Without Saving</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Admin tapping the header X: leave (just you) or close (everyone) ── -->
+  <div id="leaveCloseModal" class="hiw-overlay" style="display:none;" onclick="Session._leaveCloseCancel(event)">
+    <div class="hiw-modal" style="max-width:380px;" onclick="event.stopPropagation()">
+      <div class="hiw-header">
+        <h2>Leave or Close Session?</h2>
+        <button class="hiw-close" onclick="Session._leaveCloseCancel()" aria-label="Close">&times;</button>
+      </div>
+      <div class="hiw-body">
+        <div class="leave-close-option">
+          <button type="button" class="btn-outline" style="flex:1;padding:12px;font-size:1rem;font-weight:700;" onclick="Session._confirmLeave()">Leave Session</button>
+          <button type="button" class="qp-info-btn" aria-label="What does Leave Session do?" onclick="Session._toggleLeaveCloseInfo(event, 'leave')">?</button>
+        </div>
+        <div class="leave-close-option">
+          <button type="button" class="btn-danger" style="flex:1;padding:12px;font-size:1rem;font-weight:700;" onclick="Session._confirmClose()">Close Session</button>
+          <button type="button" class="qp-info-btn" aria-label="What does Close Session do?" onclick="Session._toggleLeaveCloseInfo(event, 'close')">?</button>
+        </div>
+        <div id="leaveCloseInfoPopover" class="qp-info-popover" style="display:none;">
+          <span id="leaveCloseInfoText"></span>
+          <button type="button" class="qp-info-close" onclick="Session._closeLeaveCloseInfo()" aria-label="Close description">&times;</button>
+        </div>
       </div>
     </div>
   </div>
@@ -2935,6 +3020,7 @@ const App = {
   _tapSelection: null,
   _proposedUndoStack: [],
   _fillSlotTarget: null,
+  _fillQueueTarget: null,
 
   // ─── Tab switching ──────────────────────────
   switchTab(tab) {
@@ -2993,6 +3079,20 @@ const App = {
     const s = this.state;
     if (!Array.isArray(s.players)) s.players = [];
     if (!Array.isArray(s.teams)) s.teams = [];
+    // Backfill "current" on teams from before the Current/Other Partner
+    // split existed — first team touching each player wins, so anyone with
+    // more than one team ends up with exactly one current (see
+    // addTeamWithSelf/promptSwapCurrentPartner for how new teams get this).
+    if (s.teams.some(t => t.current === undefined)) {
+      const claimed = new Set();
+      for (const t of s.teams) {
+        if (t.current !== undefined) { claimed.add(t.p1); claimed.add(t.p2); continue; }
+        const already = claimed.has(t.p1) || claimed.has(t.p2);
+        t.current = !already;
+        claimed.add(t.p1);
+        claimed.add(t.p2);
+      }
+    }
     if (!Array.isArray(s.roundHistory)) s.roundHistory = [];
     s.activeGames  = this._toObject(s.activeGames);
     s.scoringGames = this._toObject(s.scoringGames);
@@ -3000,6 +3100,13 @@ const App = {
     for (const g of Object.values(s.proposedGames)) {
       if (g && !Array.isArray(g.side1)) g.side1 = g.side1 ? Object.values(g.side1) : [];
       if (g && !Array.isArray(g.side2)) g.side2 = g.side2 ? Object.values(g.side2) : [];
+    }
+    // Self-heal sessions from before setSessionType cleared proposedGames on
+    // a type switch: Round Robin/Tournament never create proposed matches of
+    // their own, so any left over here are stale and were hiding their
+    // players from the queue (getPlayersOnCourts() still counted them).
+    if (s._sessionType && s._sessionType !== 'open' && Object.keys(s.proposedGames).length) {
+      s.proposedGames = {};
     }
     s.opponentHistory = this._toObject(s.opponentHistory);
     s.roundsWaited    = this._toObject(s.roundsWaited);
@@ -3125,7 +3232,10 @@ const App = {
       id: newId,
       name,
       skillLevel,
-      active: true,
+      // A closed session (see closeSession) has everyone sitting out until
+      // an admin reopens it — a newly-added player shouldn't slip into
+      // Waiting and break that.
+      active: !this.state._closed,
       isLive: false,
       addedBy: Onboard.selfId,
       joinedAt: now,
@@ -3269,6 +3379,11 @@ const App = {
   // <select> would be, via .value) plus a button (#fieldIdBtn) and an
   // inline options list (#fieldIdMenu) kept in sync here.
   _skillFieldLabels: { beginner: 'Beginner', intermediate: 'Intermediate', advanced: 'Advanced' },
+  _skillFieldAbbrevs: { beginner: 'B', intermediate: 'I', advanced: 'A' },
+  // The session settings rating field shows only the abbreviation once
+  // collapsed (matching the NR/B/I/A chip elsewhere) instead of the full
+  // word every other rating field uses.
+  _skillFieldAbbrevOnly: new Set(['settingsSkill']),
 
   toggleSkillField(fieldId) {
     const menu = document.getElementById(fieldId + 'Menu');
@@ -3284,7 +3399,13 @@ const App = {
     const btn = document.getElementById(fieldId + 'Btn');
     if (btn) {
       const label = btn.querySelector('.skill-field-label');
-      if (label) label.textContent = value ? this._skillFieldLabels[value] : (btn.dataset.placeholder || 'Rating');
+      if (label) {
+        if (this._skillFieldAbbrevOnly.has(fieldId)) {
+          label.textContent = value ? this._skillFieldAbbrevs[value] : 'NR';
+        } else {
+          label.textContent = value ? this._skillFieldLabels[value] : (btn.dataset.placeholder || 'Rating');
+        }
+      }
       btn.classList.toggle('placeholder', !value);
     }
     const menu = document.getElementById(fieldId + 'Menu');
@@ -3321,6 +3442,10 @@ const App = {
 
 
   // ─── Teams ─────────────────────────────────
+  // A player can have more than one partner saved, but only one is ever
+  // "current" — the one actually used for match-making (see
+  // _rankedQueueUnits/_buildTeamUnits) and shown with the orange chip
+  // border on the Courts tab. The rest sit in "Other Partners" as reserves.
   addTeamWithSelf(playerId) {
     const selfId = Onboard.selfId;
     if (!selfId || selfId === playerId) return;
@@ -3328,7 +3453,8 @@ const App = {
       (t.p1 === selfId && t.p2 === playerId) || (t.p2 === selfId && t.p1 === playerId)
     );
     if (existing) return; // use remove button instead
-    this.state.teams.push({ id: this.state.nextId++, p1: selfId, p2: playerId, doNotSplit: true });
+    const hasCurrent = this.state.teams.some(t => (t.p1 === selfId || t.p2 === selfId) && t.current);
+    this.state.teams.push({ id: this.state.nextId++, p1: selfId, p2: playerId, doNotSplit: true, current: !hasCurrent });
     this._teamsLocalChange = Date.now();
     const picker = document.getElementById('partnerPicker');
     if (picker) picker.style.display = 'none';
@@ -3340,6 +3466,73 @@ const App = {
     this.state.teams = this.state.teams.filter(t => t.id !== id);
     this._teamsLocalChange = Date.now();
     this.saveState();
+    this.render();
+  },
+
+  _currentPartnerTeam(selfTeams) {
+    return selfTeams.find(t => t.current) || selfTeams[0] || null;
+  },
+
+  _partnerSwapPending: null,
+
+  // Tapping an Other Partner chip proposes swapping them in as current —
+  // confirmed with a Yes/No since it demotes whoever's current now.
+  promptSwapCurrentPartner(teamId) {
+    this._partnerSwapPending = { type: 'promote', teamId };
+    this.render();
+  },
+
+  confirmSwapCurrentPartner() {
+    const pending = this._partnerSwapPending;
+    if (!pending || pending.type !== 'promote') return;
+    const selfId = Onboard.selfId;
+    this.state.teams.forEach(t => {
+      if (t.p1 === selfId || t.p2 === selfId) t.current = (t.id === pending.teamId);
+    });
+    this._partnerSwapPending = null;
+    this._teamsLocalChange = Date.now();
+    this.saveState();
+    this.render();
+  },
+
+  cancelSwapCurrentPartner() {
+    this._partnerSwapPending = null;
+    this.render();
+  },
+
+  // The × on a partner chip. Removing an Other Partner is immediate — but
+  // there's always exactly one current partner whenever any partner exists,
+  // so removing the current one while others remain requires picking who
+  // takes over first (see confirmRemoveCurrentPartner), rather than ever
+  // leaving Current Partner empty with reserves still sitting there.
+  requestRemovePartner(teamId) {
+    const selfId = Onboard.selfId;
+    const selfTeams = this.state.teams.filter(t => t.p1 === selfId || t.p2 === selfId);
+    const currentTeam = this._currentPartnerTeam(selfTeams);
+    const others = selfTeams.filter(t => t.id !== teamId);
+    if (!currentTeam || currentTeam.id !== teamId || others.length === 0) {
+      this._partnerSwapPending = null;
+      this.removeTeam(teamId);
+      return;
+    }
+    this._partnerSwapPending = { type: 'removeCurrent', teamId };
+    this.render();
+  },
+
+  confirmRemoveCurrentPartner(newCurrentTeamId) {
+    const pending = this._partnerSwapPending;
+    if (!pending || pending.type !== 'removeCurrent') return;
+    this.state.teams = this.state.teams.filter(t => t.id !== pending.teamId);
+    const promoted = this.state.teams.find(t => t.id === newCurrentTeamId);
+    if (promoted) promoted.current = true;
+    this._partnerSwapPending = null;
+    this._teamsLocalChange = Date.now();
+    this.saveState();
+    this.render();
+  },
+
+  cancelRemoveCurrentPartner() {
+    this._partnerSwapPending = null;
     this.render();
   },
 
@@ -3994,7 +4187,7 @@ const App = {
   _buildTeamUnits() {
     const playerIds = this.state.players.map(p => p.id);
     const idSet = new Set(playerIds);
-    const explicitTeams = this.state.teams.filter(t => idSet.has(t.p1) && idSet.has(t.p2));
+    const explicitTeams = this.state.teams.filter(t => t.current && idSet.has(t.p1) && idSet.has(t.p2));
     const pairedIds = new Set(explicitTeams.flatMap(t => [t.p1, t.p2]));
     const solos = this.shuffle(playerIds.filter(id => !pairedIds.has(id)));
     if (solos.length % 2 !== 0) return null;
@@ -4052,6 +4245,15 @@ const App = {
     this.state._sessionType = type || 'open';
     this.state.activeGames = {};
     this.state.scoringGames = {};
+    // Proposed (not-yet-confirmed) matches must be cleared too — otherwise
+    // whoever was sitting in one stays wrongly counted as "on a court" by
+    // getPlayersOnCourts() forever, vanishing from the queue while still
+    // counted in raw roster counts elsewhere (e.g. Round Robin/
+    // Tournament's own "N players" summary), with no way back short of
+    // removing them from the session entirely.
+    this.state.proposedGames = {};
+    this._proposedUndoStack = [];
+    this._tapSelection = null;
     this.state._rrSchedule = [];
     this.state._rrCurrentRound = 0;
     this.state._rrLocked = false;
@@ -4698,8 +4900,10 @@ ${bracketHTML}
   // first) as a tiebreak. Units are shuffled once beforehand so a remaining
   // tie resolves randomly rather than always favoring the same player.
   _rankedQueueUnits(allQueue) {
+    // Only a player's *current* partner (see renderPartners/addTeamWithSelf)
+    // is used for pairing — Other Partners are just reserves, not counted.
     const activePairs = this.state.teams.filter(t =>
-      allQueue.some(p => p.id === t.p1) && allQueue.some(p => p.id === t.p2)
+      t.current && allQueue.some(p => p.id === t.p1) && allQueue.some(p => p.id === t.p2)
     );
     const pairedIds = new Set(activePairs.flatMap(t => [t.p1, t.p2]));
     const soloPlayers = allQueue.filter(p => !pairedIds.has(p.id));
@@ -5034,6 +5238,39 @@ ${bracketHTML}
     this.render();
   },
 
+  // ─── Close / Open Session (admin-only pause) ───
+  // Closing pulls every player off any current or proposed match and into
+  // Sitting Out, and freezes the queue — nobody can move into Waiting or
+  // onto a court (see _movePlayer's _closed check) — until an admin
+  // explicitly opens it again. Matching starts fresh once reopened: the
+  // opponent-repeat history and fairness rotation from before the close
+  // no longer count, but the roster, names, and past match history stay.
+  closeSession() {
+    if (!Admin.isAdmin()) return;
+    this._logAdmin('Close Session');
+    this.state.activeGames = {};
+    this.state.scoringGames = {};
+    this.state.proposedGames = {};
+    this.state.players.forEach(p => { p.active = false; });
+    this.state.opponentHistory = {};
+    this.state.roundsWaited = {};
+    this.state.round = 0;
+    this.state.roundHistory.push({ sessionClosed: true, side1: [], side2: [], at: Date.now() });
+    this.state._closed = true;
+    this._proposedUndoStack = [];
+    this._tapSelection = null;
+    this.saveState();
+    this.render();
+  },
+
+  openSession() {
+    if (!Admin.isAdmin()) return;
+    this._logAdmin('Open Session');
+    this.state._closed = false;
+    this.saveState();
+    this.render();
+  },
+
   resetAll() {
     if (!Admin.isAdmin()) return;
     if (!confirm('Reset everything? All players, teams, courts, and history will be cleared. All users will be logged out of the session.')) return;
@@ -5083,6 +5320,13 @@ ${bracketHTML}
     // Re-evaluate admin visibility (session admin depends on state._admins)
     if (typeof Admin !== 'undefined') Admin._updateUI();
 
+    const closedBanner = document.getElementById('sessionClosedBanner');
+    if (closedBanner) {
+      closedBanner.style.display = this.state._closed ? 'flex' : 'none';
+      const openBtn = document.getElementById('btnOpenSession');
+      if (openBtn) openBtn.style.display = (typeof Admin !== 'undefined' && Admin.isAdmin()) ? '' : 'none';
+    }
+
     const rr = this.isRoundRobin();
     const tourn = this.isTournament();
     const structured = rr || tourn;
@@ -5106,7 +5350,10 @@ ${bracketHTML}
     const qAddRow = document.getElementById('queueAddPlayerRow');
     if (qAddRow) qAddRow.style.display = isLocked ? 'none' : '';
     const qAddSkill = document.getElementById('queueAddPlayerSkillField');
-    if (qAddSkill) qAddSkill.style.display = this.state._quickPlay ? 'none' : '';
+    // Open Play always sets ratings after the fact via the NR/B/I/A chip on
+    // each queue row (like Quick Play) — only Round Robin/Tournament, which
+    // build the full roster before locking it, get the field up front.
+    if (qAddSkill) qAddSkill.style.display = (this.state._quickPlay || !structured) ? 'none' : '';
     // Logging a past match only makes sense for Open Play's live queue —
     // Round Robin/Tournament build matches from a locked roster/bracket instead.
     const btnLogMatch = document.getElementById('btnLogPastMatch');
@@ -5144,12 +5391,6 @@ ${bracketHTML}
     // hidden once a round robin/tournament is locked since teams are then fixed
     const partnerSection = document.getElementById('partnerSection');
     if (partnerSection) partnerSection.style.display = (structured && isLocked) ? 'none' : '';
-    const partnerSubtitle = document.getElementById('partnerSubtitle');
-    if (partnerSubtitle) {
-      partnerSubtitle.textContent = structured
-        ? `Add a partner and you'll be teamed together for the whole ${rr ? 'round robin' : 'tournament'}. Anyone without a partner is randomly paired with another player once the roster is locked.`
-        : `When both you and a partner are in the queue, you'll be placed on the same side in doubles. If a partner isn't available, you'll be assigned normally.`;
-    }
 
     // Show unlock button for admin in round robin or tournament
     const unlockBtn = document.getElementById('rrUnlockBtn');
@@ -5209,6 +5450,18 @@ ${bracketHTML}
     if (waitingWrap) waitingWrap.style.display = structured ? 'none' : '';
     if (removeZoneTitle) removeZoneTitle.style.display = isLocked ? 'none' : '';
 
+    // While the session is closed (see closeSession), Waiting is frozen —
+    // say so where the drop strip normally explains what dropping there does.
+    const closed = !!this.state._closed;
+    const dropQueue = document.getElementById('queueDropQueue');
+    if (dropQueue) {
+      dropQueue.textContent = closed ? 'Session closed — waiting for an admin to reopen' : 'Drag or tap to enter queue';
+      dropQueue.classList.toggle('dnd-target-disabled', closed);
+    }
+    // Waiting is always empty while closed (everyone's forced to Sitting
+    // Out), so the list itself doubles as a drop target — disable it too.
+    if (activeEl) activeEl.classList.toggle('dnd-target-disabled', closed);
+
     // The Yes/No confirm renders inside the Leave Session zone itself —
     // where the player was just dropped/tapped — rather than back at their
     // old row in Waiting/Sitting Out, so it appears where the click happened.
@@ -5248,16 +5501,14 @@ ${bracketHTML}
         </div>`;
       }
       const selfId = Onboard.selfId;
+      // Only the *current* partner gets the orange border — an Other
+      // Partner isn't actually being used for match-making right now.
       const isPartner = selfId && selfId !== p.id && this.state.teams.some(t =>
-        (t.p1 === selfId && t.p2 === p.id) || (t.p2 === selfId && t.p1 === p.id)
+        t.current && ((t.p1 === selfId && t.p2 === p.id) || (t.p2 === selfId && t.p1 === p.id))
       );
-      const partnerBadge = isPartner ? '<span class="queue-partner-badge">partner</span>' : '';
       const isMyGuest = !p.isLive && p.addedBy === selfId;
       const canEdit = isMyGuest && !isYou;
       const editBtn = canEdit ? `<button class="queue-row-btn queue-row-action" onclick="App.editGuest(${p.id})" title="Edit guest">&#x270E;</button>` : '';
-      const statusBadge = isYou ? '<span class="queue-row-you">you</span>'
-        : p.isLive ? '<span class="queue-row-status user">user</span>'
-        : '';
       const skillBtn = this.state.options.useSkill
         ? `<button class="queue-row-skill-btn${p.skillLevel ? ' set' : ''}" onclick="App.toggleSkillPicker(${p.id})" title="Set skill level">${this.skillAbbrev(p)}</button>`
         : '';
@@ -5266,12 +5517,16 @@ ${bracketHTML}
           <div class="partner-picker-item" onclick="App.setPlayerSkillLevel(${p.id}, 'beginner')">Beginner</div>
           <div class="partner-picker-item" onclick="App.setPlayerSkillLevel(${p.id}, 'intermediate')">Intermediate</div>
           <div class="partner-picker-item" onclick="App.setPlayerSkillLevel(${p.id}, 'advanced')">Advanced</div>
-          <div class="partner-picker-item" onclick="App.setPlayerSkillLevel(${p.id}, null)">Clear rating</div>
+          <div class="partner-picker-item" onclick="App.setPlayerSkillLevel(${p.id}, null)">Not Rated</div>
         </div>
       </div>` : '';
       const selected = this._tapSelection && this._tapSelection.playerId === p.id ? ' dnd-selected' : '';
+      // Border color marks whose chip this is (green = you, orange = your
+      // partner, purple = another signed-in user) instead of a text badge —
+      // see .chip-self/.chip-partner/.chip-live.
+      const presenceClass = isYou ? ' chip-self' : isPartner ? ' chip-partner' : (p.isLive ? ' chip-live' : '');
       return `<div class="queue-row">
-        <span class="queue-row-name dnd-chip${selected}" data-player-id="${p.id}"><span class="queue-row-name-text">${this.esc(p.name)}</span>${editBtn}${skillBtn}${statusBadge}${partnerBadge}</span>
+        <span class="queue-row-name dnd-chip${selected}${presenceClass}" data-player-id="${p.id}"><span class="queue-row-name-text">${this.esc(p.name)}</span>${editBtn}${skillBtn}</span>
       </div>${skillPicker}`;
     };
 
@@ -5325,23 +5580,65 @@ ${bracketHTML}
     if (!selfId) {
       display.innerHTML = '';
       if (btn) btn.style.display = 'none';
+      this._partnerSwapPending = null;
       return;
     }
     if (btn) btn.style.display = '';
     const selfTeams = this.state.teams.filter(t => t.p1 === selfId || t.p2 === selfId);
     if (btn) btn.textContent = selfTeams.length > 0 ? '+ Add Another Partner' : '+ Add Partner';
     if (selfTeams.length === 0) {
+      this._partnerSwapPending = null;
       display.innerHTML = '<div style="color:var(--text-muted);font-size:0.82rem;margin-bottom:8px;">No partners selected</div>';
       return;
     }
-    display.innerHTML = selfTeams.map(t => {
-      const partnerId = t.p1 === selfId ? t.p2 : t.p1;
-      const p = this.getPlayer(partnerId);
-      return `<div class="partner-chip">
-        <span class="partner-chip-name">${this.esc(p?.name || '?')}</span>
-        <button class="partner-chip-remove" onclick="App.removeTeam(${t.id})" title="Remove partner">&times;</button>
+
+    const nameFor = t => this.esc(this.getPlayer(t.p1 === selfId ? t.p2 : t.p1)?.name || '?');
+    // Current Partner gets the same orange border as on the Courts tab;
+    // Other Partners get a yellow border instead, so the two are never
+    // mistaken for each other at a glance.
+    const chip = (t, opts = {}) => `<span class="dnd-chip ${opts.other ? 'chip-partner-other' : 'chip-partner'}" data-team-id="${t.id}"${opts.onclick ? ` onclick="${opts.onclick}" title="Tap to make current partner" style="cursor:pointer;"` : ''}>
+        <span class="queue-row-name-text">${nameFor(t)}</span>
+        <button class="partner-chip-remove" onclick="${opts.stopPropagation ? 'event.stopPropagation();' : ''}App.requestRemovePartner(${t.id})" title="Remove partner">&times;</button>
+      </span>`;
+
+    // Just one partner: no Current/Other split needed — same as the queue
+    // only splitting into Waiting/Sitting Out once there's someone to split.
+    if (selfTeams.length === 1) {
+      this._partnerSwapPending = null;
+      display.innerHTML = `<div class="partner-section-box">${chip(selfTeams[0])}</div>`;
+      return;
+    }
+
+    const currentTeam = this._currentPartnerTeam(selfTeams);
+    const otherTeams = selfTeams.filter(t => t.id !== currentTeam.id);
+    const pending = this._partnerSwapPending;
+
+    let html = `<div class="queue-subsection-label">Current Partner</div>
+      <div class="partner-section-box">${chip(currentTeam)}</div>`;
+
+    if (pending && pending.type === 'removeCurrent' && pending.teamId === currentTeam.id) {
+      html += `<div class="partner-swap-prompt">
+        <div class="partner-swap-prompt-text">${nameFor(currentTeam)} is your current partner &mdash; choose who takes over:</div>
+        <div class="partner-picker-list">${otherTeams.map(t =>
+          `<div class="partner-picker-item" onclick="App.confirmRemoveCurrentPartner(${t.id})">${nameFor(t)}</div>`
+        ).join('')}</div>
+        <button type="button" class="btn-edit-cancel" onclick="App.cancelRemoveCurrentPartner()" style="margin-top:6px;">Cancel</button>
       </div>`;
-    }).join('');
+    }
+
+    html += `<div class="queue-subsection-label" style="margin-top:10px;">Other Partners</div>
+      <div class="partner-section-box">${otherTeams.map(t => {
+        if (pending && pending.type === 'promote' && pending.teamId === t.id) {
+          return `<div class="queue-row-confirm">
+            <span>Make ${nameFor(t)} current?</span>
+            <button onclick="App.confirmSwapCurrentPartner()">Yes</button>
+            <button onclick="App.cancelSwapCurrentPartner()">No</button>
+          </div>`;
+        }
+        return chip(t, { onclick: `App.promptSwapCurrentPartner(${t.id})`, stopPropagation: true, other: true });
+      }).join('')}</div>`;
+
+    display.innerHTML = html;
   },
 
   // Open Play always shows one card per court id from 1 to "Courts available
@@ -5562,9 +5859,10 @@ ${bracketHTML}
     const selected = this._tapSelection && this._tapSelection.playerId === playerId ? ' dnd-selected' : '';
     // Skill level is a queue-only detail — once someone's on a court, which
     // team they're on already reflects any skill-based matching.
-    const youBadge = isYou ? ' <span class="queue-row-you">you</span>' : '';
-    const userBadge = !isYou && p.isLive ? ' <span class="queue-row-status user">user</span>' : '';
-    return `<span class="dnd-chip${selected}" data-player-id="${playerId}">${this.esc(p.name)}${youBadge}${userBadge}</span>`;
+    // Border color marks whose chip this is (green = you, purple = another
+    // signed-in user) instead of a text badge — see .chip-self/.chip-live.
+    const presenceClass = isYou ? ' chip-self' : (p.isLive ? ' chip-live' : '');
+    return `<span class="dnd-chip${selected}${presenceClass}" data-player-id="${playerId}">${this.esc(p.name)}</span>`;
   },
 
   // ─── Drag & drop + tap-to-move ─────
@@ -5585,6 +5883,11 @@ ${bracketHTML}
 
   _movePlayer(playerId, from, to) {
     if (this._locEq(from, to)) return;
+
+    // A closed session (see closeSession/openSession) is fully paused —
+    // nobody moves into Waiting or onto a court until an admin reopens it.
+    // Sitting Out and Leave Session stay open the whole time.
+    if (this.state._closed && (to.type === 'queue' || to.type === 'slot')) return;
 
     // Dropping/tapping onto Remove doesn't move the player anywhere — it
     // just surfaces the same Yes/No confirm the row would show elsewhere.
@@ -5780,24 +6083,45 @@ ${bracketHTML}
   // proposed court match sends them straight back to the queue — a
   // quicker shortcut than dragging/tapping them off one at a time.
   // Double-clicking/double-tapping an empty court slot's placeholder opens
-  // the fill picker (see openFillSlotPicker) — a single tap doesn't, since
-  // that was too easy to trigger by accident while scrolling past a card.
+  // the fill picker (see openFillSlotPicker), and doing the same anywhere
+  // in the Waiting or Sitting Out list opens a picker for pulling a player
+  // in from the other list (see openFillQueuePicker) — a single tap doesn't
+  // trigger either, since that was too easy to trigger by accident while
+  // scrolling past a card.
   _onDndDblClick(e) {
+    // Double-clicking a button/input/menu item (rating chip, guest name-edit
+    // field, skill picker) should just do whatever that control already does
+    // on click — not also fall through into opening a fill picker underneath it.
+    if (e.target.closest('button, input, select, textarea, .partner-picker-item, .queue-row-edit')) return;
     const chipEl = e.target.closest('.dnd-chip');
     if (chipEl) {
       const slotEl = chipEl.closest('[data-loc-type="slot"]');
-      if (!slotEl) return;
-      const playerId = Number(chipEl.dataset.playerId);
-      const from = this._locFromEl(slotEl);
-      this._tapSelection = null;
-      this._movePlayer(playerId, from, { type: 'queue' });
-      return;
+      if (slotEl) {
+        const playerId = Number(chipEl.dataset.playerId);
+        const from = this._locFromEl(slotEl);
+        this._tapSelection = null;
+        this._movePlayer(playerId, from, { type: 'queue' });
+        return;
+      }
+      // A chip inside Waiting/Sitting Out has no special double-click
+      // behavior of its own — fall through so double-clicking a chip
+      // still opens that list's fill picker below, same as empty space.
+    } else {
+      const emptySlotEl = e.target.closest('.dnd-slot-empty');
+      const slotLocEl = emptySlotEl && emptySlotEl.closest('[data-loc-type="slot"]');
+      if (slotLocEl) {
+        const loc = this._locFromEl(slotLocEl);
+        this.openFillSlotPicker(loc.court, loc.side);
+        return;
+      }
     }
-    const emptySlotEl = e.target.closest('.dnd-slot-empty');
-    const slotLocEl = emptySlotEl && emptySlotEl.closest('[data-loc-type="slot"]');
-    if (!slotLocEl) return;
-    const loc = this._locFromEl(slotLocEl);
-    this.openFillSlotPicker(loc.court, loc.side);
+    // Double-clicking/double-tapping anywhere in the Waiting or Sitting Out
+    // list opens a picker of players from the *other* list, and doing the
+    // same on Leave Session opens a picker of players from both lists —
+    // a quicker way to pick someone than dragging/tapping them one at a
+    // time. See openFillQueuePicker.
+    const queueZoneEl = e.target.closest('[data-loc-type="queue"], [data-loc-type="waiting"], [data-loc-type="remove"]');
+    if (queueZoneEl) this.openFillQueuePicker(queueZoneEl.dataset.locType);
   },
 
   // Double-tapping/double-clicking an empty court slot opens this — lets
@@ -5806,6 +6130,9 @@ ${bracketHTML}
   // than a single tap, since a single tap was too easy to trigger by
   // accident while scrolling past a court card.
   openFillSlotPicker(court, side) {
+    // Courts are frozen while the session is closed (see closeSession) —
+    // nothing to place there until an admin reopens it.
+    if (this.state._closed) return;
     this._fillSlotTarget = { court, side };
     this.renderFillSlotPicker();
     document.getElementById('fillSlotModal').style.display = 'flex';
@@ -5840,6 +6167,74 @@ ${bracketHTML}
     if (!p) return;
     const from = { type: p.active ? 'queue' : 'waiting' };
     this._movePlayer(playerId, from, { type: 'slot', court: target.court, side: target.side });
+  },
+
+  // Double-tapping/double-clicking open space in Waiting, Sitting Out, or
+  // Leave Session opens this. For Waiting/Sitting Out it's a picker of
+  // players from the *other* list only (a player already in Waiting has no
+  // reason to appear in a picker for pulling someone INTO Waiting); for
+  // Leave Session it's every removable player from both lists combined,
+  // since either one can be removed directly. Players on a court or in a
+  // proposed match are never listed here — they'd need to come off there
+  // first — but that's just the existing getPlayersOnCourts() filter,
+  // nothing to explain to the user, they simply won't show up.
+  openFillQueuePicker(zoneType) {
+    // Waiting is frozen while the session is closed (see closeSession) —
+    // nothing to pull into it until an admin reopens it. Sitting Out and
+    // Leave Session stay open the whole time.
+    if (zoneType === 'queue' && this.state._closed) return;
+    this._fillQueueTarget = zoneType;
+    const titleEl = document.getElementById('fillQueueModalTitle');
+    if (titleEl) titleEl.textContent = zoneType === 'queue' ? 'Add from Sitting Out'
+      : zoneType === 'waiting' ? 'Add from Waiting'
+      : 'Remove a Player';
+    this.renderFillQueuePicker();
+    document.getElementById('fillQueueModal').style.display = 'flex';
+    document.body.style.overflow = 'hidden';
+  },
+
+  closeFillQueuePicker(event) {
+    if (event && event.target !== event.currentTarget) return;
+    document.getElementById('fillQueueModal').style.display = 'none';
+    document.body.style.overflow = '';
+    this._fillQueueTarget = null;
+  },
+
+  renderFillQueuePicker() {
+    const el = document.getElementById('fillQueuePickerList');
+    if (!el) return;
+    const target = this._fillQueueTarget;
+    const onCourt = this.getPlayersOnCourts();
+    const empty = '<div style="padding:10px 12px;color:var(--text-light);font-size:0.82rem;">No players available</div>';
+    if (target === 'remove') {
+      // Both Waiting and Sitting Out are fair game to remove — only permission
+      // (see canRemovePlayer) narrows the list, not which of the two they're in.
+      const available = this.state.players.filter(p => !onCourt.has(p.id) && this.canRemovePlayer(p.id));
+      el.innerHTML = available.length
+        ? available.map(p => {
+            const tag = p.active ? '' : ' <span style="font-weight:400;color:var(--text-muted);">(sitting out)</span>';
+            return `<div class="partner-picker-item" onclick="App.fillQueueWithPlayer(${p.id})">${this.esc(p.name)}${tag}</div>`;
+          }).join('')
+        : empty;
+      return;
+    }
+    // Target 'queue' (Waiting) pulls from players currently sitting out,
+    // and vice versa — never from the list already being double-tapped.
+    const wantActive = target === 'waiting';
+    const available = this.state.players.filter(p => !onCourt.has(p.id) && !!p.active === wantActive);
+    el.innerHTML = available.length
+      ? available.map(p => `<div class="partner-picker-item" onclick="App.fillQueueWithPlayer(${p.id})">${this.esc(p.name)}</div>`).join('')
+      : empty;
+  },
+
+  fillQueueWithPlayer(playerId) {
+    const target = this._fillQueueTarget;
+    this.closeFillQueuePicker();
+    if (!target) return;
+    const p = this.getPlayer(playerId);
+    if (!p) return;
+    const from = { type: p.active ? 'queue' : 'waiting' };
+    this._movePlayer(playerId, from, { type: target });
   },
 
   renderSide(side) {
@@ -6216,6 +6611,14 @@ ${bracketHTML}
     }
 
     el.innerHTML = history.map(m => {
+      if (m.sessionClosed) {
+        let when = '';
+        if (m.at) {
+          const d = new Date(m.at);
+          when = `${d.toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}, ${d.toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' })}`;
+        }
+        return `<div class="history-session-closed">Session closed${when ? ' &mdash; ' + when : ''}</div>`;
+      }
       const s1 = m.side1.map(id => { const p = this.getPlayer(id); return this.esc(nameFor(id)) + (this.skillLabel(p) ? ` <span style="font-weight:400;opacity:0.7;">(${this.skillLabel(p)})</span>` : ''); });
       const s2 = m.side2.map(id => { const p = this.getPlayer(id); return this.esc(nameFor(id)) + (this.skillLabel(p) ? ` <span style="font-weight:400;opacity:0.7;">(${this.skillLabel(p)})</span>` : ''); });
       const hasScores = m.score1 != null && m.score2 != null;
@@ -6281,6 +6684,62 @@ const Session = {
   _receiving: false,
   _sse: null,
   _pushTimer: null,
+
+  // Header X button. A non-admin (or an offline Quick Play session, which
+  // has no one else to leave "open" for) just leaves, same as always. An
+  // admin of a real session gets asked whether they mean to leave (just
+  // themselves) or close the session (everyone — see App.closeSession).
+  leaveOrClose() {
+    if (this.id !== 'offline' && Admin.isAdmin()) {
+      document.getElementById('leaveCloseModal').style.display = 'flex';
+      document.body.style.overflow = 'hidden';
+      return;
+    }
+    this.leave();
+  },
+
+  _leaveCloseCancel(event) {
+    if (event && event.target !== event.currentTarget) return;
+    document.getElementById('leaveCloseModal').style.display = 'none';
+    document.body.style.overflow = '';
+    this._closeLeaveCloseInfo();
+  },
+
+  _confirmLeave() {
+    this._leaveCloseCancel();
+    this._doLeave();
+  },
+
+  _confirmClose() {
+    this._leaveCloseCancel();
+    App.closeSession();
+  },
+
+  _leaveCloseInfo: {
+    leave: 'You exit the session, but it stays open exactly as it is — everyone else keeps playing, and you can rejoin anytime.',
+    close: 'Every player, on court or not, is moved to Sitting Out, and the queue is frozen — no one can rejoin Waiting or a court, and matching ignores everything played before this point — until an admin opens the session again. The roster and match history are kept.',
+  },
+
+  _toggleLeaveCloseInfo(event, type) {
+    event.preventDefault();
+    event.stopPropagation();
+    const popover = document.getElementById('leaveCloseInfoPopover');
+    const text = document.getElementById('leaveCloseInfoText');
+    if (popover.style.display !== 'none' && text.dataset.type === type) {
+      this._closeLeaveCloseInfo();
+      return;
+    }
+    text.textContent = this._leaveCloseInfo[type] || '';
+    text.dataset.type = type;
+    const option = event.currentTarget.closest('.leave-close-option');
+    if (option) option.insertAdjacentElement('afterend', popover);
+    popover.style.display = 'flex';
+  },
+
+  _closeLeaveCloseInfo() {
+    const popover = document.getElementById('leaveCloseInfoPopover');
+    if (popover) popover.style.display = 'none';
+  },
 
   leave() {
     if (this.id === 'offline') {
@@ -6453,7 +6912,9 @@ const Session = {
       Onboard.selfId = already.id;
       this._saveSelfId(already.id);
       already.isLive = true;
-      already.active = true;
+      // A closed session (see App.closeSession) keeps everyone sitting out
+      // until an admin reopens it — rejoining shouldn't bypass that.
+      already.active = !App.state._closed;
       // Update name/skill/preferences if changed
       already.name = user.name;
       already.skillLevel = user.skillLevel || already.skillLevel;
@@ -6472,7 +6933,7 @@ const Session = {
         id,
         name: user.name,
         skillLevel: user.skillLevel || null,
-        active: true,
+        active: !App.state._closed,
         isLive: true,
         joinedAt: now,
         lastActiveAt: now,
@@ -7332,7 +7793,7 @@ const Onboard = {
               <div class="partner-picker-item" onclick="App.setSkillField('${fieldId}', 'beginner')">Beginner</div>
               <div class="partner-picker-item" onclick="App.setSkillField('${fieldId}', 'intermediate')">Intermediate</div>
               <div class="partner-picker-item" onclick="App.setSkillField('${fieldId}', 'advanced')">Advanced</div>
-              <div class="partner-picker-item" onclick="App.setSkillField('${fieldId}', '')">Clear rating</div>
+              <div class="partner-picker-item" onclick="App.setSkillField('${fieldId}', '')">Not Rated</div>
             </div>`;
           wrapper.appendChild(row);
           wrapper.appendChild(menu);
