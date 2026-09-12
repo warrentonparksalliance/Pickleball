@@ -2607,7 +2607,7 @@ body {
     </div>
   </div>
 
-  <!-- ── Double-tap Waiting/Sitting Out to pull a player from the other list ── -->
+  <!-- ── Double-tap Waiting/Sitting Out/Leave Session to pick a player ── -->
   <div id="fillQueueModal" class="hiw-overlay" style="display:none;" onclick="App.closeFillQueuePicker(event)">
     <div class="hiw-modal" style="max-width:380px;" onclick="event.stopPropagation()">
       <div class="hiw-header">
@@ -5832,10 +5832,11 @@ ${bracketHTML}
       }
     }
     // Double-clicking/double-tapping anywhere in the Waiting or Sitting Out
-    // list opens a picker of players from the *other* list — a quicker way
-    // to pull someone across than dragging/tapping them one at a time.
-    // See openFillQueuePicker.
-    const queueZoneEl = e.target.closest('[data-loc-type="queue"], [data-loc-type="waiting"]');
+    // list opens a picker of players from the *other* list, and doing the
+    // same on Leave Session opens a picker of players from both lists —
+    // a quicker way to pick someone than dragging/tapping them one at a
+    // time. See openFillQueuePicker.
+    const queueZoneEl = e.target.closest('[data-loc-type="queue"], [data-loc-type="waiting"], [data-loc-type="remove"]');
     if (queueZoneEl) this.openFillQueuePicker(queueZoneEl.dataset.locType);
   },
 
@@ -5881,17 +5882,21 @@ ${bracketHTML}
     this._movePlayer(playerId, from, { type: 'slot', court: target.court, side: target.side });
   },
 
-  // Double-tapping/double-clicking open space in Waiting or Sitting Out
-  // opens this — a picker of players from the *other* list (only; a player
-  // already in Waiting has no reason to appear in a picker for pulling
-  // someone INTO Waiting). Players on a court or in a proposed match are
-  // never listed here — they'd need to come off there first — but that's
-  // just the existing getPlayersOnCourts() filter, nothing to explain to
-  // the user, they simply won't show up.
+  // Double-tapping/double-clicking open space in Waiting, Sitting Out, or
+  // Leave Session opens this. For Waiting/Sitting Out it's a picker of
+  // players from the *other* list only (a player already in Waiting has no
+  // reason to appear in a picker for pulling someone INTO Waiting); for
+  // Leave Session it's every removable player from both lists combined,
+  // since either one can be removed directly. Players on a court or in a
+  // proposed match are never listed here — they'd need to come off there
+  // first — but that's just the existing getPlayersOnCourts() filter,
+  // nothing to explain to the user, they simply won't show up.
   openFillQueuePicker(zoneType) {
     this._fillQueueTarget = zoneType;
     const titleEl = document.getElementById('fillQueueModalTitle');
-    if (titleEl) titleEl.textContent = zoneType === 'queue' ? 'Add from Sitting Out' : 'Add from Waiting';
+    if (titleEl) titleEl.textContent = zoneType === 'queue' ? 'Add from Sitting Out'
+      : zoneType === 'waiting' ? 'Add from Waiting'
+      : 'Remove a Player';
     this.renderFillQueuePicker();
     document.getElementById('fillQueueModal').style.display = 'flex';
     document.body.style.overflow = 'hidden';
@@ -5909,13 +5914,26 @@ ${bracketHTML}
     if (!el) return;
     const target = this._fillQueueTarget;
     const onCourt = this.getPlayersOnCourts();
+    const empty = '<div style="padding:10px 12px;color:var(--text-light);font-size:0.82rem;">No players available</div>';
+    if (target === 'remove') {
+      // Both Waiting and Sitting Out are fair game to remove — only permission
+      // (see canRemovePlayer) narrows the list, not which of the two they're in.
+      const available = this.state.players.filter(p => !onCourt.has(p.id) && this.canRemovePlayer(p.id));
+      el.innerHTML = available.length
+        ? available.map(p => {
+            const tag = p.active ? '' : ' <span style="font-weight:400;color:var(--text-muted);">(sitting out)</span>';
+            return `<div class="partner-picker-item" onclick="App.fillQueueWithPlayer(${p.id})">${this.esc(p.name)}${tag}</div>`;
+          }).join('')
+        : empty;
+      return;
+    }
     // Target 'queue' (Waiting) pulls from players currently sitting out,
     // and vice versa — never from the list already being double-tapped.
     const wantActive = target === 'waiting';
     const available = this.state.players.filter(p => !onCourt.has(p.id) && !!p.active === wantActive);
     el.innerHTML = available.length
       ? available.map(p => `<div class="partner-picker-item" onclick="App.fillQueueWithPlayer(${p.id})">${this.esc(p.name)}</div>`).join('')
-      : `<div style="padding:10px 12px;color:var(--text-light);font-size:0.82rem;">No players available</div>`;
+      : empty;
   },
 
   fillQueueWithPlayer(playerId) {
