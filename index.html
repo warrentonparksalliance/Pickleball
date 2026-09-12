@@ -223,7 +223,17 @@ body {
   transition: background 0.15s, color 0.15s;
 }
 .btn-header:hover { background: rgba(255,255,255,0.15); color: #fff; }
-.btn-header.leave { color: #f87171; }
+.btn-header.leave {
+  color: #f87171;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  font-size: 1.3rem;
+  line-height: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
 .btn-header.leave:hover { background: rgba(248,113,113,0.15); }
 
 /* ── Tab Bar ────────────────────────────────── */
@@ -783,6 +793,13 @@ body {
   font-style: normal;
   font-weight: 600;
 }
+/* Waiting is frozen while the session is closed (see App.closeSession) —
+   the drop strip stops looking/acting like a drop target. */
+.dnd-target-disabled {
+  pointer-events: none;
+  opacity: 0.6;
+  cursor: default;
+}
 .queue-subsection-label {
   font-size: 0.7rem;
   font-weight: 700;
@@ -1241,6 +1258,23 @@ body {
   flex-shrink: 0;
 }
 .qp-info-close:hover { color: var(--text); }
+
+/* ── Leave/Close session chooser (admin tapping the header X) ── */
+.leave-close-option { display: flex; align-items: center; gap: 8px; }
+.session-closed-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  background: var(--pending-bg);
+  border: 1px solid var(--pending-border);
+  color: var(--pending-text);
+  padding: 10px 14px;
+  border-radius: var(--radius-sm);
+  font-size: 0.85rem;
+  font-weight: 600;
+  margin-bottom: 14px;
+}
 
 /* ── Courts grid ────────────────────────────── */
 .courts-grid { display: flex; flex-direction: column; gap: 12px; }
@@ -1830,6 +1864,23 @@ body {
   min-width: 40px;
 }
 .history-empty { padding: 8px 0; font-size: 0.82rem; color: var(--text-muted); font-style: italic; }
+.history-session-closed {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 0;
+  font-size: 0.76rem;
+  font-weight: 700;
+  color: var(--text-muted);
+  text-align: center;
+  justify-content: center;
+}
+.history-session-closed::before, .history-session-closed::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--border-strong);
+}
 .btn-my-matches-active { background: var(--primary) !important; color: white !important; border-color: var(--primary) !important; }
 .swipe-wrap { position: relative; overflow: hidden; border-radius: var(--radius); }
 .swipe-wrap .match-card { position: relative; z-index: 1; transition: transform 0.2s ease; touch-action: pan-y; }
@@ -2120,7 +2171,7 @@ body {
       <div class="header-location">
         <span class="session-status-dot"></span>
       </div>
-      <button class="btn-header leave" onclick="Session.leave()">Leave Session</button>
+      <button class="btn-header leave" onclick="Session.leaveOrClose()" aria-label="Leave session" title="Leave session">&times;</button>
     </div>
   </div>
 </header>
@@ -2135,6 +2186,13 @@ body {
 </nav>
 
 <div class="page-wrap">
+
+  <!-- Shown while an admin has closed the session (see App.closeSession) —
+       everyone's sitting out and the queue is frozen until it's reopened. -->
+  <div id="sessionClosedBanner" class="session-closed-banner" style="display:none;">
+    <span>This session is closed. Everyone's sitting out until an admin reopens it.</span>
+    <button type="button" class="btn-outline" id="btnOpenSession" style="display:none;flex-shrink:0;" onclick="App.openSession()">Open Session</button>
+  </div>
 
   <!-- Super admin panel -->
   <div id="superAdminSection" class="settings-card" style="display:none;margin-bottom:14px;">
@@ -2767,6 +2825,30 @@ body {
     </div>
   </div>
 
+  <!-- ── Admin tapping the header X: leave (just you) or close (everyone) ── -->
+  <div id="leaveCloseModal" class="hiw-overlay" style="display:none;" onclick="Session._leaveCloseCancel(event)">
+    <div class="hiw-modal" style="max-width:380px;" onclick="event.stopPropagation()">
+      <div class="hiw-header">
+        <h2>Leave or Close Session?</h2>
+        <button class="hiw-close" onclick="Session._leaveCloseCancel()" aria-label="Close">&times;</button>
+      </div>
+      <div class="hiw-body">
+        <div class="leave-close-option">
+          <button type="button" class="btn-outline" style="flex:1;padding:12px;font-size:1rem;font-weight:700;" onclick="Session._confirmLeave()">Leave Session</button>
+          <button type="button" class="qp-info-btn" aria-label="What does Leave Session do?" onclick="Session._toggleLeaveCloseInfo(event, 'leave')">?</button>
+        </div>
+        <div class="leave-close-option">
+          <button type="button" class="btn-danger" style="flex:1;padding:12px;font-size:1rem;font-weight:700;" onclick="Session._confirmClose()">Close Session</button>
+          <button type="button" class="qp-info-btn" aria-label="What does Close Session do?" onclick="Session._toggleLeaveCloseInfo(event, 'close')">?</button>
+        </div>
+        <div id="leaveCloseInfoPopover" class="qp-info-popover" style="display:none;">
+          <span id="leaveCloseInfoText"></span>
+          <button type="button" class="qp-info-close" onclick="Session._closeLeaveCloseInfo()" aria-label="Close description">&times;</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <footer class="app-footer">
     <div>Court Manager is a free community tool provided by <a href="https://www.warrentonparksalliance.com" target="_blank" rel="noopener">Warrenton Parks Alliance</a>, a 501(c)(3) nonprofit keeping Warrenton's parks and trails thriving.</div>
     <div><a href="https://www.warrentonparksalliance.com/ways-to-support/" target="_blank" rel="noopener">Donate</a> to support our mission.</div>
@@ -3129,7 +3211,10 @@ const App = {
       id: newId,
       name,
       skillLevel,
-      active: true,
+      // A closed session (see closeSession) has everyone sitting out until
+      // an admin reopens it — a newly-added player shouldn't slip into
+      // Waiting and break that.
+      active: !this.state._closed,
       isLive: false,
       addedBy: Onboard.selfId,
       joinedAt: now,
@@ -5038,6 +5123,39 @@ ${bracketHTML}
     this.render();
   },
 
+  // ─── Close / Open Session (admin-only pause) ───
+  // Closing pulls every player off any current or proposed match and into
+  // Sitting Out, and freezes the queue — nobody can move into Waiting or
+  // onto a court (see _movePlayer's _closed check) — until an admin
+  // explicitly opens it again. Matching starts fresh once reopened: the
+  // opponent-repeat history and fairness rotation from before the close
+  // no longer count, but the roster, names, and past match history stay.
+  closeSession() {
+    if (!Admin.isAdmin()) return;
+    this._logAdmin('Close Session');
+    this.state.activeGames = {};
+    this.state.scoringGames = {};
+    this.state.proposedGames = {};
+    this.state.players.forEach(p => { p.active = false; });
+    this.state.opponentHistory = {};
+    this.state.roundsWaited = {};
+    this.state.round = 0;
+    this.state.roundHistory.push({ sessionClosed: true, side1: [], side2: [], at: Date.now() });
+    this.state._closed = true;
+    this._proposedUndoStack = [];
+    this._tapSelection = null;
+    this.saveState();
+    this.render();
+  },
+
+  openSession() {
+    if (!Admin.isAdmin()) return;
+    this._logAdmin('Open Session');
+    this.state._closed = false;
+    this.saveState();
+    this.render();
+  },
+
   resetAll() {
     if (!Admin.isAdmin()) return;
     if (!confirm('Reset everything? All players, teams, courts, and history will be cleared. All users will be logged out of the session.')) return;
@@ -5086,6 +5204,13 @@ ${bracketHTML}
   render() {
     // Re-evaluate admin visibility (session admin depends on state._admins)
     if (typeof Admin !== 'undefined') Admin._updateUI();
+
+    const closedBanner = document.getElementById('sessionClosedBanner');
+    if (closedBanner) {
+      closedBanner.style.display = this.state._closed ? 'flex' : 'none';
+      const openBtn = document.getElementById('btnOpenSession');
+      if (openBtn) openBtn.style.display = (typeof Admin !== 'undefined' && Admin.isAdmin()) ? '' : 'none';
+    }
 
     const rr = this.isRoundRobin();
     const tourn = this.isTournament();
@@ -5215,6 +5340,18 @@ ${bracketHTML}
 
     if (waitingWrap) waitingWrap.style.display = structured ? 'none' : '';
     if (removeZoneTitle) removeZoneTitle.style.display = isLocked ? 'none' : '';
+
+    // While the session is closed (see closeSession), Waiting is frozen —
+    // say so where the drop strip normally explains what dropping there does.
+    const closed = !!this.state._closed;
+    const dropQueue = document.getElementById('queueDropQueue');
+    if (dropQueue) {
+      dropQueue.textContent = closed ? 'Session closed — waiting for an admin to reopen' : 'Drag or tap to enter queue';
+      dropQueue.classList.toggle('dnd-target-disabled', closed);
+    }
+    // Waiting is always empty while closed (everyone's forced to Sitting
+    // Out), so the list itself doubles as a drop target — disable it too.
+    if (activeEl) activeEl.classList.toggle('dnd-target-disabled', closed);
 
     // The Yes/No confirm renders inside the Leave Session zone itself —
     // where the player was just dropped/tapped — rather than back at their
@@ -5594,6 +5731,11 @@ ${bracketHTML}
   _movePlayer(playerId, from, to) {
     if (this._locEq(from, to)) return;
 
+    // A closed session (see closeSession/openSession) is fully paused —
+    // nobody moves into Waiting or onto a court until an admin reopens it.
+    // Sitting Out and Leave Session stay open the whole time.
+    if (this.state._closed && (to.type === 'queue' || to.type === 'slot')) return;
+
     // Dropping/tapping onto Remove doesn't move the player anywhere — it
     // just surfaces the same Yes/No confirm the row would show elsewhere.
     if (to.type === 'remove') {
@@ -5835,6 +5977,9 @@ ${bracketHTML}
   // than a single tap, since a single tap was too easy to trigger by
   // accident while scrolling past a court card.
   openFillSlotPicker(court, side) {
+    // Courts are frozen while the session is closed (see closeSession) —
+    // nothing to place there until an admin reopens it.
+    if (this.state._closed) return;
     this._fillSlotTarget = { court, side };
     this.renderFillSlotPicker();
     document.getElementById('fillSlotModal').style.display = 'flex';
@@ -5881,6 +6026,10 @@ ${bracketHTML}
   // first — but that's just the existing getPlayersOnCourts() filter,
   // nothing to explain to the user, they simply won't show up.
   openFillQueuePicker(zoneType) {
+    // Waiting is frozen while the session is closed (see closeSession) —
+    // nothing to pull into it until an admin reopens it. Sitting Out and
+    // Leave Session stay open the whole time.
+    if (zoneType === 'queue' && this.state._closed) return;
     this._fillQueueTarget = zoneType;
     const titleEl = document.getElementById('fillQueueModalTitle');
     if (titleEl) titleEl.textContent = zoneType === 'queue' ? 'Add from Sitting Out'
@@ -6309,6 +6458,14 @@ ${bracketHTML}
     }
 
     el.innerHTML = history.map(m => {
+      if (m.sessionClosed) {
+        let when = '';
+        if (m.at) {
+          const d = new Date(m.at);
+          when = `${d.toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}, ${d.toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' })}`;
+        }
+        return `<div class="history-session-closed">Session closed${when ? ' &mdash; ' + when : ''}</div>`;
+      }
       const s1 = m.side1.map(id => { const p = this.getPlayer(id); return this.esc(nameFor(id)) + (this.skillLabel(p) ? ` <span style="font-weight:400;opacity:0.7;">(${this.skillLabel(p)})</span>` : ''); });
       const s2 = m.side2.map(id => { const p = this.getPlayer(id); return this.esc(nameFor(id)) + (this.skillLabel(p) ? ` <span style="font-weight:400;opacity:0.7;">(${this.skillLabel(p)})</span>` : ''); });
       const hasScores = m.score1 != null && m.score2 != null;
@@ -6374,6 +6531,62 @@ const Session = {
   _receiving: false,
   _sse: null,
   _pushTimer: null,
+
+  // Header X button. A non-admin (or an offline Quick Play session, which
+  // has no one else to leave "open" for) just leaves, same as always. An
+  // admin of a real session gets asked whether they mean to leave (just
+  // themselves) or close the session (everyone — see App.closeSession).
+  leaveOrClose() {
+    if (this.id !== 'offline' && Admin.isAdmin()) {
+      document.getElementById('leaveCloseModal').style.display = 'flex';
+      document.body.style.overflow = 'hidden';
+      return;
+    }
+    this.leave();
+  },
+
+  _leaveCloseCancel(event) {
+    if (event && event.target !== event.currentTarget) return;
+    document.getElementById('leaveCloseModal').style.display = 'none';
+    document.body.style.overflow = '';
+    this._closeLeaveCloseInfo();
+  },
+
+  _confirmLeave() {
+    this._leaveCloseCancel();
+    this._doLeave();
+  },
+
+  _confirmClose() {
+    this._leaveCloseCancel();
+    App.closeSession();
+  },
+
+  _leaveCloseInfo: {
+    leave: 'You exit the session, but it stays open exactly as it is — everyone else keeps playing, and you can rejoin anytime.',
+    close: 'Every player, on court or not, is moved to Sitting Out, and the queue is frozen — no one can rejoin Waiting or a court, and matching ignores everything played before this point — until an admin opens the session again. The roster and match history are kept.',
+  },
+
+  _toggleLeaveCloseInfo(event, type) {
+    event.preventDefault();
+    event.stopPropagation();
+    const popover = document.getElementById('leaveCloseInfoPopover');
+    const text = document.getElementById('leaveCloseInfoText');
+    if (popover.style.display !== 'none' && text.dataset.type === type) {
+      this._closeLeaveCloseInfo();
+      return;
+    }
+    text.textContent = this._leaveCloseInfo[type] || '';
+    text.dataset.type = type;
+    const option = event.currentTarget.closest('.leave-close-option');
+    if (option) option.insertAdjacentElement('afterend', popover);
+    popover.style.display = 'flex';
+  },
+
+  _closeLeaveCloseInfo() {
+    const popover = document.getElementById('leaveCloseInfoPopover');
+    if (popover) popover.style.display = 'none';
+  },
 
   leave() {
     if (this.id === 'offline') {
@@ -6546,7 +6759,9 @@ const Session = {
       Onboard.selfId = already.id;
       this._saveSelfId(already.id);
       already.isLive = true;
-      already.active = true;
+      // A closed session (see App.closeSession) keeps everyone sitting out
+      // until an admin reopens it — rejoining shouldn't bypass that.
+      already.active = !App.state._closed;
       // Update name/skill/preferences if changed
       already.name = user.name;
       already.skillLevel = user.skillLevel || already.skillLevel;
@@ -6565,7 +6780,7 @@ const Session = {
         id,
         name: user.name,
         skillLevel: user.skillLevel || null,
-        active: true,
+        active: !App.state._closed,
         isLive: true,
         joinedAt: now,
         lastActiveAt: now,
