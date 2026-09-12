@@ -28,6 +28,7 @@
   --success-light: #ecfdf5;
   --presence-live: #8b5cf6;
   --partner: #f97316;
+  --partner-other: #eab308;
   --warning: #f59e0b;
   --warning-light: #fffbeb;
   --bg: #f2f6f3;
@@ -1464,6 +1465,9 @@ body {
 .dnd-chip.chip-self { border-color: var(--success); }
 .dnd-chip.chip-live { border-color: var(--presence-live); }
 .dnd-chip.chip-partner { border-color: var(--partner); }
+/* Other Partners (Settings > Your Partner(s), not currently used for
+   match-making) get a yellow border instead of the current partner's orange. */
+.dnd-chip.chip-partner-other { border-color: var(--partner-other); }
 .dnd-chip.dnd-selected {
   border-color: var(--primary);
   background: var(--primary-light);
@@ -5589,7 +5593,10 @@ ${bracketHTML}
     }
 
     const nameFor = t => this.esc(this.getPlayer(t.p1 === selfId ? t.p2 : t.p1)?.name || '?');
-    const chip = (t, opts = {}) => `<span class="dnd-chip chip-partner" data-team-id="${t.id}"${opts.onclick ? ` onclick="${opts.onclick}" title="Tap to make current partner" style="cursor:pointer;"` : ''}>
+    // Current Partner gets the same orange border as on the Courts tab;
+    // Other Partners get a yellow border instead, so the two are never
+    // mistaken for each other at a glance.
+    const chip = (t, opts = {}) => `<span class="dnd-chip ${opts.other ? 'chip-partner-other' : 'chip-partner'}" data-team-id="${t.id}"${opts.onclick ? ` onclick="${opts.onclick}" title="Tap to make current partner" style="cursor:pointer;"` : ''}>
         <span class="queue-row-name-text">${nameFor(t)}</span>
         <button class="partner-chip-remove" onclick="${opts.stopPropagation ? 'event.stopPropagation();' : ''}App.requestRemovePartner(${t.id})" title="Remove partner">&times;</button>
       </span>`;
@@ -5628,7 +5635,7 @@ ${bracketHTML}
             <button onclick="App.cancelSwapCurrentPartner()">No</button>
           </div>`;
         }
-        return chip(t, { onclick: `App.promptSwapCurrentPartner(${t.id})`, stopPropagation: true });
+        return chip(t, { onclick: `App.promptSwapCurrentPartner(${t.id})`, stopPropagation: true, other: true });
       }).join('')}</div>`;
 
     display.innerHTML = html;
