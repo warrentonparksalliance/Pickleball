@@ -26,6 +26,7 @@
   --danger-border: #fecaca;
   --success: #10b981;
   --success-light: #ecfdf5;
+  --presence-live: #8b5cf6;
   --warning: #f59e0b;
   --warning-light: #fffbeb;
   --bg: #f2f6f3;
@@ -837,23 +838,6 @@ body {
   border-radius: var(--radius-full);
   letter-spacing: 0.02em;
 }
-.queue-row-status {
-  font-size: 0.62rem;
-  font-weight: 700;
-  padding: 1px 5px;
-  border-radius: var(--radius-full);
-  letter-spacing: 0.02em;
-}
-.queue-row-status.guest {
-  color: var(--text-muted);
-  background: var(--hover-bg);
-  border: 1px solid var(--border);
-}
-.queue-row-status.user {
-  color: var(--primary);
-  background: var(--primary-light);
-  border: 1px solid var(--primary-muted);
-}
 .queue-row-skill-btn {
   font-size: 0.72rem;
   font-weight: 700;
@@ -1445,6 +1429,10 @@ body {
   user-select: none;
   -webkit-user-select: none;
 }
+/* Border color marks who a chip belongs to — green for the current
+   person, purple for another signed-in user — instead of a text badge. */
+.dnd-chip.chip-self { border-color: var(--success); }
+.dnd-chip.chip-live { border-color: var(--presence-live); }
 .dnd-chip.dnd-selected {
   border-color: var(--primary);
   background: var(--primary-light);
@@ -5274,9 +5262,6 @@ ${bracketHTML}
       const isMyGuest = !p.isLive && p.addedBy === selfId;
       const canEdit = isMyGuest && !isYou;
       const editBtn = canEdit ? `<button class="queue-row-btn queue-row-action" onclick="App.editGuest(${p.id})" title="Edit guest">&#x270E;</button>` : '';
-      const statusBadge = isYou ? '<span class="queue-row-you">you</span>'
-        : p.isLive ? '<span class="queue-row-status user">user</span>'
-        : '';
       const skillBtn = this.state.options.useSkill
         ? `<button class="queue-row-skill-btn${p.skillLevel ? ' set' : ''}" onclick="App.toggleSkillPicker(${p.id})" title="Set skill level">${this.skillAbbrev(p)}</button>`
         : '';
@@ -5289,8 +5274,11 @@ ${bracketHTML}
         </div>
       </div>` : '';
       const selected = this._tapSelection && this._tapSelection.playerId === p.id ? ' dnd-selected' : '';
+      // Border color marks whose chip this is (green = you, purple = another
+      // signed-in user) instead of a text badge — see .chip-self/.chip-live.
+      const presenceClass = isYou ? ' chip-self' : (p.isLive ? ' chip-live' : '');
       return `<div class="queue-row">
-        <span class="queue-row-name dnd-chip${selected}" data-player-id="${p.id}"><span class="queue-row-name-text">${this.esc(p.name)}</span>${editBtn}${skillBtn}${statusBadge}${partnerBadge}</span>
+        <span class="queue-row-name dnd-chip${selected}${presenceClass}" data-player-id="${p.id}"><span class="queue-row-name-text">${this.esc(p.name)}</span>${editBtn}${skillBtn}${partnerBadge}</span>
       </div>${skillPicker}`;
     };
 
@@ -5581,9 +5569,10 @@ ${bracketHTML}
     const selected = this._tapSelection && this._tapSelection.playerId === playerId ? ' dnd-selected' : '';
     // Skill level is a queue-only detail — once someone's on a court, which
     // team they're on already reflects any skill-based matching.
-    const youBadge = isYou ? ' <span class="queue-row-you">you</span>' : '';
-    const userBadge = !isYou && p.isLive ? ' <span class="queue-row-status user">user</span>' : '';
-    return `<span class="dnd-chip${selected}" data-player-id="${playerId}">${this.esc(p.name)}${youBadge}${userBadge}</span>`;
+    // Border color marks whose chip this is (green = you, purple = another
+    // signed-in user) instead of a text badge — see .chip-self/.chip-live.
+    const presenceClass = isYou ? ' chip-self' : (p.isLive ? ' chip-live' : '');
+    return `<span class="dnd-chip${selected}${presenceClass}" data-player-id="${playerId}">${this.esc(p.name)}</span>`;
   },
 
   // ─── Drag & drop + tap-to-move ─────
