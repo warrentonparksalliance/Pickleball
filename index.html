@@ -2215,11 +2215,6 @@ body {
     <button type="button" class="btn-outline" id="btnOpenSession" style="display:none;flex-shrink:0;" onclick="App.openSession()">Open Session</button>
   </div>
 
-  <!-- Super admin panel -->
-  <div id="superAdminSection" class="settings-card" style="display:none;margin-bottom:14px;">
-    <div class="settings-card-title" onclick="document.getElementById('superAdminPanel').style.display=document.getElementById('superAdminPanel').style.display==='none'?'':'none';this.querySelector('.sa-toggle').textContent=document.getElementById('superAdminPanel').style.display==='none'?'▸':'▾'" style="cursor:pointer;display:flex;justify-content:space-between;align-items:center;">Super Admin Management <span class="sa-toggle" style="font-size:0.8rem;color:var(--text-muted);">▸</span></div>
-    <div id="superAdminPanel" style="display:none;"></div>
-  </div>
   <!-- ── Session setup (shown before joining) ─── -->
   <div id="sessionSetupSection" class="setup-center">
     <div class="setup-card">
@@ -2253,23 +2248,9 @@ body {
         <div id="entryHiwDivider" style="height:1px;background:var(--border);margin:18px 0 14px;"></div>
         <button class="btn-hiw" id="btnEntryHiw" onclick="App.openHiw()">&#9654; How it Works</button>
       </div>
-      <!-- Signed-in profile card (shown for Google-signed-in users) -->
-      <div id="setupSignedIn" class="setup-block" style="display:none;">
-        <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;">
-          <div style="width:38px;height:38px;border-radius:50%;background:var(--primary-light);display:flex;align-items:center;justify-content:center;flex-shrink:0;">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--primary)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-          </div>
-          <div style="flex:1;min-width:0;">
-            <div id="signedInName" style="font-size:0.92rem;font-weight:600;color:var(--text);"></div>
-            <div style="display:flex;align-items:center;gap:6px;">
-              <span id="signedInAs" style="font-size:0.75rem;color:var(--text-muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1;min-width:0;"></span>
-              <button class="btn-admin-logout" onclick="Admin.logout()" style="font-size:0.72rem;flex-shrink:0;margin-left:8px;">sign out</button>
-            </div>
-          </div>
-        </div>
-        <button type="button" class="btn-outline" onclick="MyHistory.show()" id="btnMyHistoryProfile" style="width:100%;padding:12px;font-size:1rem;font-weight:700;">My Match History</button>
-      </div>
-      <!-- Join form (hidden until guest click or signed in) -->
+      <!-- Join form (hidden until guest click or signed in) — shown above the
+           signed-in profile card so Sessions is the first thing a returning
+           user sees. -->
       <div id="setupJoinForm" style="display:none;">
       <div id="joinFormHeader" style="display:flex;align-items:center;margin-bottom:16px;">
         <button type="button" id="btnBackToEntry" class="btn-back-entry" onclick="Onboard.backToEntry()" title="Back">&larr;</button>
@@ -2322,16 +2303,23 @@ body {
         <span id="sessionLoadingText">Connecting&#x2026;</span>
       </div>
       </div><!-- /setupJoinForm -->
+      <!-- Signed-in profile card (shown for Google-signed-in users) -->
+      <div id="setupSignedIn" class="setup-block" style="display:none;">
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;">
+          <div style="width:38px;height:38px;border-radius:50%;background:var(--primary-light);display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--primary)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+          </div>
+          <div style="flex:1;min-width:0;">
+            <div id="signedInName" style="font-size:0.92rem;font-weight:600;color:var(--text);"></div>
+            <div style="display:flex;align-items:center;gap:6px;">
+              <span id="signedInAs" style="font-size:0.75rem;color:var(--text-muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1;min-width:0;"></span>
+              <button class="btn-admin-logout" onclick="Admin.logout()" style="font-size:0.72rem;flex-shrink:0;margin-left:8px;">sign out</button>
+            </div>
+          </div>
+        </div>
+        <button type="button" class="btn-outline" onclick="MyHistory.show()" id="btnMyHistoryProfile" style="width:100%;padding:12px;font-size:1rem;font-weight:700;">My Match History</button>
+      </div>
     </div>
-  </div>
-
-  <div id="allSessionsSection" class="settings-card" style="display:none;margin-bottom:14px;">
-    <div class="settings-card-title" onclick="(function(p,t){p.style.display=p.style.display==='none'?'':'none';t.textContent=p.style.display==='none'?'▸':'▾';})(document.getElementById('allSessionsPanel'),this.querySelector('.as-toggle'));if(document.getElementById('allSessionsPanel').style.display!=='none')Admin.renderAllSessionsPanel();" style="cursor:pointer;display:flex;justify-content:space-between;align-items:center;">All Private Sessions <span class="as-toggle" style="font-size:0.8rem;color:var(--text-muted);">▸</span></div>
-    <div id="allSessionsPanel" style="display:none;"></div>
-  </div>
-  <div id="allUsersSection" class="settings-card" style="display:none;margin-bottom:14px;">
-    <div class="settings-card-title" onclick="(function(p,t){p.style.display=p.style.display==='none'?'':'none';t.textContent=p.style.display==='none'?'▸':'▾';})(document.getElementById('allUsersPanel'),this.querySelector('.au-toggle'));if(document.getElementById('allUsersPanel').style.display!=='none')Admin.renderAllUsersPanel();" style="cursor:pointer;display:flex;justify-content:space-between;align-items:center;">All Users <span class="au-toggle" style="font-size:0.8rem;color:var(--text-muted);">▸</span></div>
-    <div id="allUsersPanel" style="display:none;"></div>
   </div>
 
   <!-- My Match History view (outside sessionSetupSection so it can be shown independently) -->
@@ -2839,6 +2827,21 @@ body {
         </div>
       </div>
     </div>
+  </div>
+
+  <!-- Super admin panels — bottom of the page, main/landing view only (hidden
+       once inside a session; see Admin._updateAdminPanels). -->
+  <div id="superAdminSection" class="settings-card" style="display:none;margin-bottom:14px;">
+    <div class="settings-card-title" onclick="document.getElementById('superAdminPanel').style.display=document.getElementById('superAdminPanel').style.display==='none'?'':'none';this.querySelector('.sa-toggle').textContent=document.getElementById('superAdminPanel').style.display==='none'?'▸':'▾'" style="cursor:pointer;display:flex;justify-content:space-between;align-items:center;">Super Admin Management <span class="sa-toggle" style="font-size:0.8rem;color:var(--text-muted);">▸</span></div>
+    <div id="superAdminPanel" style="display:none;"></div>
+  </div>
+  <div id="allSessionsSection" class="settings-card" style="display:none;margin-bottom:14px;">
+    <div class="settings-card-title" onclick="(function(p,t){p.style.display=p.style.display==='none'?'':'none';t.textContent=p.style.display==='none'?'▸':'▾';})(document.getElementById('allSessionsPanel'),this.querySelector('.as-toggle'));if(document.getElementById('allSessionsPanel').style.display!=='none')Admin.renderAllSessionsPanel();" style="cursor:pointer;display:flex;justify-content:space-between;align-items:center;">All Private Sessions <span class="as-toggle" style="font-size:0.8rem;color:var(--text-muted);">▸</span></div>
+    <div id="allSessionsPanel" style="display:none;"></div>
+  </div>
+  <div id="allUsersSection" class="settings-card" style="display:none;margin-bottom:14px;">
+    <div class="settings-card-title" onclick="(function(p,t){p.style.display=p.style.display==='none'?'':'none';t.textContent=p.style.display==='none'?'▸':'▾';})(document.getElementById('allUsersPanel'),this.querySelector('.au-toggle'));if(document.getElementById('allUsersPanel').style.display!=='none')Admin.renderAllUsersPanel();" style="cursor:pointer;display:flex;justify-content:space-between;align-items:center;">All Users <span class="au-toggle" style="font-size:0.8rem;color:var(--text-muted);">▸</span></div>
+    <div id="allUsersPanel" style="display:none;"></div>
   </div>
 
   <footer class="app-footer">
@@ -7290,6 +7293,8 @@ const Session = {
       if (setup) setup.style.display = '';
       App._hideTabs();
     }
+    // Super admin's landing-page-only panels — hide once inside a session.
+    Admin._updateAdminPanels();
   },
 };
 
@@ -8318,16 +8323,7 @@ const Admin = {
     }
     // Refresh session bubbles (super admin may see all sessions)
     Onboard._renderSessionBubbles();
-    // Super admin panel
-    const superSection = document.getElementById('superAdminSection');
-    if (superSection) {
-      superSection.style.display = isSuperAdmin ? '' : 'none';
-      if (isSuperAdmin) this.renderSuperAdminPanel();
-    }
-    const allSessionsSection = document.getElementById('allSessionsSection');
-    if (allSessionsSection) allSessionsSection.style.display = isSuperAdmin ? '' : 'none';
-    const allUsersSection = document.getElementById('allUsersSection');
-    if (allUsersSection) allUsersSection.style.display = isSuperAdmin ? '' : 'none';
+    this._updateAdminPanels();
     // Header badge
     const badge = document.getElementById('adminHeaderBadge');
     if (badge) {
@@ -8339,6 +8335,21 @@ const Admin = {
         badge.innerHTML = '';
       }
     }
+  },
+
+  // Super Admin Management / All Private Sessions / All Users — main
+  // landing page only, hidden once inside a session (Session.id set).
+  _updateAdminPanels() {
+    const show = this.isSuperAdmin() && !Session.id;
+    const superSection = document.getElementById('superAdminSection');
+    if (superSection) {
+      superSection.style.display = show ? '' : 'none';
+      if (show) this.renderSuperAdminPanel();
+    }
+    const allSessionsSection = document.getElementById('allSessionsSection');
+    if (allSessionsSection) allSessionsSection.style.display = show ? '' : 'none';
+    const allUsersSection = document.getElementById('allUsersSection');
+    if (allUsersSection) allUsersSection.style.display = show ? '' : 'none';
   },
 };
 
