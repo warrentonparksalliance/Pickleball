@@ -685,9 +685,21 @@ body {
 .skill-field-caret { font-size: 0.65em; color: var(--text-muted); flex-shrink: 0; }
 .skill-field-menu { margin-bottom: 8px; }
 /* Your Partner(s) card: same bubble as the queue/court chips (orange
-   border — see .chip-partner), just not draggable. */
-#partnerDisplay { display: flex; flex-flow: row wrap; gap: 6px 8px; margin-bottom: 8px; }
+   border — see .chip-partner), just not draggable. Once there's more than
+   one partner, they split into Current Partner / Other Partners, same
+   shape as the queue's Waiting/Sitting Out split. */
+#partnerDisplay { margin-bottom: 8px; }
 #partnerDisplay .dnd-chip { cursor: default; }
+.partner-section-box { display: flex; flex-flow: row wrap; gap: 6px 8px; margin-bottom: 8px; }
+.partner-swap-prompt {
+  background: var(--hover-bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 8px 10px;
+  margin-bottom: 8px;
+  font-size: 0.85rem;
+}
+.partner-swap-prompt-text { margin-bottom: 6px; font-weight: 600; color: var(--text); }
 .partner-chip-remove {
   background: none;
   border: none;
@@ -3063,6 +3075,20 @@ const App = {
     const s = this.state;
     if (!Array.isArray(s.players)) s.players = [];
     if (!Array.isArray(s.teams)) s.teams = [];
+    // Backfill "current" on teams from before the Current/Other Partner
+    // split existed — first team touching each player wins, so anyone with
+    // more than one team ends up with exactly one current (see
+    // addTeamWithSelf/promptSwapCurrentPartner for how new teams get this).
+    if (s.teams.some(t => t.current === undefined)) {
+      const claimed = new Set();
+      for (const t of s.teams) {
+        if (t.current !== undefined) { claimed.add(t.p1); claimed.add(t.p2); continue; }
+        const already = claimed.has(t.p1) || claimed.has(t.p2);
+        t.current = !already;
+        claimed.add(t.p1);
+        claimed.add(t.p2);
+      }
+    }
     if (!Array.isArray(s.roundHistory)) s.roundHistory = [];
     s.activeGames  = this._toObject(s.activeGames);
     s.scoringGames = this._toObject(s.scoringGames);
@@ -3405,6 +3431,10 @@ const App = {
 
 
   // ─── Teams ─────────────────────────────────
+  // A player can have more than one partner saved, but only one is ever
+  // "current" — the one actually used for match-making (see
+  // _rankedQueueUnits/_buildTeamUnits) and shown with the orange chip
+  // border on the Courts tab. The rest sit in "Other Partners" as reserves.
   addTeamWithSelf(playerId) {
     const selfId = Onboard.selfId;
     if (!selfId || selfId === playerId) return;
@@ -3412,7 +3442,8 @@ const App = {
       (t.p1 === selfId && t.p2 === playerId) || (t.p2 === selfId && t.p1 === playerId)
     );
     if (existing) return; // use remove button instead
-    this.state.teams.push({ id: this.state.nextId++, p1: selfId, p2: playerId, doNotSplit: true });
+    const hasCurrent = this.state.teams.some(t => (t.p1 === selfId || t.p2 === selfId) && t.current);
+    this.state.teams.push({ id: this.state.nextId++, p1: selfId, p2: playerId, doNotSplit: true, current: !hasCurrent });
     this._teamsLocalChange = Date.now();
     const picker = document.getElementById('partnerPicker');
     if (picker) picker.style.display = 'none';
@@ -3424,6 +3455,73 @@ const App = {
     this.state.teams = this.state.teams.filter(t => t.id !== id);
     this._teamsLocalChange = Date.now();
     this.saveState();
+    this.render();
+  },
+
+  _currentPartnerTeam(selfTeams) {
+    return selfTeams.find(t => t.current) || selfTeams[0] || null;
+  },
+
+  _partnerSwapPending: null,
+
+  // Tapping an Other Partner chip proposes swapping them in as current —
+  // confirmed with a Yes/No since it demotes whoever's current now.
+  promptSwapCurrentPartner(teamId) {
+    this._partnerSwapPending = { type: 'promote', teamId };
+    this.render();
+  },
+
+  confirmSwapCurrentPartner() {
+    const pending = this._partnerSwapPending;
+    if (!pending || pending.type !== 'promote') return;
+    const selfId = Onboard.selfId;
+    this.state.teams.forEach(t => {
+      if (t.p1 === selfId || t.p2 === selfId) t.current = (t.id === pending.teamId);
+    });
+    this._partnerSwapPending = null;
+    this._teamsLocalChange = Date.now();
+    this.saveState();
+    this.render();
+  },
+
+  cancelSwapCurrentPartner() {
+    this._partnerSwapPending = null;
+    this.render();
+  },
+
+  // The × on a partner chip. Removing an Other Partner is immediate — but
+  // there's always exactly one current partner whenever any partner exists,
+  // so removing the current one while others remain requires picking who
+  // takes over first (see confirmRemoveCurrentPartner), rather than ever
+  // leaving Current Partner empty with reserves still sitting there.
+  requestRemovePartner(teamId) {
+    const selfId = Onboard.selfId;
+    const selfTeams = this.state.teams.filter(t => t.p1 === selfId || t.p2 === selfId);
+    const currentTeam = this._currentPartnerTeam(selfTeams);
+    const others = selfTeams.filter(t => t.id !== teamId);
+    if (!currentTeam || currentTeam.id !== teamId || others.length === 0) {
+      this._partnerSwapPending = null;
+      this.removeTeam(teamId);
+      return;
+    }
+    this._partnerSwapPending = { type: 'removeCurrent', teamId };
+    this.render();
+  },
+
+  confirmRemoveCurrentPartner(newCurrentTeamId) {
+    const pending = this._partnerSwapPending;
+    if (!pending || pending.type !== 'removeCurrent') return;
+    this.state.teams = this.state.teams.filter(t => t.id !== pending.teamId);
+    const promoted = this.state.teams.find(t => t.id === newCurrentTeamId);
+    if (promoted) promoted.current = true;
+    this._partnerSwapPending = null;
+    this._teamsLocalChange = Date.now();
+    this.saveState();
+    this.render();
+  },
+
+  cancelRemoveCurrentPartner() {
+    this._partnerSwapPending = null;
     this.render();
   },
 
@@ -4078,7 +4176,7 @@ const App = {
   _buildTeamUnits() {
     const playerIds = this.state.players.map(p => p.id);
     const idSet = new Set(playerIds);
-    const explicitTeams = this.state.teams.filter(t => idSet.has(t.p1) && idSet.has(t.p2));
+    const explicitTeams = this.state.teams.filter(t => t.current && idSet.has(t.p1) && idSet.has(t.p2));
     const pairedIds = new Set(explicitTeams.flatMap(t => [t.p1, t.p2]));
     const solos = this.shuffle(playerIds.filter(id => !pairedIds.has(id)));
     if (solos.length % 2 !== 0) return null;
@@ -4782,8 +4880,10 @@ ${bracketHTML}
   // first) as a tiebreak. Units are shuffled once beforehand so a remaining
   // tie resolves randomly rather than always favoring the same player.
   _rankedQueueUnits(allQueue) {
+    // Only a player's *current* partner (see renderPartners/addTeamWithSelf)
+    // is used for pairing — Other Partners are just reserves, not counted.
     const activePairs = this.state.teams.filter(t =>
-      allQueue.some(p => p.id === t.p1) && allQueue.some(p => p.id === t.p2)
+      t.current && allQueue.some(p => p.id === t.p1) && allQueue.some(p => p.id === t.p2)
     );
     const pairedIds = new Set(activePairs.flatMap(t => [t.p1, t.p2]));
     const soloPlayers = allQueue.filter(p => !pairedIds.has(p.id));
@@ -5381,8 +5481,10 @@ ${bracketHTML}
         </div>`;
       }
       const selfId = Onboard.selfId;
+      // Only the *current* partner gets the orange border — an Other
+      // Partner isn't actually being used for match-making right now.
       const isPartner = selfId && selfId !== p.id && this.state.teams.some(t =>
-        (t.p1 === selfId && t.p2 === p.id) || (t.p2 === selfId && t.p1 === p.id)
+        t.current && ((t.p1 === selfId && t.p2 === p.id) || (t.p2 === selfId && t.p1 === p.id))
       );
       const isMyGuest = !p.isLive && p.addedBy === selfId;
       const canEdit = isMyGuest && !isYou;
@@ -5458,23 +5560,62 @@ ${bracketHTML}
     if (!selfId) {
       display.innerHTML = '';
       if (btn) btn.style.display = 'none';
+      this._partnerSwapPending = null;
       return;
     }
     if (btn) btn.style.display = '';
     const selfTeams = this.state.teams.filter(t => t.p1 === selfId || t.p2 === selfId);
     if (btn) btn.textContent = selfTeams.length > 0 ? '+ Add Another Partner' : '+ Add Partner';
     if (selfTeams.length === 0) {
+      this._partnerSwapPending = null;
       display.innerHTML = '<div style="color:var(--text-muted);font-size:0.82rem;margin-bottom:8px;">No partners selected</div>';
       return;
     }
-    display.innerHTML = selfTeams.map(t => {
-      const partnerId = t.p1 === selfId ? t.p2 : t.p1;
-      const p = this.getPlayer(partnerId);
-      return `<span class="dnd-chip chip-partner">
-        <span class="queue-row-name-text">${this.esc(p?.name || '?')}</span>
-        <button class="partner-chip-remove" onclick="App.removeTeam(${t.id})" title="Remove partner">&times;</button>
+
+    const nameFor = t => this.esc(this.getPlayer(t.p1 === selfId ? t.p2 : t.p1)?.name || '?');
+    const chip = (t, opts = {}) => `<span class="dnd-chip chip-partner" data-team-id="${t.id}"${opts.onclick ? ` onclick="${opts.onclick}" title="Tap to make current partner" style="cursor:pointer;"` : ''}>
+        <span class="queue-row-name-text">${nameFor(t)}</span>
+        <button class="partner-chip-remove" onclick="${opts.stopPropagation ? 'event.stopPropagation();' : ''}App.requestRemovePartner(${t.id})" title="Remove partner">&times;</button>
       </span>`;
-    }).join('');
+
+    // Just one partner: no Current/Other split needed — same as the queue
+    // only splitting into Waiting/Sitting Out once there's someone to split.
+    if (selfTeams.length === 1) {
+      this._partnerSwapPending = null;
+      display.innerHTML = `<div class="partner-section-box">${chip(selfTeams[0])}</div>`;
+      return;
+    }
+
+    const currentTeam = this._currentPartnerTeam(selfTeams);
+    const otherTeams = selfTeams.filter(t => t.id !== currentTeam.id);
+    const pending = this._partnerSwapPending;
+
+    let html = `<div class="queue-subsection-label">Current Partner</div>
+      <div class="partner-section-box">${chip(currentTeam)}</div>`;
+
+    if (pending && pending.type === 'removeCurrent' && pending.teamId === currentTeam.id) {
+      html += `<div class="partner-swap-prompt">
+        <div class="partner-swap-prompt-text">${nameFor(currentTeam)} is your current partner &mdash; choose who takes over:</div>
+        <div class="partner-picker-list">${otherTeams.map(t =>
+          `<div class="partner-picker-item" onclick="App.confirmRemoveCurrentPartner(${t.id})">${nameFor(t)}</div>`
+        ).join('')}</div>
+        <button type="button" class="btn-edit-cancel" onclick="App.cancelRemoveCurrentPartner()" style="margin-top:6px;">Cancel</button>
+      </div>`;
+    }
+
+    html += `<div class="queue-subsection-label" style="margin-top:10px;">Other Partners</div>
+      <div class="partner-section-box">${otherTeams.map(t => {
+        if (pending && pending.type === 'promote' && pending.teamId === t.id) {
+          return `<div class="queue-row-confirm">
+            <span>Make ${nameFor(t)} current?</span>
+            <button onclick="App.confirmSwapCurrentPartner()">Yes</button>
+            <button onclick="App.cancelSwapCurrentPartner()">No</button>
+          </div>`;
+        }
+        return chip(t, { onclick: `App.promptSwapCurrentPartner(${t.id})`, stopPropagation: true });
+      }).join('')}</div>`;
+
+    display.innerHTML = html;
   },
 
   // Open Play always shows one card per court id from 1 to "Courts available
