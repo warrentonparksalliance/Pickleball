@@ -1481,6 +1481,11 @@ body {
 /* Other Partners (Settings > Your Partner(s), not currently used for
    match-making) get a yellow border instead of the current partner's orange. */
 .dnd-chip.chip-partner-other { border-color: var(--partner-other); }
+/* Session bubbles (Join a Session > Your Sessions) reuse the chip shape —
+   green marks an open session, orange a closed one. */
+.dnd-chip.chip-session-open { border-color: var(--success); }
+.dnd-chip.chip-session-closed { border-color: var(--partner); }
+.dnd-chip.chip-session-btn { cursor: pointer; background: var(--card); font-family: inherit; }
 .dnd-chip.dnd-selected {
   border-color: var(--primary);
   background: var(--primary-light);
@@ -2274,21 +2279,38 @@ body {
       <!-- Session selection (hidden during share-link flow) -->
       <div id="sessionSelectionBlock">
       <div class="setup-block">
-        <div class="section-title" style="margin-bottom:4px;">Private Session</div>
-        <div class="section-subtitle" style="margin-bottom:14px;">Create a session for your group and share the link or code with friends — they can join without signing in. Great for reserved court nights or league play.</div>
-        <button type="button" class="btn-outline" onclick="Onboard.openCreatePrivate()" id="btn-create-private" style="width:100%;padding:12px 14px;font-size:1rem;font-weight:700;font-family:inherit;">+ Create New</button>
+        <div class="section-title" style="margin-bottom:4px;">Sessions</div>
+        <div class="section-subtitle" style="margin-bottom:14px;">Create a session for your group and share the link or code with friends — they can join without signing in.</div>
+        <button type="button" class="btn-outline" onclick="Onboard.toggleCreateSessionRow()" id="btn-create-private" style="width:100%;padding:12px 14px;font-size:1rem;font-weight:700;font-family:inherit;">+ Create New</button>
+        <div id="createSessionRow" style="display:none;margin-top:10px;">
+          <p id="createSessionError" class="setup-error" style="display:none;">Enter a session name and select a session type</p>
+          <input type="text" class="setup-input" id="privateSessionName" placeholder="Session name" maxlength="20" style="width:100%;">
+          <select class="setup-input" id="selectSessionType" onchange="Onboard.setSessionType(this.value)" style="width:100%;cursor:pointer;">
+            <option value="" disabled selected>Select session type...</option>
+            <option value="open">Open Play</option>
+            <option value="roundrobin">Round Robin</option>
+            <option value="tournament">Tournament</option>
+          </select>
+          <label class="toggle-switch-label" style="margin:10px 0;">
+            <span class="toggle-switch">
+              <input type="checkbox" id="privatePasscodeToggle" onchange="Onboard.togglePasscodeField()">
+              <span class="toggle-switch-track"></span>
+            </span>
+            Passcode required
+          </label>
+          <div id="privatePasscodeField" style="display:none;gap:8px;align-items:center;margin-bottom:10px;">
+            <input type="text" class="setup-input" id="privatePasscode" placeholder="Passcode (4 chars)" maxlength="4" style="flex:1;margin-bottom:0;text-transform:uppercase;">
+            <button type="button" class="btn-outline" onclick="Onboard.randomPasscode()" style="white-space:nowrap;padding:12px 14px;font-size:1rem;font-weight:700;">Random</button>
+          </div>
+          <button type="button" class="btn-confirm-join" style="width:100%;padding:12px;font-size:1rem;font-weight:700;" onclick="Onboard.createPrivate()">Create &amp; Join</button>
+        </div>
         <div style="display:flex;align-items:center;gap:10px;margin:14px 0 10px;">
           <div style="flex:1;height:1px;background:var(--border);"></div>
-          <span style="font-size:0.7rem;font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.05em;">Existing Sessions</span>
+          <span style="font-size:0.7rem;font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.05em;">Your Sessions</span>
           <div style="flex:1;height:1px;background:var(--border);"></div>
         </div>
-        <div style="display:flex;gap:8px;margin-bottom:4px;">
-          <select class="setup-input" id="privateSessionSelect" onchange="Onboard._updateJoinBtn('privateSessionSelect','btnJoinPrivate')" style="flex:1;margin-bottom:0;cursor:pointer;">
-            <option value="">Select a session...</option>
-          </select>
-          <button type="button" class="btn-confirm-join" id="btnJoinPrivate" onclick="Onboard.joinSavedPrivate()" disabled style="white-space:nowrap;padding:12px 18px;font-size:1rem;flex:0 0 auto;">Join</button>
-        </div>
-        <div id="privateConfirmInline" style="display:none;margin-bottom:8px;"></div>
+        <div id="privateSessionBubbles" style="display:flex;flex-wrap:wrap;gap:8px;"></div>
+        <div id="privateSessionsEmpty" class="section-subtitle" style="display:none;">No saved sessions yet.</div>
       </div>
       </div><!-- /sessionSelectionBlock -->
       <!-- Share-link join button (shown when joining via share link) -->
@@ -2758,31 +2780,6 @@ body {
           <button type="button" class="qp-info-close" onclick="Onboard._closeQpInfo()" aria-label="Close description">&times;</button>
         </div>
         <button type="button" class="btn-confirm-join" style="width:100%;padding:12px;font-size:1rem;font-weight:700;" onclick="Onboard._quickPlayContinueType()">Continue</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- ── New Private Session: name, passcode, format ── -->
-  <div id="createPrivateModal" class="hiw-overlay" style="display:none;" onclick="Onboard._createPrivateCancel(event)">
-    <div class="hiw-modal" style="max-width:380px;" onclick="event.stopPropagation()">
-      <div class="hiw-header">
-        <h2>New Private Session</h2>
-        <button class="hiw-close" onclick="Onboard._createPrivateCancel()" aria-label="Close">&times;</button>
-      </div>
-      <div class="hiw-body">
-        <input type="text" class="setup-input" id="privateSessionName" placeholder="Session name" maxlength="20" style="width:100%;margin-bottom:0;">
-        <div style="display:flex;gap:8px;align-items:center;">
-          <input type="text" class="setup-input" id="privatePasscode" placeholder="Passcode (4 chars)" maxlength="4" style="flex:1;margin-bottom:0;text-transform:uppercase;">
-          <button type="button" class="btn-outline" onclick="Onboard.randomPasscode()" style="white-space:nowrap;padding:12px 14px;font-size:1rem;font-weight:700;">Random</button>
-        </div>
-        <select class="setup-input" id="selectSessionType" onchange="Onboard.setSessionType(this.value)" style="width:100%;margin-bottom:0;cursor:pointer;">
-          <option value="" disabled selected>Select session type...</option>
-          <option value="open">Open Play</option>
-          <option value="roundrobin">Round Robin</option>
-          <option value="tournament">Tournament</option>
-        </select>
-        <p id="privateSessionError" class="setup-error" style="display:none;">Enter a session name and 4-character passcode</p>
-        <button type="button" class="btn-confirm-join" style="width:100%;padding:12px;font-size:1rem;font-weight:700;" onclick="Onboard.createPrivate()">Create &amp; Join</button>
       </div>
     </div>
   </div>
@@ -7080,7 +7077,7 @@ const Session = {
       this._receiving = false;
     } catch(e) { /* always continue to show UI */ }
     this._setLoading(false);
-    this._listen(user);
+    this._listen(user, isNew);
     this._updateUI();
   },
 
@@ -7094,7 +7091,7 @@ const Session = {
     btns.forEach(b => b.disabled = on);
   },
 
-  _addSelf(user) {
+  _addSelf(user, isNew) {
     // Try to find existing player: first by persisted selfId, then by name
     const savedId = this._getSavedSelfId();
     let already = savedId != null ? App.state.players.find(p => p.id === savedId) : null;
@@ -7113,9 +7110,10 @@ const Session = {
       Onboard.selfId = already.id;
       this._saveSelfId(already.id);
       already.isLive = true;
-      // A closed session (see App.closeSession) keeps everyone sitting out
-      // until an admin reopens it — rejoining shouldn't bypass that.
-      already.active = !App.state._closed;
+      // Creating a session drops you into the queue (unless it's already
+      // closed — see App.closeSession); joining an existing one always
+      // lands you in Sitting Out instead.
+      already.active = isNew ? !App.state._closed : false;
       // Update name/skill/preferences if changed
       already.name = user.name;
       already.skillLevel = user.skillLevel || already.skillLevel;
@@ -7134,7 +7132,7 @@ const Session = {
         id,
         name: user.name,
         skillLevel: user.skillLevel || null,
-        active: !App.state._closed,
+        active: isNew ? !App.state._closed : false,
         isLive: true,
         joinedAt: now,
         lastActiveAt: now,
@@ -7212,7 +7210,7 @@ const Session = {
     } catch(e) { /* silent */ }
   },
 
-  _listen(pendingUser) {
+  _listen(pendingUser, isNew) {
     if (this._sse) this._sse.close();
     const src = new EventSource(this._url());
     this._sse = src;
@@ -7220,7 +7218,7 @@ const Session = {
     const addSelfOnce = () => {
       if (!selfAdded && pendingUser) {
         selfAdded = true;
-        this._addSelf(pendingUser);
+        this._addSelf(pendingUser, isNew);
       }
     };
     let _lastResetAt = App.state._resetAt || 0;
@@ -7349,8 +7347,8 @@ const Onboard = {
     const user = this._savedUser();
     const s = new URLSearchParams(window.location.search).get('s');
 
-    // Populate dropdowns
-    this._populatePrivateDropdown();
+    // Populate saved-session bubbles
+    this._renderSessionBubbles();
 
     if (s) {
       // Set loading flag immediately to prevent _updateUI from showing entry options
@@ -7569,44 +7567,6 @@ const Onboard = {
   _pendingKey: null,
   _pendingLabel: null,
 
-  _showInlineConfirm(elId, label, onYes) {
-    // Hide all other inline confirms
-    ['privateConfirmInline'].forEach(id => {
-      const el = document.getElementById(id);
-      if (el) { el.style.display = 'none'; el.innerHTML = ''; }
-    });
-    const el = document.getElementById(elId);
-    if (!el) return;
-    el.style.display = '';
-    el.innerHTML = `<div class="queue-row-confirm" style="padding:8px 0;color:var(--primary);">
-      <span style="font-size:0.85rem;">Join <strong>${App.esc(label)}</strong>?</span>
-      <button style="color:var(--primary);border-color:var(--primary-muted);font-size:0.82rem;padding:4px 12px;border:1.5px solid;border-radius:6px;background:var(--primary-light);cursor:pointer;font-family:inherit;font-weight:600;" onclick="Onboard._inlineYes()">Yes</button>
-      <button style="color:var(--text-muted);border-color:var(--border);font-size:0.82rem;padding:4px 12px;border:1.5px solid;border-radius:6px;background:transparent;cursor:pointer;font-family:inherit;" onclick="Onboard._inlineNo()">No</button>
-    </div>`;
-    this._inlineYesAction = onYes;
-  },
-
-  _inlineYes() {
-    if (this._inlineYesAction) this._inlineYesAction();
-    this._inlineYesAction = null;
-  },
-
-  _inlineNo() {
-    ['privateConfirmInline'].forEach(id => {
-      const el = document.getElementById(id);
-      if (el) { el.style.display = 'none'; el.innerHTML = ''; }
-    });
-    this._pendingKey = null;
-    this._pendingLabel = null;
-    this._inlineYesAction = null;
-  },
-
-  _updateJoinBtn(selId, btnId) {
-    const sel = document.getElementById(selId);
-    const btn = document.getElementById(btnId);
-    if (btn) btn.disabled = !sel?.value;
-  },
-
   // ─── Private sessions ──────────────────────
   _getSavedPrivateSessions() {
     try { return JSON.parse(localStorage.getItem('pj_privateSessions')) || []; } catch(e) { return []; }
@@ -7616,41 +7576,36 @@ const Onboard = {
     const sessions = this._getSavedPrivateSessions().filter(s => s.id !== id);
     sessions.unshift({ id, name });
     try { localStorage.setItem('pj_privateSessions', JSON.stringify(sessions.slice(0, 20))); } catch(e) {}
-    this._populatePrivateDropdown();
+    this._renderSessionBubbles();
   },
 
-  async _populatePrivateDropdown() {
-    const sel = document.getElementById('privateSessionSelect');
-    if (!sel) return;
-    // Keep the placeholder, clear the rest
-    while (sel.options.length > 1) sel.remove(1);
+  // Session bubbles replace the old dropdown — green border for an open
+  // session, orange for one an admin has closed (see App.closeSession).
+  async _renderSessionBubbles() {
+    const wrap = document.getElementById('privateSessionBubbles');
+    const empty = document.getElementById('privateSessionsEmpty');
+    if (!wrap) return;
 
     let sessions;
     if (Admin.isSuperAdmin()) {
       sessions = await this._fetchAllPrivateSessions();
     } else {
-      sessions = this._getSavedPrivateSessions();
+      const saved = this._getSavedPrivateSessions();
+      const data = await Promise.all(saved.map(s => Session._get(s.id)));
+      sessions = saved.map((s, i) => ({ id: s.id, name: s.name, closed: !!data[i]?._closed }));
     }
 
-    if (sessions.length === 0) {
-      sel.options[0].textContent = 'No saved sessions';
-      sel.disabled = true;
-      sel.style.appearance = 'none';
-      sel.style.backgroundImage = 'none';
-    } else {
-      sel.options[0].textContent = 'Select a session...';
-      sel.disabled = false;
-      sel.style.appearance = '';
-      sel.style.backgroundImage = '';
-      sessions.forEach(s => {
-        const opt = document.createElement('option');
-        opt.value = s.id;
-        opt.textContent = s.name;
-        sel.appendChild(opt);
-      });
-    }
-    sel.value = '';
-    this._updateJoinBtn('privateSessionSelect', 'btnJoinPrivate');
+    wrap.innerHTML = '';
+    if (empty) empty.style.display = sessions.length === 0 ? '' : 'none';
+    sessions.forEach(s => {
+      const chip = document.createElement('button');
+      chip.type = 'button';
+      chip.className = `dnd-chip chip-session-btn ${s.closed ? 'chip-session-closed' : 'chip-session-open'}`;
+      chip.title = s.closed ? 'Closed' : 'Open';
+      chip.textContent = s.name;
+      chip.onclick = () => this.joinPrivateSession(s.id, s.name);
+      wrap.appendChild(chip);
+    });
   },
 
   async _fetchAllPrivateSessions() {
@@ -7661,23 +7616,18 @@ const Onboard = {
       const savedMap = {};
       this._getSavedPrivateSessions().forEach(s => { savedMap[s.id] = s.name; });
       return Object.entries(all)
-        .filter(([k, v]) => k.startsWith('pvt-') && v && typeof v === 'object' && v._passcode)
-        .map(([k, v]) => ({ id: k, name: savedMap[k] || v._sessionName || k.replace(/^pvt-/, '') }));
+        .filter(([k, v]) => k.startsWith('pvt-') && v && typeof v === 'object')
+        .map(([k, v]) => ({ id: k, name: savedMap[k] || v._sessionName || k.replace(/^pvt-/, ''), closed: !!v._closed }));
     } catch(e) { return []; }
   },
 
-  joinSavedPrivate() {
-    const sel = document.getElementById('privateSessionSelect');
-    const id = sel?.value;
-    if (!id) return;
-    // Look up from localStorage first, fall back to the dropdown's display text
-    const saved = this._getSavedPrivateSessions().find(s => s.id === id);
-    const label = saved ? saved.name : sel.options[sel.selectedIndex]?.textContent || id;
-    this._promptSelfProfile(() => {
-      this._pendingKey = id;
-      this._pendingLabel = label;
-      this._showInlineConfirm('privateConfirmInline', label, () => this.confirmJoin());
-    });
+  // Tapping a session bubble joins right away — no name/skill prompt (the
+  // signed-in Google name is used, see confirmJoin) and no extra confirm
+  // step. New joiners land in Sitting Out rather than the queue (_addSelf).
+  joinPrivateSession(id, label) {
+    this._pendingKey = id;
+    this._pendingLabel = label;
+    this.confirmJoin();
   },
 
   _newSessionType: '',
@@ -7686,29 +7636,41 @@ const Onboard = {
     this._newSessionType = type;
   },
 
-  openCreatePrivate() {
+  togglePasscodeField() {
+    const on = !!document.getElementById('privatePasscodeToggle')?.checked;
+    const field = document.getElementById('privatePasscodeField');
+    if (field) field.style.display = on ? 'flex' : 'none';
+    if (!on) {
+      const codeEl = document.getElementById('privatePasscode');
+      if (codeEl) codeEl.value = '';
+    }
+  },
+
+  // "+ Create New" expands an inline form (name, type, passcode toggle) in
+  // place, the same pattern as the queue's inline Add Player row, instead
+  // of opening a modal.
+  toggleCreateSessionRow() {
     if (!Admin.isSignedIn()) {
       alert('Sign in with Google to create private sessions and to save your preferences. Use the back arrow and choose "Sign in with Google".');
       return;
     }
+    const row = document.getElementById('createSessionRow');
+    if (!row) return;
+    if (row.style.display !== 'none') { row.style.display = 'none'; return; }
     this._newSessionType = '';
     const nameEl = document.getElementById('privateSessionName');
     const codeEl = document.getElementById('privatePasscode');
+    const toggleEl = document.getElementById('privatePasscodeToggle');
     const sel = document.getElementById('selectSessionType');
-    const errEl = document.getElementById('privateSessionError');
+    const errEl = document.getElementById('createSessionError');
     if (nameEl) nameEl.value = '';
     if (codeEl) codeEl.value = '';
+    if (toggleEl) toggleEl.checked = false;
     if (sel) sel.selectedIndex = 0;
     if (errEl) errEl.style.display = 'none';
-    document.getElementById('createPrivateModal').style.display = 'flex';
-    document.body.style.overflow = 'hidden';
+    this.togglePasscodeField();
+    row.style.display = '';
     nameEl?.focus();
-  },
-
-  _createPrivateCancel(event) {
-    if (event && event.target !== event.currentTarget) return;
-    document.getElementById('createPrivateModal').style.display = 'none';
-    document.body.style.overflow = '';
   },
 
   randomPasscode() {
@@ -7721,17 +7683,24 @@ const Onboard = {
   createPrivate() {
     const nameEl = document.getElementById('privateSessionName');
     const codeEl = document.getElementById('privatePasscode');
-    const errEl = document.getElementById('privateSessionError');
+    const toggleEl = document.getElementById('privatePasscodeToggle');
+    const errEl = document.getElementById('createSessionError');
     const sessionName = (nameEl?.value || '').trim();
-    const passcode = (codeEl?.value || '').trim().toUpperCase();
-    if (!sessionName || passcode.length !== 4 || !this._newSessionType) {
-      if (errEl) { errEl.textContent = 'Enter a session name, 4-character passcode, and select a session type'; errEl.style.display = 'block'; }
+    const passcodeRequired = !!toggleEl?.checked;
+    const passcode = passcodeRequired ? (codeEl?.value || '').trim().toUpperCase() : '';
+    if (!sessionName || !this._newSessionType || (passcodeRequired && passcode.length !== 4)) {
+      if (errEl) {
+        errEl.textContent = passcodeRequired
+          ? 'Enter a session name, 4-character passcode, and select a session type'
+          : 'Enter a session name and select a session type';
+        errEl.style.display = 'block';
+      }
       return;
     }
     if (errEl) errEl.style.display = 'none';
     const id = 'pvt-' + sessionName.toLowerCase().replace(/[^a-z0-9]/g, '');
     this._savePrivateSession(id, sessionName);
-    document.getElementById('createPrivateModal').style.display = 'none';
+    document.getElementById('createSessionRow').style.display = 'none';
     this._promptSelfProfile(() => {
       this._pendingKey = id;
       this._pendingLabel = sessionName;
@@ -7761,7 +7730,14 @@ const Onboard = {
     const key = this._pendingKey;
     const label = this._pendingLabel;
     if (!key || !label) return;
-    const user = this._savedUser();
+    // Signed-in users joining a saved session may never have gone through
+    // the name/skill prompt — fall back to their Google display name so
+    // tapping a session bubble can join without asking for anything.
+    let user = this._savedUser();
+    if (!user && Admin._user?.displayName) {
+      user = { name: Admin._user.displayName, skillLevel: null };
+      try { localStorage.setItem('courtManagerUser', JSON.stringify(user)); } catch(e) {}
+    }
     if (!user) return;
 
     // Super admin: ask if joining as player or admin only
@@ -7817,11 +7793,10 @@ const Onboard = {
   showStep() {
     const setup = document.getElementById('sessionSetupSection');
     if (setup) setup.style.display = '';
-    const pvtModal = document.getElementById('createPrivateModal');
-    if (pvtModal) pvtModal.style.display = 'none';
+    const createRow = document.getElementById('createSessionRow');
+    if (createRow) createRow.style.display = 'none';
     const sharePasscode = document.getElementById('sharePasscodePrompt');
     if (sharePasscode) sharePasscode.style.display = 'none';
-    this._inlineNo();
     this._pendingKey = null;
     this._pendingLabel = null;
     this._pendingPasscode = null;
@@ -7829,7 +7804,7 @@ const Onboard = {
     this._shareLink = null;
     this._sharePending = null;
     this._shareLinkLoading = false;
-    this._populatePrivateDropdown();
+    this._renderSessionBubbles();
     // No pending share link — restore the default landing page (Quick Play included)
     // and stop offering guest join, which is only for a specific shared link
     const heading = document.getElementById('entryHeading');
@@ -8414,8 +8389,8 @@ const Admin = {
         if (signedInAs) signedInAs.innerHTML = '';
       }
     }
-    // Refresh private dropdown (super admin may see all sessions)
-    Onboard._populatePrivateDropdown();
+    // Refresh session bubbles (super admin may see all sessions)
+    Onboard._renderSessionBubbles();
     // Super admin panel
     const superSection = document.getElementById('superAdminSection');
     if (superSection) {
