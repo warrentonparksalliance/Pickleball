@@ -2057,19 +2057,6 @@ body {
   padding: 1px 5px;
   border-radius: var(--radius-full);
 }
-.btn-clear-history {
-  padding: 6px 14px;
-  background: transparent;
-  color: var(--text-muted);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-sm);
-  font-size: 0.78rem;
-  font-weight: 600;
-  font-family: inherit;
-  cursor: pointer;
-}
-.btn-clear-history:hover { color: var(--danger); border-color: var(--danger-border); background: var(--danger-light); }
-
 /* ── Footer ─────────────────────────────────── */
 .app-footer {
   text-align: center;
@@ -2807,7 +2794,6 @@ body {
         <div class="section-title">Match History</div>
         <div style="display:flex;gap:8px;">
           <button class="btn-outline" id="btnLogPastMatch" onclick="App.toggleLogPastMatch()" style="display:none;padding:6px 12px;font-size:0.78rem;font-weight:600;">+ Log Past Match</button>
-          <button class="btn-clear-history admin-only" id="btnClearHistory" onclick="App.clearHistory()" style="display:none;">Clear History</button>
         </div>
       </div>
       <div id="logPastMatchPanel" class="partner-picker" style="display:none;margin-bottom:14px;">
@@ -5639,18 +5625,6 @@ ${bracketHTML}
     if (e && e.target !== document.getElementById('hiwModal')) return;
     document.getElementById('hiwModal').style.display = 'none';
     document.body.style.overflow = '';
-  },
-
-  clearHistory() {
-    if (!Admin.isAdmin()) return;
-    if (!confirm('Clear all match history and fairness rotation counts for all users?')) return;
-    this._logAdmin('Clear History');
-    this.state.opponentHistory = {};
-    this.state.roundsWaited = {};
-    this.state.roundHistory = [];
-    this.state.round = 0;
-    this.saveState();
-    this.render();
   },
 
   // ─── Close / Open Session (admin-only pause) ───
