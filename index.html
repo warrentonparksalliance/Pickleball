@@ -2362,8 +2362,8 @@ body {
         <div class="section-subtitle" style="margin-bottom:14px;">Create a session for your group and share the link or code with friends — they can join without signing in.</div>
         <button type="button" class="btn-outline" onclick="Onboard.toggleCreateSessionRow()" id="btn-create-private" style="width:100%;padding:12px 14px;font-size:1rem;font-weight:700;font-family:inherit;">+ Create New</button>
         <div id="createSessionRow" style="display:none;margin-top:10px;">
-          <p id="createSessionError" class="setup-error" style="display:none;">Enter a session name</p>
-          <input type="text" class="setup-input" id="privateSessionName" placeholder="Session name" maxlength="20" style="width:100%;">
+          <p id="createSessionError" class="setup-error" style="display:none;">Enter a 4-character passcode</p>
+          <input type="text" class="setup-input" id="privateSessionName" placeholder="Session name (optional)" maxlength="20" style="width:100%;">
           <div class="qp-type-group" id="sessionTypeGroup" role="radiogroup" aria-label="Session type" style="margin-bottom:8px;">
             <label class="qp-type-option">
               <input type="radio" name="sessionCreateType" value="open" checked onchange="Onboard.setSessionType(this.value)">
@@ -8064,20 +8064,30 @@ const Onboard = {
     const codeEl = document.getElementById('privatePasscode');
     const toggleEl = document.getElementById('privatePasscodeToggle');
     const errEl = document.getElementById('createSessionError');
-    const sessionName = (nameEl?.value || '').trim();
+    let sessionName = (nameEl?.value || '').trim();
     const passcodeRequired = !!toggleEl?.checked;
     const passcode = passcodeRequired ? (codeEl?.value || '').trim().toUpperCase() : '';
-    if (!sessionName || (passcodeRequired && passcode.length !== 4)) {
+    if (passcodeRequired && passcode.length !== 4) {
       if (errEl) {
-        errEl.textContent = passcodeRequired
-          ? 'Enter a session name and a 4-character passcode'
-          : 'Enter a session name';
+        errEl.textContent = 'Enter a 4-character passcode';
         errEl.style.display = 'block';
       }
       return;
     }
     if (errEl) errEl.style.display = 'none';
-    const id = 'pvt-' + sessionName.toLowerCase().replace(/[^a-z0-9]/g, '');
+    // Name is optional — an untitled session gets the same auto-label
+    // pattern as a saved Quick Play session, but with the type in place of
+    // "Quick Play" (e.g. "Round Robin Sep 14 3:45 PM"), and the id gets a
+    // random suffix since that label isn't guaranteed unique.
+    let id;
+    if (sessionName) {
+      id = 'pvt-' + sessionName.toLowerCase().replace(/[^a-z0-9]/g, '');
+    } else {
+      const typeLabel = this._newSessionType === 'roundrobin' ? 'Round Robin' : this._newSessionType === 'tournament' ? 'Tournament' : 'Open Play';
+      const now = new Date();
+      sessionName = `${typeLabel} ${now.toLocaleDateString(undefined, { month: 'short', day: 'numeric' })} ${now.toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' })}`;
+      id = 'pvt-' + sessionName.toLowerCase().replace(/[^a-z0-9]/g, '') + '-' + Math.random().toString(36).slice(2, 6);
+    }
     this._savePrivateSession(id, sessionName);
     document.getElementById('createSessionRow').style.display = 'none';
     this._promptSelfProfile(() => {
