@@ -1945,6 +1945,35 @@ body {
   text-align: right;
   min-width: 40px;
 }
+.match-score-edit {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
+  color: var(--text-muted);
+}
+.match-score-edit input[type="number"] {
+  width: 44px;
+  padding: 4px 6px;
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius-sm);
+  font-size: 0.85rem;
+  font-family: inherit;
+  background: var(--card);
+  color: var(--text);
+  text-align: center;
+}
+.match-score-edit input:focus {
+  outline: none;
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px var(--primary-light);
+}
+.match-edit-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 6px;
+  margin-top: 8px;
+}
 .history-empty { padding: 8px 0; font-size: 0.82rem; color: var(--text-muted); font-style: italic; }
 .history-session-closed {
   display: flex;
@@ -5530,12 +5559,26 @@ ${bracketHTML}
     this.state.opponentHistory = {};
     this.state.roundsWaited = {};
     this.state.round = 0;
+    // Round Robin/Tournament locks in a roster for one day's play — closing
+    // resets that lock too, so reopening starts a fresh roster instead of
+    // landing back on a finished schedule/bracket with no way to build a new one.
+    if (this.isRoundRobin()) {
+      this.state._rrLocked = false;
+      this.state._rrSchedule = [];
+      this.state._rrCurrentRound = 0;
+    }
+    if (this.isTournament()) {
+      this.state._bracketLocked = false;
+      this.state._bracket = [];
+      this.state._bracketCurrentRound = 0;
+    }
     const summary = this._buildSessionSummary();
     if (summary) this.state.roundHistory.push(summary);
     this.state.roundHistory.push({ sessionClosed: true, side1: [], side2: [], at: Date.now() });
     this.state._closed = true;
     this._proposedUndoStack = [];
     this._tapSelection = null;
+    this._editingMatchIdx = null;
     this.saveState();
     this.render();
     // Jump straight to History so whoever closed it sees the session
@@ -7222,19 +7265,92 @@ ${bracketHTML}
       }
       const headerLeft = m.manual ? 'Logged as already played' : (dateTime || '');
       const headerRight = dur ? `${dur}` : '';
+      // A score can only be corrected while the session is open \u2014 once
+      // closed, this record (and the summary built from it) is final.
+      const idx = this.state.roundHistory.indexOf(m);
+      const canEditScore = !this.state._closed;
+      const isEditing = canEditScore && this._editingMatchIdx === idx;
+      const editBtn = canEditScore && !isEditing
+        ? `<button class="queue-row-btn queue-row-action" onclick="App.editMatchScore(${idx})" title="Edit score">&#x270E;</button>`
+        : '';
+      const scoreArea = isEditing
+        ? `<div class="match-score-edit">
+            <input type="number" min="0" id="matchEditScore1-${idx}" value="${m.score1 != null ? m.score1 : ''}" placeholder="0">
+            <span>&ndash;</span>
+            <input type="number" min="0" id="matchEditScore2-${idx}" value="${m.score2 != null ? m.score2 : ''}" placeholder="0">
+          </div>`
+        : `<div class="match-card-score">${scoreText}</div>`;
+      const editActions = isEditing
+        ? `<p id="matchEditError-${idx}" class="setup-error" style="display:none;margin-top:6px;"></p>
+           <div class="match-edit-actions">
+             <button class="btn-edit-cancel" onclick="App.cancelEditMatchScore()">Cancel</button>
+             <button class="btn-edit-save" onclick="App.saveEditMatchScore(${idx})">Save</button>
+           </div>`
+        : '';
       return `<div class="match-card">
         <div class="match-card-header">
           <span>${headerLeft}</span>
-          <span>${headerRight}</span>
+          <span style="display:flex;align-items:center;gap:6px;">${headerRight}${editBtn}</span>
         </div>
         <div class="match-card-body">
           <div class="match-card-team ${s1Class}">${s1.join(' & ')}</div>
           <span class="match-card-vs">vs</span>
           <div class="match-card-team ${s2Class}" style="text-align:right;">${s2.join(' & ')}</div>
-          <div class="match-card-score">${scoreText}</div>
+          ${scoreArea}
         </div>
+        ${editActions}
       </div>`;
     }).join('');
+  },
+
+  // Index (in this.state.roundHistory) of the match card currently showing
+  // its score-edit form — only one at a time, and only while the session
+  // is open (see canEditScore in renderHistory).
+  _editingMatchIdx: null,
+
+  editMatchScore(idx) {
+    if (this.state._closed) return;
+    this._editingMatchIdx = idx;
+    this.renderHistory();
+  },
+
+  cancelEditMatchScore() {
+    this._editingMatchIdx = null;
+    this.renderHistory();
+  },
+
+  saveEditMatchScore(idx) {
+    if (this.state._closed) return;
+    const m = this.state.roundHistory[idx];
+    if (!m) return;
+    const s1Input = document.getElementById(`matchEditScore1-${idx}`);
+    const s2Input = document.getElementById(`matchEditScore2-${idx}`);
+    const errEl = document.getElementById(`matchEditError-${idx}`);
+    const raw1 = (s1Input?.value || '').trim();
+    const raw2 = (s2Input?.value || '').trim();
+    let score1 = null, score2 = null;
+    if (raw1 !== '' || raw2 !== '') {
+      score1 = parseInt(raw1, 10);
+      score2 = parseInt(raw2, 10);
+      if (isNaN(score1) || isNaN(score2)) {
+        if (errEl) { errEl.textContent = 'Enter a score for both sides, or leave both blank.'; errEl.style.display = ''; }
+        return;
+      }
+      if (this.isTournament() && score1 === score2) {
+        if (errEl) { errEl.textContent = 'Tournament matches cannot end in a tie.'; errEl.style.display = ''; }
+        return;
+      }
+    }
+    m.score1 = score1;
+    m.score2 = score2;
+    m.winner = (score1 != null && score2 != null) ? (score1 > score2 ? 1 : score2 > score1 ? 2 : 0) : null;
+    // A corrected score means this match is no longer an unresolved
+    // "expired" one — see renderHistoryStats/_buildSessionSummary, which
+    // otherwise skip expired entries when tallying wins even with a winner set.
+    if (score1 != null && score2 != null) m.expired = false;
+    this._editingMatchIdx = null;
+    this.saveState();
+    this.render();
   },
 
   renderAdminLog() {
