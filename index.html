@@ -1974,6 +1974,27 @@ body {
   gap: 6px;
   margin-top: 8px;
 }
+.match-duration-edit {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+}
+.match-duration-edit input[type="number"] {
+  width: 28px;
+  padding: 2px 3px;
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius-sm);
+  font-size: 0.72rem;
+  font-family: inherit;
+  background: var(--card);
+  color: var(--text);
+  text-align: center;
+}
+.match-duration-edit input:focus {
+  outline: none;
+  border-color: var(--primary);
+  box-shadow: 0 0 0 2px var(--primary-light);
+}
 .history-empty { padding: 8px 0; font-size: 0.82rem; color: var(--text-muted); font-style: italic; }
 .history-session-closed {
   display: flex;
@@ -2817,6 +2838,7 @@ body {
             <span id="seasonSummaryRange" style="font-size:0.72rem;color:var(--text-muted);"></span>
           </div>
           <div id="seasonSummaryRows"></div>
+          <button type="button" class="btn-outline" id="btnToggleSeasonStandings" onclick="App.toggleSeasonStandings()" style="display:none;width:100%;margin-top:8px;padding:8px;font-size:0.78rem;font-weight:600;">Show All Players</button>
         </div>
         <button type="button" class="btn-outline" id="btnToggleSeasonDetails" onclick="App.toggleSeasonDetails()" style="width:100%;padding:10px;font-size:0.85rem;font-weight:600;">Show Day-by-Day Details</button>
       </div>
@@ -2835,8 +2857,16 @@ body {
         </div>
         <div class="history-filters" style="display:flex;gap:8px;align-items:center;">
           <input type="text" id="historySearch" class="history-search" placeholder="Search players..." oninput="App.renderHistory()" style="flex:1;">
+          <!-- League standings already narrow the roster to who's actually
+               playing, so a full name picker (see App.filterHistoryByPlayer)
+               stands in for free-text search there — swapped in/out in
+               renderSeasonSummary alongside the rest of the League UI. -->
+          <select id="historyPlayerSelect" class="setup-input" style="display:none;flex:1;margin-bottom:0;cursor:pointer;" onchange="App.filterHistoryByPlayer(this.value)">
+            <option value="">All Players</option>
+          </select>
           <button type="button" class="btn-outline" id="btnFilterMyMatches" onclick="App.toggleMyMatches()" style="white-space:nowrap;padding:12px 16px;font-size:1rem;font-weight:700;">My Matches</button>
         </div>
+        <div id="historyPlayerStatCard" style="display:none;padding:10px 14px;margin-bottom:10px;background:var(--card);border:1px solid var(--border);border-radius:var(--radius);font-size:0.85rem;"></div>
         <div class="history-table-wrap" id="historyRounds"></div>
       </div>
     </div>
@@ -7257,6 +7287,28 @@ ${bracketHTML}
   // null until renderSeasonSummary first decides a default (expanded while
   // the season's in progress, collapsed once it's ended) — see there.
   _seasonDetailsExpanded: null,
+  // Season standings start collapsed to the top 3 — see renderSeasonSummary.
+  _seasonStandingsExpanded: false,
+  // Selected from the League player picker (see renderSeasonSummary) —
+  // null means "All Players". Stands in for the free-text search filter
+  // it replaces while a League is active.
+  _historyFilterPlayerId: null,
+
+  filterHistoryByPlayer(value) {
+    this._historyFilterPlayerId = value === '' ? null : Number(value);
+    this.renderHistory();
+  },
+
+  // Indices (in roundHistory) of per-close session summaries currently
+  // showing all players instead of just the top 3 — see the sessionSummary
+  // branch in renderHistory and toggleSessionSummaryExpanded.
+  _expandedSessionSummaries: new Set(),
+
+  toggleSessionSummaryExpanded(idx) {
+    if (this._expandedSessionSummaries.has(idx)) this._expandedSessionSummaries.delete(idx);
+    else this._expandedSessionSummaries.add(idx);
+    this.renderHistory();
+  },
 
   toggleMyMatches() {
     this._historyFilterMine = !this._historyFilterMine;
@@ -7334,14 +7386,35 @@ ${bracketHTML}
   renderSeasonSummary() {
     const section = document.getElementById('seasonSummarySection');
     const detailSection = document.getElementById('historyDetailSection');
+    const searchEl = document.getElementById('historySearch');
+    const playerSelectEl = document.getElementById('historyPlayerSelect');
     if (!section) return;
     const summary = this.isRoundRobin() ? this._buildSeasonSummary() : null;
     if (!summary) {
       section.style.display = 'none';
       if (detailSection) detailSection.style.display = '';
+      // No league — back to the plain search box, same as before it existed.
+      if (searchEl) searchEl.style.display = '';
+      if (playerSelectEl) playerSelectEl.style.display = 'none';
+      this._historyFilterPlayerId = null;
       return;
     }
     section.style.display = '';
+    // League: a full player picker replaces free-text search — every name
+    // in the season is already known, so picking beats typing, and
+    // selecting one filters both the match list below and shows their
+    // own season stats (see filterHistoryByPlayer/renderHistory).
+    if (searchEl) searchEl.style.display = 'none';
+    if (playerSelectEl) {
+      playerSelectEl.style.display = '';
+      const current = this._historyFilterPlayerId;
+      playerSelectEl.innerHTML = '<option value="">All Players</option>' +
+        summary.players.map(p => `<option value="${p.id}"${current === p.id ? ' selected' : ''}>${this.esc(p.name)}</option>`).join('');
+      if (current != null && !summary.players.some(p => p.id === current)) {
+        this._historyFilterPlayerId = null;
+        playerSelectEl.value = '';
+      }
+    }
     const titleEl = document.getElementById('seasonSummaryTitle');
     if (titleEl) titleEl.textContent = summary.ended ? 'Season Complete' : 'Season Summary (to date)';
     const rangeEl = document.getElementById('seasonSummaryRange');
@@ -7351,17 +7424,28 @@ ${bracketHTML}
       rangeEl.textContent = `${fmt(summary.league.startDate)} – ${fmt(summary.league.endDate)}${freqLabel ? ' · ' + freqLabel : ''}`;
     }
     const rowsEl = document.getElementById('seasonSummaryRows');
+    const standingsToggleBtn = document.getElementById('btnToggleSeasonStandings');
     if (rowsEl) {
-      rowsEl.innerHTML = summary.players.length
-        ? summary.players.map(p =>
+      const players = summary.players;
+      // Top 3 by default — full standings are one tap away, so a season
+      // with a long roster still leads with who's actually in contention.
+      const showAllStandings = this._seasonStandingsExpanded || players.length <= 3;
+      const visible = showAllStandings ? players : players.slice(0, 3);
+      rowsEl.innerHTML = players.length
+        ? visible.map(p =>
             `<div class="history-summary-row"><span class="history-summary-name">${this.esc(p.name)}</span><span class="history-summary-record">${p.wins}-${p.losses}${p.played ? ` · ${p.played} played` : ''}${p.avgPoints != null ? ` · ${p.avgPoints} avg pts` : ''}</span></div>`
           ).join('')
         : '<div class="history-empty">No matches yet this season</div>';
+      if (standingsToggleBtn) {
+        standingsToggleBtn.style.display = players.length > 3 ? '' : 'none';
+        standingsToggleBtn.textContent = showAllStandings ? 'Show Top 3' : `Show All ${players.length} Players`;
+      }
     }
     if (this._seasonDetailsExpanded == null) this._seasonDetailsExpanded = !summary.ended;
     const toggleBtn = document.getElementById('btnToggleSeasonDetails');
     if (toggleBtn) toggleBtn.textContent = this._seasonDetailsExpanded ? 'Hide Day-by-Day Details' : 'Show Day-by-Day Details';
     if (detailSection) detailSection.style.display = this._seasonDetailsExpanded ? '' : 'none';
+    return summary;
   },
 
   toggleSeasonDetails() {
@@ -7369,12 +7453,30 @@ ${bracketHTML}
     this.renderSeasonSummary();
   },
 
+  toggleSeasonStandings() {
+    this._seasonStandingsExpanded = !this._seasonStandingsExpanded;
+    this.renderSeasonSummary();
+  },
+
   renderHistory() {
     const el = document.getElementById('historyRounds');
     let history = [...(this.state.roundHistory || [])];
 
-    this.renderSeasonSummary();
+    const seasonSummary = this.renderSeasonSummary();
     this.renderHistoryStats(history);
+
+    // League player picker (see filterHistoryByPlayer): show the selected
+    // player's own season stats next to the match list it also filters.
+    const statCard = document.getElementById('historyPlayerStatCard');
+    if (statCard) {
+      const p = this._historyFilterPlayerId != null ? seasonSummary?.players.find(pl => pl.id === this._historyFilterPlayerId) : null;
+      if (p) {
+        statCard.style.display = '';
+        statCard.innerHTML = `<strong>${this.esc(p.name)}</strong> this season &middot; ${p.wins}-${p.losses}${p.played ? ` &middot; ${p.played} played` : ''}${p.avgPoints != null ? ` &middot; ${p.avgPoints} avg pts` : ''}`;
+      } else {
+        statCard.style.display = 'none';
+      }
+    }
 
     if (history.length === 0) {
       el.innerHTML = '<div class="history-empty">No completed games yet</div>';
@@ -7387,6 +7489,13 @@ ${bracketHTML}
     // Filter by "My Matches"
     if (this._historyFilterMine && Onboard.selfId) {
       history = history.filter(m => [...m.side1, ...m.side2].includes(Onboard.selfId));
+    }
+
+    // Filter by the League player picker, which stands in for free-text
+    // search while a League is active (see renderSeasonSummary) — only one
+    // of the two is ever visible, so only one ever has anything to filter by.
+    if (this._historyFilterPlayerId != null) {
+      history = history.filter(m => [...m.side1, ...m.side2].includes(this._historyFilterPlayerId));
     }
 
     // Filter by player name search — fall back to the snapshotted name for
@@ -7416,12 +7525,22 @@ ${bracketHTML}
         return `<div class="history-session-closed">Session closed${when ? ' &mdash; ' + when : ''}</div>`;
       }
       if (m.sessionSummary) {
-        const rows = (m.players || []).map(p =>
+        // Top 3 by default, same as the League season summary above —
+        // see toggleSessionSummaryExpanded.
+        const idx = this.state.roundHistory.indexOf(m);
+        const players = m.players || [];
+        const expanded = this._expandedSessionSummaries.has(idx) || players.length <= 3;
+        const visible = expanded ? players : players.slice(0, 3);
+        const rows = visible.map(p =>
           `<div class="history-summary-row"><span class="history-summary-name">${this.esc(p.name)}</span><span class="history-summary-record">${p.wins}-${p.losses}${p.played ? ` &middot; ${p.played} played` : ''}${p.avgPoints != null ? ` &middot; ${p.avgPoints} avg pts` : ''}</span></div>`
         ).join('');
+        const toggleBtn = players.length > 3
+          ? `<button type="button" class="btn-outline" style="width:100%;margin-top:8px;padding:6px;font-size:0.74rem;font-weight:600;" onclick="App.toggleSessionSummaryExpanded(${idx})">${expanded ? 'Show Top 3' : `Show All ${players.length} Players`}</button>`
+          : '';
         return `<div class="history-session-summary">
           <div class="history-session-summary-title">Session Summary</div>
           ${rows}
+          ${toggleBtn}
         </div>`;
       }
       const s1 = m.side1.map(id => { const p = this.getPlayer(id); return this.esc(nameFor(id)) + (p && p.skillLevel ? ` <span style="font-weight:400;opacity:0.7;">(${this.skillAbbrev(p)})</span>` : ''); });
@@ -7430,7 +7549,6 @@ ${bracketHTML}
       const s1Class = hasScores ? (m.winner === 1 ? 'winner' : m.winner === 2 ? 'loser' : '') : '';
       const s2Class = hasScores ? (m.winner === 2 ? 'winner' : m.winner === 1 ? 'loser' : '') : '';
       const scoreText = hasScores ? `${m.score1}\u2013${m.score2}` : (m.expired ? 'N/A' : '\u2013');
-      const dur = m.duration ? this.formatTimer(m.duration) : '';
       let dateTime = '';
       if (m.startTime) {
         const d = new Date(m.startTime);
@@ -7439,15 +7557,19 @@ ${bracketHTML}
         dateTime = `${date}, ${time}`;
       }
       const headerLeft = m.manual ? 'Logged as already played' : (dateTime || '');
-      const headerRight = dur ? `${dur}` : '';
-      // A score can only be corrected while the session is open \u2014 once
-      // closed, this record (and the summary built from it) is final.
+      // A score (and duration) can only be corrected while the session is
+      // open \u2014 once closed, this record (and the summary built from it) is final.
       const idx = this.state.roundHistory.indexOf(m);
       const canEditScore = !this.state._closed;
       const isEditing = canEditScore && this._editingMatchIdx === idx;
       const editBtn = canEditScore && !isEditing
         ? `<button class="queue-row-btn queue-row-action" onclick="App.editMatchScore(${idx})" title="Edit score">&#x270E;</button>`
         : '';
+      const durMin = m.duration ? Math.floor(m.duration / 60000) : '';
+      const durSec = m.duration ? Math.floor((m.duration % 60000) / 1000) : '';
+      const durationArea = isEditing
+        ? `<span class="match-duration-edit"><input type="number" min="0" id="matchEditDurMin-${idx}" value="${durMin}" placeholder="0"><span>:</span><input type="number" min="0" max="59" id="matchEditDurSec-${idx}" value="${durSec}" placeholder="00"></span>`
+        : `<span>${m.duration ? this.formatTimer(m.duration) : '\u2013'}</span>`;
       const scoreArea = isEditing
         ? `<div class="match-score-edit">
             <input type="number" min="0" id="matchEditScore1-${idx}" value="${m.score1 != null ? m.score1 : ''}" placeholder="0">
@@ -7466,7 +7588,7 @@ ${bracketHTML}
       return `<div class="match-card">
         <div class="match-card-header">
           <span>${headerLeft}</span>
-          <span style="display:flex;align-items:center;gap:6px;">${headerRight}${editBtn}</span>
+          <span style="display:flex;align-items:center;gap:6px;">${durationArea}${editBtn}</span>
         </div>
         <div class="match-card-body">
           <div class="match-card-team ${s1Class}">${s1.join(' & ')}</div>
@@ -7517,9 +7639,24 @@ ${bracketHTML}
         return;
       }
     }
+    const durMinInput = document.getElementById(`matchEditDurMin-${idx}`);
+    const durSecInput = document.getElementById(`matchEditDurSec-${idx}`);
+    const rawMin = (durMinInput?.value || '').trim();
+    const rawSec = (durSecInput?.value || '').trim();
+    let duration = null;
+    if (rawMin !== '' || rawSec !== '') {
+      const mins = rawMin === '' ? 0 : parseInt(rawMin, 10);
+      const secs = rawSec === '' ? 0 : parseInt(rawSec, 10);
+      if (isNaN(mins) || isNaN(secs)) {
+        if (errEl) { errEl.textContent = 'Enter a valid match duration.'; errEl.style.display = ''; }
+        return;
+      }
+      duration = (mins * 60 + secs) * 1000;
+    }
     m.score1 = score1;
     m.score2 = score2;
     m.winner = (score1 != null && score2 != null) ? (score1 > score2 ? 1 : score2 > score1 ? 2 : 0) : null;
+    m.duration = duration;
     // A corrected score means this match is no longer an unresolved
     // "expired" one — see renderHistoryStats/_buildSessionSummary, which
     // otherwise skip expired entries when tallying wins even with a winner set.
@@ -9250,7 +9387,7 @@ const MyHistory = {
       const s1Class = hasScores ? (m.winner === 1 ? 'winner' : m.winner === 2 ? 'loser' : '') : '';
       const s2Class = hasScores ? (m.winner === 2 ? 'winner' : m.winner === 1 ? 'loser' : '') : '';
       const scoreText = hasScores ? `${m.score1}\u2013${m.score2}` : (m.expired ? 'N/A' : '\u2013');
-      const dur = m.duration ? App.formatTimer(m.duration) : '';
+      const dur = m.duration ? App.formatTimer(m.duration) : '–';
       let dateTime = '';
       if (m.startTime) {
         const d = new Date(m.startTime);
