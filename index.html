@@ -2538,13 +2538,19 @@ body {
             <button type="button" class="btn-add-player" style="margin-top:0;flex-shrink:0;width:auto;padding:12px 16px;" onclick="App.submitQueueAddPlayer()">+ Add Player</button>
           </div>
         </div>
-        <div class="queue-subsection-label">Waiting</div>
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;">
+          <div class="queue-subsection-label">Waiting</div>
+          <button type="button" class="btn-outline" id="btnSelectAllQueue" style="display:none;flex-shrink:0;padding:5px 10px;font-size:0.78rem;font-weight:600;" onclick="App.toggleSelectAllInZone('queue')">Select All</button>
+        </div>
         <div class="queue-list-box">
           <div id="queueActiveList" class="queue-list dnd-target" data-loc-type="queue"></div>
           <div id="queueDropQueue" class="queue-drop-strip dnd-target" data-loc-type="queue">Enter Queue</div>
         </div>
         <div id="queueWaitingWrap" style="display:none;">
-          <div class="queue-subsection-label" style="margin-top:10px;">Sitting Out</div>
+          <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-top:10px;">
+            <div class="queue-subsection-label">Sitting Out</div>
+            <button type="button" class="btn-outline" id="btnSelectAllWaiting" style="display:none;flex-shrink:0;padding:5px 10px;font-size:0.78rem;font-weight:600;" onclick="App.toggleSelectAllInZone('waiting')">Select All</button>
+          </div>
           <div class="queue-list-box">
             <div id="queueWaitingList" class="queue-list dnd-target" data-loc-type="waiting"></div>
             <div id="queueDropWaiting" class="queue-drop-strip dnd-target" data-loc-type="waiting">Sit Out</div>
@@ -2839,6 +2845,7 @@ body {
         <div class="partner-picker" style="margin-top:0;">
           <div class="partner-picker-list" id="fillQueuePickerList"></div>
         </div>
+        <button type="button" class="btn-confirm-join" id="btnFillQueueConfirm" style="display:none;width:100%;padding:12px;font-size:1rem;font-weight:700;margin-top:10px;" onclick="App.confirmFillQueueSelection()" disabled>Move Player</button>
       </div>
     </div>
   </div>
@@ -5810,7 +5817,7 @@ ${bracketHTML}
       const skillBtn = this.state.options.useSkill
         ? `<button class="queue-row-skill-btn${p.skillLevel ? ' set' : ''}" onclick="App.toggleSkillPicker(${p.id})" title="Set skill level">${this.skillAbbrev(p)}</button>`
         : '';
-      const selected = this._tapSelection && this._tapSelection.playerIds.length === 1 && this._tapSelection.playerIds[0] === p.id ? ' dnd-selected' : '';
+      const selected = this._tapSelection && this._tapSelection.playerIds.includes(p.id) ? ' dnd-selected' : '';
       // Border color marks whose chip this is (green = you, orange = your
       // partner, purple = another signed-in user) instead of a text badge —
       // see .chip-self/.chip-partner/.chip-live.
@@ -5856,7 +5863,7 @@ ${bracketHTML}
     // itself a drag/tap target that moves both players together (see
     // _onDndPointerDown/_movePlayers) instead of one at a time.
     const renderPairRow = (team, p1, p2) => {
-      const ampSelected = this._tapSelection && this._tapSelection.teamId === team.id ? ' dnd-selected' : '';
+      const ampSelected = this._tapSelection && this._tapSelection.playerIds.includes(p1.id) && this._tapSelection.playerIds.includes(p2.id) ? ' dnd-selected' : '';
       return `<div class="queue-row queue-row-pair">${chipSpan(p1)}<span class="queue-pair-amp${ampSelected}" data-team-id="${team.id}" data-p1="${p1.id}" data-p2="${p2.id}" title="Drag or tap to move both">&amp;</span>${chipSpan(p2)}</div>${skillPickerFor(p1)}${skillPickerFor(p2)}`;
     };
 
@@ -5895,6 +5902,36 @@ ${bracketHTML}
     if (waitingEl) waitingEl.innerHTML = waitingPlayers.length
       ? buildListHtml(waitingPlayers)
       : '';
+
+    const sel = this._tapSelection;
+    const isAllSelected = (zoneType, players) => !!sel && this._locEq(sel.from, { type: zoneType }) &&
+      sel.playerIds.length === players.length && players.every(p => sel.playerIds.includes(p.id));
+    const btnSelectAllQueue = document.getElementById('btnSelectAllQueue');
+    if (btnSelectAllQueue) {
+      btnSelectAllQueue.style.display = activePlayers.length ? '' : 'none';
+      btnSelectAllQueue.textContent = isAllSelected('queue', activePlayers) ? 'Clear Selection' : 'Select All';
+    }
+    const btnSelectAllWaiting = document.getElementById('btnSelectAllWaiting');
+    if (btnSelectAllWaiting) {
+      btnSelectAllWaiting.style.display = waitingPlayers.length ? '' : 'none';
+      btnSelectAllWaiting.textContent = isAllSelected('waiting', waitingPlayers) ? 'Clear Selection' : 'Select All';
+    }
+  },
+
+  // Selects (or, if the whole zone is already selected, clears) every
+  // player currently in Waiting ('queue') or Sitting Out ('waiting') —
+  // same multi-select this feeds into via tapping/dragging individual
+  // chips (see _onDndPointerUp), just a faster way to grab everyone at once.
+  toggleSelectAllInZone(zoneType) {
+    const wantActive = zoneType === 'queue';
+    const onCourts = this.getPlayersOnCourts();
+    const ids = this.state.players.filter(p => !onCourts.has(p.id) && !!p.active === wantActive).map(p => p.id);
+    if (!ids.length) return;
+    const sel = this._tapSelection;
+    const alreadyAllSelected = !!sel && this._locEq(sel.from, { type: zoneType }) &&
+      sel.playerIds.length === ids.length && ids.every(id => sel.playerIds.includes(id));
+    this._tapSelection = alreadyAllSelected ? null : { playerIds: ids, from: { type: zoneType } };
+    this.render();
   },
 
   togglePartnerPicker() {
@@ -6221,7 +6258,7 @@ ${bracketHTML}
     const isPartner = selfId && selfId !== playerId && this.state.teams.some(t =>
       t.current && ((t.p1 === selfId && t.p2 === playerId) || (t.p2 === selfId && t.p1 === playerId))
     );
-    const selected = this._tapSelection && this._tapSelection.playerIds.length === 1 && this._tapSelection.playerIds[0] === playerId ? ' dnd-selected' : '';
+    const selected = this._tapSelection && this._tapSelection.playerIds.includes(playerId) ? ' dnd-selected' : '';
     // Skill level is a queue-only detail — once someone's on a court, which
     // team they're on already reflects any skill-based matching.
     // Border color marks whose chip this is (green = you, orange = your
@@ -6316,17 +6353,19 @@ ${bracketHTML}
     }
   },
 
-  // Moves a locked-partner pair together in one action — used when dragging
-  // or tapping the "&" between two partnered chips in Waiting/Sitting Out
-  // (see renderPlayers) instead of moving each player one at a time. Only
-  // lands when the destination has room for both without bumping anyone
-  // already there — a pair is never split across two different targets or
-  // swapped in over an existing occupant.
+  // Moves a locked-partner pair — or a larger multi-selection built up via
+  // Select All/tapping several chips in Waiting/Sitting Out (see
+  // renderPlayers/_onDndPointerUp) — together in one action, instead of
+  // moving each player one at a time. Only lands on a court slot when the
+  // destination has room for exactly this many without bumping anyone
+  // already there — a side never holds more than 2, so a bigger
+  // multi-selection just isn't a valid drop there.
   _movePlayers(playerIds, from, to) {
     if (this._locEq(from, to)) return;
-    if (to.type === 'remove') return; // no bulk-remove via the pair — each player's own chip still can
+    if (to.type === 'remove') return; // no bulk-remove via a multi-select — each player's own chip still can
     if (this.state._closed && (to.type === 'queue' || to.type === 'slot')) return;
     if (to.type === 'slot') {
+      if (playerIds.length > 2) return;
       const game = this.state.proposedGames[to.court];
       const destArr = game && game['side' + to.side];
       const occupiedByOthers = destArr ? destArr.filter(id => !playerIds.includes(id)).length : 0;
@@ -6412,7 +6451,7 @@ ${bracketHTML}
     if (!zoneTapTo) return;
     this._dragState = {
       playerIds: this._tapSelection.playerIds,
-      teamId: this._tapSelection.teamId || null,
+      teamId: null,
       from: this._tapSelection.from,
       startX: e.clientX, startY: e.clientY,
       moved: false,
@@ -6474,26 +6513,44 @@ ${bracketHTML}
       return;
     }
     if (!d.moved) {
-      // Plain tap on a chip or "&": first tap selects it, a second tap on
-      // a different chip/"&" moves the selected unit to that tap's
-      // location, and tapping the same chip/"&" again just deselects it.
+      // Plain tap on a chip or "&": first tap selects it. A second tap on
+      // a chip/"&" in that SAME zone toggles it into/out of the selection
+      // (building up a multi-select), while tapping one in a DIFFERENT
+      // zone (or a court slot) moves the whole selection there instead.
       if (!this._tapSelection) {
-        this._tapSelection = { playerIds: d.playerIds, from: d.from, teamId: d.teamId };
+        this._tapSelection = { playerIds: [...d.playerIds], from: d.from };
         this.render();
         return;
       }
-      const { playerIds, from } = this._tapSelection;
+      const sel = this._tapSelection;
+      if (this._locEq(sel.from, d.from)) {
+        const allIn = d.playerIds.every(id => sel.playerIds.includes(id));
+        if (allIn) {
+          sel.playerIds = sel.playerIds.filter(id => !d.playerIds.includes(id));
+        } else {
+          d.playerIds.forEach(id => { if (!sel.playerIds.includes(id)) sel.playerIds.push(id); });
+        }
+        if (sel.playerIds.length === 0) this._tapSelection = null;
+        this.render();
+        return;
+      }
+      const { playerIds, from } = sel;
       this._tapSelection = null;
-      const sameUnit = playerIds.length === d.playerIds.length && playerIds.every(id => d.playerIds.includes(id));
-      if (sameUnit) { this.render(); return; }
       this._moveUnit(playerIds, from, d.from);
       return;
     }
     if (!d.hoverEl) return;
     const to = this._locFromEl(d.hoverEl);
     if (to) {
+      // Dragging a chip that's part of an active multi-selection (same
+      // zone) carries the whole selection along, not just the one chip
+      // under the pointer — same result as tapping each one, then tapping
+      // the destination.
+      const sel = this._tapSelection;
+      const useSelection = sel && this._locEq(sel.from, d.from) && d.playerIds.every(id => sel.playerIds.includes(id));
+      const playerIds = useSelection ? sel.playerIds : d.playerIds;
       this._tapSelection = null;
-      this._moveUnit(d.playerIds, d.from, to);
+      this._moveUnit(playerIds, d.from, to);
     }
   },
 
@@ -6652,6 +6709,7 @@ ${bracketHTML}
     // Leave Session stay open the whole time.
     if (zoneType === 'queue' && this.state._closed) return;
     this._fillQueueTarget = zoneType;
+    this._fillQueueSelection = [];
     const titleEl = document.getElementById('fillQueueModalTitle');
     if (titleEl) titleEl.textContent = zoneType === 'queue' ? 'Add from Sitting Out'
       : zoneType === 'waiting' ? 'Add from Waiting'
@@ -6666,10 +6724,18 @@ ${bracketHTML}
     document.getElementById('fillQueueModal').style.display = 'none';
     document.body.style.overflow = '';
     this._fillQueueTarget = null;
+    this._fillQueueSelection = [];
   },
+
+  // playerIds picked so far in the Waiting/Sitting Out fill picker — kept
+  // separate from _tapSelection (the queue's own multi-select) since this
+  // list only ever holds candidates from the *other* zone, picked here to
+  // be moved as a batch via confirmFillQueueSelection.
+  _fillQueueSelection: [],
 
   renderFillQueuePicker() {
     const el = document.getElementById('fillQueuePickerList');
+    const confirmBtn = document.getElementById('btnFillQueueConfirm');
     if (!el) return;
     const target = this._fillQueueTarget;
     const onCourt = this.getPlayersOnCourts();
@@ -6677,6 +6743,9 @@ ${bracketHTML}
     if (target === 'remove') {
       // Both Waiting and Sitting Out are fair game to remove — only permission
       // (see canRemovePlayer) narrows the list, not which of the two they're in.
+      // Removal always goes through its own one-at-a-time Yes/No confirm
+      // (see confirmRemove), so this list stays single-click, no multi-select.
+      if (confirmBtn) confirmBtn.style.display = 'none';
       const available = this.state.players.filter(p => !onCourt.has(p.id) && this.canRemovePlayer(p.id));
       el.innerHTML = available.length
         ? available.map(p => {
@@ -6690,11 +6759,42 @@ ${bracketHTML}
     // and vice versa — never from the list already being double-tapped.
     const wantActive = target === 'waiting';
     const available = this.state.players.filter(p => !onCourt.has(p.id) && !!p.active === wantActive);
-    el.innerHTML = available.length
-      ? available.map(p => `<div class="partner-picker-item" onclick="App.fillQueueWithPlayer(${p.id})">${this.esc(p.name)}</div>`).join('')
-      : empty;
+    if (!available.length) {
+      el.innerHTML = empty;
+      if (confirmBtn) confirmBtn.style.display = 'none';
+      return;
+    }
+    el.innerHTML = available.map(p => {
+      const selected = this._fillQueueSelection.includes(p.id) ? ' partner-picker-item-selected' : '';
+      return `<div class="partner-picker-item${selected}" onclick="App.toggleFillQueuePlayer(${p.id})">${this.esc(p.name)}</div>`;
+    }).join('');
+    if (confirmBtn) {
+      const n = this._fillQueueSelection.length;
+      confirmBtn.style.display = '';
+      confirmBtn.disabled = n === 0;
+      confirmBtn.textContent = n > 1 ? `Move ${n} Players` : 'Move Player';
+    }
   },
 
+  toggleFillQueuePlayer(playerId) {
+    const sel = this._fillQueueSelection;
+    const idx = sel.indexOf(playerId);
+    if (idx !== -1) sel.splice(idx, 1); else sel.push(playerId);
+    this.renderFillQueuePicker();
+  },
+
+  confirmFillQueueSelection() {
+    const target = this._fillQueueTarget;
+    const playerIds = this._fillQueueSelection;
+    if (!target || target === 'remove' || !playerIds.length) return;
+    const from = { type: target === 'waiting' ? 'queue' : 'waiting' };
+    this.closeFillQueuePicker();
+    this._moveUnit(playerIds, from, { type: target });
+  },
+
+  // Single-click, immediate — used only by the "remove" picker, where each
+  // row already opens its own Yes/No confirm (see confirmRemove) rather
+  // than needing the select-then-confirm flow above.
   fillQueueWithPlayer(playerId) {
     const target = this._fillQueueTarget;
     this.closeFillQueuePicker();
