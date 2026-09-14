@@ -2572,6 +2572,25 @@ body.view-only-locked #tabCourts #btnToggleQueue {
         </div>
       </div>
       <div class="section-subtitle" id="assignCount"></div>
+      <div id="scheduleTimeOptions" style="display:none;margin-top:10px;padding-top:10px;border-top:1px solid var(--border);">
+        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:8px;">
+          <div style="flex:1;min-width:110px;">
+            <label style="font-size:0.72rem;font-weight:600;color:var(--text-muted);display:block;margin-bottom:4px;">Match Time Limit (min)</label>
+            <input type="number" class="setup-input" id="matchTimeMinutes" min="1" step="1" style="margin-bottom:0;" onchange="App.updateScheduleTimeOptions()">
+          </div>
+          <div style="flex:1;min-width:110px;">
+            <label style="font-size:0.72rem;font-weight:600;color:var(--text-muted);display:block;margin-bottom:4px;">Session Time Limit (hrs)</label>
+            <input type="number" class="setup-input" id="sessionTimeHours" min="0.25" step="0.25" style="margin-bottom:0;" onchange="App.updateScheduleTimeOptions()">
+          </div>
+        </div>
+        <div id="scheduleRoundsOverrideWrap" style="display:none;margin-bottom:8px;">
+          <label style="font-size:0.72rem;font-weight:600;color:var(--text-muted);display:block;margin-bottom:4px;">Rounds</label>
+          <input type="number" class="setup-input" id="scheduleRoundsInput" min="1" step="1" style="margin-bottom:0;" onchange="App.updateScheduleTimeOptions()">
+        </div>
+        <div id="scheduleRoundsInfo" style="font-size:0.82rem;font-weight:600;color:var(--text);margin-bottom:4px;"></div>
+        <a href="#" id="scheduleRoundsToggleLink" onclick="App.toggleRoundsOverrideMode();return false;" style="font-size:0.75rem;font-weight:600;color:var(--primary);display:none;"></a>
+        <p id="scheduleTimeWarning" class="setup-error" style="display:none;margin-top:6px;"></p>
+      </div>
       <div class="assign-controls" id="assignControls" style="display:none;">
         <button id="btnAssignAll" class="btn-assign-all" onclick="App.assignAll()">Assign Courts</button>
       </div>
@@ -4513,6 +4532,106 @@ const App = {
     return units;
   },
 
+  // How many teams _buildTeamUnits would produce, without actually running
+  // its random pairing — used to preview a full round-robin rotation length
+  // (or a bracket's fixed round count) before the roster is locked.
+  _teamUnitCount() {
+    const playerIds = this.state.players.filter(p => p.active).map(p => p.id);
+    const idSet = new Set(playerIds);
+    const explicitTeams = this.state.teams.filter(t => t.current && idSet.has(t.p1) && idSet.has(t.p2));
+    const pairedIds = new Set(explicitTeams.flatMap(t => [t.p1, t.p2]));
+    const soloCount = playerIds.length - pairedIds.size;
+    if (soloCount % 2 !== 0) return null;
+    return explicitTeams.length + soloCount / 2;
+  },
+
+  _pairKey(a, b) { return a < b ? `${a}|${b}` : `${b}|${a}`; },
+
+  // Per-player-pair partner/opponent counts from this League season's match
+  // history (same date-range scoping as _buildSeasonSummary), used to steer
+  // team formation and round order away from repeat matchups. Null when no
+  // League season is active — repeat-minimization only applies then, since
+  // that's the only place a "season" date range is defined.
+  _seasonPairCounts() {
+    const league = this.state._league;
+    if (!league || !league.enabled) return null;
+    const startMs = league.startDate ? new Date(league.startDate + 'T00:00:00').getTime() : null;
+    const endMs = league.endDate ? new Date(league.endDate + 'T23:59:59').getTime() : null;
+    const partners = new Map();
+    const opponents = new Map();
+    const bump = (map, a, b) => map.set(this._pairKey(a, b), (map.get(this._pairKey(a, b)) || 0) + 1);
+    (this.state.roundHistory || []).forEach(m => {
+      if (m.sessionClosed || m.sessionSummary) return;
+      const ts = m.startTime || m.at;
+      if (ts == null) return;
+      if (startMs != null && ts < startMs) return;
+      if (endMs != null && ts > endMs) return;
+      const s1 = m.side1 || [], s2 = m.side2 || [];
+      if (s1.length === 2) bump(partners, s1[0], s1[1]);
+      if (s2.length === 2) bump(partners, s2[0], s2[1]);
+      s1.forEach(a => s2.forEach(b => bump(opponents, a, b)));
+    });
+    return { partners, opponents };
+  },
+
+  // Same team-formation as _buildTeamUnits, but when a League season is
+  // active, tries several random pairings and keeps whichever repeats the
+  // fewest partner pairs from this season's history so far.
+  _buildTeamUnitsForSeason() {
+    const pairCounts = this._seasonPairCounts();
+    if (!pairCounts) return this._buildTeamUnits();
+    const TRIALS = 150;
+    let best = null, bestScore = Infinity;
+    for (let i = 0; i < TRIALS; i++) {
+      const units = this._buildTeamUnits();
+      if (!units) return null;
+      const score = units.reduce((sum, u) => sum + (pairCounts.partners.get(this._pairKey(u.p1, u.p2)) || 0), 0);
+      if (score < bestScore) { bestScore = score; best = units; }
+      if (bestScore === 0) break;
+    }
+    return best;
+  },
+
+  // Reads the Match/Session Time Limit fields and returns how many rounds
+  // to actually schedule, capped to maxRounds (a full rotation) — or null
+  // if the admin hasn't filled in enough of them to make a recommendation,
+  // in which case callers keep their existing (uncapped) behavior.
+  _plannedRoundCount(maxRounds) {
+    const s = this.state._scheduleTime || {};
+    let rounds;
+    if (s.mode === 'rounds' && s.roundsOverride) {
+      rounds = s.roundsOverride;
+    } else if (s.matchMinutes && s.sessionHours) {
+      rounds = Math.round((s.sessionHours * 60) / s.matchMinutes);
+    } else {
+      return null;
+    }
+    return Math.max(1, Math.min(rounds, maxRounds));
+  },
+
+  // Caps a full round-robin rotation down to the planned round count, if
+  // one was given — keeping whichever rounds have the fewest repeat
+  // opponents from this League season's history (falling back to the
+  // earliest rounds when there's no season history to score against).
+  _applyPlannedRounds(rounds) {
+    const planned = this._plannedRoundCount(rounds.length);
+    if (planned == null || planned >= rounds.length) return rounds;
+    const pairCounts = this._seasonPairCounts();
+    let kept;
+    if (pairCounts) {
+      const scored = rounds.map(round => ({
+        round,
+        score: round.games.reduce((sum, g) => sum + g.side1.reduce((s, a) =>
+          s + g.side2.reduce((s2, b) => s2 + (pairCounts.opponents.get(this._pairKey(a, b)) || 0), 0), 0), 0),
+      }));
+      scored.sort((a, b) => a.score - b.score);
+      kept = scored.slice(0, planned).map(x => x.round).sort((a, b) => a.round - b.round);
+    } else {
+      kept = rounds.slice(0, planned);
+    }
+    return kept.map((r, i) => ({ ...r, round: i + 1 }));
+  },
+
   _passcodeVisible: false,
 
   togglePasscode() {
@@ -4730,6 +4849,95 @@ const App = {
     this.render();
   },
 
+  // ─── Match/Session Time Limit → recommended rounds ──
+  // Shown for Round Robin and Tournament alike, once the roster is locked
+  // but before the schedule/bracket is generated. Round Robin uses these to
+  // cap how many of a full rotation's rounds get scheduled (see
+  // _plannedRoundCount); Tournament's round count is fixed by bracket size,
+  // so there it's just an estimate + a "won't fit" warning.
+  toggleRoundsOverrideMode() {
+    if (!this.canModify()) return;
+    const s = this.state._scheduleTime || {};
+    this.state._scheduleTime = { ...s, mode: s.mode === 'rounds' ? 'time' : 'rounds' };
+    this.saveState();
+    this.render();
+  },
+
+  updateScheduleTimeOptions() {
+    if (!this.canModify()) return;
+    const matchMinutes = parseFloat(document.getElementById('matchTimeMinutes')?.value) || null;
+    const sessionHours = parseFloat(document.getElementById('sessionTimeHours')?.value) || null;
+    const roundsOverride = parseInt(document.getElementById('scheduleRoundsInput')?.value, 10) || null;
+    const mode = (this.state._scheduleTime && this.state._scheduleTime.mode) || 'time';
+    this.state._scheduleTime = { matchMinutes, sessionHours, roundsOverride, mode };
+    this.saveState();
+    this.render();
+  },
+
+  // Shared by _renderQueueRR/_renderQueueTournament's "locked, not yet
+  // generated" branch. maxRounds is a full RR rotation's length, or a
+  // tournament bracket's fixed round count; fixedRounds distinguishes which.
+  _renderScheduleTimeOptions(maxRounds, fixedRounds) {
+    const wrap = document.getElementById('scheduleTimeOptions');
+    if (!wrap) return;
+    wrap.style.display = '';
+    const st = this.state._scheduleTime || {};
+    const matchEl = document.getElementById('matchTimeMinutes');
+    const sessionEl = document.getElementById('sessionTimeHours');
+    if (matchEl && document.activeElement !== matchEl) matchEl.value = st.matchMinutes || '';
+    if (sessionEl && document.activeElement !== sessionEl) sessionEl.value = st.sessionHours || '';
+    const overrideWrap = document.getElementById('scheduleRoundsOverrideWrap');
+    const toggleLink = document.getElementById('scheduleRoundsToggleLink');
+    const infoEl = document.getElementById('scheduleRoundsInfo');
+    const warnEl = document.getElementById('scheduleTimeWarning');
+    const estMinutes = (maxRounds && st.matchMinutes) ? maxRounds * st.matchMinutes : null;
+
+    if (fixedRounds) {
+      if (overrideWrap) overrideWrap.style.display = 'none';
+      if (toggleLink) toggleLink.style.display = 'none';
+      if (infoEl) {
+        infoEl.textContent = maxRounds
+          ? `${maxRounds} round${maxRounds === 1 ? '' : 's'} (fixed by bracket size)${estMinutes ? ` · est. ${estMinutes} min` : ''}`
+          : '';
+      }
+      if (warnEl) {
+        if (estMinutes != null && st.sessionHours && estMinutes > st.sessionHours * 60) {
+          warnEl.textContent = `Estimated ${estMinutes} min exceeds your ${st.sessionHours} hr session limit.`;
+          warnEl.style.display = 'block';
+        } else {
+          warnEl.style.display = 'none';
+        }
+      }
+      return;
+    }
+
+    if (toggleLink) {
+      toggleLink.style.display = '';
+      toggleLink.textContent = st.mode === 'rounds' ? 'Or set a time limit instead' : 'Or set rounds directly';
+    }
+    if (overrideWrap) overrideWrap.style.display = st.mode === 'rounds' ? '' : 'none';
+    const roundsInput = document.getElementById('scheduleRoundsInput');
+    if (roundsInput && document.activeElement !== roundsInput) roundsInput.value = st.roundsOverride || '';
+    if (warnEl) warnEl.style.display = 'none';
+
+    if (!infoEl) return;
+    if (st.mode === 'rounds') {
+      if (st.roundsOverride && st.sessionHours) {
+        const perMatch = Math.round((st.sessionHours * 60) / st.roundsOverride);
+        infoEl.textContent = `Match time limit to use: ~${perMatch} min`;
+      } else {
+        infoEl.textContent = 'Enter rounds and a session time limit to get a match time.';
+      }
+    } else if (st.matchMinutes && st.sessionHours) {
+      const recommended = Math.max(1, Math.round((st.sessionHours * 60) / st.matchMinutes));
+      infoEl.textContent = (maxRounds && recommended > maxRounds)
+        ? `Recommended: ${maxRounds} rounds (full rotation reached — only ${maxRounds} unique rounds possible)`
+        : `Recommended: ${recommended} round${recommended === 1 ? '' : 's'}`;
+    } else {
+      infoEl.textContent = maxRounds ? `Full rotation: ${maxRounds} round${maxRounds === 1 ? '' : 's'}` : '';
+    }
+  },
+
   rrLockPlayers() {
     if (this.state.players.filter(p => p.active).length < 4) {
       alert('Need at least 4 players for round robin.');
@@ -4753,7 +4961,7 @@ const App = {
   rrGenerateSchedule() {
     const n = this.state.players.filter(p => p.active).length;
     if (n < 4) return;
-    const units = this._buildTeamUnits();
+    const units = this._buildTeamUnitsForSeason();
     if (!units) {
       alert('Add one more player, or pair everyone up with a partner, so no one is left without a doubles partner.');
       return;
@@ -4768,7 +4976,7 @@ const App = {
     if (list.length % 2 === 1) list.push(null); // bye
     const total = list.length;
     const numRounds = total - 1;
-    const rounds = [];
+    let rounds = [];
 
     for (let r = 0; r < numRounds; r++) {
       // Build rotation: fix first, rotate rest
@@ -4793,6 +5001,8 @@ const App = {
 
       if (games.length > 0) rounds.push({ round: r + 1, games });
     }
+
+    rounds = this._applyPlannedRounds(rounds);
 
     this.state._rrSchedule = rounds;
     this.state._rrCurrentRound = 1;
@@ -4865,7 +5075,7 @@ const App = {
   },
 
   bracketGenerate() {
-    const units = this._buildTeamUnits();
+    const units = this._buildTeamUnitsForSeason();
     if (!units) {
       alert('Add one more player, or pair everyone up with a partner, so no one is left without a doubles partner.');
       return;
@@ -5171,6 +5381,7 @@ const App = {
     const locked = this.state._bracketLocked;
     const bracket = this.state._bracket || [];
     const currentRound = this.state._bracketCurrentRound || 0;
+    const timeOptions = document.getElementById('scheduleTimeOptions');
 
     if (!locked) {
       countEl.innerHTML = n < 4
@@ -5178,6 +5389,7 @@ const App = {
         : `${n} player${n !== 1 ? 's' : ''} &middot; <a href="#" onclick="App.bracketLockPlayers();return false;" style="color:var(--primary);font-weight:600;">Lock Players to Generate Bracket</a>`;
       if (controls) controls.style.display = 'none';
       if (courtSelect) courtSelect.parentElement.style.display = 'none';
+      if (timeOptions) timeOptions.style.display = 'none';
     } else if (bracket.length === 0) {
       countEl.textContent = `${n} players locked`;
       if (Session.id && controls) {
@@ -5192,7 +5404,15 @@ const App = {
           btnAssignAll.onclick = () => this.bracketGenerate();
         }
       }
+      const teamCount = this._teamUnitCount();
+      let bracketSize = null;
+      if (teamCount) {
+        bracketSize = 2;
+        while (bracketSize < teamCount) bracketSize *= 2;
+      }
+      this._renderScheduleTimeOptions(bracketSize ? Math.log2(bracketSize) : null, true);
     } else {
+      if (timeOptions) timeOptions.style.display = 'none';
       const totalRounds = bracket.length;
       const hasActive = this.rrHasActiveGames();
       const roundComplete = this.bracketIsRoundComplete();
@@ -7125,6 +7345,8 @@ ${bracketHTML}
     if (rrSection) rrSection.style.display = 'none';
     const bracketSec = document.getElementById('bracketSection');
     if (bracketSec) bracketSec.style.display = 'none';
+    const timeOptions = document.getElementById('scheduleTimeOptions');
+    if (timeOptions) timeOptions.style.display = 'none';
 
     // Assignment now happens per-court (Auto-fill/drag on each court card),
     // so this section is just the title and court-count picker — no bulk
@@ -7279,6 +7501,7 @@ ${bracketHTML}
     const locked = this.state._rrLocked;
     const schedule = this.state._rrSchedule || [];
     const currentRound = this.state._rrCurrentRound || 0;
+    const timeOptions = document.getElementById('scheduleTimeOptions');
 
     if (!locked) {
       countEl.innerHTML = n < 4
@@ -7286,6 +7509,7 @@ ${bracketHTML}
         : `${n} player${n !== 1 ? 's' : ''} · <a href="#" onclick="App.rrLockPlayers();return false;" style="color:var(--primary);font-weight:600;">Lock Players to Generate Schedule</a>`;
       if (controls) controls.style.display = 'none';
       if (courtSelect) courtSelect.parentElement.style.display = 'none';
+      if (timeOptions) timeOptions.style.display = 'none';
     } else if (schedule.length === 0) {
       countEl.textContent = `${n} players locked`;
       if (Session.id && controls) {
@@ -7300,7 +7524,11 @@ ${bracketHTML}
           btnAssignAll.onclick = () => this.rrGenerateSchedule();
         }
       }
+      const teamCount = this._teamUnitCount();
+      const maxRounds = teamCount ? (teamCount % 2 === 1 ? teamCount : teamCount - 1) : null;
+      this._renderScheduleTimeOptions(maxRounds, false);
     } else {
+      if (timeOptions) timeOptions.style.display = 'none';
       const totalRounds = schedule.length;
       const hasActive = this.rrHasActiveGames();
       if (currentRound > 0 && currentRound <= totalRounds) {
