@@ -4877,7 +4877,8 @@ const App = {
   // Shared by _renderQueueRR/_renderQueueTournament's "locked, not yet
   // generated" branch. maxRounds is a full RR rotation's length, or a
   // tournament bracket's fixed round count; fixedRounds distinguishes which.
-  _renderScheduleTimeOptions(maxRounds, fixedRounds) {
+  // teamCount (RR only) drives the too-few-courts warning below.
+  _renderScheduleTimeOptions(maxRounds, fixedRounds, teamCount) {
     const wrap = document.getElementById('scheduleTimeOptions');
     if (!wrap) return;
     wrap.style.display = '';
@@ -4918,7 +4919,21 @@ const App = {
     if (overrideWrap) overrideWrap.style.display = st.mode === 'rounds' ? '' : 'none';
     const roundsInput = document.getElementById('scheduleRoundsInput');
     if (roundsInput && document.activeElement !== roundsInput) roundsInput.value = st.roundsOverride || '';
-    if (warnEl) warnEl.style.display = 'none';
+
+    // Round Robin drops any of a round's matchups beyond the number of
+    // available courts instead of rescheduling them (unlike Tournament,
+    // which just queues them as waiting matches) — so with too few courts,
+    // some teams sit out every round with no makeup game.
+    if (warnEl) {
+      const numCourts = this.state.availableCourts || 1;
+      const neededCourts = teamCount ? Math.ceil(teamCount / 2) : null;
+      if (neededCourts && numCourts < neededCourts) {
+        warnEl.textContent = `Only ${numCourts} court${numCourts === 1 ? '' : 's'} available, but ${neededCourts} would let every team play each round — some teams will sit out rounds with no makeup.`;
+        warnEl.style.display = 'block';
+      } else {
+        warnEl.style.display = 'none';
+      }
+    }
 
     if (!infoEl) return;
     if (st.mode === 'rounds') {
@@ -7526,7 +7541,7 @@ ${bracketHTML}
       }
       const teamCount = this._teamUnitCount();
       const maxRounds = teamCount ? (teamCount % 2 === 1 ? teamCount : teamCount - 1) : null;
-      this._renderScheduleTimeOptions(maxRounds, false);
+      this._renderScheduleTimeOptions(maxRounds, false, teamCount);
     } else {
       if (timeOptions) timeOptions.style.display = 'none';
       const totalRounds = schedule.length;
