@@ -2840,7 +2840,7 @@ body {
     </div>
   </div>
 
-  <!-- ── Quick Play: format selector, shown before the player count ── -->
+  <!-- ── Quick Play: format selector ── -->
   <div id="quickPlayTypeModal" class="hiw-overlay" style="display:none;" onclick="Onboard._quickPlayTypeCancel(event)">
     <div class="hiw-modal" style="max-width:380px;" onclick="event.stopPropagation()">
       <div class="hiw-header">
@@ -2871,41 +2871,6 @@ body {
           <button type="button" class="qp-info-close" onclick="Onboard._closeQpInfo()" aria-label="Close description">&times;</button>
         </div>
         <button type="button" class="btn-confirm-join" style="width:100%;padding:12px;font-size:1rem;font-weight:700;" onclick="Onboard._quickPlayContinueType()">Continue</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- ── New session: player count modal ────────── -->
-  <div id="bulkCountModal" class="hiw-overlay" style="display:none;" onclick="Onboard._bulkCancel(event)">
-    <div class="hiw-modal" style="max-width:380px;" onclick="event.stopPropagation()">
-      <div class="hiw-header">
-        <h2 id="bulkCountHeading">Get Started</h2>
-        <button class="hiw-close" onclick="Onboard._bulkCancel()" aria-label="Close">&times;</button>
-      </div>
-      <div class="hiw-body">
-        <p style="font-size:0.85rem;color:var(--text-light);line-height:1.5;margin:0;">How many players are starting?</p>
-        <input type="number" class="setup-input" id="bulkPlayerCount" min="1" max="24" step="1" value="4" style="width:100%;" onkeydown="if(event.key==='Enter')Onboard._bulkContinueToNames()">
-        <p style="font-size:0.78rem;color:var(--text-muted);margin:0;">You can add more players later.</p>
-        <p id="bulkCountError" class="setup-error">Enter a number of players (1 or more)</p>
-        <button type="button" class="btn-confirm-join" style="width:100%;padding:12px;font-size:1rem;font-weight:700;" onclick="Onboard._bulkContinueToNames()">Continue</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- ── New session: player names (+ skill) modal ── -->
-  <div id="bulkNamesModal" class="hiw-overlay" style="display:none;" onclick="Onboard._bulkCancel(event)">
-    <div class="hiw-modal" style="max-width:420px;" onclick="event.stopPropagation()">
-      <div class="hiw-header">
-        <h2>Player Names</h2>
-        <button class="hiw-close" onclick="Onboard._bulkCancel()" aria-label="Close">&times;</button>
-      </div>
-      <div class="hiw-body">
-        <div id="bulkNamesList" style="display:flex;flex-direction:column;gap:8px;"></div>
-        <p id="bulkNamesError" class="setup-error">Enter at least one player name</p>
-        <div style="display:flex;gap:8px;">
-          <button type="button" class="btn-outline" style="flex:1;padding:12px;font-size:1rem;font-weight:700;" onclick="Onboard._bulkBackToCount()">&larr; Back</button>
-          <button type="button" class="btn-confirm-join" id="bulkSubmitBtn" style="flex:2;padding:12px;font-size:1rem;font-weight:700;" onclick="Onboard._bulkSubmit()">Start Playing</button>
-        </div>
       </div>
     </div>
   </div>
@@ -8096,17 +8061,7 @@ const Onboard = {
       this._pendingPasscode = passcode;
       this._pendingIsCreate = true;
       this._pendingSessionType = this._newSessionType;
-      // Open Play can add players inline from the queue card once the
-      // session starts; Round Robin/Tournament still need the roster
-      // collected up front so the schedule/bracket can be locked in.
-      if (this._newSessionType === 'open') {
-        this.confirmJoin();
-        return;
-      }
-      this._openBulkSetup({
-        quickPlay: false,
-        onComplete: (players) => { this._pendingBulkPlayers = players; this.confirmJoin(); },
-      });
+      this.confirmJoin();
     });
   },
 
@@ -8124,9 +8079,6 @@ const Onboard = {
       try { localStorage.setItem('courtManagerUser', JSON.stringify(user)); } catch(e) {}
     }
     if (!user) return;
-
-    const bulkPlayers = this._pendingBulkPlayers;
-    this._pendingBulkPlayers = null;
 
     if (this._pendingIsCreate) {
       // Creating new — set passcode, name, and creator as session admin
@@ -8150,11 +8102,6 @@ const Onboard = {
       this._pendingPasscodeVersion = data ? (data._passcodeVersion || 0) : 0;
       this._savePrivateSession(key, label);
       await Session._connect(key, label, false, user);
-    }
-    if (bulkPlayers?.length) {
-      this._pushBulkPlayers(bulkPlayers);
-      App.saveState();
-      App.render();
     }
     this._pendingPasscode = null;
     this._pendingIsCreate = false;
@@ -8254,136 +8201,20 @@ const Onboard = {
     const sessionType = document.querySelector('input[name="quickPlayType"]:checked')?.value || 'open';
     document.getElementById('quickPlayTypeModal').style.display = 'none';
     document.body.style.overflow = '';
-    // Open Play can add players inline from the queue card once the
-    // session starts, so skip straight in instead of asking up front —
-    // Round Robin/Tournament still need the full roster before locking it.
-    if (sessionType === 'open') {
-      this._startOfflineSession(sessionType, { quickPlay: true, players: [] });
-      return;
-    }
-    this._openBulkSetup({
-      quickPlay: true,
-      onComplete: (players) => this._startOfflineSession(sessionType, { quickPlay: true, players }),
-    });
+    this._startOfflineSession(sessionType);
   },
 
-  _startOfflineSession(sessionType, opts = {}) {
+  _startOfflineSession(sessionType) {
     App.state = App._freshState();
     App.state._sessionType = sessionType;
     App.state._offline = true;
-    if (opts.quickPlay) App.state._quickPlay = true;
+    App.state._quickPlay = true;
     App._normState();
-    this._pushBulkPlayers(opts.players);
     Session.id = 'offline';
     Session.label = 'Offline';
     App.render();
     this._hide();
     Session._updateUI();
-  },
-
-  // ─── Bulk player setup (count → names/skill), used before a new session
-  // first opens: Quick Play and creating a private session both
-  // funnel through this. ────────────────────────
-  _bulkCtx: null,
-
-  _openBulkSetup(ctx) {
-    this._bulkCtx = ctx;
-    const countEl = document.getElementById('bulkPlayerCount');
-    if (countEl) countEl.value = 4;
-    const errEl = document.getElementById('bulkCountError');
-    if (errEl) errEl.style.display = 'none';
-    const submitBtn = document.getElementById('bulkSubmitBtn');
-    if (submitBtn) submitBtn.textContent = ctx.quickPlay ? 'Start Playing' : 'Add Players';
-    document.getElementById('bulkCountModal').style.display = 'flex';
-    document.body.style.overflow = 'hidden';
-    countEl?.focus();
-  },
-
-  _bulkCancel(event) {
-    if (event && event.target !== event.currentTarget) return;
-    document.getElementById('bulkCountModal').style.display = 'none';
-    document.getElementById('bulkNamesModal').style.display = 'none';
-    document.body.style.overflow = '';
-    this._bulkCtx = null;
-  },
-
-  _bulkContinueToNames() {
-    const countEl = document.getElementById('bulkPlayerCount');
-    const errEl = document.getElementById('bulkCountError');
-    const count = parseInt(countEl?.value, 10);
-    if (!count || count < 1) {
-      if (errEl) errEl.style.display = 'block';
-      return;
-    }
-    if (errEl) errEl.style.display = 'none';
-    // Everyone is added as Not Rated and sets a skill level afterward via
-    // the NR/B/I/A chip, so this roster form only asks for names.
-    const list = document.getElementById('bulkNamesList');
-    if (list) {
-      list.innerHTML = '';
-      for (let i = 1; i <= count; i++) {
-        const wrapper = document.createElement('div');
-        const row = document.createElement('div');
-        row.style.cssText = 'display:flex;gap:8px;';
-        const nameInput = document.createElement('input');
-        nameInput.type = 'text';
-        nameInput.className = 'setup-input';
-        nameInput.placeholder = `Player ${i} name`;
-        nameInput.style.cssText = 'flex:1;margin-bottom:0;';
-        nameInput.dataset.bulkName = i;
-        row.appendChild(nameInput);
-        wrapper.appendChild(row);
-        if (i === count) nameInput.onkeydown = (e) => { if (e.key === 'Enter') this._bulkSubmit(); };
-        list.appendChild(wrapper);
-      }
-      list.querySelector('input')?.focus();
-    }
-    document.getElementById('bulkCountModal').style.display = 'none';
-    document.getElementById('bulkNamesModal').style.display = 'flex';
-  },
-
-  _bulkBackToCount() {
-    document.getElementById('bulkNamesModal').style.display = 'none';
-    document.getElementById('bulkCountModal').style.display = 'flex';
-    document.getElementById('bulkPlayerCount')?.focus();
-  },
-
-  _bulkSubmit() {
-    const rows = [...document.querySelectorAll('#bulkNamesList > div')];
-    const players = [];
-    rows.forEach(row => {
-      const nameEl = row.querySelector('[data-bulk-name]');
-      const name = nameEl?.value.trim();
-      if (!name) return;
-      players.push({ name, skillLevel: null });
-    });
-    const errEl = document.getElementById('bulkNamesError');
-    if (!players.length) {
-      if (errEl) errEl.style.display = 'block';
-      return;
-    }
-    if (errEl) errEl.style.display = 'none';
-    document.getElementById('bulkNamesModal').style.display = 'none';
-    document.body.style.overflow = '';
-    const ctx = this._bulkCtx;
-    this._bulkCtx = null;
-    ctx?.onComplete?.(players);
-  },
-
-  _pushBulkPlayers(players) {
-    (players || []).forEach(({ name, skillLevel }) => {
-      const now = Date.now();
-      App.state.players.push({
-        id: App.state.nextId++,
-        name,
-        skillLevel: skillLevel || null,
-        active: true,
-        isLive: false,
-        addedBy: this.selfId,
-        joinedAt: now,
-        lastActiveAt: now,
-      });
-    });
   },
 
   _hide() {
