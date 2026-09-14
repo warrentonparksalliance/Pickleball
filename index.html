@@ -4353,8 +4353,11 @@ const App = {
   // Builds fixed doubles teams for Round Robin / Tournament: existing
   // partner pairs stay together, everyone else is randomly paired up.
   // Returns null if an odd player is left without a partner.
+  // Only players who aren't sitting out are eligible for pairing — an
+  // odd one out (or a late joiner not yet ready) can be benched in
+  // Sitting Out instead of forcing the whole roster to pair up evenly.
   _buildTeamUnits() {
-    const playerIds = this.state.players.map(p => p.id);
+    const playerIds = this.state.players.filter(p => p.active).map(p => p.id);
     const idSet = new Set(playerIds);
     const explicitTeams = this.state.teams.filter(t => t.current && idSet.has(t.p1) && idSet.has(t.p2));
     const pairedIds = new Set(explicitTeams.flatMap(t => [t.p1, t.p2]));
@@ -4520,7 +4523,7 @@ const App = {
   },
 
   rrLockPlayers() {
-    if (this.state.players.length < 4) {
+    if (this.state.players.filter(p => p.active).length < 4) {
       alert('Need at least 4 players for round robin.');
       return;
     }
@@ -4540,7 +4543,7 @@ const App = {
   },
 
   rrGenerateSchedule() {
-    const n = this.state.players.length;
+    const n = this.state.players.filter(p => p.active).length;
     if (n < 4) return;
     const units = this._buildTeamUnits();
     if (!units) {
@@ -4634,7 +4637,7 @@ const App = {
   },
 
   bracketLockPlayers() {
-    if (this.state.players.length < 4) {
+    if (this.state.players.filter(p => p.active).length < 4) {
       alert('Need at least 4 players (2 teams) for a tournament.');
       return;
     }
@@ -4956,7 +4959,7 @@ const App = {
     const rrSection = document.getElementById('rrUpcomingSection');
     if (rrSection) rrSection.style.display = 'none';
 
-    const n = this.state.players.length;
+    const n = this.state.players.filter(p => p.active).length;
     const locked = this.state._bracketLocked;
     const bracket = this.state._bracket || [];
     const currentRound = this.state._bracketCurrentRound || 0;
@@ -5741,10 +5744,12 @@ ${bracketHTML}
     const moveHint = document.getElementById('queueMoveHint');
     const rr = this.isRoundRobin();
     const tourn = this.isTournament();
-    const structured = rr || tourn;
     const isLocked = (rr && this.state._rrLocked) || (tourn && this.state._bracketLocked);
 
-    if (waitingWrap) waitingWrap.style.display = structured ? 'none' : '';
+    // Sitting Out stays visible for Round Robin/Tournament too — someone
+    // who joins mid-session (or an odd player out before locking) needs a
+    // place to land other than straight into the locked roster/pairing math.
+    if (waitingWrap) waitingWrap.style.display = '';
     if (removeZoneTitle) removeZoneTitle.style.display = isLocked ? 'none' : '';
     if (moveHint) moveHint.style.display = isLocked ? 'none' : '';
 
@@ -6873,7 +6878,7 @@ ${bracketHTML}
     const bracketSec = document.getElementById('bracketSection');
     if (bracketSec) bracketSec.style.display = 'none';
 
-    const n = this.state.players.length;
+    const n = this.state.players.filter(p => p.active).length;
     const locked = this.state._rrLocked;
     const schedule = this.state._rrSchedule || [];
     const currentRound = this.state._rrCurrentRound || 0;
