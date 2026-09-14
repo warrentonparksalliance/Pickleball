@@ -2285,15 +2285,9 @@ body.view-only-locked #tabCourts #btnToggleQueue {
     gap: 14px;
     align-items: start;
   }
-  #sessionNameCard {
+  #courtsLeftCol {
     grid-column: 1;
-    grid-row: 1;
-    margin-bottom: 0 !important;
-  }
-  #playersSection {
-    grid-column: 1;
-    grid-row: 2 / -1;
-    margin-bottom: 0 !important;
+    grid-row: 1 / -1;
   }
   #assignHeader {
     grid-column: 2 / -1;
@@ -2550,10 +2544,74 @@ body.view-only-locked #tabCourts #btnToggleQueue {
   <!-- ═══════════════ TAB: COURTS ═══════════════ -->
   <div id="tabCourts" class="tab-panel active" style="display:none;">
 
-    <!-- Session name -->
-    <div id="sessionNameCard" class="queue-bar-wrap" style="margin-bottom:14px;">
-      <div class="queue-bar-label">Session</div>
-      <div class="section-title" id="sessionNameDisplay"></div>
+    <!-- Left column: Session name + Queue, kept as one flow so Queue
+         always stacks directly under Session regardless of how tall the
+         Assign Courts column (right) grows — see #courtsLeftCol below. -->
+    <div id="courtsLeftCol">
+      <!-- Session name -->
+      <div id="sessionNameCard" class="queue-bar-wrap" style="margin-bottom:14px;">
+        <div class="queue-bar-label">Session</div>
+        <div class="section-title" id="sessionNameDisplay"></div>
+      </div>
+
+      <!-- Queue -->
+      <div id="playersSection" class="queue-bar-wrap" style="margin-bottom:14px;">
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:4px;">
+          <div class="section-title" id="queueTitle">Queue</div>
+          <button id="btnToggleQueue" class="btn-icon-eye" title="Hide queue" onclick="App.toggleQueueVisibility()">
+            <svg id="queueEyeIcon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8Z"/><circle cx="12" cy="12" r="3"/></svg>
+          </button>
+        </div>
+        <div id="queueBody">
+          <div style="display:flex;justify-content:flex-end;margin-bottom:4px;">
+            <button id="btnUndoMove" class="btn-outline" style="display:none;flex-shrink:0;padding:5px 10px;font-size:0.78rem;font-weight:600;" onclick="App.undoProposedMove()">&#8617; Undo</button>
+          </div>
+          <div class="section-subtitle" id="queueSubtitle" style="margin-bottom:10px;"></div>
+          <div class="assign-match-options" style="margin-bottom:10px;">
+            <label class="toggle-switch-label">
+              <span class="toggle-switch">
+                <input type="checkbox" id="optSkill" onchange="App.toggleSkillMatching()">
+                <span class="toggle-switch-track"></span>
+              </span>
+              Match by skill
+            </label>
+          </div>
+          <div id="queueAddPlayerRow" style="display:none;margin-bottom:10px;">
+            <p id="queueAddPlayerError" class="setup-error" style="display:none;">Enter a player name</p>
+            <div style="display:flex;gap:8px;">
+              <input type="text" class="setup-input" id="queueAddPlayerName" placeholder="Player name" style="flex:1;margin-bottom:0;" onkeydown="if(event.key==='Enter')App.submitQueueAddPlayer()">
+              <button type="button" class="btn-add-player" style="margin-top:0;flex-shrink:0;width:auto;padding:12px 16px;" onclick="App.submitQueueAddPlayer()">+ Add Player</button>
+            </div>
+          </div>
+          <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;">
+            <div class="queue-subsection-label">Waiting</div>
+            <button type="button" class="btn-outline" id="btnSelectAllQueue" style="display:none;flex-shrink:0;padding:5px 10px;font-size:0.78rem;font-weight:600;" onclick="App.toggleSelectAllInZone('queue')">Select All</button>
+          </div>
+          <div class="queue-list-box">
+            <div id="queueActiveList" class="queue-list dnd-target" data-loc-type="queue"></div>
+            <div id="queueDropQueue" class="queue-drop-strip dnd-target" data-loc-type="queue">Enter Queue</div>
+          </div>
+          <div id="queueWaitingWrap" style="display:none;">
+            <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-top:10px;">
+              <div class="queue-subsection-label">Sitting Out</div>
+              <button type="button" class="btn-outline" id="btnSelectAllWaiting" style="display:none;flex-shrink:0;padding:5px 10px;font-size:0.78rem;font-weight:600;" onclick="App.toggleSelectAllInZone('waiting')">Select All</button>
+            </div>
+            <div class="queue-list-box">
+              <div id="queueWaitingList" class="queue-list dnd-target" data-loc-type="waiting"></div>
+              <div id="queueDropWaiting" class="queue-drop-strip dnd-target" data-loc-type="waiting">Sit Out</div>
+            </div>
+          </div>
+          <div id="queueRemoveZoneTitle" class="queue-subsection-label" style="margin-top:10px;">Leave Session</div>
+          <div id="queueRemoveZone" class="queue-remove-zone dnd-target" data-loc-type="remove">
+            <span id="queueRemoveZoneLabel">Remove</span>
+          </div>
+          <div id="queueMoveHint" class="proposed-hint" style="text-align:left;display:flex;align-items:center;gap:6px;">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+            <span>Drag or double tap players to move</span>
+          </div>
+          <button id="rrUnlockBtn" class="btn-outline" onclick="App.isRoundRobin()?App.rrUnlockPlayers():App.bracketUnlockPlayers()" style="display:none;margin-top:8px;width:100%;color:var(--warning);border-color:var(--warning);font-size:0.82rem;">Unlock Players &amp; Reset</button>
+        </div>
+      </div>
     </div>
 
     <!-- Courts -->
@@ -2582,6 +2640,10 @@ body.view-only-locked #tabCourts #btnToggleQueue {
             <label style="font-size:0.72rem;font-weight:600;color:var(--text-muted);display:block;margin-bottom:4px;">Session Time Limit (hrs)</label>
             <input type="number" class="setup-input" id="sessionTimeHours" min="0.25" step="0.25" style="margin-bottom:0;" onchange="App.updateScheduleTimeOptions()">
           </div>
+          <div style="flex:1;min-width:110px;">
+            <label style="font-size:0.72rem;font-weight:600;color:var(--text-muted);display:block;margin-bottom:4px;">Buffer Between Rounds (min)</label>
+            <input type="number" class="setup-input" id="scheduleBufferMinutes" min="0" step="1" style="margin-bottom:0;" onchange="App.updateScheduleTimeOptions()">
+          </div>
         </div>
         <div id="scheduleRoundsOverrideWrap" style="display:none;margin-bottom:8px;">
           <label style="font-size:0.72rem;font-weight:600;color:var(--text-muted);display:block;margin-bottom:4px;">Rounds</label>
@@ -2593,65 +2655,6 @@ body.view-only-locked #tabCourts #btnToggleQueue {
       </div>
       <div class="assign-controls" id="assignControls" style="display:none;">
         <button id="btnAssignAll" class="btn-assign-all" onclick="App.assignAll()">Assign Courts</button>
-      </div>
-    </div>
-
-    <!-- Queue -->
-    <div id="playersSection" class="queue-bar-wrap" style="margin-bottom:14px;">
-      <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:4px;">
-        <div class="section-title" id="queueTitle">Queue</div>
-        <button id="btnToggleQueue" class="btn-icon-eye" title="Hide queue" onclick="App.toggleQueueVisibility()">
-          <svg id="queueEyeIcon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8Z"/><circle cx="12" cy="12" r="3"/></svg>
-        </button>
-      </div>
-      <div id="queueBody">
-        <div style="display:flex;justify-content:flex-end;margin-bottom:4px;">
-          <button id="btnUndoMove" class="btn-outline" style="display:none;flex-shrink:0;padding:5px 10px;font-size:0.78rem;font-weight:600;" onclick="App.undoProposedMove()">&#8617; Undo</button>
-        </div>
-        <div class="section-subtitle" id="queueSubtitle" style="margin-bottom:10px;"></div>
-        <div class="assign-match-options" style="margin-bottom:10px;">
-          <label class="toggle-switch-label">
-            <span class="toggle-switch">
-              <input type="checkbox" id="optSkill" onchange="App.toggleSkillMatching()">
-              <span class="toggle-switch-track"></span>
-            </span>
-            Match by skill
-          </label>
-        </div>
-        <div id="queueAddPlayerRow" style="display:none;margin-bottom:10px;">
-          <p id="queueAddPlayerError" class="setup-error" style="display:none;">Enter a player name</p>
-          <div style="display:flex;gap:8px;">
-            <input type="text" class="setup-input" id="queueAddPlayerName" placeholder="Player name" style="flex:1;margin-bottom:0;" onkeydown="if(event.key==='Enter')App.submitQueueAddPlayer()">
-            <button type="button" class="btn-add-player" style="margin-top:0;flex-shrink:0;width:auto;padding:12px 16px;" onclick="App.submitQueueAddPlayer()">+ Add Player</button>
-          </div>
-        </div>
-        <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;">
-          <div class="queue-subsection-label">Waiting</div>
-          <button type="button" class="btn-outline" id="btnSelectAllQueue" style="display:none;flex-shrink:0;padding:5px 10px;font-size:0.78rem;font-weight:600;" onclick="App.toggleSelectAllInZone('queue')">Select All</button>
-        </div>
-        <div class="queue-list-box">
-          <div id="queueActiveList" class="queue-list dnd-target" data-loc-type="queue"></div>
-          <div id="queueDropQueue" class="queue-drop-strip dnd-target" data-loc-type="queue">Enter Queue</div>
-        </div>
-        <div id="queueWaitingWrap" style="display:none;">
-          <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-top:10px;">
-            <div class="queue-subsection-label">Sitting Out</div>
-            <button type="button" class="btn-outline" id="btnSelectAllWaiting" style="display:none;flex-shrink:0;padding:5px 10px;font-size:0.78rem;font-weight:600;" onclick="App.toggleSelectAllInZone('waiting')">Select All</button>
-          </div>
-          <div class="queue-list-box">
-            <div id="queueWaitingList" class="queue-list dnd-target" data-loc-type="waiting"></div>
-            <div id="queueDropWaiting" class="queue-drop-strip dnd-target" data-loc-type="waiting">Sit Out</div>
-          </div>
-        </div>
-        <div id="queueRemoveZoneTitle" class="queue-subsection-label" style="margin-top:10px;">Leave Session</div>
-        <div id="queueRemoveZone" class="queue-remove-zone dnd-target" data-loc-type="remove">
-          <span id="queueRemoveZoneLabel">Remove</span>
-        </div>
-        <div id="queueMoveHint" class="proposed-hint" style="text-align:left;display:flex;align-items:center;gap:6px;">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
-          <span>Drag or double tap players to move</span>
-        </div>
-        <button id="rrUnlockBtn" class="btn-outline" onclick="App.isRoundRobin()?App.rrUnlockPlayers():App.bracketUnlockPlayers()" style="display:none;margin-top:8px;width:100%;color:var(--warning);border-color:var(--warning);font-size:0.82rem;">Unlock Players &amp; Reset</button>
       </div>
     </div>
 
@@ -4605,7 +4608,7 @@ const App = {
     } else if (s.matchMinutes && s.sessionHours) {
       // Rounds fit end-to-end with a buffer between them, not back-to-back
       // with none: N*matchMinutes + (N-1)*buffer <= sessionMinutes.
-      const buffer = this.ROUND_BUFFER_MIN;
+      const buffer = s.bufferMinutes != null ? s.bufferMinutes : this.ROUND_BUFFER_MIN;
       rounds = Math.floor((s.sessionHours * 60 + buffer) / (s.matchMinutes + buffer));
     } else {
       return null;
@@ -4872,8 +4875,11 @@ const App = {
     const matchMinutes = parseFloat(document.getElementById('matchTimeMinutes')?.value) || null;
     const sessionHours = parseFloat(document.getElementById('sessionTimeHours')?.value) || null;
     const roundsOverride = parseInt(document.getElementById('scheduleRoundsInput')?.value, 10) || null;
+    // 0 is a valid buffer (back-to-back rounds), so don't let "|| null" treat it as unset.
+    const bufferRaw = document.getElementById('scheduleBufferMinutes')?.value;
+    const bufferMinutes = bufferRaw === '' || bufferRaw == null ? null : Math.max(0, parseFloat(bufferRaw) || 0);
     const mode = (this.state._scheduleTime && this.state._scheduleTime.mode) || 'time';
-    this.state._scheduleTime = { matchMinutes, sessionHours, roundsOverride, mode };
+    this.state._scheduleTime = { matchMinutes, sessionHours, roundsOverride, bufferMinutes, mode };
     this.saveState();
     this.render();
   },
@@ -4889,13 +4895,15 @@ const App = {
     const st = this.state._scheduleTime || {};
     const matchEl = document.getElementById('matchTimeMinutes');
     const sessionEl = document.getElementById('sessionTimeHours');
+    const bufferEl = document.getElementById('scheduleBufferMinutes');
     if (matchEl && document.activeElement !== matchEl) matchEl.value = st.matchMinutes || '';
     if (sessionEl && document.activeElement !== sessionEl) sessionEl.value = st.sessionHours || '';
+    const buffer = st.bufferMinutes != null ? st.bufferMinutes : this.ROUND_BUFFER_MIN;
+    if (bufferEl && document.activeElement !== bufferEl) bufferEl.value = st.bufferMinutes != null ? st.bufferMinutes : this.ROUND_BUFFER_MIN;
     const overrideWrap = document.getElementById('scheduleRoundsOverrideWrap');
     const toggleLink = document.getElementById('scheduleRoundsToggleLink');
     const infoEl = document.getElementById('scheduleRoundsInfo');
     const warnEl = document.getElementById('scheduleTimeWarning');
-    const buffer = this.ROUND_BUFFER_MIN;
     // Rounds run back-to-back with a buffer between them (not zero gap), so
     // N rounds cost N*matchMinutes + (N-1)*buffer, not N*matchMinutes.
     const estFor = rounds => (rounds && st.matchMinutes) ? rounds * st.matchMinutes + Math.max(0, rounds - 1) * buffer : null;
