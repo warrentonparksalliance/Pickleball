@@ -5543,24 +5543,30 @@ ${bracketHTML}
     const nameFor = id => this.getPlayer(id)?.name || nameMap.get(id) || '?';
     const stats = new Map();
     const ensure = id => {
-      if (!stats.has(id)) stats.set(id, { id, name: nameFor(id), wins: 0, losses: 0, played: 0 });
+      if (!stats.has(id)) stats.set(id, { id, name: nameFor(id), wins: 0, losses: 0, played: 0, _points: 0, _scoredMatches: 0 });
       return stats.get(id);
     };
     matches.forEach(m => {
       const decided = !m.expired && (m.winner === 1 || m.winner === 2);
+      const hasScores = m.score1 != null && m.score2 != null;
       (m.side1 || []).forEach(id => {
         const s = ensure(id);
         s.played++;
         if (decided) { if (m.winner === 1) s.wins++; else s.losses++; }
+        if (hasScores) { s._points += m.score1; s._scoredMatches++; }
       });
       (m.side2 || []).forEach(id => {
         const s = ensure(id);
         s.played++;
         if (decided) { if (m.winner === 2) s.wins++; else s.losses++; }
+        if (hasScores) { s._points += m.score2; s._scoredMatches++; }
       });
     });
     if (!stats.size) return null;
-    const players = [...stats.values()].sort((a, b) => b.wins - a.wins || b.played - a.played || a.name.localeCompare(b.name));
+    const players = [...stats.values()].map(s => {
+      const avgPoints = s._scoredMatches ? Math.round((s._points / s._scoredMatches) * 10) / 10 : null;
+      return { id: s.id, name: s.name, wins: s.wins, losses: s.losses, played: s.played, avgPoints };
+    }).sort((a, b) => b.wins - a.wins || (b.avgPoints ?? -Infinity) - (a.avgPoints ?? -Infinity) || b.played - a.played || a.name.localeCompare(b.name));
     return { sessionSummary: true, side1: [], side2: [], at: Date.now(), players };
   },
 
@@ -7077,7 +7083,7 @@ ${bracketHTML}
       }
       if (m.sessionSummary) {
         const rows = (m.players || []).map(p =>
-          `<div class="history-summary-row"><span class="history-summary-name">${this.esc(p.name)}</span><span class="history-summary-record">${p.wins}-${p.losses}${p.played ? ` &middot; ${p.played} played` : ''}</span></div>`
+          `<div class="history-summary-row"><span class="history-summary-name">${this.esc(p.name)}</span><span class="history-summary-record">${p.wins}-${p.losses}${p.played ? ` &middot; ${p.played} played` : ''}${p.avgPoints != null ? ` &middot; ${p.avgPoints} avg pts` : ''}</span></div>`
         ).join('');
         return `<div class="history-session-summary">
           <div class="history-session-summary-title">Session Summary</div>
