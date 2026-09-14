@@ -1838,6 +1838,9 @@ body {
   gap: 8px;
   margin-bottom: 12px;
   flex-wrap: wrap;
+  max-width: 540px;
+  margin-left: auto;
+  margin-right: auto;
 }
 .history-search {
   flex: 1;
@@ -1977,14 +1980,16 @@ body {
 .match-duration-edit {
   display: flex;
   align-items: center;
-  gap: 2px;
+  gap: 3px;
+  color: var(--text);
+  font-weight: 600;
 }
 .match-duration-edit input[type="number"] {
-  width: 28px;
-  padding: 2px 3px;
+  width: 38px;
+  padding: 4px 2px;
   border: 1.5px solid var(--border);
   border-radius: var(--radius-sm);
-  font-size: 0.72rem;
+  font-size: 0.85rem;
   font-family: inherit;
   background: var(--card);
   color: var(--text);
@@ -2831,7 +2836,7 @@ body {
            While the season's still going, the day-by-day detail below stays
            open by default; once it ends, this collapses it so the tab leads
            with the final standings instead of a season's worth of matches. -->
-      <div id="seasonSummarySection" style="display:none;margin-bottom:14px;">
+      <div id="seasonSummarySection" style="display:none;margin-bottom:14px;max-width:540px;margin-left:auto;margin-right:auto;">
         <div class="history-session-summary" style="margin-bottom:8px;">
           <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;margin-bottom:6px;">
             <div class="history-session-summary-title" id="seasonSummaryTitle" style="margin-bottom:0;">Season Summary</div>
@@ -2866,7 +2871,7 @@ body {
           </select>
           <button type="button" class="btn-outline" id="btnFilterMyMatches" onclick="App.toggleMyMatches()" style="white-space:nowrap;padding:12px 16px;font-size:1rem;font-weight:700;">My Matches</button>
         </div>
-        <div id="historyPlayerStatCard" style="display:none;padding:10px 14px;margin-bottom:10px;background:var(--card);border:1px solid var(--border);border-radius:var(--radius);font-size:0.85rem;"></div>
+        <div id="historyPlayerStatCard" style="display:none;padding:10px 14px;margin:0 auto 10px;max-width:540px;background:var(--card);border:1px solid var(--border);border-radius:var(--radius);font-size:0.85rem;"></div>
         <div class="history-table-wrap" id="historyRounds"></div>
       </div>
     </div>
@@ -5692,6 +5697,17 @@ ${bracketHTML}
     this.switchTab('history');
   },
 
+  // "N win(s) · N loss(es) · N played · N avg pts" — shared text for a
+  // player's record wherever _tallyPlayerStats output gets rendered
+  // (session summary, season summary, the League player stat card).
+  _formatPlayerRecord(p) {
+    const winLabel = `${p.wins} win${p.wins === 1 ? '' : 's'}`;
+    const lossLabel = `${p.losses} loss${p.losses === 1 ? '' : 'es'}`;
+    const played = p.played ? ` · ${p.played} played` : '';
+    const avg = p.avgPoints != null ? ` · ${p.avgPoints} avg pts` : '';
+    return `${winLabel} · ${lossLabel}${played}${avg}`;
+  },
+
   // Per-player wins/losses/played/avg-points across a set of match entries
   // (never sessionClosed/sessionSummary markers) — shared by a single
   // close's own summary (_buildSessionSummary) and a whole League season's
@@ -7433,7 +7449,7 @@ ${bracketHTML}
       const visible = showAllStandings ? players : players.slice(0, 3);
       rowsEl.innerHTML = players.length
         ? visible.map(p =>
-            `<div class="history-summary-row"><span class="history-summary-name">${this.esc(p.name)}</span><span class="history-summary-record">${p.wins}-${p.losses}${p.played ? ` · ${p.played} played` : ''}${p.avgPoints != null ? ` · ${p.avgPoints} avg pts` : ''}</span></div>`
+            `<div class="history-summary-row"><span class="history-summary-name">${this.esc(p.name)}</span><span class="history-summary-record">${this._formatPlayerRecord(p)}</span></div>`
           ).join('')
         : '<div class="history-empty">No matches yet this season</div>';
       if (standingsToggleBtn) {
@@ -7472,7 +7488,7 @@ ${bracketHTML}
       const p = this._historyFilterPlayerId != null ? seasonSummary?.players.find(pl => pl.id === this._historyFilterPlayerId) : null;
       if (p) {
         statCard.style.display = '';
-        statCard.innerHTML = `<strong>${this.esc(p.name)}</strong> this season &middot; ${p.wins}-${p.losses}${p.played ? ` &middot; ${p.played} played` : ''}${p.avgPoints != null ? ` &middot; ${p.avgPoints} avg pts` : ''}`;
+        statCard.innerHTML = `<strong>${this.esc(p.name)}</strong> this season &middot; ${this._formatPlayerRecord(p)}`;
       } else {
         statCard.style.display = 'none';
       }
@@ -7532,7 +7548,7 @@ ${bracketHTML}
         const expanded = this._expandedSessionSummaries.has(idx) || players.length <= 3;
         const visible = expanded ? players : players.slice(0, 3);
         const rows = visible.map(p =>
-          `<div class="history-summary-row"><span class="history-summary-name">${this.esc(p.name)}</span><span class="history-summary-record">${p.wins}-${p.losses}${p.played ? ` &middot; ${p.played} played` : ''}${p.avgPoints != null ? ` &middot; ${p.avgPoints} avg pts` : ''}</span></div>`
+          `<div class="history-summary-row"><span class="history-summary-name">${this.esc(p.name)}</span><span class="history-summary-record">${this._formatPlayerRecord(p)}</span></div>`
         ).join('');
         const toggleBtn = players.length > 3
           ? `<button type="button" class="btn-outline" style="width:100%;margin-top:8px;padding:6px;font-size:0.74rem;font-weight:600;" onclick="App.toggleSessionSummaryExpanded(${idx})">${expanded ? 'Show Top 3' : `Show All ${players.length} Players`}</button>`
