@@ -4256,6 +4256,7 @@ const App = {
   MAX_MATCH_MS: 100 * 60 * 1000,        // 100 minutes — normal match duration cap (requires the timer to have been started)
   COURT_STUCK_MS: 6 * 60 * 60 * 1000,   // 6 hours — force-end a match that's been sitting on a court, win or lose, and send its players back to the queue
   SESSION_MAX_MS: 12 * 60 * 60 * 1000,  // 12 hours — remove a player (queued or on a court) from the session entirely
+  ROUND_BUFFER_MIN: 3,                  // minutes assumed between rounds (players finding their next court) when planning Round Robin/Tournament rounds against a time limit
 
   _lastExpireCheck: 0,
 
@@ -4602,7 +4603,10 @@ const App = {
     if (s.mode === 'rounds' && s.roundsOverride) {
       rounds = s.roundsOverride;
     } else if (s.matchMinutes && s.sessionHours) {
-      rounds = Math.round((s.sessionHours * 60) / s.matchMinutes);
+      // Rounds fit end-to-end with a buffer between them, not back-to-back
+      // with none: N*matchMinutes + (N-1)*buffer <= sessionMinutes.
+      const buffer = this.ROUND_BUFFER_MIN;
+      rounds = Math.floor((s.sessionHours * 60 + buffer) / (s.matchMinutes + buffer));
     } else {
       return null;
     }
@@ -4891,9 +4895,14 @@ const App = {
     const toggleLink = document.getElementById('scheduleRoundsToggleLink');
     const infoEl = document.getElementById('scheduleRoundsInfo');
     const warnEl = document.getElementById('scheduleTimeWarning');
-    const estMinutes = (maxRounds && st.matchMinutes) ? maxRounds * st.matchMinutes : null;
+    const buffer = this.ROUND_BUFFER_MIN;
+    // Rounds run back-to-back with a buffer between them (not zero gap), so
+    // N rounds cost N*matchMinutes + (N-1)*buffer, not N*matchMinutes.
+    const estFor = rounds => (rounds && st.matchMinutes) ? rounds * st.matchMinutes + Math.max(0, rounds - 1) * buffer : null;
+    const warnings = [];
 
     if (fixedRounds) {
+      const estMinutes = estFor(maxRounds);
       if (overrideWrap) overrideWrap.style.display = 'none';
       if (toggleLink) toggleLink.style.display = 'none';
       if (infoEl) {
@@ -4901,14 +4910,10 @@ const App = {
           ? `${maxRounds} round${maxRounds === 1 ? '' : 's'} (fixed by bracket size)${estMinutes ? ` · est. ${estMinutes} min` : ''}`
           : '';
       }
-      if (warnEl) {
-        if (estMinutes != null && st.sessionHours && estMinutes > st.sessionHours * 60) {
-          warnEl.textContent = `Estimated ${estMinutes} min exceeds your ${st.sessionHours} hr session limit.`;
-          warnEl.style.display = 'block';
-        } else {
-          warnEl.style.display = 'none';
-        }
+      if (estMinutes != null && st.sessionHours && estMinutes > st.sessionHours * 60) {
+        warnings.push(`Estimated ${estMinutes} min exceeds your ${st.sessionHours} hr session limit.`);
       }
+      this._applyScheduleWarnings(warnEl, warnings);
       return;
     }
 
@@ -4924,32 +4929,43 @@ const App = {
     // available courts instead of rescheduling them (unlike Tournament,
     // which just queues them as waiting matches) — so with too few courts,
     // some teams sit out every round with no makeup game.
-    if (warnEl) {
-      const numCourts = this.state.availableCourts || 1;
-      const neededCourts = teamCount ? Math.ceil(teamCount / 2) : null;
-      if (neededCourts && numCourts < neededCourts) {
-        warnEl.textContent = `Only ${numCourts} court${numCourts === 1 ? '' : 's'} available, but ${neededCourts} would let every team play each round — some teams will sit out rounds with no makeup.`;
-        warnEl.style.display = 'block';
+    const numCourts = this.state.availableCourts || 1;
+    const neededCourts = teamCount ? Math.ceil(teamCount / 2) : null;
+    if (neededCourts && numCourts < neededCourts) {
+      warnings.push(`Only ${numCourts} court${numCourts === 1 ? '' : 's'} available, but ${neededCourts} would let every team play each round — some teams will sit out rounds with no makeup.`);
+    }
+
+    if (infoEl) {
+      if (st.mode === 'rounds') {
+        if (st.roundsOverride && st.matchMinutes) {
+          const est = estFor(st.roundsOverride);
+          infoEl.textContent = `Estimated session time: ~${est} min (with ${buffer} min between rounds)`;
+          if (st.sessionHours && est > st.sessionHours * 60) {
+            warnings.push(`Estimated ${est} min exceeds your ${st.sessionHours} hr session limit.`);
+          }
+        } else {
+          infoEl.textContent = 'Enter a match time limit and number of rounds to get an estimated session time.';
+        }
+      } else if (st.matchMinutes && st.sessionHours) {
+        const recommended = Math.max(1, Math.floor((st.sessionHours * 60 + buffer) / (st.matchMinutes + buffer)));
+        infoEl.textContent = (maxRounds && recommended > maxRounds)
+          ? `Recommended: ${maxRounds} rounds (full rotation reached — only ${maxRounds} unique rounds possible)`
+          : `Recommended: ${recommended} round${recommended === 1 ? '' : 's'} (with ${buffer} min between rounds)`;
       } else {
-        warnEl.style.display = 'none';
+        infoEl.textContent = maxRounds ? `Full rotation: ${maxRounds} round${maxRounds === 1 ? '' : 's'}` : '';
       }
     }
 
-    if (!infoEl) return;
-    if (st.mode === 'rounds') {
-      if (st.roundsOverride && st.sessionHours) {
-        const perMatch = Math.round((st.sessionHours * 60) / st.roundsOverride);
-        infoEl.textContent = `Match time limit to use: ~${perMatch} min`;
-      } else {
-        infoEl.textContent = 'Enter rounds and a session time limit to get a match time.';
-      }
-    } else if (st.matchMinutes && st.sessionHours) {
-      const recommended = Math.max(1, Math.round((st.sessionHours * 60) / st.matchMinutes));
-      infoEl.textContent = (maxRounds && recommended > maxRounds)
-        ? `Recommended: ${maxRounds} rounds (full rotation reached — only ${maxRounds} unique rounds possible)`
-        : `Recommended: ${recommended} round${recommended === 1 ? '' : 's'}`;
+    this._applyScheduleWarnings(warnEl, warnings);
+  },
+
+  _applyScheduleWarnings(warnEl, warnings) {
+    if (!warnEl) return;
+    if (warnings.length) {
+      warnEl.innerHTML = warnings.map(w => this.esc(w)).join('<br>');
+      warnEl.style.display = 'block';
     } else {
-      infoEl.textContent = maxRounds ? `Full rotation: ${maxRounds} round${maxRounds === 1 ? '' : 's'}` : '';
+      warnEl.style.display = 'none';
     }
   },
 
