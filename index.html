@@ -5520,6 +5520,9 @@ ${bracketHTML}
     this._tapSelection = null;
     this.saveState();
     this.render();
+    // Jump straight to History so whoever closed it sees the session
+    // summary just added, instead of an empty, frozen Courts tab.
+    this.switchTab('history');
   },
 
   // Player names + win/loss/played record for the games since the last
