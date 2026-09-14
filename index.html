@@ -4839,7 +4839,7 @@ const App = {
     const frequency = document.getElementById('leagueFrequency')?.value || 'weekly';
     const errEl = document.getElementById('leagueError');
     if (startDate && endDate && endDate < startDate) {
-      if (errEl) errEl.style.display = '';
+      if (errEl) errEl.style.display = 'block';
       return;
     }
     if (errEl) errEl.style.display = 'none';
@@ -7448,7 +7448,7 @@ ${bracketHTML}
       score1 = parseInt(rawA);
       score2 = parseInt(rawB);
       if (isNaN(score1) || isNaN(score2)) {
-        if (errEl) { errEl.textContent = 'Enter a score for both teams, or leave both blank.'; errEl.style.display = ''; }
+        if (errEl) { errEl.textContent = 'Enter a score for both teams, or leave both blank.'; errEl.style.display = 'block'; }
         return;
       }
     }
@@ -7932,11 +7932,11 @@ ${bracketHTML}
       score1 = parseInt(raw1, 10);
       score2 = parseInt(raw2, 10);
       if (isNaN(score1) || isNaN(score2)) {
-        if (errEl) { errEl.textContent = 'Enter a score for both sides, or leave both blank.'; errEl.style.display = ''; }
+        if (errEl) { errEl.textContent = 'Enter a score for both sides, or leave both blank.'; errEl.style.display = 'block'; }
         return;
       }
       if (this.isTournament() && score1 === score2) {
-        if (errEl) { errEl.textContent = 'Tournament matches cannot end in a tie.'; errEl.style.display = ''; }
+        if (errEl) { errEl.textContent = 'Tournament matches cannot end in a tie.'; errEl.style.display = 'block'; }
         return;
       }
     }
@@ -7949,7 +7949,7 @@ ${bracketHTML}
       const mins = rawMin === '' ? 0 : parseInt(rawMin, 10);
       const secs = rawSec === '' ? 0 : parseInt(rawSec, 10);
       if (isNaN(mins) || isNaN(secs)) {
-        if (errEl) { errEl.textContent = 'Enter a valid match duration.'; errEl.style.display = ''; }
+        if (errEl) { errEl.textContent = 'Enter a valid match duration.'; errEl.style.display = 'block'; }
         return;
       }
       duration = (mins * 60 + secs) * 1000;
