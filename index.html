@@ -2696,6 +2696,34 @@ body {
         <option value="roundrobin">Round Robin</option>
         <option value="tournament">Tournament</option>
       </select>
+      <div id="leagueSection" style="display:none;margin-top:12px;padding-top:12px;border-top:1px solid var(--border);">
+        <label class="toggle-switch-label" style="margin:0 0 10px;">
+          <span class="toggle-switch">
+            <input type="checkbox" id="leagueToggle" onchange="App.toggleLeague()">
+            <span class="toggle-switch-track"></span>
+          </span>
+          League
+        </label>
+        <div id="leagueFields" style="display:none;">
+          <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:8px;">
+            <div style="flex:1;min-width:120px;">
+              <label style="font-size:0.72rem;font-weight:600;color:var(--text-muted);display:block;margin-bottom:4px;">Start Date</label>
+              <input type="date" class="setup-input" id="leagueStartDate" style="margin-bottom:0;" onchange="App.saveLeagueSettings()">
+            </div>
+            <div style="flex:1;min-width:120px;">
+              <label style="font-size:0.72rem;font-weight:600;color:var(--text-muted);display:block;margin-bottom:4px;">End Date</label>
+              <input type="date" class="setup-input" id="leagueEndDate" style="margin-bottom:0;" onchange="App.saveLeagueSettings()">
+            </div>
+          </div>
+          <label style="font-size:0.72rem;font-weight:600;color:var(--text-muted);display:block;margin-bottom:4px;">Frequency</label>
+          <select class="setup-input" id="leagueFrequency" style="margin-bottom:0;cursor:pointer;" onchange="App.saveLeagueSettings()">
+            <option value="weekly">Weekly</option>
+            <option value="biweekly">Bi-Weekly</option>
+            <option value="monthly">Monthly</option>
+          </select>
+          <p id="leagueError" class="setup-error" style="display:none;">End date must be on or after the start date</p>
+        </div>
+      </div>
     </div>
 
     <!-- Session passcode (admin only, private sessions) -->
@@ -2778,23 +2806,39 @@ body {
           <button type="button" class="btn-confirm-join" id="btnSubmitLogPastMatch" onclick="App.submitLogPastMatch()" disabled style="flex:1;padding:10px;font-size:0.85rem;font-weight:700;">Add to History</button>
         </div>
       </div>
-      <div id="historyStats" class="history-stats-card" style="display:none;">
-        <div class="history-stat-tile">
-          <div class="history-stat-value history-stat-name" id="historyStatTeamName">&ndash;</div>
-          <div class="history-stat-sub" id="historyStatTeamWins"></div>
-          <div class="history-stat-label">Winningest Team</div>
+      <!-- League (Round Robin) season standings — see App.renderSeasonSummary.
+           While the season's still going, the day-by-day detail below stays
+           open by default; once it ends, this collapses it so the tab leads
+           with the final standings instead of a season's worth of matches. -->
+      <div id="seasonSummarySection" style="display:none;margin-bottom:14px;">
+        <div class="history-session-summary" style="margin-bottom:8px;">
+          <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;margin-bottom:6px;">
+            <div class="history-session-summary-title" id="seasonSummaryTitle" style="margin-bottom:0;">Season Summary</div>
+            <span id="seasonSummaryRange" style="font-size:0.72rem;color:var(--text-muted);"></span>
+          </div>
+          <div id="seasonSummaryRows"></div>
         </div>
-        <div class="history-stat-tile">
-          <div class="history-stat-value history-stat-name" id="historyStatPlayerName">&ndash;</div>
-          <div class="history-stat-sub" id="historyStatPlayerWins"></div>
-          <div class="history-stat-label">Winningest Player</div>
+        <button type="button" class="btn-outline" id="btnToggleSeasonDetails" onclick="App.toggleSeasonDetails()" style="width:100%;padding:10px;font-size:0.85rem;font-weight:600;">Show Day-by-Day Details</button>
+      </div>
+      <div id="historyDetailSection">
+        <div id="historyStats" class="history-stats-card" style="display:none;">
+          <div class="history-stat-tile">
+            <div class="history-stat-value history-stat-name" id="historyStatTeamName">&ndash;</div>
+            <div class="history-stat-sub" id="historyStatTeamWins"></div>
+            <div class="history-stat-label">Winningest Team</div>
+          </div>
+          <div class="history-stat-tile">
+            <div class="history-stat-value history-stat-name" id="historyStatPlayerName">&ndash;</div>
+            <div class="history-stat-sub" id="historyStatPlayerWins"></div>
+            <div class="history-stat-label">Winningest Player</div>
+          </div>
         </div>
+        <div class="history-filters" style="display:flex;gap:8px;align-items:center;">
+          <input type="text" id="historySearch" class="history-search" placeholder="Search players..." oninput="App.renderHistory()" style="flex:1;">
+          <button type="button" class="btn-outline" id="btnFilterMyMatches" onclick="App.toggleMyMatches()" style="white-space:nowrap;padding:12px 16px;font-size:1rem;font-weight:700;">My Matches</button>
+        </div>
+        <div class="history-table-wrap" id="historyRounds"></div>
       </div>
-      <div class="history-filters" style="display:flex;gap:8px;align-items:center;">
-        <input type="text" id="historySearch" class="history-search" placeholder="Search players..." oninput="App.renderHistory()" style="flex:1;">
-        <button type="button" class="btn-outline" id="btnFilterMyMatches" onclick="App.toggleMyMatches()" style="white-space:nowrap;padding:12px 16px;font-size:1rem;font-weight:700;">My Matches</button>
-      </div>
-      <div class="history-table-wrap" id="historyRounds"></div>
     </div>
   </div>
 
@@ -4569,6 +4613,38 @@ const App = {
     this.render();
   },
 
+  // ─── League (Round Robin only) ──────────────
+  // A recurring season spanning many closed days, standing apart from a
+  // single Round Robin's own roster/schedule (which still resets per
+  // closeSession — see there). Just a date range + cadence used to scope
+  // the season-wide standings in renderSeasonSummary; the day-to-day
+  // roster/lock flow is unaffected by whether this is on.
+  toggleLeague() {
+    if (!Admin.isAdmin()) return;
+    const on = !!document.getElementById('leagueToggle')?.checked;
+    this.state._league = { startDate: null, endDate: null, frequency: 'weekly', ...(this.state._league || {}), enabled: on };
+    this._logAdmin(on ? 'Enable League' : 'Disable League');
+    this.saveState();
+    this.render();
+  },
+
+  saveLeagueSettings() {
+    if (!Admin.isAdmin()) return;
+    const startDate = document.getElementById('leagueStartDate')?.value || null;
+    const endDate = document.getElementById('leagueEndDate')?.value || null;
+    const frequency = document.getElementById('leagueFrequency')?.value || 'weekly';
+    const errEl = document.getElementById('leagueError');
+    if (startDate && endDate && endDate < startDate) {
+      if (errEl) errEl.style.display = '';
+      return;
+    }
+    if (errEl) errEl.style.display = 'none';
+    this.state._league = { ...(this.state._league || {}), enabled: true, startDate, endDate, frequency };
+    this._logAdmin('Update League Settings');
+    this.saveState();
+    this.render();
+  },
+
   rrLockPlayers() {
     if (this.state.players.filter(p => p.active).length < 4) {
       alert('Need at least 4 players for round robin.');
@@ -5586,20 +5662,12 @@ ${bracketHTML}
     this.switchTab('history');
   },
 
-  // Player names + win/loss/played record for the games since the last
-  // close (or session start), snapshotted onto a "session summary" entry in
-  // Match History — the round-by-round stats it's built from
-  // (opponentHistory, round) get wiped by closeSession, so this is the
-  // lasting record of who played and how they did.
-  _buildSessionSummary() {
-    const history = this.state.roundHistory || [];
-    let startIdx = 0;
-    for (let i = history.length - 1; i >= 0; i--) {
-      if (history[i].sessionClosed) { startIdx = i + 1; break; }
-    }
-    const matches = history.slice(startIdx).filter(m => !m.sessionClosed && !m.sessionSummary);
+  // Per-player wins/losses/played/avg-points across a set of match entries
+  // (never sessionClosed/sessionSummary markers) — shared by a single
+  // close's own summary (_buildSessionSummary) and a whole League season's
+  // (_buildSeasonSummary), which just pass in a differently-scoped list.
+  _tallyPlayerStats(matches) {
     if (!matches.length) return null;
-
     const nameMap = this._historyNameMap(matches);
     const nameFor = id => this.getPlayer(id)?.name || nameMap.get(id) || '?';
     const stats = new Map();
@@ -5624,11 +5692,50 @@ ${bracketHTML}
       });
     });
     if (!stats.size) return null;
-    const players = [...stats.values()].map(s => {
+    return [...stats.values()].map(s => {
       const avgPoints = s._scoredMatches ? Math.round((s._points / s._scoredMatches) * 10) / 10 : null;
       return { id: s.id, name: s.name, wins: s.wins, losses: s.losses, played: s.played, avgPoints };
     }).sort((a, b) => b.wins - a.wins || (b.avgPoints ?? -Infinity) - (a.avgPoints ?? -Infinity) || b.played - a.played || a.name.localeCompare(b.name));
+  },
+
+  // Player names + win/loss/played record for the games since the last
+  // close (or session start), snapshotted onto a "session summary" entry in
+  // Match History — the round-by-round stats it's built from
+  // (opponentHistory, round) get wiped by closeSession, so this is the
+  // lasting record of who played and how they did.
+  _buildSessionSummary() {
+    const history = this.state.roundHistory || [];
+    let startIdx = 0;
+    for (let i = history.length - 1; i >= 0; i--) {
+      if (history[i].sessionClosed) { startIdx = i + 1; break; }
+    }
+    const matches = history.slice(startIdx).filter(m => !m.sessionClosed && !m.sessionSummary);
+    if (!matches.length) return null;
+    const players = this._tallyPlayerStats(matches);
+    if (!players) return null;
     return { sessionSummary: true, side1: [], side2: [], at: Date.now(), players };
+  },
+
+  // League season standings: every match whose timestamp falls within the
+  // configured start/end dates, regardless of how many closes it spans —
+  // see renderSeasonSummary for how this gets shown (and collapsed once
+  // the season's over) in the History tab.
+  _buildSeasonSummary() {
+    const league = this.state._league;
+    if (!league || !league.enabled) return null;
+    const startMs = league.startDate ? new Date(league.startDate + 'T00:00:00').getTime() : null;
+    const endMs = league.endDate ? new Date(league.endDate + 'T23:59:59').getTime() : null;
+    const matches = (this.state.roundHistory || []).filter(m => {
+      if (m.sessionClosed || m.sessionSummary) return false;
+      const ts = m.startTime || m.at;
+      if (ts == null) return false;
+      if (startMs != null && ts < startMs) return false;
+      if (endMs != null && ts > endMs) return false;
+      return true;
+    });
+    const players = this._tallyPlayerStats(matches) || [];
+    const ended = endMs != null && Date.now() > endMs;
+    return { league, players, ended };
   },
 
   openSession() {
@@ -5649,6 +5756,7 @@ ${bracketHTML}
     const prevOffline = this.state._offline;
     const prevQuickPlay = this.state._quickPlay;
     const prevSessionType = this.state._sessionType;
+    const prevLeague = this.state._league;
     const fresh = this._freshState();
     fresh._resetAt = Date.now();
     fresh.adminLog = prevLog;
@@ -5657,6 +5765,7 @@ ${bracketHTML}
     if (prevOffline) fresh._offline = prevOffline;
     if (prevQuickPlay) fresh._quickPlay = prevQuickPlay;
     if (prevSessionType) fresh._sessionType = prevSessionType;
+    if (prevLeague) fresh._league = prevLeague;
     localStorage.removeItem('courtManager');
     this._myGuests = new Set();
     this._saveMyGuests();
@@ -5770,6 +5879,24 @@ ${bracketHTML}
       sessionTypeSection.style.display = (Session.id && Session.id.startsWith('pvt-') && Admin.isAdmin()) ? '' : 'none';
       const selType = document.getElementById('settingsSessionType');
       if (selType) selType.value = rr ? 'roundrobin' : tourn ? 'tournament' : 'open';
+    }
+
+    // League (Round Robin only): recurring season with a shared standings
+    // summary across every closed day — see renderSeasonSummary.
+    const leagueSection = document.getElementById('leagueSection');
+    if (leagueSection) {
+      leagueSection.style.display = rr ? '' : 'none';
+      const league = this.state._league || {};
+      const leagueToggle = document.getElementById('leagueToggle');
+      if (leagueToggle) leagueToggle.checked = !!league.enabled;
+      const leagueFields = document.getElementById('leagueFields');
+      if (leagueFields) leagueFields.style.display = league.enabled ? '' : 'none';
+      const startEl = document.getElementById('leagueStartDate');
+      if (startEl) startEl.value = league.startDate || '';
+      const endEl = document.getElementById('leagueEndDate');
+      if (endEl) endEl.value = league.endDate || '';
+      const freqEl = document.getElementById('leagueFrequency');
+      if (freqEl) freqEl.value = league.frequency || 'weekly';
     }
 
     // Show passcode section for private sessions (admin only)
@@ -7127,6 +7254,9 @@ ${bracketHTML}
   },
 
   _historyFilterMine: false,
+  // null until renderSeasonSummary first decides a default (expanded while
+  // the season's in progress, collapsed once it's ended) — see there.
+  _seasonDetailsExpanded: null,
 
   toggleMyMatches() {
     this._historyFilterMine = !this._historyFilterMine;
@@ -7195,10 +7325,55 @@ ${bracketHTML}
       ? `${maxPlayerWins} win${maxPlayerWins === 1 ? '' : 's'}${playerNames.length > 1 ? ' (tie)' : ''}` : '';
   },
 
+  // Shows League season-wide standings above the regular Match History
+  // list, and — once the season's end date has passed — collapses that
+  // list (individual closes and their matches) behind a "Show Day-by-Day
+  // Details" toggle, so the tab leads with final standings rather than a
+  // whole season of history. Toggling manually (see toggleSeasonDetails)
+  // overrides that default for the rest of this page load.
+  renderSeasonSummary() {
+    const section = document.getElementById('seasonSummarySection');
+    const detailSection = document.getElementById('historyDetailSection');
+    if (!section) return;
+    const summary = this.isRoundRobin() ? this._buildSeasonSummary() : null;
+    if (!summary) {
+      section.style.display = 'none';
+      if (detailSection) detailSection.style.display = '';
+      return;
+    }
+    section.style.display = '';
+    const titleEl = document.getElementById('seasonSummaryTitle');
+    if (titleEl) titleEl.textContent = summary.ended ? 'Season Complete' : 'Season Summary (to date)';
+    const rangeEl = document.getElementById('seasonSummaryRange');
+    if (rangeEl) {
+      const fmt = d => d ? new Date(d + 'T00:00:00').toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' }) : '?';
+      const freqLabel = { weekly: 'Weekly', biweekly: 'Bi-Weekly', monthly: 'Monthly' }[summary.league.frequency] || '';
+      rangeEl.textContent = `${fmt(summary.league.startDate)} – ${fmt(summary.league.endDate)}${freqLabel ? ' · ' + freqLabel : ''}`;
+    }
+    const rowsEl = document.getElementById('seasonSummaryRows');
+    if (rowsEl) {
+      rowsEl.innerHTML = summary.players.length
+        ? summary.players.map(p =>
+            `<div class="history-summary-row"><span class="history-summary-name">${this.esc(p.name)}</span><span class="history-summary-record">${p.wins}-${p.losses}${p.played ? ` · ${p.played} played` : ''}${p.avgPoints != null ? ` · ${p.avgPoints} avg pts` : ''}</span></div>`
+          ).join('')
+        : '<div class="history-empty">No matches yet this season</div>';
+    }
+    if (this._seasonDetailsExpanded == null) this._seasonDetailsExpanded = !summary.ended;
+    const toggleBtn = document.getElementById('btnToggleSeasonDetails');
+    if (toggleBtn) toggleBtn.textContent = this._seasonDetailsExpanded ? 'Hide Day-by-Day Details' : 'Show Day-by-Day Details';
+    if (detailSection) detailSection.style.display = this._seasonDetailsExpanded ? '' : 'none';
+  },
+
+  toggleSeasonDetails() {
+    this._seasonDetailsExpanded = !this._seasonDetailsExpanded;
+    this.renderSeasonSummary();
+  },
+
   renderHistory() {
     const el = document.getElementById('historyRounds');
     let history = [...(this.state.roundHistory || [])];
 
+    this.renderSeasonSummary();
     this.renderHistoryStats(history);
 
     if (history.length === 0) {
@@ -7283,6 +7458,7 @@ ${bracketHTML}
       const editActions = isEditing
         ? `<p id="matchEditError-${idx}" class="setup-error" style="display:none;margin-top:6px;"></p>
            <div class="match-edit-actions">
+             <button class="btn-edit-cancel" style="color:var(--danger);border-color:#fca5a5;margin-right:auto;" onclick="App.deleteMatchScore(${idx})">Delete</button>
              <button class="btn-edit-cancel" onclick="App.cancelEditMatchScore()">Cancel</button>
              <button class="btn-edit-save" onclick="App.saveEditMatchScore(${idx})">Save</button>
            </div>`
@@ -7348,6 +7524,19 @@ ${bracketHTML}
     // "expired" one — see renderHistoryStats/_buildSessionSummary, which
     // otherwise skip expired entries when tallying wins even with a winner set.
     if (score1 != null && score2 != null) m.expired = false;
+    this._editingMatchIdx = null;
+    this.saveState();
+    this.render();
+  },
+
+  // Only reachable from the score-edit form, so it's already gated behind
+  // canEditScore (session open) the same as saveEditMatchScore.
+  deleteMatchScore(idx) {
+    if (this.state._closed) return;
+    const m = this.state.roundHistory[idx];
+    if (!m) return;
+    if (!confirm('Delete this match from history? This cannot be undone.')) return;
+    this.state.roundHistory.splice(idx, 1);
     this._editingMatchIdx = null;
     this.saveState();
     this.render();
