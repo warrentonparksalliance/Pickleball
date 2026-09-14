@@ -2228,9 +2228,14 @@ body {
     gap: 14px;
     align-items: start;
   }
+  #sessionNameCard {
+    grid-column: 1;
+    grid-row: 1;
+    margin-bottom: 0 !important;
+  }
   #playersSection {
     grid-column: 1;
-    grid-row: 1 / -1;
+    grid-row: 2 / -1;
     margin-bottom: 0 !important;
   }
   #assignHeader {
@@ -2487,6 +2492,12 @@ body {
 
   <!-- ═══════════════ TAB: COURTS ═══════════════ -->
   <div id="tabCourts" class="tab-panel active" style="display:none;">
+
+    <!-- Session name -->
+    <div id="sessionNameCard" class="queue-bar-wrap" style="margin-bottom:14px;">
+      <div class="queue-bar-label">Session</div>
+      <div class="section-title" id="sessionNameDisplay"></div>
+    </div>
 
     <!-- Courts -->
     <div class="assign-header" id="assignHeader" style="margin-bottom:14px;">
@@ -5633,6 +5644,11 @@ ${bracketHTML}
   render() {
     // Re-evaluate admin visibility (session admin depends on state._admins)
     if (typeof Admin !== 'undefined') Admin._updateUI();
+
+    const sessionNameEl = document.getElementById('sessionNameDisplay');
+    if (sessionNameEl) {
+      sessionNameEl.textContent = this.state._sessionName || (this.state._offline ? 'Quick Play' : 'Session');
+    }
 
     const closedBanner = document.getElementById('sessionClosedBanner');
     if (closedBanner) {
