@@ -1966,6 +1966,31 @@ body {
   height: 1px;
   background: var(--border-strong);
 }
+.history-session-summary {
+  background: var(--card);
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius);
+  padding: 10px 12px;
+  margin-bottom: 2px;
+}
+.history-session-summary-title {
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--text-muted);
+  margin-bottom: 6px;
+}
+.history-summary-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  font-size: 0.85rem;
+  padding: 3px 0;
+}
+.history-summary-row + .history-summary-row { border-top: 1px solid var(--border); }
+.history-summary-name { flex: 1; }
+.history-summary-record { font-weight: 700; color: var(--text-muted); flex-shrink: 0; }
 .btn-my-matches-active { background: var(--primary) !important; color: white !important; border-color: var(--primary) !important; }
 .swipe-wrap { position: relative; overflow: hidden; border-radius: var(--radius); }
 .swipe-wrap .match-card { position: relative; z-index: 1; transition: transform 0.2s ease; touch-action: pan-y; }
@@ -5487,12 +5512,53 @@ ${bracketHTML}
     this.state.opponentHistory = {};
     this.state.roundsWaited = {};
     this.state.round = 0;
+    const summary = this._buildSessionSummary();
+    if (summary) this.state.roundHistory.push(summary);
     this.state.roundHistory.push({ sessionClosed: true, side1: [], side2: [], at: Date.now() });
     this.state._closed = true;
     this._proposedUndoStack = [];
     this._tapSelection = null;
     this.saveState();
     this.render();
+  },
+
+  // Player names + win/loss/played record for the games since the last
+  // close (or session start), snapshotted onto a "session summary" entry in
+  // Match History — the round-by-round stats it's built from
+  // (opponentHistory, round) get wiped by closeSession, so this is the
+  // lasting record of who played and how they did.
+  _buildSessionSummary() {
+    const history = this.state.roundHistory || [];
+    let startIdx = 0;
+    for (let i = history.length - 1; i >= 0; i--) {
+      if (history[i].sessionClosed) { startIdx = i + 1; break; }
+    }
+    const matches = history.slice(startIdx).filter(m => !m.sessionClosed && !m.sessionSummary);
+    if (!matches.length) return null;
+
+    const nameMap = this._historyNameMap(matches);
+    const nameFor = id => this.getPlayer(id)?.name || nameMap.get(id) || '?';
+    const stats = new Map();
+    const ensure = id => {
+      if (!stats.has(id)) stats.set(id, { id, name: nameFor(id), wins: 0, losses: 0, played: 0 });
+      return stats.get(id);
+    };
+    matches.forEach(m => {
+      const decided = !m.expired && (m.winner === 1 || m.winner === 2);
+      (m.side1 || []).forEach(id => {
+        const s = ensure(id);
+        s.played++;
+        if (decided) { if (m.winner === 1) s.wins++; else s.losses++; }
+      });
+      (m.side2 || []).forEach(id => {
+        const s = ensure(id);
+        s.played++;
+        if (decided) { if (m.winner === 2) s.wins++; else s.losses++; }
+      });
+    });
+    if (!stats.size) return null;
+    const players = [...stats.values()].sort((a, b) => b.wins - a.wins || b.played - a.played || a.name.localeCompare(b.name));
+    return { sessionSummary: true, side1: [], side2: [], at: Date.now(), players };
   },
 
   openSession() {
@@ -7003,6 +7069,15 @@ ${bracketHTML}
           when = `${d.toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}, ${d.toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' })}`;
         }
         return `<div class="history-session-closed">Session closed${when ? ' &mdash; ' + when : ''}</div>`;
+      }
+      if (m.sessionSummary) {
+        const rows = (m.players || []).map(p =>
+          `<div class="history-summary-row"><span class="history-summary-name">${this.esc(p.name)}</span><span class="history-summary-record">${p.wins}-${p.losses}${p.played ? ` &middot; ${p.played} played` : ''}</span></div>`
+        ).join('');
+        return `<div class="history-session-summary">
+          <div class="history-session-summary-title">Session Summary</div>
+          ${rows}
+        </div>`;
       }
       const s1 = m.side1.map(id => { const p = this.getPlayer(id); return this.esc(nameFor(id)) + (p && p.skillLevel ? ` <span style="font-weight:400;opacity:0.7;">(${this.skillAbbrev(p)})</span>` : ''); });
       const s2 = m.side2.map(id => { const p = this.getPlayer(id); return this.esc(nameFor(id)) + (p && p.skillLevel ? ` <span style="font-weight:400;opacity:0.7;">(${this.skillAbbrev(p)})</span>` : ''); });
