@@ -235,9 +235,6 @@ body {
   display: flex;
   background: var(--tab-bg);
   border-bottom: 1px solid var(--tab-bg-border);
-  position: sticky;
-  top: 94px;
-  z-index: 45;
 }
 .tab-btn {
   flex: 1;
@@ -2314,14 +2311,14 @@ body {
   </div>
 </header>
 
-</div>
-
 <!-- ── Tab Bar (shown when in session) ─────────── -->
 <nav class="tab-bar" id="tabBar" style="display:none;">
   <button class="tab-btn active" data-tab="courts" onclick="App.switchTab('courts')">Courts <span class="tab-badge" id="tabBadgeCourts">0</span></button>
   <button class="tab-btn" id="tabBtnSettings" data-tab="settings" onclick="App.switchTab('settings')">Settings</button>
   <button class="tab-btn" data-tab="history" onclick="App.switchTab('history')">History <span class="tab-badge" id="tabBadgeHistory">0</span></button>
 </nav>
+
+</div>
 
 <div class="page-wrap">
 
