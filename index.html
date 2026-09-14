@@ -2136,6 +2136,9 @@ body.view-only-locked #tabCourts #btnToggleQueue {
 .bracket-match.completed {
   opacity: 0.7;
 }
+.bracket-match-dim {
+  opacity: 0.35;
+}
 .bracket-slot {
   padding: 5px 8px;
   display: flex;
@@ -2344,8 +2347,9 @@ body.view-only-locked #tabCourts #btnToggleQueue {
   #manageAdminsSection { grid-column: 2; grid-row: 2; }
   #shareLinkSection { grid-column: 3; grid-row: 1; }
   #passcodeSection { grid-column: 3; grid-row: 2; }
-  #dangerZone { grid-column: 1 / -1; grid-row: 3; }
-  #adminLogSection { grid-column: 1 / -1; grid-row: 4; }
+  #partnershipsSection { grid-column: 1 / -1; grid-row: 3; }
+  #dangerZone { grid-column: 1 / -1; grid-row: 4; }
+  #adminLogSection { grid-column: 1 / -1; grid-row: 5; }
 }
 </style>
 </head>
@@ -2610,6 +2614,22 @@ body.view-only-locked #tabCourts #btnToggleQueue {
             <span>Drag or double tap players to move</span>
           </div>
           <button id="rrUnlockBtn" class="btn-outline" onclick="App.isRoundRobin()?App.rrUnlockPlayers():App.bracketUnlockPlayers()" style="display:none;margin-top:8px;width:100%;color:var(--warning);border-color:var(--warning);font-size:0.82rem;">Unlock Players &amp; Reset</button>
+          <div style="display:flex;justify-content:flex-end;margin-top:8px;">
+            <button id="btnViewPartnerships" class="btn-outline" onclick="App.openViewPartnerships()" style="display:none;padding:6px 12px;font-size:0.78rem;font-weight:600;">View Partnerships</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- View Partnerships (read-only, everyone) -->
+    <div id="viewPartnershipsModal" class="hiw-overlay" style="display:none;" onclick="App.closeViewPartnerships()">
+      <div class="hiw-modal" style="max-width:380px;" onclick="event.stopPropagation()">
+        <div class="hiw-header">
+          <h2>Partnerships</h2>
+          <button class="hiw-close" onclick="App.closeViewPartnerships()" aria-label="Close">&times;</button>
+        </div>
+        <div class="hiw-body">
+          <div id="viewPartnershipsList"></div>
         </div>
       </div>
     </div>
@@ -2664,7 +2684,12 @@ body.view-only-locked #tabCourts #btnToggleQueue {
     <!-- Round Robin: upcoming rounds -->
     <div id="rrUpcomingSection" style="display:none;margin-top:14px;">
       <div class="queue-bar-wrap">
-        <div class="section-title" style="margin-bottom:8px;">Upcoming Rounds</div>
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:8px;flex-wrap:wrap;">
+          <div class="section-title">Upcoming Rounds</div>
+          <select id="upcomingPlayerFilter" class="setup-input" style="width:auto;min-width:140px;margin-bottom:0;cursor:pointer;" onchange="App.filterUpcomingByPlayer(this.value)">
+            <option value="">All Players</option>
+          </select>
+        </div>
         <div id="rrUpcomingList"></div>
       </div>
     </div>
@@ -2672,9 +2697,14 @@ body.view-only-locked #tabCourts #btnToggleQueue {
     <!-- Tournament: bracket view -->
     <div id="bracketSection" style="display:none;margin-top:14px;">
       <div class="queue-bar-wrap">
-        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:8px;flex-wrap:wrap;">
           <div class="section-title">Bracket</div>
-          <button type="button" class="btn-outline btn-print-bracket" onclick="App.printBracket()" style="padding:6px 12px;font-size:0.8rem;font-weight:600;">&#128438; Save as PDF</button>
+          <div style="display:flex;align-items:center;gap:8px;">
+            <select id="bracketPlayerFilter" class="setup-input" style="width:auto;min-width:140px;margin-bottom:0;cursor:pointer;" onchange="App.filterUpcomingByPlayer(this.value)">
+              <option value="">All Players</option>
+            </select>
+            <button type="button" class="btn-outline btn-print-bracket" onclick="App.printBracket()" style="padding:6px 12px;font-size:0.8rem;font-weight:600;">&#128438; Save as PDF</button>
+          </div>
         </div>
         <div id="bracketPrintArea">
           <div id="bracketView"></div>
@@ -2820,6 +2850,41 @@ body.view-only-locked #tabCourts #btnToggleQueue {
       <button class="btn-add-partner" id="btnAddAdmin" onclick="App.toggleAdminPicker()">+ Add Admin</button>
       <div id="adminPicker" style="display:none;margin-top:8px;border:1.5px solid var(--border);border-radius:var(--radius);padding:8px;background:var(--bg);">
         <div id="adminPickerList"></div>
+      </div>
+    </div>
+
+    <!-- Partnerships (admin only) — separate from the self-service "Your
+         Partner(s)" card above: an admin links any two players together,
+         tagged Mixed/Men's/Women's doubles. A player can hold one of each
+         type at once; Round Robin alternates them evenly round-to-round
+         when they have two (see rrGenerateSchedule). -->
+    <div class="settings-card admin-only" id="partnershipsSection" style="display:none;">
+      <div class="settings-card-title">Partnerships</div>
+      <p style="font-size:0.8rem;color:var(--text-muted);margin:0 0 10px;">Link two players as a Mixed, Men's, or Women's doubles team for Round Robin. A player can hold one of each — Mixed plus Men's or Women's — and rounds alternate evenly between them.</p>
+      <div id="partnershipsList"></div>
+      <button class="btn-add-partner" id="btnAddPartnership" onclick="App.toggleCreatePartnership()">+ Create Partnership</button>
+      <div id="partnershipCreatePanel" style="display:none;margin-top:10px;border:1.5px solid var(--border);border-radius:var(--radius);padding:10px;background:var(--bg);">
+        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:8px;">
+          <div style="flex:1;min-width:130px;">
+            <label style="font-size:0.72rem;font-weight:600;color:var(--text-muted);display:block;margin-bottom:4px;">Player 1</label>
+            <select class="setup-input" id="partnershipP1" style="margin-bottom:0;cursor:pointer;" onchange="App.renderPartnershipCreatePanel()"></select>
+          </div>
+          <div style="flex:1;min-width:130px;">
+            <label style="font-size:0.72rem;font-weight:600;color:var(--text-muted);display:block;margin-bottom:4px;">Player 2</label>
+            <select class="setup-input" id="partnershipP2" style="margin-bottom:0;cursor:pointer;"></select>
+          </div>
+        </div>
+        <label style="font-size:0.72rem;font-weight:600;color:var(--text-muted);display:block;margin-bottom:4px;">Type</label>
+        <select class="setup-input" id="partnershipType" style="margin-bottom:8px;cursor:pointer;">
+          <option value="mixed">Mixed Doubles</option>
+          <option value="mens">Men's Doubles</option>
+          <option value="womens">Women's Doubles</option>
+        </select>
+        <p id="partnershipCreateError" class="setup-error" style="display:none;"></p>
+        <div style="display:flex;gap:8px;">
+          <button type="button" class="btn-confirm-join" onclick="App.confirmCreatePartnership()" style="flex:1;">Create</button>
+          <button type="button" class="btn-edit-cancel" onclick="App.toggleCreatePartnership()">Cancel</button>
+        </div>
       </div>
     </div>
 
@@ -3869,6 +3934,131 @@ const App = {
     this.render();
   },
 
+  // ─── Admin Partnerships (Mixed/Men's/Women's doubles) ──
+  // Separate from the self-service "Your Partner(s)" system above: an
+  // admin links any two players together, tagged by type. Unlike a
+  // self-service partner (only one ever "current"), a player can hold one
+  // typed partnership per type at once — so at most Mixed + one of
+  // Men's/Women's. Round Robin alternates a player evenly between two
+  // typed partnerships round-by-round instead of picking just one for the
+  // whole session (see rrGenerateSchedule/_activePartnershipForRound).
+  PARTNERSHIP_TYPES: { mixed: 'Mixed Doubles', mens: "Men's Doubles", womens: "Women's Doubles" },
+
+  _typedTeams() {
+    return this.state.teams.filter(t => t.type);
+  },
+
+  _typedPartnershipsForPlayer(playerId) {
+    return this._typedTeams().filter(t => t.p1 === playerId || t.p2 === playerId).sort((a, b) => a.id - b.id);
+  },
+
+  toggleCreatePartnership() {
+    if (!Admin.isAdmin()) return;
+    const panel = document.getElementById('partnershipCreatePanel');
+    if (!panel) return;
+    const show = panel.style.display === 'none';
+    panel.style.display = show ? 'block' : 'none';
+    const err = document.getElementById('partnershipCreateError');
+    if (err) err.style.display = 'none';
+    if (show) this.renderPartnershipCreatePanel();
+  },
+
+  renderPartnershipCreatePanel() {
+    const p1Sel = document.getElementById('partnershipP1');
+    const p2Sel = document.getElementById('partnershipP2');
+    if (!p1Sel || !p2Sel) return;
+    const players = [...this.state.players].filter(p => p.active).sort((a, b) => a.name.localeCompare(b.name));
+    const prevP1 = p1Sel.value;
+    p1Sel.innerHTML = players.map(p => `<option value="${p.id}">${this.esc(p.name)}</option>`).join('');
+    if (prevP1 && players.some(p => String(p.id) === prevP1)) p1Sel.value = prevP1;
+    const p1Id = parseInt(p1Sel.value, 10);
+    const prevP2 = p2Sel.value;
+    p2Sel.innerHTML = players.filter(p => p.id !== p1Id).map(p => `<option value="${p.id}">${this.esc(p.name)}</option>`).join('');
+    if (prevP2 && players.some(p => String(p.id) === prevP2 && p.id !== p1Id)) p2Sel.value = prevP2;
+  },
+
+  confirmCreatePartnership() {
+    if (!Admin.isAdmin()) return;
+    const p1 = parseInt(document.getElementById('partnershipP1')?.value, 10);
+    const p2 = parseInt(document.getElementById('partnershipP2')?.value, 10);
+    const type = document.getElementById('partnershipType')?.value;
+    const errEl = document.getElementById('partnershipCreateError');
+    const showError = msg => { if (errEl) { errEl.textContent = msg; errEl.style.display = 'block'; } };
+    if (!p1 || !p2 || p1 === p2 || !this.PARTNERSHIP_TYPES[type]) {
+      showError('Pick two different players.');
+      return;
+    }
+    const conflict = this._typedTeams().find(t => t.type === type && (t.p1 === p1 || t.p2 === p1 || t.p1 === p2 || t.p2 === p2));
+    if (conflict) {
+      const conflictedId = (conflict.p1 === p1 || conflict.p2 === p1) ? p1 : p2;
+      const name = this.getPlayer(conflictedId)?.name || '?';
+      showError(`${name} already has a ${this.PARTNERSHIP_TYPES[type]} partnership — remove it first.`);
+      return;
+    }
+    if (errEl) errEl.style.display = 'none';
+    const p1Name = this.getPlayer(p1)?.name || '?', p2Name = this.getPlayer(p2)?.name || '?';
+    this.state.teams.push({ id: this.state.nextId++, p1, p2, type, current: true });
+    this._logAdmin(`Create ${this.PARTNERSHIP_TYPES[type]} Partnership: ${p1Name} & ${p2Name}`);
+    const panel = document.getElementById('partnershipCreatePanel');
+    if (panel) panel.style.display = 'none';
+    this.saveState();
+    this.render();
+  },
+
+  removePartnership(teamId) {
+    if (!Admin.isAdmin()) return;
+    const t = this.state.teams.find(x => x.id === teamId);
+    if (t) {
+      const label = this.PARTNERSHIP_TYPES[t.type] || 'Partnership';
+      this._logAdmin(`Remove ${label}: ${this.getPlayer(t.p1)?.name || '?'} & ${this.getPlayer(t.p2)?.name || '?'}`);
+    }
+    this.state.teams = this.state.teams.filter(x => x.id !== teamId);
+    this.saveState();
+    this.render();
+  },
+
+  renderPartnershipsList() {
+    const el = document.getElementById('partnershipsList');
+    if (!el) return;
+    const typed = this._typedTeams();
+    if (!typed.length) {
+      el.innerHTML = '<div style="color:var(--text-muted);font-size:0.82rem;margin-bottom:8px;">No partnerships yet</div>';
+      return;
+    }
+    el.innerHTML = typed.map(t => `<div style="display:flex;align-items:center;justify-content:space-between;gap:8px;padding:6px 0;border-bottom:1px solid var(--border);">
+        <span style="font-size:0.85rem;"><strong>${this.esc(this.getPlayer(t.p1)?.name || '?')}</strong> &amp; <strong>${this.esc(this.getPlayer(t.p2)?.name || '?')}</strong> <span style="color:var(--text-muted);">&middot; ${this.PARTNERSHIP_TYPES[t.type] || t.type}</span></span>
+        <button class="partner-chip-remove" onclick="App.removePartnership(${t.id})" title="Remove partnership">&times;</button>
+      </div>`).join('');
+  },
+
+  // "View Partnerships" — read-only, everyone, bottom-right of the Queue
+  // card. Shows self-service partners too (untyped), not just admin ones,
+  // since either kind means players are "accounted for" as locked pairs.
+  openViewPartnerships() {
+    this.renderViewPartnershipsList();
+    const modal = document.getElementById('viewPartnershipsModal');
+    if (modal) modal.style.display = 'flex';
+  },
+
+  closeViewPartnerships() {
+    const modal = document.getElementById('viewPartnershipsModal');
+    if (modal) modal.style.display = 'none';
+  },
+
+  renderViewPartnershipsList() {
+    const el = document.getElementById('viewPartnershipsList');
+    if (!el) return;
+    const teams = this.state.teams.filter(t => !t.type || t.current);
+    if (!teams.length) {
+      el.innerHTML = '<div style="color:var(--text-muted);font-size:0.85rem;">No partnerships set up</div>';
+      return;
+    }
+    el.innerHTML = teams.map(t => `<div style="display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid var(--border);">
+        <span style="font-size:0.9rem;"><strong>${this.esc(this.getPlayer(t.p1)?.name || '?')}</strong> &amp; <strong>${this.esc(this.getPlayer(t.p2)?.name || '?')}</strong></span>
+        ${t.type ? `<span style="font-size:0.72rem;font-weight:700;color:var(--primary);background:var(--primary-light);padding:2px 8px;border-radius:99px;">${this.PARTNERSHIP_TYPES[t.type] || t.type}</span>` : ''}
+      </div>`).join('');
+  },
+
   // ─── Courts ────────────────────────────────
   cancelGame(courtId) {
     if (!confirm(`Cancel Court ${courtId}? Players will be sent back to the queue.`)) return;
@@ -4516,37 +4706,66 @@ const App = {
   // ─── Round Robin ────────────────────────────
   isRoundRobin() { return this.state._sessionType === 'roundrobin'; },
 
+  // A typed partnership (see PARTNERSHIP_TYPES) is "always active" — fixed
+  // for the whole session like a normal locked team — unless either player
+  // holds a second typed partnership, in which case both of that player's
+  // partnerships instead alternate by round (see _activePartnershipForRound).
+  _isPartnershipAlwaysActive(t) {
+    return this._typedPartnershipsForPlayer(t.p1).length <= 1 && this._typedPartnershipsForPlayer(t.p2).length <= 1;
+  },
+
+  // Every player involved in a NOT-always-active typed partnership — these
+  // are excluded from _buildTeamUnits' fixed solo/explicit-team pool
+  // entirely, since rrGenerateSchedule assigns their team fresh each round.
+  _roundVaryingPlayerIds() {
+    const ids = new Set();
+    this._typedTeams().forEach(t => {
+      if (!this._isPartnershipAlwaysActive(t)) { ids.add(t.p1); ids.add(t.p2); }
+    });
+    return ids;
+  },
+
   // Builds fixed doubles teams for Round Robin / Tournament: existing
   // partner pairs stay together, everyone else is randomly paired up.
   // Returns null if an odd player is left without a partner.
   // Only players who aren't sitting out are eligible for pairing — an
   // odd one out (or a late joiner not yet ready) can be benched in
   // Sitting Out instead of forcing the whole roster to pair up evenly.
-  _buildTeamUnits() {
-    const playerIds = this.state.players.filter(p => p.active).map(p => p.id);
+  // Round-varying players (see above) are excluded — they're layered in
+  // separately, round by round.
+  // excludeIds defaults to every round-varying player (the normal Round
+  // Robin case, where they're layered in separately per round) — Tournament
+  // instead excludes only the players its dual-partnership resolution
+  // actually used, so whichever player "lost" that pick falls back to
+  // being treated as a normal solo here rather than dropped entirely.
+  _buildTeamUnits(excludeIds) {
+    const roundVarying = excludeIds || this._roundVaryingPlayerIds();
+    const playerIds = this.state.players.filter(p => p.active && !roundVarying.has(p.id)).map(p => p.id);
     const idSet = new Set(playerIds);
     const explicitTeams = this.state.teams.filter(t => t.current && idSet.has(t.p1) && idSet.has(t.p2));
     const pairedIds = new Set(explicitTeams.flatMap(t => [t.p1, t.p2]));
     const solos = this.shuffle(playerIds.filter(id => !pairedIds.has(id)));
     if (solos.length % 2 !== 0) return null;
-    const units = explicitTeams.map(t => ({ p1: t.p1, p2: t.p2 }));
+    const units = explicitTeams.map(t => ({ p1: t.p1, p2: t.p2, type: t.type || null }));
     for (let i = 0; i + 1 < solos.length; i += 2) {
-      units.push({ p1: solos[i], p2: solos[i + 1] });
+      units.push({ p1: solos[i], p2: solos[i + 1], type: null });
     }
     return units;
   },
 
   // How many teams _buildTeamUnits would produce, without actually running
   // its random pairing — used to preview a full round-robin rotation length
-  // (or a bracket's fixed round count) before the roster is locked.
+  // (or a bracket's fixed round count) before the roster is locked. Adds a
+  // rough estimate for round-varying players, who _buildTeamUnits excludes.
   _teamUnitCount() {
-    const playerIds = this.state.players.filter(p => p.active).map(p => p.id);
+    const roundVarying = this._roundVaryingPlayerIds();
+    const playerIds = this.state.players.filter(p => p.active && !roundVarying.has(p.id)).map(p => p.id);
     const idSet = new Set(playerIds);
     const explicitTeams = this.state.teams.filter(t => t.current && idSet.has(t.p1) && idSet.has(t.p2));
     const pairedIds = new Set(explicitTeams.flatMap(t => [t.p1, t.p2]));
     const soloCount = playerIds.length - pairedIds.size;
     if (soloCount % 2 !== 0) return null;
-    return explicitTeams.length + soloCount / 2;
+    return explicitTeams.length + soloCount / 2 + Math.round(roundVarying.size / 2);
   },
 
   _pairKey(a, b) { return a < b ? `${a}|${b}` : `${b}|${a}`; },
@@ -4581,19 +4800,160 @@ const App = {
   // Same team-formation as _buildTeamUnits, but when a League season is
   // active, tries several random pairings and keeps whichever repeats the
   // fewest partner pairs from this season's history so far.
-  _buildTeamUnitsForSeason() {
+  _buildTeamUnitsForSeason(excludeIds) {
     const pairCounts = this._seasonPairCounts();
-    if (!pairCounts) return this._buildTeamUnits();
+    if (!pairCounts) return this._buildTeamUnits(excludeIds);
     const TRIALS = 150;
     let best = null, bestScore = Infinity;
     for (let i = 0; i < TRIALS; i++) {
-      const units = this._buildTeamUnits();
+      const units = this._buildTeamUnits(excludeIds);
       if (!units) return null;
       const score = units.reduce((sum, u) => sum + (pairCounts.partners.get(this._pairKey(u.p1, u.p2)) || 0), 0);
       if (score < bestScore) { bestScore = score; best = units; }
       if (bestScore === 0) break;
     }
     return best;
+  },
+
+  // Which of a round-varying player's typed partnerships is "their turn"
+  // for a given round — alternates evenly across a player's list; a player
+  // with only one (non-always-active) partnership always gets that one.
+  _activePartnershipForRound(playerId, roundIndex) {
+    const list = this._typedPartnershipsForPlayer(playerId).filter(t => !this._isPartnershipAlwaysActive(t));
+    if (!list.length) return null;
+    return list[roundIndex % list.length];
+  },
+
+  // This round's teams for round-varying players: a typed partnership
+  // actually plays this round only if BOTH sides' alternation agrees it's
+  // their turn — if their partner's *other* partnership wanted them
+  // instead, both fall back to being "free agents" for just this round
+  // (paired together, or left with a bye if there's an odd one out — see
+  // _pairFreeAgents). Rare in practice; only comes up when two players'
+  // alternation schedules conflict.
+  _roundVaryingUnitsForRound(roundIndex, activeIds) {
+    const seen = new Set();
+    const units = [];
+    const freeAgents = [];
+    this._roundVaryingPlayerIds().forEach(id => {
+      if (seen.has(id) || !activeIds.has(id)) return;
+      const active = this._activePartnershipForRound(id, roundIndex);
+      const bothAgree = active
+        && this._activePartnershipForRound(active.p1, roundIndex)?.id === active.id
+        && this._activePartnershipForRound(active.p2, roundIndex)?.id === active.id
+        && activeIds.has(active.p1) && activeIds.has(active.p2);
+      if (bothAgree) {
+        seen.add(active.p1); seen.add(active.p2);
+        units.push({ p1: active.p1, p2: active.p2, type: active.type });
+      } else {
+        seen.add(id);
+        freeAgents.push(id);
+      }
+    });
+    return { units, freeAgents };
+  },
+
+  // Best-effort pairing for players who fell back to free-agent status for
+  // one round (see above) — just randomly paired for that round alone; an
+  // odd one out sits that single round out rather than forcing a match.
+  _pairFreeAgents(freeAgentIds) {
+    const shuffled = this.shuffle([...freeAgentIds]);
+    const units = [];
+    for (let i = 0; i + 1 < shuffled.length; i += 2) {
+      units.push({ p1: shuffled[i], p2: shuffled[i + 1], type: null });
+    }
+    return units;
+  },
+
+  // Pairs a list of team-units into matchups, running several random trials
+  // and keeping whichever repeats the fewest opponents — weighted heavily
+  // against repeating someone already played THIS session (sessionPlayed),
+  // and lightly against this League season's history (pairCounts, if any).
+  // An odd unit out is returned unmatched for the caller to fold in
+  // elsewhere (e.g. a category group's leftover joins the general pool).
+  _pairUnitsMinimizingRepeats(list, sessionPlayed, pairCounts) {
+    if (list.length < 2) return { pairs: [], unmatched: list };
+    const TRIALS = 60;
+    let best = null, bestScore = Infinity, bestUnmatched = null;
+    for (let i = 0; i < TRIALS; i++) {
+      const shuffled = this.shuffle([...list]);
+      const pairs = [];
+      for (let j = 0; j + 1 < shuffled.length; j += 2) pairs.push([shuffled[j], shuffled[j + 1]]);
+      const unmatched = shuffled.length % 2 === 1 ? [shuffled[shuffled.length - 1]] : [];
+      const score = pairs.reduce((sum, [a, b]) => {
+        let s = 0;
+        [a.p1, a.p2].forEach(x => [b.p1, b.p2].forEach(y => {
+          const k = this._pairKey(x, y);
+          s += (sessionPlayed.get(k) || 0) * 1000 + (pairCounts ? (pairCounts.opponents.get(k) || 0) : 0);
+        }));
+        return sum + s;
+      }, 0);
+      if (score < bestScore) { bestScore = score; best = pairs; bestUnmatched = unmatched; }
+      if (bestScore === 0) break;
+    }
+    return { pairs: best || [], unmatched: bestUnmatched || [] };
+  },
+
+  // Builds one round's games from that round's full unit list: same-type
+  // units (Mixed/Men's/Women's) are matched against each other first when
+  // there are at least two of a type, with any leftover (odd one out, or
+  // untyped units) matched generally — all minimizing repeat opponents.
+  _buildRoundGames(units, sessionPlayed, pairCounts, numCourts) {
+    const byType = { mixed: [], mens: [], womens: [], none: [] };
+    units.forEach(u => (byType[u.type || 'none'] || byType.none).push(u));
+
+    const matchups = [];
+    ['mixed', 'mens', 'womens'].forEach(type => {
+      const group = byType[type];
+      if (group.length < 2) { byType.none.push(...group); return; }
+      const { pairs, unmatched } = this._pairUnitsMinimizingRepeats(group, sessionPlayed, pairCounts);
+      matchups.push(...pairs);
+      byType.none.push(...unmatched);
+    });
+    const { pairs: generalPairs } = this._pairUnitsMinimizingRepeats(byType.none, sessionPlayed, pairCounts);
+    matchups.push(...generalPairs);
+
+    return matchups.slice(0, numCourts).map((m, i) => ({
+      side1: [m[0].p1, m[0].p2], side2: [m[1].p1, m[1].p2], court: i + 1,
+    }));
+  },
+
+  // Tournament brackets don't have repeating rounds to alternate a dual
+  // partnership across, so each round-varying player's two partnerships
+  // are resolved to just one for the whole bracket — whichever has been
+  // used less this League season, so it balances out over time instead
+  // (same idea as _buildTeamUnitsForSeason, just decided once up front).
+  _resolveDualPartnershipsOnce() {
+    const pairCounts = this._seasonPairCounts();
+    const resolved = [];
+    const handled = new Set();
+    this._roundVaryingPlayerIds().forEach(id => {
+      if (handled.has(id)) return;
+      const list = this._typedPartnershipsForPlayer(id).filter(t => !this._isPartnershipAlwaysActive(t) && !handled.has(t.p1) && !handled.has(t.p2));
+      if (!list.length) return;
+      let chosen = list[0];
+      if (pairCounts && list.length > 1) {
+        chosen = [...list].sort((a, b) =>
+          (pairCounts.partners.get(this._pairKey(a.p1, a.p2)) || 0) - (pairCounts.partners.get(this._pairKey(b.p1, b.p2)) || 0)
+        )[0];
+      }
+      resolved.push({ p1: chosen.p1, p2: chosen.p2, type: chosen.type });
+      handled.add(chosen.p1); handled.add(chosen.p2);
+    });
+    return resolved;
+  },
+
+  _buildTeamUnitsForTournament() {
+    const resolved = this._resolveDualPartnershipsOnce();
+    const resolvedIds = new Set(resolved.flatMap(u => [u.p1, u.p2]));
+    // Only the players _resolveDualPartnershipsOnce actually paired up are
+    // excluded from the normal explicit-team/solo pool — whichever player
+    // "lost" a dual-partnership pick (their partner chose someone else for
+    // the whole bracket) falls back to being randomly paired as a solo,
+    // same as anyone without a partner at all, instead of being dropped.
+    const base = this._buildTeamUnitsForSeason(resolvedIds);
+    if (!base) return null;
+    return [...base, ...resolved];
   },
 
   // Reads the Match/Session Time Limit fields and returns how many rounds
@@ -5000,45 +5360,42 @@ const App = {
   rrGenerateSchedule() {
     const n = this.state.players.filter(p => p.active).length;
     if (n < 4) return;
-    const units = this._buildTeamUnitsForSeason();
-    if (!units) {
+    const fixedUnits = this._buildTeamUnitsForSeason();
+    if (!fixedUnits) {
       alert('Add one more player, or pair everyone up with a partner, so no one is left without a doubles partner.');
       return;
     }
-    if (units.length < 2) return;
+
+    const roundVarying = this._roundVaryingPlayerIds();
+    const unitEstimate = fixedUnits.length + Math.round(roundVarying.size / 2);
+    if (unitEstimate < 2) return;
+    const numRounds = unitEstimate % 2 === 1 ? unitEstimate : unitEstimate - 1;
 
     const numCourts = this.state.availableCourts || 1;
-
-    // Circle method for round robin, run over fixed teams instead of
-    // individual players so partners always stay on the same side.
-    const list = units.map((_, i) => i);
-    if (list.length % 2 === 1) list.push(null); // bye
-    const total = list.length;
-    const numRounds = total - 1;
+    const pairCounts = this._seasonPairCounts();
+    const activeIds = new Set(this.state.players.filter(p => p.active).map(p => p.id));
+    // Repeats already played THIS session, tracked as rounds are built one
+    // at a time — with fixed teams this used to be guaranteed zero by the
+    // circle method; now that round-varying partnerships mean the set of
+    // teams can change round to round, it's a heuristic instead (weighted
+    // far above season history so it always wins the tie-break).
+    const sessionPlayed = new Map();
     let rounds = [];
 
     for (let r = 0; r < numRounds; r++) {
-      // Build rotation: fix first, rotate rest
-      const rotated = [list[0]];
-      for (let i = 1; i < total; i++) {
-        rotated.push(list[1 + (i - 1 + r) % (total - 1)]);
-      }
+      const { units: varyingUnits, freeAgents } = this._roundVaryingUnitsForRound(r, activeIds);
+      const freeAgentUnits = this._pairFreeAgents(freeAgents);
+      const allUnits = [...fixedUnits, ...varyingUnits, ...freeAgentUnits];
 
-      // Create team matchups: (0, n-1), (1, n-2), etc.
-      const matchups = [];
-      for (let i = 0; i < total / 2; i++) {
-        const a = rotated[i];
-        const b = rotated[total - 1 - i];
-        if (a != null && b != null) matchups.push([a, b]);
-      }
-
-      const games = [];
-      for (const [a, b] of matchups) {
-        if (games.length >= numCourts) break;
-        games.push({ side1: [units[a].p1, units[a].p2], side2: [units[b].p1, units[b].p2], court: games.length + 1 });
-      }
-
+      const games = this._buildRoundGames(allUnits, sessionPlayed, pairCounts, numCourts);
       if (games.length > 0) rounds.push({ round: r + 1, games });
+
+      games.forEach(g => {
+        g.side1.forEach(a => g.side2.forEach(b => {
+          const k = this._pairKey(a, b);
+          sessionPlayed.set(k, (sessionPlayed.get(k) || 0) + 1);
+        }));
+      });
     }
 
     rounds = this._applyPlannedRounds(rounds);
@@ -5114,7 +5471,7 @@ const App = {
   },
 
   bracketGenerate() {
-    const units = this._buildTeamUnitsForSeason();
+    const units = this._buildTeamUnitsForTournament();
     if (!units) {
       alert('Add one more player, or pair everyone up with a partner, so no one is left without a doubles partner.');
       return;
@@ -5499,6 +5856,7 @@ const App = {
     const section = document.getElementById('bracketSection');
     const view = document.getElementById('bracketView');
     if (!section || !view) return;
+    this._populatePlayerFilterSelect(document.getElementById('bracketPlayerFilter'));
 
     const rounds = this.state._bracket || [];
     if (rounds.length === 0) {
@@ -5509,6 +5867,10 @@ const App = {
     section.style.display = '';
     const totalRounds = rounds.length;
     const currentRound = this.state._bracketCurrentRound || 0;
+    // The bracket's tree/connector layout is fixed by round size, so
+    // filtering by player dims non-matching matches instead of removing
+    // them (unlike Upcoming Rounds' simple list, which can just hide them).
+    const filterId = this._upcomingFilterPlayerId;
 
     let html = '<div class="bracket-container">';
 
@@ -5523,7 +5885,8 @@ const App = {
         const isActive = !match.bye && !match.winner && match.side1 && match.side2;
         const isOnCourt = match.court && this.state.activeGames[match.court];
         const isDone = !!match.winner && !match.bye;
-        const matchClass = isOnCourt ? 'bracket-match active' : isDone ? 'bracket-match completed' : 'bracket-match';
+        const involvesFiltered = filterId == null || (match.side1 && match.side1.includes(filterId)) || (match.side2 && match.side2.includes(filterId));
+        const matchClass = (isOnCourt ? 'bracket-match active' : isDone ? 'bracket-match completed' : 'bracket-match') + (involvesFiltered ? '' : ' bracket-match-dim');
 
         html += `<div class="${matchClass}">`;
 
@@ -5626,8 +5989,14 @@ ${bracketHTML}
   _rankedQueueUnits(allQueue) {
     // Only a player's *current* partner (see renderPartners/addTeamWithSelf)
     // is used for pairing — Other Partners are just reserves, not counted.
+    // Round-varying admin partnerships (a player with two typed
+    // partnerships, see _roundVaryingPlayerIds) are excluded here — Open
+    // Play has no "rounds" to alternate them across, so those players are
+    // just treated as solos for court assignment.
+    const roundVarying = this._roundVaryingPlayerIds();
     const activePairs = this.state.teams.filter(t =>
-      t.current && allQueue.some(p => p.id === t.p1) && allQueue.some(p => p.id === t.p2)
+      t.current && !roundVarying.has(t.p1) && !roundVarying.has(t.p2) &&
+      allQueue.some(p => p.id === t.p1) && allQueue.some(p => p.id === t.p2)
     );
     const pairedIds = new Set(activePairs.flatMap(t => [t.p1, t.p2]));
     const soloPlayers = allQueue.filter(p => !pairedIds.has(p.id));
@@ -6196,6 +6565,9 @@ ${bracketHTML}
       this.renderPartnerPicker();
     }
     this.renderAdmins();
+    this.renderPartnershipsList();
+    const viewPartnershipsBtn = document.getElementById('btnViewPartnerships');
+    if (viewPartnershipsBtn) viewPartnershipsBtn.style.display = this.state.teams.length ? '' : 'none';
     // Refresh admin-only visibility (session admin depends on _admins in state)
     const isAdmin = Admin.isAdmin();
     document.querySelectorAll('.admin-only').forEach(el => {
@@ -7589,14 +7961,41 @@ ${bracketHTML}
     this._renderRRUpcoming();
   },
 
+  // Shared by Round Robin's Upcoming Rounds and Tournament's Bracket —
+  // null means "All Players". Round Robin hides non-matching games/rounds
+  // entirely; the bracket instead dims non-matching matches (see
+  // _renderBracket), since removing entries would break its fixed
+  // tree/connector layout.
+  _upcomingFilterPlayerId: null,
+
+  filterUpcomingByPlayer(value) {
+    this._upcomingFilterPlayerId = value === '' ? null : Number(value);
+    this._renderRRUpcoming();
+    this._renderBracket();
+  },
+
+  _populatePlayerFilterSelect(select) {
+    if (!select) return;
+    const prev = select.value;
+    const players = [...this.state.players].filter(p => p.active).sort((a, b) => a.name.localeCompare(b.name));
+    select.innerHTML = '<option value="">All Players</option>' +
+      players.map(p => `<option value="${p.id}">${this.esc(p.name)}</option>`).join('');
+    if (prev && players.some(p => String(p.id) === prev)) select.value = prev;
+  },
+
   _renderRRUpcoming() {
     const section = document.getElementById('rrUpcomingSection');
     const list = document.getElementById('rrUpcomingList');
     if (!section || !list) return;
+    this._populatePlayerFilterSelect(document.getElementById('upcomingPlayerFilter'));
 
     const schedule = this.state._rrSchedule || [];
     const currentRound = this.state._rrCurrentRound || 0;
-    const upcoming = schedule.filter(r => r.round > currentRound);
+    const filterId = this._upcomingFilterPlayerId;
+    const upcoming = schedule
+      .filter(r => r.round > currentRound)
+      .map(r => filterId == null ? r : { ...r, games: r.games.filter(g => g.side1.includes(filterId) || g.side2.includes(filterId)) })
+      .filter(r => r.games.length > 0);
 
     if (upcoming.length === 0) {
       section.style.display = 'none';
