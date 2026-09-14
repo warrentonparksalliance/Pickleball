@@ -2057,6 +2057,21 @@ body {
   padding: 1px 5px;
   border-radius: var(--radius-full);
 }
+/* ── View Only (see App.canModify/toggleViewOnly) ──
+   Blocks interaction with anything that mutates shared state for a
+   non-admin viewer — Courts (queue, court assignment, RR/bracket
+   controls) and Settings (profile, partners, and anything already
+   admin-only under the hood). Match History's own tab is untouched, so
+   its search/player-filter/My Matches controls stay usable; editing a
+   match's score there is instead gated directly via canModify() (see
+   canEditScore in renderHistory) since Delete/Save live inline with it. */
+body.view-only-locked #tabCourts,
+body.view-only-locked #tabSettings {
+  pointer-events: none;
+}
+body.view-only-locked #tabCourts #btnToggleQueue {
+  pointer-events: auto;
+}
 /* ── Footer ─────────────────────────────────── */
 .app-footer {
   text-align: center;
@@ -2699,6 +2714,20 @@ body {
         </div>
       </div>
       <p id="shareLinkOfflineMsg" style="display:none;font-size:0.85rem;color:var(--text-muted);margin:0;">Share links are not available for offline sessions.</p>
+      <div id="viewOnlySection" class="admin-only" style="display:none;margin-top:12px;padding-top:12px;border-top:1px solid var(--border);position:relative;">
+        <label class="toggle-switch-label" style="margin:0;">
+          <span class="toggle-switch">
+            <input type="checkbox" id="viewOnlyToggle" onchange="App.toggleViewOnly()">
+            <span class="toggle-switch-track"></span>
+          </span>
+          View Only
+          <button type="button" class="qp-info-btn" aria-label="What does View Only do?" onclick="App._toggleViewOnlyInfo(event)">?</button>
+        </label>
+        <div id="viewOnlyInfoPopover" class="qp-info-popover" style="display:none;">
+          <span>Only admins can add/move players, score matches, or change settings. Everyone else can just watch — they can still search and filter Match History.</span>
+          <button type="button" class="qp-info-close" onclick="App._closeViewOnlyInfo()" aria-label="Close description">&times;</button>
+        </div>
+      </div>
     </div>
 
     <!-- Session Type (admin only, private sessions) -->
@@ -3479,6 +3508,7 @@ const App = {
   // bottom of the queue — everyone joins Not Rated and sets their rating
   // afterward via the NR/B/I/A chip.
   submitQueueAddPlayer() {
+    if (!this.canModify()) return;
     const nameEl = document.getElementById('queueAddPlayerName');
     const name = nameEl?.value.trim();
     if (!name) {
@@ -3853,6 +3883,7 @@ const App = {
   // option the organizer picked (Open Play only; RR/Tournament always pass
   // 'all', which behaves exactly like today's plain Save).
   submitScore(courtId, mode = 'all') {
+    if (!this.canModify()) return;
     const s1Input = document.getElementById(`score-s1-${courtId}`);
     const s2Input = document.getElementById(`score-s2-${courtId}`);
     const raw1 = s1Input.value.trim();
@@ -4604,6 +4635,39 @@ const App = {
       const btn = document.getElementById('btnCopyShareLink');
       if (btn) { btn.textContent = 'Copied!'; setTimeout(() => { btn.textContent = 'Copy'; }, 1500); }
     });
+  },
+
+  // ─── View Only (admin, private sessions) ───
+  // Locks everyone but an admin out of changing anything shared — adding,
+  // moving, or removing players, scoring, court assignment, settings, the
+  // roster lock/schedule flow, and so on (see the "view-only-locked" class
+  // toggled in render(), plus the editMatchScore/deleteMatchScore and
+  // toggleLeague/saveLeagueSettings/setSessionType guards that check
+  // canModify() directly since they sit outside that locked area).
+  // Filtering/searching Match History stays local-only and unaffected.
+  canModify() {
+    return !this.state._viewOnly || Admin.isAdmin();
+  },
+
+  toggleViewOnly() {
+    if (!Admin.isAdmin()) return;
+    const on = !!document.getElementById('viewOnlyToggle')?.checked;
+    this.state._viewOnly = on;
+    this._logAdmin(on ? 'Enable View Only' : 'Disable View Only');
+    this.saveState();
+    this.render();
+  },
+
+  _toggleViewOnlyInfo(event) {
+    event.preventDefault();
+    event.stopPropagation();
+    const popover = document.getElementById('viewOnlyInfoPopover');
+    if (popover) popover.style.display = popover.style.display === 'none' ? 'flex' : 'none';
+  },
+
+  _closeViewOnlyInfo() {
+    const popover = document.getElementById('viewOnlyInfoPopover');
+    if (popover) popover.style.display = 'none';
   },
 
   setSessionType(type) {
@@ -5777,6 +5841,7 @@ ${bracketHTML}
     const prevQuickPlay = this.state._quickPlay;
     const prevSessionType = this.state._sessionType;
     const prevLeague = this.state._league;
+    const prevViewOnly = this.state._viewOnly;
     const fresh = this._freshState();
     fresh._resetAt = Date.now();
     fresh.adminLog = prevLog;
@@ -5786,6 +5851,7 @@ ${bracketHTML}
     if (prevQuickPlay) fresh._quickPlay = prevQuickPlay;
     if (prevSessionType) fresh._sessionType = prevSessionType;
     if (prevLeague) fresh._league = prevLeague;
+    if (prevViewOnly) fresh._viewOnly = prevViewOnly;
     localStorage.removeItem('courtManager');
     this._myGuests = new Set();
     this._saveMyGuests();
@@ -5854,8 +5920,8 @@ ${bracketHTML}
     // Logging a past match only makes sense for Open Play's live queue —
     // Round Robin/Tournament build matches from a locked roster/bracket instead.
     const btnLogMatch = document.getElementById('btnLogPastMatch');
-    if (btnLogMatch) btnLogMatch.style.display = structured ? 'none' : '';
-    if (structured) this._closeLogPastMatch();
+    if (btnLogMatch) btnLogMatch.style.display = (structured || !this.canModify()) ? 'none' : '';
+    if (structured || !this.canModify()) this._closeLogPastMatch();
 
     // Offline sessions have no persistent identity/preferences to manage
     const isOffline = !!this.state._offline;
@@ -5938,6 +6004,18 @@ ${bracketHTML}
     const deleteBtn = document.getElementById('btnDeleteSession');
     const isPvt = Session.id && Session.id.startsWith('pvt-');
     if (deleteBtn) deleteBtn.style.display = (isPvt || Admin.isSuperAdmin()) ? '' : 'none';
+
+    // View Only toggle (admin, private sessions) — see canModify/toggleViewOnly.
+    const viewOnlySection = document.getElementById('viewOnlySection');
+    if (viewOnlySection) {
+      viewOnlySection.style.display = (isPvt && Admin.isAdmin()) ? '' : 'none';
+      const voToggle = document.getElementById('viewOnlyToggle');
+      if (voToggle) voToggle.checked = !!this.state._viewOnly;
+    }
+    // Locks every mutating control in Courts/Settings for a non-admin
+    // viewer (see the .view-only-locked rules) — Match History's own
+    // search/filter controls live outside that lock and stay usable.
+    document.body.classList.toggle('view-only-locked', !!this.state._viewOnly && !Admin.isAdmin());
   },
 
   _updateTabBadges() {
@@ -6492,6 +6570,7 @@ ${bracketHTML}
 
   _movePlayer(playerId, from, to, opts = {}) {
     if (this._locEq(from, to)) return;
+    if (!this.canModify()) return;
 
     // A closed session (see closeSession/openSession) is fully paused —
     // nobody moves into Waiting or onto a court until an admin reopens it.
@@ -6568,6 +6647,7 @@ ${bracketHTML}
   // multi-selection just isn't a valid drop there.
   _movePlayers(playerIds, from, to) {
     if (this._locEq(from, to)) return;
+    if (!this.canModify()) return;
     if (to.type === 'remove') return; // no bulk-remove via a multi-select — each player's own chip still can
     if (this.state._closed && (to.type === 'queue' || to.type === 'slot')) return;
     if (to.type === 'slot') {
@@ -7076,6 +7156,7 @@ ${bracketHTML}
   _logMatchSelection: [],
 
   toggleLogPastMatch() {
+    if (!this.canModify()) return;
     const panel = document.getElementById('logPastMatchPanel');
     if (!panel) return;
     const showing = panel.style.display !== 'none';
@@ -7132,6 +7213,7 @@ ${bracketHTML}
   },
 
   submitLogPastMatch() {
+    if (!this.canModify()) return;
     const sel = this._logMatchSelection;
     const errEl = document.getElementById('logPastMatchError');
     if (sel.length !== 4) return;
@@ -7548,9 +7630,10 @@ ${bracketHTML}
       }
       const headerLeft = m.manual ? 'Logged as already played' : (dateTime || '');
       // A score (and duration) can only be corrected while the session is
-      // open \u2014 once closed, this record (and the summary built from it) is final.
+      // open \u2014 once closed, this record (and the summary built from it) is
+      // final. Under View Only, only an admin can, same as everywhere else.
       const idx = this.state.roundHistory.indexOf(m);
-      const canEditScore = !this.state._closed;
+      const canEditScore = !this.state._closed && this.canModify();
       const isEditing = canEditScore && this._editingMatchIdx === idx;
       const editBtn = canEditScore && !isEditing
         ? `<button class="queue-row-btn queue-row-action" onclick="App.editMatchScore(${idx})" title="Edit score">&#x270E;</button>`
@@ -7597,7 +7680,7 @@ ${bracketHTML}
   _editingMatchIdx: null,
 
   editMatchScore(idx) {
-    if (this.state._closed) return;
+    if (this.state._closed || !this.canModify()) return;
     this._editingMatchIdx = idx;
     this.renderHistory();
   },
@@ -7608,7 +7691,7 @@ ${bracketHTML}
   },
 
   saveEditMatchScore(idx) {
-    if (this.state._closed) return;
+    if (this.state._closed || !this.canModify()) return;
     const m = this.state.roundHistory[idx];
     if (!m) return;
     const s1Input = document.getElementById(`matchEditScore1-${idx}`);
@@ -7659,7 +7742,7 @@ ${bracketHTML}
   // Only reachable from the score-edit form, so it's already gated behind
   // canEditScore (session open) the same as saveEditMatchScore.
   deleteMatchScore(idx) {
-    if (this.state._closed) return;
+    if (this.state._closed || !this.canModify()) return;
     const m = this.state.roundHistory[idx];
     if (!m) return;
     if (!confirm('Delete this match from history? This cannot be undone.')) return;
