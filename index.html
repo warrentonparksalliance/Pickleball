@@ -4201,7 +4201,7 @@ const App = {
         side1: [...game.side1],
         side2: [...game.side2],
         // Snapshot names so history stays readable after a player is removed
-        // from the session (e.g. auto-expired) or the session is otherwise mutated.
+        // from the session or the session is otherwise mutated.
         side1Names: game.side1.map(id => this.getPlayer(id)?.name || '?'),
         side2Names: game.side2.map(id => this.getPlayer(id)?.name || '?'),
         mode: game.mode,
@@ -4221,7 +4221,6 @@ const App = {
         this.bracketRecordWinner(courtId, winner);
       }
     }
-    const courtPlayers = game ? [...(game.side1 || []), ...(game.side2 || [])] : [];
     if (mode === 'rematch' && game) {
       delete this.state.activeGames[courtId];
       delete this.state.scoringGames[courtId];
@@ -4229,9 +4228,7 @@ const App = {
     } else {
       this._rotateCourtAfterMatch(courtId, mode, winner);
     }
-    const selfExpired = this._expireStaleFromCourt(courtPlayers);
     this.saveState();
-    if (selfExpired) { this._handleSelfExpired(); return; }
     this.render();
   },
 
@@ -4478,14 +4475,11 @@ const App = {
       this.bracketRecordWinner(courtId, winner);
     }
 
-    const courtPlayers = [...(game.side1 || []), ...(game.side2 || [])];
     // Score Keeper's "Finish" always returns all 4 to the queue — it always
     // has a concrete winner, so the rotation choice/warn dialog wouldn't add
     // anything here; 'all' keeps this path's behavior exactly as before.
     this._rotateCourtAfterMatch(courtId, 'all', winner);
-    const selfExpired = this._expireStaleFromCourt(courtPlayers);
     this.saveState();
-    if (selfExpired) { this._handleSelfExpired(); return; }
     this.render();
   },
 
@@ -4512,38 +4506,11 @@ const App = {
 
   MAX_MATCH_MS: 100 * 60 * 1000,        // 100 minutes — normal match duration cap (requires the timer to have been started)
   COURT_STUCK_MS: 6 * 60 * 60 * 1000,   // 6 hours — force-end a match that's been sitting on a court, win or lose, and send its players back to the queue
-  SESSION_MAX_MS: 12 * 60 * 60 * 1000,  // 12 hours — remove a player (queued or on a court) from the session entirely
   ROUND_BUFFER_MIN: 3,                  // minutes assumed between rounds (players finding their next court) when planning Round Robin/Tournament rounds against a time limit
   MATCH_TIME_DEFAULT_MIN: 12,           // default Match Time Limit once a time limit is turned on
   SESSION_TIME_DEFAULT_HOURS: 2,        // default Session Time Limit once a time limit is turned on
 
   _lastExpireCheck: 0,
-
-  // Remove stale players (in the session 12+ hours) from a given ID list. Returns true if self was expired.
-  _expireStaleFromCourt(playerIds) {
-    const now = Date.now();
-    const stale = playerIds.filter(id => {
-      const p = this.getPlayer(id);
-      return p && now - (p.joinedAt || 0) >= this.SESSION_MAX_MS;
-    });
-    if (stale.length === 0) return false;
-    const staleIds = new Set(stale);
-    const selfExpired = Onboard.selfId != null && staleIds.has(Onboard.selfId);
-    this.state.players = this.state.players.filter(p => !staleIds.has(p.id));
-    this.state.teams   = this.state.teams.filter(t => !staleIds.has(t.p1) && !staleIds.has(t.p2));
-    return selfExpired;
-  },
-
-  _handleSelfExpired() {
-    alert('Your session timed out after 12 hours. Please rejoin to continue playing.');
-    Session._doLeave();
-  },
-
-  _checkSelfRemoved() {
-    if (Onboard.selfId == null || !Session.id) return;
-    if (this.state.players.some(p => p.id === Onboard.selfId)) return;
-    this._handleSelfExpired();
-  },
 
   _autoExpirePlayers() {
     const now = Date.now();
@@ -4561,20 +4528,6 @@ const App = {
         changed = true;
       }
     }
-
-    // Anyone who's been in the session 12+ hours is removed entirely, whether
-    // they're queued or on a court. If they're mid-match, end that match first
-    // so the rest of the game returns to the queue instead of vanishing.
-    for (const [courtId, game] of Object.entries(this.state.activeGames)) {
-      const gamePlayers = [...(game.side1 || []), ...(game.side2 || [])];
-      const hasStalePlayer = gamePlayers.some(id => now - (this.getPlayer(id)?.joinedAt || 0) >= this.SESSION_MAX_MS);
-      if (hasStalePlayer) { this._expireMatch(courtId); changed = true; }
-    }
-    const allIds = this.state.players.map(p => p.id);
-    const before = this.state.players.length;
-    const selfExpired = this._expireStaleFromCourt(allIds);
-    if (selfExpired) { this._handleSelfExpired(); return; }
-    if (this.state.players.length < before) changed = true;
 
     if (changed) { this.saveState(); this.render(); }
   },
@@ -4595,15 +4548,10 @@ const App = {
       }
     }
     if (expired.length > 0) {
-      const expiredPlayers = [];
       for (const courtId of expired) {
-        const g = this.state.activeGames[courtId];
-        if (g) expiredPlayers.push(...(g.side1 || []), ...(g.side2 || []));
         this._expireMatch(courtId);
       }
-      const selfExpired = this._expireStaleFromCourt(expiredPlayers);
       this.saveState();
-      if (selfExpired) { this._handleSelfExpired(); return; }
       this.render();
     }
   },
@@ -8314,7 +8262,7 @@ ${scheduleHTML}
     this.renderHistory();
   },
 
-  // Players who've left the session (auto-expired, removed, etc.) no longer
+  // Players who've left the session (removed, etc.) no longer
   // resolve via getPlayer — fall back to the name snapshotted on the match
   // history entry at the time the match was played.
   _historyNameMap(history) {
