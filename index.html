@@ -2951,7 +2951,7 @@ body.view-only-locked #tabCourts #btnToggleQueue {
              on the default option, the list below instead shows the still-open
              session's matches plus every closed session collapsed to its
              summary card (added in App._populateHistorySessionSelect). -->
-        <div style="margin-bottom:10px;">
+        <div style="max-width:540px;margin:0 auto 10px;">
           <select id="historySessionSelect" class="setup-input" style="width:100%;margin-bottom:0;cursor:pointer;" onchange="App.filterHistoryBySession(this.value)">
             <option value="">Current &amp; Recent Sessions</option>
           </select>
