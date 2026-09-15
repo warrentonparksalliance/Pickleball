@@ -2985,15 +2985,15 @@ body.view-only-locked #tabCourts #btnToggleQueue {
         </div>
       </div>
       <div id="historyDetailSection">
-        <!-- Picks one session — the still-open one or any previously-closed
-             one — to view in full, match-by-match — see
-             App.filterHistoryBySession. Left on the default option, the
-             list below instead shows every session, open or closed alike,
-             collapsed to its own summary card (added in
-             App._populateHistorySessionSelect). -->
+        <!-- Picks one previously-closed session (by its close date) to view
+             in full, match-by-match — see App.filterHistoryBySession. Left
+             on the default option, the list below instead shows the
+             still-open session in full (its own live summary card plus its
+             matches, editable) followed by every closed session collapsed
+             to its summary card (added in App._populateHistorySessionSelect). -->
         <div style="max-width:540px;margin:0 auto 10px;">
           <select id="historySessionSelect" class="setup-input" style="width:100%;margin-bottom:0;cursor:pointer;" onchange="App.filterHistoryBySession(this.value)">
-            <option value="">All Sessions (Summaries)</option>
+            <option value="">Current &amp; Recent Sessions</option>
           </select>
         </div>
         <div class="history-filters" style="display:flex;gap:8px;align-items:center;">
@@ -8233,10 +8233,11 @@ ${scheduleHTML}
   // null means "All Players". Stands in for the free-text search filter
   // it replaces while a League is active.
   _historyFilterPlayerId: null,
-  // Session picked from the historySessionSelect dropdown to view in full —
-  // either 'current' (the still-open session) or a closed session's
-  // sessionClosed "at" timestamp. null means the default view: every
-  // session, open or closed, collapsed to its own summary card.
+  // Closed session picked from the historySessionSelect dropdown (by its
+  // sessionClosed "at" timestamp) — null means the default view (the
+  // still-open session in full, plus every closed session collapsed to its
+  // summary card). Set, it instead shows just that one closed session's
+  // matches in full.
   _historySelectedSessionAt: null,
   // Top 3 by default, same as a closed session's summary card — see
   // toggleCurrentSessionSummaryExpanded/_renderCurrentSessionSummaryCard.
@@ -8261,32 +8262,26 @@ ${scheduleHTML}
   },
 
   filterHistoryBySession(value) {
-    this._historySelectedSessionAt = value === '' ? null : value === 'current' ? 'current' : Number(value);
+    this._historySelectedSessionAt = value === '' ? null : Number(value);
     this.renderHistory();
   },
 
-  // Fills the "view a session in full" dropdown, newest first (the
-  // still-open session, if it has any matches yet, always leads), preserving
+  // Fills the "view a previous session" dropdown, newest first, preserving
   // the current selection (falling back to the default view if that
-  // selection no longer exists, e.g. the session just closed or its only
-  // match got deleted).
-  _populateHistorySessionSelect(closedSessions, current) {
+  // session no longer exists, e.g. its only match got deleted).
+  _populateHistorySessionSelect(closedSessions) {
     const el = document.getElementById('historySessionSelect');
     if (!el) return;
     const selected = this._historySelectedSessionAt;
-    const hasCurrent = current.length > 0;
-    const currentOption = hasCurrent
-      ? `<option value="current"${selected === 'current' ? ' selected' : ''}>Current Session (in progress)</option>`
-      : '';
-    const closedOptions = [...closedSessions].reverse().map(s => {
+    const options = [...closedSessions].reverse().map(s => {
       const d = new Date(s.closedAt);
       const label = `${d.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}, ${d.toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' })}`;
       return `<option value="${s.closedAt}"${selected === s.closedAt ? ' selected' : ''}>${this.esc(label)}</option>`;
     }).join('');
-    el.innerHTML = '<option value="">All Sessions (Summaries)</option>' + currentOption + closedOptions;
-    if (selected != null) {
-      const stillValid = selected === 'current' ? hasCurrent : closedSessions.some(s => s.closedAt === selected);
-      if (!stillValid) { this._historySelectedSessionAt = null; el.value = ''; }
+    el.innerHTML = '<option value="">Current &amp; Recent Sessions</option>' + options;
+    if (selected != null && !closedSessions.some(s => s.closedAt === selected)) {
+      this._historySelectedSessionAt = null;
+      el.value = '';
     }
   },
 
@@ -8528,7 +8523,7 @@ ${scheduleHTML}
     const el = document.getElementById('historyRounds');
     const seasonSummary = this.renderSeasonSummary();
     const { closed, current } = this._historySessions();
-    this._populateHistorySessionSelect(closed, current);
+    this._populateHistorySessionSelect(closed);
 
     // League player picker (see filterHistoryByPlayer): show the selected
     // player's own season stats next to the match list it also filters.
@@ -8559,35 +8554,33 @@ ${scheduleHTML}
       return true;
     };
 
-    // A specific session picked from historySessionSelect — show every one
-    // of its matches in full instead of the default view below.
+    // A specific closed session picked from historySessionSelect — show
+    // every one of its matches in full instead of the default view below.
     if (this._historySelectedSessionAt != null) {
-      let matches;
-      if (this._historySelectedSessionAt === 'current') {
-        matches = [...current].reverse().filter(matchPassesFilters);
-      } else {
-        const session = closed.find(s => s.closedAt === this._historySelectedSessionAt);
-        matches = session ? [...session.matches].reverse().filter(matchPassesFilters) : [];
-      }
+      const session = closed.find(s => s.closedAt === this._historySelectedSessionAt);
+      const matches = session ? [...session.matches].reverse().filter(matchPassesFilters) : [];
       el.innerHTML = matches.length
         ? matches.map(m => this._renderMatchCard(m, nameFor)).join('')
         : '<div class="history-empty">No matches found</div>';
       return;
     }
 
-    // Default view: every session — the still-open one and every closed
-    // one alike — collapsed to just its own summary card (newest first) —
-    // see historySessionSelect for viewing any one session's full detail.
+    // Default view: the still-open session in full — its own live summary
+    // card (see _renderCurrentSessionSummaryCard) plus its matches,
+    // editable — then every closed session collapsed to just its summary
+    // card (newest first) — see historySessionSelect for viewing a closed
+    // session's full detail instead.
     const rows = [];
     const currentPlayers = this._tallyPlayerStats(current);
     if (currentPlayers) {
-      const showCurrent = !(
+      const showCurrentSummary = !(
         (this._historyFilterMine && Onboard.selfId && !currentPlayers.some(p => p.id === Onboard.selfId)) ||
         (this._historyFilterPlayerId != null && !currentPlayers.some(p => p.id === this._historyFilterPlayerId)) ||
         (search && !currentPlayers.some(p => p.name.toLowerCase().includes(search)))
       );
-      if (showCurrent) rows.push(this._renderCurrentSessionSummaryCard(currentPlayers));
+      if (showCurrentSummary) rows.push(this._renderCurrentSessionSummaryCard(currentPlayers));
     }
+    rows.push(...[...current].reverse().filter(matchPassesFilters).map(m => this._renderMatchCard(m, nameFor)));
     [...closed].reverse().forEach(session => {
       if (!session.summary) return; // nothing played that close — nothing to show
       const players = session.summary.players || [];
