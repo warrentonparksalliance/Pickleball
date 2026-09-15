@@ -4869,8 +4869,12 @@ const App = {
   // and keeping whichever repeats the fewest opponents — weighted heavily
   // against repeating someone already played THIS session (sessionPlayed),
   // and lightly against this League season's history (pairCounts, if any).
-  // An odd unit out is returned unmatched for the caller to fold in
-  // elsewhere (e.g. a category group's leftover joins the general pool).
+  // Matching same-type units (Mixed vs Mixed, Men's vs Men's, etc.) is only
+  // a light tiebreaker on top of that, not a precondition — so e.g. two
+  // Mixed pairs that are the only Mixed teams don't get forced to replay
+  // each other every round just to keep the type match; they'll be matched
+  // against different opponents (of any type) once repeats outweigh the
+  // same-type preference. An odd unit out is returned unmatched.
   _pairUnitsMinimizingRepeats(list, sessionPlayed, pairCounts) {
     if (list.length < 2) return { pairs: [], unmatched: list };
     const TRIALS = 60;
@@ -4886,6 +4890,7 @@ const App = {
           const k = this._pairKey(x, y);
           s += (sessionPlayed.get(k) || 0) * 1000 + (pairCounts ? (pairCounts.opponents.get(k) || 0) : 0);
         }));
+        if (!(a.type && b.type && a.type === b.type)) s += 0.1;
         return sum + s;
       }, 0);
       if (score < bestScore) { bestScore = score; best = pairs; bestUnmatched = unmatched; }
@@ -4894,24 +4899,12 @@ const App = {
     return { pairs: best || [], unmatched: bestUnmatched || [] };
   },
 
-  // Builds one round's games from that round's full unit list: same-type
-  // units (Mixed/Men's/Women's) are matched against each other first when
-  // there are at least two of a type, with any leftover (odd one out, or
-  // untyped units) matched generally — all minimizing repeat opponents.
+  // Builds one round's games from that round's full unit list. All units
+  // (regardless of partnership type) are minimized together in one pass —
+  // see _pairUnitsMinimizingRepeats for why type matching is only a
+  // tiebreaker rather than a hard grouping.
   _buildRoundGames(units, sessionPlayed, pairCounts, numCourts) {
-    const byType = { mixed: [], mens: [], womens: [], none: [] };
-    units.forEach(u => (byType[u.type || 'none'] || byType.none).push(u));
-
-    const matchups = [];
-    ['mixed', 'mens', 'womens'].forEach(type => {
-      const group = byType[type];
-      if (group.length < 2) { byType.none.push(...group); return; }
-      const { pairs, unmatched } = this._pairUnitsMinimizingRepeats(group, sessionPlayed, pairCounts);
-      matchups.push(...pairs);
-      byType.none.push(...unmatched);
-    });
-    const { pairs: generalPairs } = this._pairUnitsMinimizingRepeats(byType.none, sessionPlayed, pairCounts);
-    matchups.push(...generalPairs);
+    const { pairs: matchups } = this._pairUnitsMinimizingRepeats(units, sessionPlayed, pairCounts);
 
     return matchups.slice(0, numCourts).map((m, i) => ({
       side1: [m[0].p1, m[0].p2], side2: [m[1].p1, m[1].p2], court: i + 1,
