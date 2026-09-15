@@ -2985,23 +2985,24 @@ body.view-only-locked #tabCourts #btnToggleQueue {
         </div>
       </div>
       <div id="historyDetailSection">
-        <!-- Picks one previously-closed session (by its close date) to view
-             in full, match-by-match — see App.filterHistoryBySession. Left
-             on the default option, the list below instead shows the still-open
-             session's matches plus every closed session collapsed to its
-             summary card (added in App._populateHistorySessionSelect). -->
+        <!-- Picks one session — the still-open one or any previously-closed
+             one — to view in full, match-by-match — see
+             App.filterHistoryBySession. Left on the default option, the
+             list below instead shows every session, open or closed alike,
+             collapsed to its own summary card (added in
+             App._populateHistorySessionSelect). -->
         <div style="max-width:540px;margin:0 auto 10px;">
           <select id="historySessionSelect" class="setup-input" style="width:100%;margin-bottom:0;cursor:pointer;" onchange="App.filterHistoryBySession(this.value)">
-            <option value="">Current &amp; Recent Sessions</option>
+            <option value="">All Sessions (Summaries)</option>
           </select>
         </div>
         <div class="history-filters" style="display:flex;gap:8px;align-items:center;">
-          <input type="text" id="historySearch" class="history-search" placeholder="Search players..." oninput="App.renderHistory()" style="flex:1;">
-          <!-- League standings already narrow the roster to who's actually
-               playing, so a full name picker (see App.filterHistoryByPlayer)
-               stands in for free-text search there — swapped in/out in
-               renderSeasonSummary alongside the rest of the League UI. -->
-          <select id="historyPlayerSelect" class="setup-input" style="display:none;flex:1;margin-bottom:0;cursor:pointer;" onchange="App.filterHistoryByPlayer(this.value)">
+          <input type="text" id="historySearch" class="history-search" placeholder="Search players..." oninput="App.renderHistory()" style="flex:1;display:none;">
+          <!-- Every player who's shown up here is already known, so a full
+               name picker (see App.filterHistoryByPlayer) always stands in
+               for free-text search — wired up in renderSeasonSummary
+               alongside the rest of the League/season UI. -->
+          <select id="historyPlayerSelect" class="setup-input" style="flex:1;margin-bottom:0;cursor:pointer;" onchange="App.filterHistoryByPlayer(this.value)">
             <option value="">All Players</option>
           </select>
           <button type="button" class="btn-outline" id="btnFilterMyMatches" onclick="App.toggleMyMatches()" style="white-space:nowrap;padding:12px 16px;font-size:1rem;font-weight:700;">My Matches</button>
@@ -8232,11 +8233,14 @@ ${scheduleHTML}
   // null means "All Players". Stands in for the free-text search filter
   // it replaces while a League is active.
   _historyFilterPlayerId: null,
-  // Closed session picked from the historySessionSelect dropdown (by its
-  // sessionClosed "at" timestamp) — null means the default view (current
-  // session's live matches + every closed session collapsed to its summary
-  // card). Set, it instead shows just that one session's matches in full.
+  // Session picked from the historySessionSelect dropdown to view in full —
+  // either 'current' (the still-open session) or a closed session's
+  // sessionClosed "at" timestamp. null means the default view: every
+  // session, open or closed, collapsed to its own summary card.
   _historySelectedSessionAt: null,
+  // Top 3 by default, same as a closed session's summary card — see
+  // toggleCurrentSessionSummaryExpanded/_renderCurrentSessionSummaryCard.
+  _currentSessionSummaryExpanded: false,
 
   // Splits roundHistory (chronological) into each closed session — the
   // matches between two sessionClosed markers, plus the summary pushed
@@ -8257,26 +8261,32 @@ ${scheduleHTML}
   },
 
   filterHistoryBySession(value) {
-    this._historySelectedSessionAt = value === '' ? null : Number(value);
+    this._historySelectedSessionAt = value === '' ? null : value === 'current' ? 'current' : Number(value);
     this.renderHistory();
   },
 
-  // Fills the "view a previous session" dropdown, newest first, preserving
+  // Fills the "view a session in full" dropdown, newest first (the
+  // still-open session, if it has any matches yet, always leads), preserving
   // the current selection (falling back to the default view if that
-  // session no longer exists, e.g. its only match got deleted).
-  _populateHistorySessionSelect(closedSessions) {
+  // selection no longer exists, e.g. the session just closed or its only
+  // match got deleted).
+  _populateHistorySessionSelect(closedSessions, current) {
     const el = document.getElementById('historySessionSelect');
     if (!el) return;
-    const current = this._historySelectedSessionAt;
-    const options = [...closedSessions].reverse().map(s => {
+    const selected = this._historySelectedSessionAt;
+    const hasCurrent = current.length > 0;
+    const currentOption = hasCurrent
+      ? `<option value="current"${selected === 'current' ? ' selected' : ''}>Current Session (in progress)</option>`
+      : '';
+    const closedOptions = [...closedSessions].reverse().map(s => {
       const d = new Date(s.closedAt);
       const label = `${d.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}, ${d.toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' })}`;
-      return `<option value="${s.closedAt}"${current === s.closedAt ? ' selected' : ''}>${this.esc(label)}</option>`;
+      return `<option value="${s.closedAt}"${selected === s.closedAt ? ' selected' : ''}>${this.esc(label)}</option>`;
     }).join('');
-    el.innerHTML = '<option value="">Current &amp; Recent Sessions</option>' + options;
-    if (current != null && !closedSessions.some(s => s.closedAt === current)) {
-      this._historySelectedSessionAt = null;
-      el.value = '';
+    el.innerHTML = '<option value="">All Sessions (Summaries)</option>' + currentOption + closedOptions;
+    if (selected != null) {
+      const stillValid = selected === 'current' ? hasCurrent : closedSessions.some(s => s.closedAt === selected);
+      if (!stillValid) { this._historySelectedSessionAt = null; el.value = ''; }
     }
   },
 
@@ -8318,37 +8328,56 @@ ${scheduleHTML}
     return map;
   },
 
-  // Shows League season-wide standings above the regular Match History list.
+  // Everyone who's played a match in this room, ever (all sessions, current
+  // and closed alike) — the roster behind the universal player picker (see
+  // renderSeasonSummary) when there's no League season standings to use
+  // instead. Alphabetical, since there's no win/loss to rank by across
+  // sessions that don't share a season.
+  _allHistoryPlayers() {
+    const history = this.state.roundHistory || [];
+    const nameMap = this._historyNameMap(history);
+    const ids = new Set();
+    history.forEach(m => {
+      if (m.sessionClosed || m.sessionSummary) return;
+      (m.side1 || []).forEach(id => ids.add(id));
+      (m.side2 || []).forEach(id => ids.add(id));
+    });
+    return [...ids].map(id => ({ id, name: this.getPlayer(id)?.name || nameMap.get(id) || '?' }))
+      .sort((a, b) => a.name.localeCompare(b.name));
+  },
+
+  // Shows League season-wide standings above the regular Match History list,
+  // and wires up the player picker that replaces free-text search everywhere.
   renderSeasonSummary() {
     const section = document.getElementById('seasonSummarySection');
     const searchEl = document.getElementById('historySearch');
     const playerSelectEl = document.getElementById('historyPlayerSelect');
-    if (!section) return;
     const summary = this.isRoundRobin() ? this._buildSeasonSummary() : null;
-    if (!summary) {
-      section.style.display = 'none';
-      // No league — back to the plain search box, same as before it existed.
-      if (searchEl) searchEl.style.display = '';
-      if (playerSelectEl) playerSelectEl.style.display = 'none';
-      this._historyFilterPlayerId = null;
-      return;
-    }
-    section.style.display = '';
-    // League: a full player picker replaces free-text search — every name
-    // in the season is already known, so picking beats typing, and
-    // selecting one filters both the match list below and shows their
-    // own season stats (see filterHistoryByPlayer/renderHistory).
+
+    // Every player who's shown up here is already known, so a picker always
+    // stands in for typing — a League's roster is its season standings
+    // (already win/loss-sorted); otherwise it's everyone who's ever played
+    // in this room (see _allHistoryPlayers). Selecting one filters the
+    // match list below same as before (see filterHistoryByPlayer).
+    const pickerPlayers = summary ? summary.players : this._allHistoryPlayers();
     if (searchEl) searchEl.style.display = 'none';
     if (playerSelectEl) {
       playerSelectEl.style.display = '';
       const current = this._historyFilterPlayerId;
       playerSelectEl.innerHTML = '<option value="">All Players</option>' +
-        summary.players.map(p => `<option value="${p.id}"${current === p.id ? ' selected' : ''}>${this.esc(p.name)}</option>`).join('');
-      if (current != null && !summary.players.some(p => p.id === current)) {
+        pickerPlayers.map(p => `<option value="${p.id}"${current === p.id ? ' selected' : ''}>${this.esc(p.name)}</option>`).join('');
+      if (current != null && !pickerPlayers.some(p => p.id === current)) {
         this._historyFilterPlayerId = null;
         playerSelectEl.value = '';
       }
     }
+
+    if (!section) return summary;
+    if (!summary) {
+      section.style.display = 'none';
+      return null;
+    }
+    section.style.display = '';
     const titleEl = document.getElementById('seasonSummaryTitle');
     if (titleEl) titleEl.textContent = summary.ended ? 'Season Complete' : 'Season Summary (to date)';
     const rangeEl = document.getElementById('seasonSummaryRange');
@@ -8470,11 +8499,36 @@ ${scheduleHTML}
     </div>`;
   },
 
+  toggleCurrentSessionSummaryExpanded() {
+    this._currentSessionSummaryExpanded = !this._currentSessionSummaryExpanded;
+    this.renderHistory();
+  },
+
+  // Same card as _renderSessionSummaryCard, but for the still-open session:
+  // tallied live from its matches so far (there's no stored summary/closed
+  // marker for it yet — see _historySessions/_buildSessionSummary) and
+  // labeled "In Progress" instead of a close date.
+  _renderCurrentSessionSummaryCard(players) {
+    const expanded = this._currentSessionSummaryExpanded || players.length <= 3;
+    const visible = expanded ? players : players.slice(0, 3);
+    const rows = visible.map(p =>
+      `<div class="history-summary-row"><span class="history-summary-name">${this.esc(p.name)}</span><span class="history-summary-record">${this._formatPlayerRecord(p, true)}</span></div>`
+    ).join('');
+    const toggleBtn = players.length > 3
+      ? `<button type="button" class="btn-outline" style="width:100%;margin-top:8px;padding:6px;font-size:0.74rem;font-weight:600;" onclick="App.toggleCurrentSessionSummaryExpanded()">${expanded ? 'Show Top 3' : `Show All ${players.length} Players`}</button>`
+      : '';
+    return `<div class="history-session-summary">
+      <div class="history-session-summary-title">Session Summary &mdash; In Progress</div>
+      ${rows}
+      ${toggleBtn}
+    </div>`;
+  },
+
   renderHistory() {
     const el = document.getElementById('historyRounds');
     const seasonSummary = this.renderSeasonSummary();
     const { closed, current } = this._historySessions();
-    this._populateHistorySessionSelect(closed);
+    this._populateHistorySessionSelect(closed, current);
 
     // League player picker (see filterHistoryByPlayer): show the selected
     // player's own season stats next to the match list it also filters.
@@ -8505,21 +8559,35 @@ ${scheduleHTML}
       return true;
     };
 
-    // A specific closed session picked from historySessionSelect — show
-    // every one of its matches in full instead of the default view below.
+    // A specific session picked from historySessionSelect — show every one
+    // of its matches in full instead of the default view below.
     if (this._historySelectedSessionAt != null) {
-      const session = closed.find(s => s.closedAt === this._historySelectedSessionAt);
-      const matches = session ? [...session.matches].reverse().filter(matchPassesFilters) : [];
+      let matches;
+      if (this._historySelectedSessionAt === 'current') {
+        matches = [...current].reverse().filter(matchPassesFilters);
+      } else {
+        const session = closed.find(s => s.closedAt === this._historySelectedSessionAt);
+        matches = session ? [...session.matches].reverse().filter(matchPassesFilters) : [];
+      }
       el.innerHTML = matches.length
         ? matches.map(m => this._renderMatchCard(m, nameFor)).join('')
         : '<div class="history-empty">No matches found</div>';
       return;
     }
 
-    // Default view: the still-open session's matches in full, then every
-    // closed session collapsed to just its summary card (newest first) —
-    // see historySessionSelect for viewing a closed session's full detail.
-    const rows = [...current].reverse().filter(matchPassesFilters).map(m => this._renderMatchCard(m, nameFor));
+    // Default view: every session — the still-open one and every closed
+    // one alike — collapsed to just its own summary card (newest first) —
+    // see historySessionSelect for viewing any one session's full detail.
+    const rows = [];
+    const currentPlayers = this._tallyPlayerStats(current);
+    if (currentPlayers) {
+      const showCurrent = !(
+        (this._historyFilterMine && Onboard.selfId && !currentPlayers.some(p => p.id === Onboard.selfId)) ||
+        (this._historyFilterPlayerId != null && !currentPlayers.some(p => p.id === this._historyFilterPlayerId)) ||
+        (search && !currentPlayers.some(p => p.name.toLowerCase().includes(search)))
+      );
+      if (showCurrent) rows.push(this._renderCurrentSessionSummaryCard(currentPlayers));
+    }
     [...closed].reverse().forEach(session => {
       if (!session.summary) return; // nothing played that close — nothing to show
       const players = session.summary.players || [];
