@@ -2934,10 +2934,7 @@ body.view-only-locked #tabCourts #btnToggleQueue {
           <button type="button" class="btn-confirm-join" id="btnSubmitLogPastMatch" onclick="App.submitLogPastMatch()" disabled style="flex:1;padding:10px;font-size:0.85rem;font-weight:700;">Add to History</button>
         </div>
       </div>
-      <!-- League (Round Robin) season standings — see App.renderSeasonSummary.
-           While the season's still going, the day-by-day detail below stays
-           open by default; once it ends, this collapses it so the tab leads
-           with the final standings instead of a season's worth of matches. -->
+      <!-- League (Round Robin) season standings — see App.renderSeasonSummary. -->
       <div id="seasonSummarySection" style="display:none;margin-bottom:14px;max-width:540px;margin-left:auto;margin-right:auto;">
         <div class="history-session-summary" style="margin-bottom:8px;">
           <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;margin-bottom:6px;">
@@ -2947,20 +2944,17 @@ body.view-only-locked #tabCourts #btnToggleQueue {
           <div id="seasonSummaryRows"></div>
           <button type="button" class="btn-outline" id="btnToggleSeasonStandings" onclick="App.toggleSeasonStandings()" style="display:none;width:100%;margin-top:8px;padding:8px;font-size:0.78rem;font-weight:600;">Show All Players</button>
         </div>
-        <button type="button" class="btn-outline" id="btnToggleSeasonDetails" onclick="App.toggleSeasonDetails()" style="width:100%;padding:10px;font-size:0.85rem;font-weight:600;">Show Day-by-Day Details</button>
       </div>
       <div id="historyDetailSection">
-        <div id="historyStats" class="history-stats-card" style="display:none;">
-          <div class="history-stat-tile">
-            <div class="history-stat-value history-stat-name" id="historyStatTeamName">&ndash;</div>
-            <div class="history-stat-sub" id="historyStatTeamWins"></div>
-            <div class="history-stat-label">Winningest Team</div>
-          </div>
-          <div class="history-stat-tile">
-            <div class="history-stat-value history-stat-name" id="historyStatPlayerName">&ndash;</div>
-            <div class="history-stat-sub" id="historyStatPlayerWins"></div>
-            <div class="history-stat-label">Winningest Player</div>
-          </div>
+        <!-- Picks one previously-closed session (by its close date) to view
+             in full, match-by-match — see App.filterHistoryBySession. Left
+             on the default option, the list below instead shows the still-open
+             session's matches plus every closed session collapsed to its
+             summary card (added in App._populateHistorySessionSelect). -->
+        <div style="margin-bottom:10px;">
+          <select id="historySessionSelect" class="setup-input" style="width:100%;margin-bottom:0;cursor:pointer;" onchange="App.filterHistoryBySession(this.value)">
+            <option value="">Current &amp; Recent Sessions</option>
+          </select>
         </div>
         <div class="history-filters" style="display:flex;gap:8px;align-items:center;">
           <input type="text" id="historySearch" class="history-search" placeholder="Search players..." oninput="App.renderHistory()" style="flex:1;">
@@ -8019,15 +8013,59 @@ ${bracketHTML}
   },
 
   _historyFilterMine: false,
-  // null until renderSeasonSummary first decides a default (expanded while
-  // the season's in progress, collapsed once it's ended) — see there.
-  _seasonDetailsExpanded: null,
   // Season standings start collapsed to the top 3 — see renderSeasonSummary.
   _seasonStandingsExpanded: false,
   // Selected from the League player picker (see renderSeasonSummary) —
   // null means "All Players". Stands in for the free-text search filter
   // it replaces while a League is active.
   _historyFilterPlayerId: null,
+  // Closed session picked from the historySessionSelect dropdown (by its
+  // sessionClosed "at" timestamp) — null means the default view (current
+  // session's live matches + every closed session collapsed to its summary
+  // card). Set, it instead shows just that one session's matches in full.
+  _historySelectedSessionAt: null,
+
+  // Splits roundHistory (chronological) into each closed session — the
+  // matches between two sessionClosed markers, plus the summary pushed
+  // right before that marker — and the still-open trailing session, which
+  // has no summary/closed marker yet. Used by renderHistory's default view
+  // and by the historySessionSelect dropdown (App._populateHistorySessionSelect).
+  _historySessions() {
+    const raw = this.state.roundHistory || [];
+    const closed = [];
+    let bucket = [];
+    let summary = null;
+    raw.forEach(entry => {
+      if (entry.sessionSummary) { summary = entry; return; }
+      if (entry.sessionClosed) { closed.push({ closedAt: entry.at, summary, matches: bucket }); bucket = []; summary = null; return; }
+      bucket.push(entry);
+    });
+    return { closed, current: bucket };
+  },
+
+  filterHistoryBySession(value) {
+    this._historySelectedSessionAt = value === '' ? null : Number(value);
+    this.renderHistory();
+  },
+
+  // Fills the "view a previous session" dropdown, newest first, preserving
+  // the current selection (falling back to the default view if that
+  // session no longer exists, e.g. its only match got deleted).
+  _populateHistorySessionSelect(closedSessions) {
+    const el = document.getElementById('historySessionSelect');
+    if (!el) return;
+    const current = this._historySelectedSessionAt;
+    const options = [...closedSessions].reverse().map(s => {
+      const d = new Date(s.closedAt);
+      const label = `${d.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}, ${d.toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' })}`;
+      return `<option value="${s.closedAt}"${current === s.closedAt ? ' selected' : ''}>${this.esc(label)}</option>`;
+    }).join('');
+    el.innerHTML = '<option value="">Current &amp; Recent Sessions</option>' + options;
+    if (current != null && !closedSessions.some(s => s.closedAt === current)) {
+      this._historySelectedSessionAt = null;
+      el.value = '';
+    }
+  },
 
   filterHistoryByPlayer(value) {
     this._historyFilterPlayerId = value === '' ? null : Number(value);
@@ -8067,67 +8105,15 @@ ${bracketHTML}
     return map;
   },
 
-  // Overall session stats: most-winning team pairing and most-winning individual player
-  renderHistoryStats(history) {
-    const stats = document.getElementById('historyStats');
-    if (!stats) return;
-    const nameMap = this._historyNameMap(history);
-    const nameFor = id => this.getPlayer(id)?.name || nameMap.get(id) || '?';
-
-    const teamWins = new Map(); // sorted-ids key -> { ids, wins }
-    const playerWins = new Map(); // id -> wins
-
-    history.forEach(m => {
-      if (m.expired || (m.winner !== 1 && m.winner !== 2)) return;
-      const winIds = m.winner === 1 ? m.side1 : m.side2;
-      if (!winIds || !winIds.length) return;
-      const key = [...winIds].sort((a, b) => a - b).join(',');
-      const entry = teamWins.get(key) || { ids: winIds, wins: 0 };
-      entry.wins++;
-      teamWins.set(key, entry);
-      winIds.forEach(id => playerWins.set(id, (playerWins.get(id) || 0) + 1));
-    });
-
-    let maxTeamWins = 0;
-    teamWins.forEach(entry => { if (entry.wins > maxTeamWins) maxTeamWins = entry.wins; });
-    const bestTeams = maxTeamWins > 0 ? [...teamWins.values()].filter(e => e.wins === maxTeamWins) : [];
-
-    let maxPlayerWins = 0;
-    playerWins.forEach(wins => { if (wins > maxPlayerWins) maxPlayerWins = wins; });
-    const bestPlayerIds = maxPlayerWins > 0 ? [...playerWins.entries()].filter(([, wins]) => wins === maxPlayerWins).map(([id]) => id) : [];
-
-    if (!bestTeams.length && !bestPlayerIds.length) {
-      stats.style.display = 'none';
-      return;
-    }
-    stats.style.display = '';
-
-    const teamNames = bestTeams.map(e => e.ids.map(id => nameFor(id)).join(' & '));
-    const playerNames = bestPlayerIds.map(id => nameFor(id));
-    document.getElementById('historyStatTeamName').textContent = teamNames.length ? teamNames.join(', ') : '–';
-    document.getElementById('historyStatTeamWins').textContent = teamNames.length
-      ? `${maxTeamWins} win${maxTeamWins === 1 ? '' : 's'}${teamNames.length > 1 ? ' (tie)' : ''}` : '';
-    document.getElementById('historyStatPlayerName').textContent = playerNames.length ? playerNames.join(', ') : '–';
-    document.getElementById('historyStatPlayerWins').textContent = playerNames.length
-      ? `${maxPlayerWins} win${maxPlayerWins === 1 ? '' : 's'}${playerNames.length > 1 ? ' (tie)' : ''}` : '';
-  },
-
-  // Shows League season-wide standings above the regular Match History
-  // list, and — once the season's end date has passed — collapses that
-  // list (individual closes and their matches) behind a "Show Day-by-Day
-  // Details" toggle, so the tab leads with final standings rather than a
-  // whole season of history. Toggling manually (see toggleSeasonDetails)
-  // overrides that default for the rest of this page load.
+  // Shows League season-wide standings above the regular Match History list.
   renderSeasonSummary() {
     const section = document.getElementById('seasonSummarySection');
-    const detailSection = document.getElementById('historyDetailSection');
     const searchEl = document.getElementById('historySearch');
     const playerSelectEl = document.getElementById('historyPlayerSelect');
     if (!section) return;
     const summary = this.isRoundRobin() ? this._buildSeasonSummary() : null;
     if (!summary) {
       section.style.display = 'none';
-      if (detailSection) detailSection.style.display = '';
       // No league — back to the plain search box, same as before it existed.
       if (searchEl) searchEl.style.display = '';
       if (playerSelectEl) playerSelectEl.style.display = 'none';
@@ -8168,7 +8154,7 @@ ${bracketHTML}
       const visible = showAllStandings ? players : players.slice(0, 3);
       rowsEl.innerHTML = players.length
         ? visible.map(p =>
-            `<div class="history-summary-row"><span class="history-summary-name">${this.esc(p.name)}</span><span class="history-summary-record">${this._formatPlayerRecord(p)}</span></div>`
+            `<div class="history-summary-row"><span class="history-summary-name">${this.esc(p.name)}</span><span class="history-summary-record">${this._formatPlayerRecord(p, true)}</span></div>`
           ).join('')
         : '<div class="history-empty">No matches yet this season</div>';
       if (standingsToggleBtn) {
@@ -8176,16 +8162,7 @@ ${bracketHTML}
         standingsToggleBtn.textContent = showAllStandings ? 'Show Top 3' : `Show All ${players.length} Players`;
       }
     }
-    if (this._seasonDetailsExpanded == null) this._seasonDetailsExpanded = !summary.ended;
-    const toggleBtn = document.getElementById('btnToggleSeasonDetails');
-    if (toggleBtn) toggleBtn.textContent = this._seasonDetailsExpanded ? 'Hide Day-by-Day Details' : 'Show Day-by-Day Details';
-    if (detailSection) detailSection.style.display = this._seasonDetailsExpanded ? '' : 'none';
     return summary;
-  },
-
-  toggleSeasonDetails() {
-    this._seasonDetailsExpanded = !this._seasonDetailsExpanded;
-    this.renderSeasonSummary();
   },
 
   toggleSeasonStandings() {
@@ -8193,12 +8170,98 @@ ${bracketHTML}
     this.renderSeasonSummary();
   },
 
+  // Renders one raw match entry as a match-card, including its inline
+  // score-edit form when applicable. nameFor resolves display names
+  // (falling back to the name snapshotted at match time for players who've
+  // since left) — computed once by the caller rather than per-card.
+  _renderMatchCard(m, nameFor) {
+    const s1 = m.side1.map(id => { const p = this.getPlayer(id); return this.esc(nameFor(id)) + (p && p.skillLevel ? ` <span style="font-weight:400;opacity:0.7;">(${this.skillAbbrev(p)})</span>` : ''); });
+    const s2 = m.side2.map(id => { const p = this.getPlayer(id); return this.esc(nameFor(id)) + (p && p.skillLevel ? ` <span style="font-weight:400;opacity:0.7;">(${this.skillAbbrev(p)})</span>` : ''); });
+    const hasScores = m.score1 != null && m.score2 != null;
+    const s1Class = hasScores ? (m.winner === 1 ? 'winner' : m.winner === 2 ? 'loser' : '') : '';
+    const s2Class = hasScores ? (m.winner === 2 ? 'winner' : m.winner === 1 ? 'loser' : '') : '';
+    const scoreText = hasScores ? `${m.score1}–${m.score2}` : (m.expired ? 'N/A' : '–');
+    let dateTime = '';
+    if (m.startTime) {
+      const d = new Date(m.startTime);
+      const date = d.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+      const time = d.toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' });
+      dateTime = `${date}, ${time}`;
+    }
+    const headerLeft = m.manual ? 'Logged as already played' : (dateTime || '');
+    // A score (and duration) can only be corrected while the session is
+    // open — once closed, this record (and the summary built from it) is
+    // final. Under View Only, only an admin can, same as everywhere else.
+    const idx = this.state.roundHistory.indexOf(m);
+    const canEditScore = !this.state._closed && this.canModify();
+    const isEditing = canEditScore && this._editingMatchIdx === idx;
+    const editBtn = canEditScore && !isEditing
+      ? `<button class="queue-row-btn queue-row-action" onclick="App.editMatchScore(${idx})" title="Edit score">&#x270E;</button>`
+      : '';
+    const durMin = m.duration ? Math.floor(m.duration / 60000) : '';
+    const durSec = m.duration ? Math.floor((m.duration % 60000) / 1000) : '';
+    const durationArea = isEditing
+      ? `<span class="match-duration-edit"><input type="number" min="0" id="matchEditDurMin-${idx}" value="${durMin}" placeholder="0"><span>:</span><input type="number" min="0" max="59" id="matchEditDurSec-${idx}" value="${durSec}" placeholder="00"></span>`
+      : `<span>${m.duration ? this.formatTimer(m.duration) : '–'}</span>`;
+    const scoreArea = isEditing
+      ? `<div class="match-score-edit">
+          <input type="number" min="0" id="matchEditScore1-${idx}" value="${m.score1 != null ? m.score1 : ''}" placeholder="0">
+          <span>&ndash;</span>
+          <input type="number" min="0" id="matchEditScore2-${idx}" value="${m.score2 != null ? m.score2 : ''}" placeholder="0">
+        </div>`
+      : `<div class="match-card-score">${scoreText}</div>`;
+    const editActions = isEditing
+      ? `<p id="matchEditError-${idx}" class="setup-error" style="display:none;margin-top:6px;"></p>
+         <div class="match-edit-actions">
+           <button class="btn-edit-cancel" style="color:var(--danger);border-color:#fca5a5;margin-right:auto;" onclick="App.deleteMatchScore(${idx})">Delete</button>
+           <button class="btn-edit-cancel" onclick="App.cancelEditMatchScore()">Cancel</button>
+           <button class="btn-edit-save" onclick="App.saveEditMatchScore(${idx})">Save</button>
+         </div>`
+      : '';
+    return `<div class="match-card">
+      <div class="match-card-header">
+        <span>${headerLeft}</span>
+        <span style="display:flex;align-items:center;gap:6px;">${durationArea}${editBtn}</span>
+      </div>
+      <div class="match-card-body">
+        <div class="match-card-team ${s1Class}">${s1.join(' & ')}</div>
+        <span class="match-card-vs">vs</span>
+        <div class="match-card-team ${s2Class}" style="text-align:right;">${s2.join(' & ')}</div>
+        ${scoreArea}
+      </div>
+      ${editActions}
+    </div>`;
+  },
+
+  // Renders a closed session's summary card — top 3 players by default,
+  // same as the League season summary (see toggleSessionSummaryExpanded) —
+  // with its close date in the title since, by default, this card is all
+  // that represents that session in the list (see renderHistory).
+  _renderSessionSummaryCard(m) {
+    const idx = this.state.roundHistory.indexOf(m);
+    const players = m.players || [];
+    const expanded = this._expandedSessionSummaries.has(idx) || players.length <= 3;
+    const visible = expanded ? players : players.slice(0, 3);
+    const rows = visible.map(p =>
+      `<div class="history-summary-row"><span class="history-summary-name">${this.esc(p.name)}</span><span class="history-summary-record">${this._formatPlayerRecord(p, true)}</span></div>`
+    ).join('');
+    const toggleBtn = players.length > 3
+      ? `<button type="button" class="btn-outline" style="width:100%;margin-top:8px;padding:6px;font-size:0.74rem;font-weight:600;" onclick="App.toggleSessionSummaryExpanded(${idx})">${expanded ? 'Show Top 3' : `Show All ${players.length} Players`}</button>`
+      : '';
+    const d = new Date(m.at);
+    const when = `${d.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}, ${d.toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' })}`;
+    return `<div class="history-session-summary">
+      <div class="history-session-summary-title">Session Summary &mdash; ${when}</div>
+      ${rows}
+      ${toggleBtn}
+    </div>`;
+  },
+
   renderHistory() {
     const el = document.getElementById('historyRounds');
-    let history = [...(this.state.roundHistory || [])];
-
     const seasonSummary = this.renderSeasonSummary();
-    this.renderHistoryStats(history);
+    const { closed, current } = this._historySessions();
+    this._populateHistorySessionSelect(closed);
 
     // League player picker (see filterHistoryByPlayer): show the selected
     // player's own season stats next to the match list it also filters.
@@ -8213,128 +8276,46 @@ ${bracketHTML}
       }
     }
 
-    if (history.length === 0) {
+    if (!closed.length && !current.length) {
       el.innerHTML = '<div class="history-empty">No completed games yet</div>';
       return;
     }
 
-    // Newest first
-    history.reverse();
-
-    // Filter by "My Matches"
-    if (this._historyFilterMine && Onboard.selfId) {
-      history = history.filter(m => [...m.side1, ...m.side2].includes(Onboard.selfId));
-    }
-
-    // Filter by the League player picker, which stands in for free-text
-    // search while a League is active (see renderSeasonSummary) — only one
-    // of the two is ever visible, so only one ever has anything to filter by.
-    if (this._historyFilterPlayerId != null) {
-      history = history.filter(m => [...m.side1, ...m.side2].includes(this._historyFilterPlayerId));
-    }
-
-    // Filter by player name search — fall back to the snapshotted name for
-    // players who've since been removed from the session.
     const nameMap = this._historyNameMap(this.state.roundHistory || []);
     const nameFor = id => this.getPlayer(id)?.name || nameMap.get(id) || '?';
     const search = (document.getElementById('historySearch')?.value || '').toLowerCase().trim();
-    if (search) {
-      history = history.filter(m => {
-        const allIds = [...m.side1, ...m.side2];
-        return allIds.some(id => nameFor(id).toLowerCase().includes(search));
-      });
-    }
+    const matchPassesFilters = m => {
+      const allIds = [...m.side1, ...m.side2];
+      if (this._historyFilterMine && Onboard.selfId && !allIds.includes(Onboard.selfId)) return false;
+      if (this._historyFilterPlayerId != null && !allIds.includes(this._historyFilterPlayerId)) return false;
+      if (search && !allIds.some(id => nameFor(id).toLowerCase().includes(search))) return false;
+      return true;
+    };
 
-    if (history.length === 0) {
-      el.innerHTML = '<div class="history-empty">No matches found</div>';
+    // A specific closed session picked from historySessionSelect — show
+    // every one of its matches in full instead of the default view below.
+    if (this._historySelectedSessionAt != null) {
+      const session = closed.find(s => s.closedAt === this._historySelectedSessionAt);
+      const matches = session ? [...session.matches].reverse().filter(matchPassesFilters) : [];
+      el.innerHTML = matches.length
+        ? matches.map(m => this._renderMatchCard(m, nameFor)).join('')
+        : '<div class="history-empty">No matches found</div>';
       return;
     }
 
-    el.innerHTML = history.map(m => {
-      if (m.sessionClosed) {
-        let when = '';
-        if (m.at) {
-          const d = new Date(m.at);
-          when = `${d.toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}, ${d.toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' })}`;
-        }
-        return `<div class="history-session-closed">Session closed${when ? ' &mdash; ' + when : ''}</div>`;
-      }
-      if (m.sessionSummary) {
-        // Top 3 by default, same as the League season summary above —
-        // see toggleSessionSummaryExpanded.
-        const idx = this.state.roundHistory.indexOf(m);
-        const players = m.players || [];
-        const expanded = this._expandedSessionSummaries.has(idx) || players.length <= 3;
-        const visible = expanded ? players : players.slice(0, 3);
-        const rows = visible.map(p =>
-          `<div class="history-summary-row"><span class="history-summary-name">${this.esc(p.name)}</span><span class="history-summary-record">${this._formatPlayerRecord(p)}</span></div>`
-        ).join('');
-        const toggleBtn = players.length > 3
-          ? `<button type="button" class="btn-outline" style="width:100%;margin-top:8px;padding:6px;font-size:0.74rem;font-weight:600;" onclick="App.toggleSessionSummaryExpanded(${idx})">${expanded ? 'Show Top 3' : `Show All ${players.length} Players`}</button>`
-          : '';
-        return `<div class="history-session-summary">
-          <div class="history-session-summary-title">Session Summary</div>
-          ${rows}
-          ${toggleBtn}
-        </div>`;
-      }
-      const s1 = m.side1.map(id => { const p = this.getPlayer(id); return this.esc(nameFor(id)) + (p && p.skillLevel ? ` <span style="font-weight:400;opacity:0.7;">(${this.skillAbbrev(p)})</span>` : ''); });
-      const s2 = m.side2.map(id => { const p = this.getPlayer(id); return this.esc(nameFor(id)) + (p && p.skillLevel ? ` <span style="font-weight:400;opacity:0.7;">(${this.skillAbbrev(p)})</span>` : ''); });
-      const hasScores = m.score1 != null && m.score2 != null;
-      const s1Class = hasScores ? (m.winner === 1 ? 'winner' : m.winner === 2 ? 'loser' : '') : '';
-      const s2Class = hasScores ? (m.winner === 2 ? 'winner' : m.winner === 1 ? 'loser' : '') : '';
-      const scoreText = hasScores ? `${m.score1}\u2013${m.score2}` : (m.expired ? 'N/A' : '\u2013');
-      let dateTime = '';
-      if (m.startTime) {
-        const d = new Date(m.startTime);
-        const date = d.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
-        const time = d.toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' });
-        dateTime = `${date}, ${time}`;
-      }
-      const headerLeft = m.manual ? 'Logged as already played' : (dateTime || '');
-      // A score (and duration) can only be corrected while the session is
-      // open \u2014 once closed, this record (and the summary built from it) is
-      // final. Under View Only, only an admin can, same as everywhere else.
-      const idx = this.state.roundHistory.indexOf(m);
-      const canEditScore = !this.state._closed && this.canModify();
-      const isEditing = canEditScore && this._editingMatchIdx === idx;
-      const editBtn = canEditScore && !isEditing
-        ? `<button class="queue-row-btn queue-row-action" onclick="App.editMatchScore(${idx})" title="Edit score">&#x270E;</button>`
-        : '';
-      const durMin = m.duration ? Math.floor(m.duration / 60000) : '';
-      const durSec = m.duration ? Math.floor((m.duration % 60000) / 1000) : '';
-      const durationArea = isEditing
-        ? `<span class="match-duration-edit"><input type="number" min="0" id="matchEditDurMin-${idx}" value="${durMin}" placeholder="0"><span>:</span><input type="number" min="0" max="59" id="matchEditDurSec-${idx}" value="${durSec}" placeholder="00"></span>`
-        : `<span>${m.duration ? this.formatTimer(m.duration) : '\u2013'}</span>`;
-      const scoreArea = isEditing
-        ? `<div class="match-score-edit">
-            <input type="number" min="0" id="matchEditScore1-${idx}" value="${m.score1 != null ? m.score1 : ''}" placeholder="0">
-            <span>&ndash;</span>
-            <input type="number" min="0" id="matchEditScore2-${idx}" value="${m.score2 != null ? m.score2 : ''}" placeholder="0">
-          </div>`
-        : `<div class="match-card-score">${scoreText}</div>`;
-      const editActions = isEditing
-        ? `<p id="matchEditError-${idx}" class="setup-error" style="display:none;margin-top:6px;"></p>
-           <div class="match-edit-actions">
-             <button class="btn-edit-cancel" style="color:var(--danger);border-color:#fca5a5;margin-right:auto;" onclick="App.deleteMatchScore(${idx})">Delete</button>
-             <button class="btn-edit-cancel" onclick="App.cancelEditMatchScore()">Cancel</button>
-             <button class="btn-edit-save" onclick="App.saveEditMatchScore(${idx})">Save</button>
-           </div>`
-        : '';
-      return `<div class="match-card">
-        <div class="match-card-header">
-          <span>${headerLeft}</span>
-          <span style="display:flex;align-items:center;gap:6px;">${durationArea}${editBtn}</span>
-        </div>
-        <div class="match-card-body">
-          <div class="match-card-team ${s1Class}">${s1.join(' & ')}</div>
-          <span class="match-card-vs">vs</span>
-          <div class="match-card-team ${s2Class}" style="text-align:right;">${s2.join(' & ')}</div>
-          ${scoreArea}
-        </div>
-        ${editActions}
-      </div>`;
-    }).join('');
+    // Default view: the still-open session's matches in full, then every
+    // closed session collapsed to just its summary card (newest first) —
+    // see historySessionSelect for viewing a closed session's full detail.
+    const rows = [...current].reverse().filter(matchPassesFilters).map(m => this._renderMatchCard(m, nameFor));
+    [...closed].reverse().forEach(session => {
+      if (!session.summary) return; // nothing played that close — nothing to show
+      const players = session.summary.players || [];
+      if (this._historyFilterMine && Onboard.selfId && !players.some(p => p.id === Onboard.selfId)) return;
+      if (this._historyFilterPlayerId != null && !players.some(p => p.id === this._historyFilterPlayerId)) return;
+      if (search && !players.some(p => p.name.toLowerCase().includes(search))) return;
+      rows.push(this._renderSessionSummaryCard(session.summary));
+    });
+    el.innerHTML = rows.length ? rows.join('') : '<div class="history-empty">No matches found</div>';
   },
 
   // Index (in this.state.roundHistory) of the match card currently showing
@@ -8394,7 +8375,7 @@ ${bracketHTML}
     m.winner = (score1 != null && score2 != null) ? (score1 > score2 ? 1 : score2 > score1 ? 2 : 0) : null;
     m.duration = duration;
     // A corrected score means this match is no longer an unresolved
-    // "expired" one — see renderHistoryStats/_buildSessionSummary, which
+    // "expired" one — see _tallyPlayerStats/_buildSessionSummary, which
     // otherwise skip expired entries when tallying wins even with a winner set.
     if (score1 != null && score2 != null) m.expired = false;
     this._editingMatchIdx = null;
