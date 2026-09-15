@@ -2669,30 +2669,34 @@ body.view-only-locked #tabCourts #btnToggleQueue {
             <option value="5">5</option>
             <option value="6">6</option>
           </select>
+          <div style="font-size:0.68rem;color:var(--text-muted);margin-top:4px;">Courts available</div>
         </div>
       </div>
       <div class="section-subtitle" id="assignCount"></div>
       <div id="scheduleTimeOptions" style="display:none;margin-top:10px;padding-top:10px;border-top:1px solid var(--border);">
-        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:8px;">
-          <div style="flex:1;min-width:110px;">
-            <label style="font-size:0.72rem;font-weight:600;color:var(--text-muted);display:block;margin-bottom:4px;">Match Time Limit (min)</label>
-            <input type="number" class="setup-input" id="matchTimeMinutes" min="1" step="1" style="margin-bottom:0;" onchange="App.updateScheduleTimeOptions()">
-          </div>
-          <div style="flex:1;min-width:110px;">
-            <label style="font-size:0.72rem;font-weight:600;color:var(--text-muted);display:block;margin-bottom:4px;">Session Time Limit (hrs)</label>
-            <input type="number" class="setup-input" id="sessionTimeHours" min="0.25" step="0.25" style="margin-bottom:0;" onchange="App.updateScheduleTimeOptions()">
-          </div>
-          <div style="flex:1;min-width:110px;">
-            <label style="font-size:0.72rem;font-weight:600;color:var(--text-muted);display:block;margin-bottom:4px;">Buffer Between Rounds (min)</label>
-            <input type="number" class="setup-input" id="scheduleBufferMinutes" min="0" step="1" style="margin-bottom:0;" onchange="App.updateScheduleTimeOptions()">
-          </div>
-        </div>
-        <div id="scheduleRoundsOverrideWrap" style="display:none;margin-bottom:8px;">
-          <label style="font-size:0.72rem;font-weight:600;color:var(--text-muted);display:block;margin-bottom:4px;">Rounds</label>
-          <input type="number" class="setup-input" id="scheduleRoundsInput" min="1" step="1" style="margin-bottom:0;" onchange="App.updateScheduleTimeOptions()">
-        </div>
         <div id="scheduleRoundsInfo" style="font-size:0.82rem;font-weight:600;color:var(--text);margin-bottom:4px;"></div>
-        <a href="#" id="scheduleRoundsToggleLink" onclick="App.toggleRoundsOverrideMode();return false;" style="font-size:0.75rem;font-weight:600;color:var(--primary);display:none;"></a>
+        <a href="#" id="scheduleTimeLimitToggleLink" onclick="App.toggleScheduleTimeLimitEnabled();return false;" style="font-size:0.75rem;font-weight:600;color:var(--primary);display:inline-block;margin-bottom:8px;"></a>
+        <div id="scheduleTimeLimitFields" style="display:none;">
+          <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:8px;">
+            <div style="flex:1;min-width:110px;">
+              <label style="font-size:0.72rem;font-weight:600;color:var(--text-muted);display:block;margin-bottom:4px;">Match Time Limit (min)</label>
+              <input type="number" class="setup-input" id="matchTimeMinutes" min="1" step="1" style="margin-bottom:0;" onchange="App.updateScheduleTimeOptions()">
+            </div>
+            <div style="flex:1;min-width:110px;">
+              <label style="font-size:0.72rem;font-weight:600;color:var(--text-muted);display:block;margin-bottom:4px;">Session Time Limit (hrs)</label>
+              <input type="number" class="setup-input" id="sessionTimeHours" min="0.25" step="0.25" style="margin-bottom:0;" onchange="App.updateScheduleTimeOptions()">
+            </div>
+            <div style="flex:1;min-width:110px;">
+              <label style="font-size:0.72rem;font-weight:600;color:var(--text-muted);display:block;margin-bottom:4px;">Buffer Between Rounds (min)</label>
+              <input type="number" class="setup-input" id="scheduleBufferMinutes" min="0" step="1" style="margin-bottom:0;" onchange="App.updateScheduleTimeOptions()">
+            </div>
+          </div>
+          <div id="scheduleRoundsOverrideWrap" style="display:none;margin-bottom:8px;">
+            <label style="font-size:0.72rem;font-weight:600;color:var(--text-muted);display:block;margin-bottom:4px;">Rounds</label>
+            <input type="number" class="setup-input" id="scheduleRoundsInput" min="1" step="1" style="margin-bottom:0;" onchange="App.updateScheduleTimeOptions()">
+          </div>
+          <a href="#" id="scheduleRoundsToggleLink" onclick="App.toggleRoundsOverrideMode();return false;" style="font-size:0.75rem;font-weight:600;color:var(--primary);display:none;"></a>
+        </div>
         <p id="scheduleTimeWarning" class="setup-error" style="display:none;margin-top:6px;"></p>
       </div>
       <div class="assign-controls" id="assignControls" style="display:none;">
@@ -3061,7 +3065,7 @@ body.view-only-locked #tabCourts #btnToggleQueue {
         </div>
         <div class="hiw-section">
           <h3>🗓️ Round Robin &amp; Tournament</h3>
-          <p>After locking the roster, set the number of courts and, optionally, a <strong>Match Time Limit</strong>, <strong>Session Time Limit</strong>, and <strong>Buffer Between Rounds</strong> — Round Robin recommends how many rounds will fit (or let you enter rounds directly), and Tournament shows an estimated total duration for its fixed bracket size, warning if either won't fit your session.</p>
+          <p>After locking the roster, set the number of courts. Round Robin shows the full rotation's round count by default; tap <strong>+ Add a time limit</strong> to set a <strong>Match Time Limit</strong>, <strong>Session Time Limit</strong>, and <strong>Buffer Between Rounds</strong> instead (prefilled at 12 min / 2 hrs / 3 min) — Round Robin then recommends how many rounds will fit (or let you enter rounds directly), and Tournament shows an estimated total duration for its fixed bracket size, warning if either won't fit your session.</p>
           <p style="margin-top:6px;">Turn on <strong>League</strong> (Settings &gt; Session Type, Round Robin only) to track standings across a whole season and have team/round selection minimize repeat partners and opponents across sessions, not just within one.</p>
         </div>
         <div class="hiw-section">
@@ -4508,6 +4512,8 @@ const App = {
   COURT_STUCK_MS: 6 * 60 * 60 * 1000,   // 6 hours — force-end a match that's been sitting on a court, win or lose, and send its players back to the queue
   SESSION_MAX_MS: 12 * 60 * 60 * 1000,  // 12 hours — remove a player (queued or on a court) from the session entirely
   ROUND_BUFFER_MIN: 3,                  // minutes assumed between rounds (players finding their next court) when planning Round Robin/Tournament rounds against a time limit
+  MATCH_TIME_DEFAULT_MIN: 12,           // default Match Time Limit once a time limit is turned on
+  SESSION_TIME_DEFAULT_HOURS: 2,        // default Session Time Limit once a time limit is turned on
 
   _lastExpireCheck: 0,
 
@@ -5009,20 +5015,23 @@ const App = {
 
   // Reads the Match/Session Time Limit fields and returns how many rounds
   // to actually schedule, capped to maxRounds (a full rotation) — or null
-  // if the admin hasn't filled in enough of them to make a recommendation,
-  // in which case callers keep their existing (uncapped) behavior.
+  // if the admin hasn't turned a time limit on, in which case callers keep
+  // their existing (uncapped) behavior. Once turned on, Match/Session/Buffer
+  // all fall back to real defaults (MATCH_TIME_DEFAULT_MIN/SESSION_TIME_DEFAULT_HOURS/
+  // ROUND_BUFFER_MIN) even if the admin never touches those fields.
   _plannedRoundCount(maxRounds) {
     const s = this.state._scheduleTime || {};
+    if (!s.enabled) return null;
     let rounds;
     if (s.mode === 'rounds' && s.roundsOverride) {
       rounds = s.roundsOverride;
-    } else if (s.matchMinutes && s.sessionHours) {
+    } else {
       // Rounds fit end-to-end with a buffer between them, not back-to-back
       // with none: N*matchMinutes + (N-1)*buffer <= sessionMinutes.
       const buffer = s.bufferMinutes != null ? s.bufferMinutes : this.ROUND_BUFFER_MIN;
-      rounds = Math.floor((s.sessionHours * 60 + buffer) / (s.matchMinutes + buffer));
-    } else {
-      return null;
+      const matchMinutes = s.matchMinutes != null ? s.matchMinutes : this.MATCH_TIME_DEFAULT_MIN;
+      const sessionHours = s.sessionHours != null ? s.sessionHours : this.SESSION_TIME_DEFAULT_HOURS;
+      rounds = Math.floor((sessionHours * 60 + buffer) / (matchMinutes + buffer));
     }
     return Math.max(1, Math.min(rounds, maxRounds));
   },
@@ -5289,8 +5298,19 @@ const App = {
     // 0 is a valid buffer (back-to-back rounds), so don't let "|| null" treat it as unset.
     const bufferRaw = document.getElementById('scheduleBufferMinutes')?.value;
     const bufferMinutes = bufferRaw === '' || bufferRaw == null ? null : Math.max(0, parseFloat(bufferRaw) || 0);
-    const mode = (this.state._scheduleTime && this.state._scheduleTime.mode) || 'time';
-    this.state._scheduleTime = { matchMinutes, sessionHours, roundsOverride, bufferMinutes, mode };
+    const s = this.state._scheduleTime || {};
+    this.state._scheduleTime = { ...s, matchMinutes, sessionHours, roundsOverride, bufferMinutes };
+    this.saveState();
+    this.render();
+  },
+
+  // Collapsed by default so a locked bracket just shows the full rotation's
+  // round count — flipping this on reveals Match/Session/Buffer and switches
+  // _plannedRoundCount over to actually capping rounds by them (see there).
+  toggleScheduleTimeLimitEnabled() {
+    if (!this.canModify()) return;
+    const s = this.state._scheduleTime || {};
+    this.state._scheduleTime = { ...s, enabled: !s.enabled };
     this.saveState();
     this.render();
   },
@@ -5304,24 +5324,35 @@ const App = {
     if (!wrap) return;
     wrap.style.display = '';
     const st = this.state._scheduleTime || {};
+    const enabled = !!st.enabled;
+    const fieldsWrap = document.getElementById('scheduleTimeLimitFields');
+    const enableLink = document.getElementById('scheduleTimeLimitToggleLink');
+    if (fieldsWrap) fieldsWrap.style.display = enabled ? '' : 'none';
+    if (enableLink) enableLink.textContent = enabled ? 'Remove time limit' : '+ Add a time limit';
+
+    // Once a time limit is turned on, Match/Session/Buffer all show (and use)
+    // real defaults even before the admin edits them, same as Buffer already did.
+    const matchMinutes = st.matchMinutes != null ? st.matchMinutes : this.MATCH_TIME_DEFAULT_MIN;
+    const sessionHours = st.sessionHours != null ? st.sessionHours : this.SESSION_TIME_DEFAULT_HOURS;
+    const buffer = st.bufferMinutes != null ? st.bufferMinutes : this.ROUND_BUFFER_MIN;
     const matchEl = document.getElementById('matchTimeMinutes');
     const sessionEl = document.getElementById('sessionTimeHours');
     const bufferEl = document.getElementById('scheduleBufferMinutes');
-    if (matchEl && document.activeElement !== matchEl) matchEl.value = st.matchMinutes || '';
-    if (sessionEl && document.activeElement !== sessionEl) sessionEl.value = st.sessionHours || '';
-    const buffer = st.bufferMinutes != null ? st.bufferMinutes : this.ROUND_BUFFER_MIN;
-    if (bufferEl && document.activeElement !== bufferEl) bufferEl.value = st.bufferMinutes != null ? st.bufferMinutes : this.ROUND_BUFFER_MIN;
+    if (matchEl && document.activeElement !== matchEl) matchEl.value = matchMinutes;
+    if (sessionEl && document.activeElement !== sessionEl) sessionEl.value = sessionHours;
+    if (bufferEl && document.activeElement !== bufferEl) bufferEl.value = buffer;
+
     const overrideWrap = document.getElementById('scheduleRoundsOverrideWrap');
     const toggleLink = document.getElementById('scheduleRoundsToggleLink');
     const infoEl = document.getElementById('scheduleRoundsInfo');
     const warnEl = document.getElementById('scheduleTimeWarning');
     // Rounds run back-to-back with a buffer between them (not zero gap), so
     // N rounds cost N*matchMinutes + (N-1)*buffer, not N*matchMinutes.
-    const estFor = rounds => (rounds && st.matchMinutes) ? rounds * st.matchMinutes + Math.max(0, rounds - 1) * buffer : null;
+    const estFor = rounds => rounds ? rounds * matchMinutes + Math.max(0, rounds - 1) * buffer : null;
     const warnings = [];
 
     if (fixedRounds) {
-      const estMinutes = estFor(maxRounds);
+      const estMinutes = enabled ? estFor(maxRounds) : null;
       if (overrideWrap) overrideWrap.style.display = 'none';
       if (toggleLink) toggleLink.style.display = 'none';
       if (infoEl) {
@@ -5329,18 +5360,18 @@ const App = {
           ? `${maxRounds} round${maxRounds === 1 ? '' : 's'} (fixed by bracket size)${estMinutes ? ` · est. ${estMinutes} min` : ''}`
           : '';
       }
-      if (estMinutes != null && st.sessionHours && estMinutes > st.sessionHours * 60) {
-        warnings.push(`Estimated ${estMinutes} min exceeds your ${st.sessionHours} hr session limit.`);
+      if (enabled && estMinutes != null && estMinutes > sessionHours * 60) {
+        warnings.push(`Estimated ${estMinutes} min exceeds your ${sessionHours} hr session limit.`);
       }
       this._applyScheduleWarnings(warnEl, warnings);
       return;
     }
 
     if (toggleLink) {
-      toggleLink.style.display = '';
+      toggleLink.style.display = enabled ? '' : 'none';
       toggleLink.textContent = st.mode === 'rounds' ? 'Or set a time limit instead' : 'Or set rounds directly';
     }
-    if (overrideWrap) overrideWrap.style.display = st.mode === 'rounds' ? '' : 'none';
+    if (overrideWrap) overrideWrap.style.display = (enabled && st.mode === 'rounds') ? '' : 'none';
     const roundsInput = document.getElementById('scheduleRoundsInput');
     if (roundsInput && document.activeElement !== roundsInput) roundsInput.value = st.roundsOverride || '';
 
@@ -5355,23 +5386,23 @@ const App = {
     }
 
     if (infoEl) {
-      if (st.mode === 'rounds') {
-        if (st.roundsOverride && st.matchMinutes) {
+      if (!enabled) {
+        infoEl.textContent = maxRounds ? `Full rotation: ${maxRounds} round${maxRounds === 1 ? '' : 's'}` : '';
+      } else if (st.mode === 'rounds') {
+        if (st.roundsOverride) {
           const est = estFor(st.roundsOverride);
           infoEl.textContent = `Estimated session time: ~${est} min (with ${buffer} min between rounds)`;
-          if (st.sessionHours && est > st.sessionHours * 60) {
-            warnings.push(`Estimated ${est} min exceeds your ${st.sessionHours} hr session limit.`);
+          if (est > sessionHours * 60) {
+            warnings.push(`Estimated ${est} min exceeds your ${sessionHours} hr session limit.`);
           }
         } else {
-          infoEl.textContent = 'Enter a match time limit and number of rounds to get an estimated session time.';
+          infoEl.textContent = 'Enter a number of rounds to get an estimated session time.';
         }
-      } else if (st.matchMinutes && st.sessionHours) {
-        const recommended = Math.max(1, Math.floor((st.sessionHours * 60 + buffer) / (st.matchMinutes + buffer)));
+      } else {
+        const recommended = Math.max(1, Math.floor((sessionHours * 60 + buffer) / (matchMinutes + buffer)));
         infoEl.textContent = (maxRounds && recommended > maxRounds)
           ? `Recommended: ${maxRounds} rounds (full rotation reached — only ${maxRounds} unique rounds possible)`
           : `Recommended: ${recommended} round${recommended === 1 ? '' : 's'} (with ${buffer} min between rounds)`;
-      } else {
-        infoEl.textContent = maxRounds ? `Full rotation: ${maxRounds} round${maxRounds === 1 ? '' : 's'}` : '';
       }
     }
 
@@ -8128,15 +8159,16 @@ ${bracketHTML}
   // "Match Time Limit: 15 min · Session Time Limit: 2 hrs · Buffer: 3 min
   // between rounds" — shown atop Upcoming Rounds and in the printed PDF so
   // anyone viewing the session (not just whoever set the schedule up) can
-  // see the pace it was planned around. Buffer always shows an effective
-  // value (falling back to ROUND_BUFFER_MIN) since it's used in planning
-  // either way; match/session limits show "Not set" when left blank.
+  // see the pace it was planned around. Only shown when a time limit was
+  // turned on (see toggleScheduleTimeLimitEnabled); otherwise the rotation
+  // played out in full with no cap.
   _scheduleTimeSummaryLine() {
     const st = this.state._scheduleTime || {};
+    if (!st.enabled) return 'No time limit set';
     const buffer = st.bufferMinutes != null ? st.bufferMinutes : this.ROUND_BUFFER_MIN;
-    const matchText = st.matchMinutes ? `${st.matchMinutes} min` : 'Not set';
-    const sessionText = st.sessionHours ? `${st.sessionHours} hr${st.sessionHours === 1 ? '' : 's'}` : 'Not set';
-    return `Match Time Limit: ${matchText} · Session Time Limit: ${sessionText} · Buffer: ${buffer} min between rounds`;
+    const matchMinutes = st.matchMinutes != null ? st.matchMinutes : this.MATCH_TIME_DEFAULT_MIN;
+    const sessionHours = st.sessionHours != null ? st.sessionHours : this.SESSION_TIME_DEFAULT_HOURS;
+    return `Match Time Limit: ${matchMinutes} min · Session Time Limit: ${sessionHours} hr${sessionHours === 1 ? '' : 's'} · Buffer: ${buffer} min between rounds`;
   },
 
   _renderRRUpcoming() {
