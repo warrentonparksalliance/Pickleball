@@ -18,3 +18,10 @@ Use descriptive branch names, e.g. `feature/bracket-pdf`, `fix/join-card-spacing
 - Single-file app: `index.html` (HTML + CSS + JS, no build step)
 - Firebase Realtime Database for session state
 - Deployed via Netlify (auto-deploys `main`; PR previews for feature branches)
+
+## Netlify Preview Usage
+
+Netlify deploy previews are limited, so skip them by default. Add `[skip ci]`
+to the commit message on PR commits unless the user explicitly asks for a
+preview link on that PR. If a preview is needed later, push a follow-up
+commit without the skip directive to trigger one.
