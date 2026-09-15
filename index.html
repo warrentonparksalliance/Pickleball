@@ -2991,7 +2991,7 @@ body.view-only-locked #tabCourts #btnToggleQueue {
              still-open session in full (its own live summary card plus its
              matches, editable) followed by every closed session collapsed
              to its summary card (added in App._populateHistorySessionSelect). -->
-        <div style="max-width:540px;margin:0 auto 10px;">
+        <div id="historySessionSelectWrap" style="display:none;max-width:540px;margin:0 auto 10px;">
           <select id="historySessionSelect" class="setup-input" style="width:100%;margin-bottom:0;cursor:pointer;" onchange="App.filterHistoryBySession(this.value)">
             <option value="">Current &amp; Recent Sessions</option>
           </select>
@@ -8268,8 +8268,11 @@ ${scheduleHTML}
 
   // Fills the "view a previous session" dropdown, newest first, preserving
   // the current selection (falling back to the default view if that
-  // session no longer exists, e.g. its only match got deleted).
+  // session no longer exists, e.g. its only match got deleted). Hidden
+  // entirely when there's nothing closed yet to pick from.
   _populateHistorySessionSelect(closedSessions) {
+    const wrap = document.getElementById('historySessionSelectWrap');
+    if (wrap) wrap.style.display = closedSessions.length ? '' : 'none';
     const el = document.getElementById('historySessionSelect');
     if (!el) return;
     const selected = this._historySelectedSessionAt;
