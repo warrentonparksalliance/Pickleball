@@ -4792,10 +4792,11 @@ const App = {
 
   // Builds fixed doubles teams for Round Robin / Tournament: existing
   // partner pairs stay together, everyone else is randomly paired up.
-  // Returns null if an odd player is left without a partner.
-  // Only players who aren't sitting out are eligible for pairing — an
-  // odd one out (or a late joiner not yet ready) can be benched in
-  // Sitting Out instead of forcing the whole roster to pair up evenly.
+  // If that leaves one solo player odd, they're benched (sit out the whole
+  // schedule) rather than blocking generation for the group.
+  // Only players who aren't already sitting out are eligible for pairing —
+  // a late joiner not yet ready can also be benched in Sitting Out instead
+  // of forcing the whole roster to pair up evenly.
   // Round-varying players (see above) are excluded — they're layered in
   // separately, round by round.
   // excludeIds defaults to every round-varying player (the normal Round
@@ -4810,7 +4811,7 @@ const App = {
     const explicitTeams = this.state.teams.filter(t => t.current && idSet.has(t.p1) && idSet.has(t.p2));
     const pairedIds = new Set(explicitTeams.flatMap(t => [t.p1, t.p2]));
     const solos = this.shuffle(playerIds.filter(id => !pairedIds.has(id)));
-    if (solos.length % 2 !== 0) return null;
+    if (solos.length % 2 !== 0) solos.pop();
     const units = explicitTeams.map(t => ({ p1: t.p1, p2: t.p2, type: t.type || null }));
     for (let i = 0; i + 1 < solos.length; i += 2) {
       units.push({ p1: solos[i], p2: solos[i + 1], type: null });
@@ -4829,8 +4830,8 @@ const App = {
     const explicitTeams = this.state.teams.filter(t => t.current && idSet.has(t.p1) && idSet.has(t.p2));
     const pairedIds = new Set(explicitTeams.flatMap(t => [t.p1, t.p2]));
     const soloCount = playerIds.length - pairedIds.size;
-    if (soloCount % 2 !== 0) return null;
-    return explicitTeams.length + soloCount / 2 + Math.round(roundVarying.size / 2);
+    const pairedSoloCount = soloCount % 2 !== 0 ? soloCount - 1 : soloCount;
+    return explicitTeams.length + pairedSoloCount / 2 + Math.round(roundVarying.size / 2);
   },
 
   _pairKey(a, b) { return a < b ? `${a}|${b}` : `${b}|${a}`; },
@@ -4872,7 +4873,6 @@ const App = {
     let best = null, bestScore = Infinity;
     for (let i = 0; i < TRIALS; i++) {
       const units = this._buildTeamUnits(excludeIds);
-      if (!units) return null;
       const score = units.reduce((sum, u) => sum + (pairCounts.partners.get(this._pairKey(u.p1, u.p2)) || 0), 0);
       if (score < bestScore) { bestScore = score; best = units; }
       if (bestScore === 0) break;
@@ -5010,7 +5010,6 @@ const App = {
     // the whole bracket) falls back to being randomly paired as a solo,
     // same as anyone without a partner at all, instead of being dropped.
     const base = this._buildTeamUnitsForSeason(resolvedIds);
-    if (!base) return null;
     return [...base, ...resolved];
   },
 
@@ -5444,10 +5443,6 @@ const App = {
     const n = this.state.players.filter(p => p.active).length;
     if (n < 4) return;
     const fixedUnits = this._buildTeamUnitsForSeason();
-    if (!fixedUnits) {
-      alert('Add one more player, or pair everyone up with a partner, so no one is left without a doubles partner.');
-      return;
-    }
 
     const roundVarying = this._roundVaryingPlayerIds();
     const unitEstimate = fixedUnits.length + Math.round(roundVarying.size / 2);
@@ -5560,10 +5555,6 @@ const App = {
 
   bracketGenerate() {
     const units = this._buildTeamUnitsForTournament();
-    if (!units) {
-      alert('Add one more player, or pair everyone up with a partner, so no one is left without a doubles partner.');
-      return;
-    }
     const n = units.length;
     if (n < 2) {
       alert('Need at least 2 teams for a tournament.');
