@@ -1219,6 +1219,20 @@ body {
 }
 .btn-assign-all:hover:not(:disabled) { background: #047857; }
 .btn-assign-all:disabled { opacity: 0.45; cursor: not-allowed; }
+.btn-end-all-courts {
+  padding: 11px;
+  background: var(--danger-light);
+  color: var(--danger);
+  border: 1px solid var(--danger-border);
+  border-radius: var(--radius-sm);
+  font-size: 0.95rem;
+  font-weight: 700;
+  font-family: inherit;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+.btn-end-all-courts:hover:not(:disabled) { background: #fee2e2; }
+.btn-end-all-courts:disabled { opacity: 0.45; cursor: not-allowed; }
 
 /* ── Options bar ────────────────────────────── */
 .options-bar {
@@ -2093,6 +2107,14 @@ body.view-only-locked #tabCourts #btnToggleQueue {
   border-top: 1px solid var(--border);
 }
 
+/* ── Round Robin Schedule (also reused, as plain-color classes, by the
+     printSchedule "Save as PDF" popup) ────── */
+.schedule-round { margin-bottom: 12px; }
+.schedule-round-title { font-size: 0.78rem; font-weight: 700; color: var(--text-light); margin-bottom: 4px; }
+.schedule-game { display: flex; align-items: center; gap: 6px; padding: 4px 0; font-size: 0.82rem; }
+.schedule-court { color: var(--text-muted); font-size: 0.7rem; min-width: 18px; font-weight: 700; }
+.schedule-vs { color: var(--text-muted); font-size: 0.7rem; font-weight: 700; }
+
 /* ── Tournament Bracket ────────────────────── */
 .bracket-container {
   display: flex;
@@ -2678,6 +2700,14 @@ body.view-only-locked #tabCourts #btnToggleQueue {
       </div>
     </div>
 
+    <!-- Bulk Start/End — same actions as each court's own Confirm/Start/End
+         buttons, batched across every court on screen (see renderCourts /
+         _renderCourtsBulkControls). Works the same for every session type. -->
+    <div class="courts-bulk-controls" id="courtsBulkControls" style="display:none;gap:8px;margin-bottom:14px;">
+      <button type="button" id="btnStartAllCourts" class="btn-assign-all" style="flex:1;width:auto;" onclick="App.startAllCourts()">Start All</button>
+      <button type="button" id="btnEndAllCourts" class="btn-end-all-courts" style="flex:1;" onclick="App.endAllCourts()">End All</button>
+    </div>
+
     <!-- Courts grid (active games) -->
     <div class="courts-grid" id="courtsGrid"></div>
 
@@ -2686,9 +2716,12 @@ body.view-only-locked #tabCourts #btnToggleQueue {
       <div class="queue-bar-wrap">
         <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:8px;flex-wrap:wrap;">
           <div class="section-title">Upcoming Rounds</div>
-          <select id="upcomingPlayerFilter" class="setup-input" style="width:auto;min-width:140px;margin-bottom:0;cursor:pointer;" onchange="App.filterUpcomingByPlayer(this.value)">
-            <option value="">All Players</option>
-          </select>
+          <div style="display:flex;align-items:center;gap:8px;">
+            <select id="upcomingPlayerFilter" class="setup-input" style="width:auto;min-width:140px;margin-bottom:0;cursor:pointer;" onchange="App.filterUpcomingByPlayer(this.value)">
+              <option value="">All Players</option>
+            </select>
+            <button type="button" class="btn-outline btn-print-bracket" onclick="App.printSchedule()" style="padding:6px 12px;font-size:0.8rem;font-weight:600;">&#128438; Save as PDF</button>
+          </div>
         </div>
         <div id="rrUpcomingList"></div>
       </div>
@@ -4073,14 +4106,36 @@ const App = {
     this.render();
   },
 
-  endGame(courtId) {
+  // Core of endGame, without the save+render — shared with endAllCourts,
+  // which batches many of these into one save+render instead of one each.
+  _endGameCore(courtId) {
     const game = this.state.activeGames[courtId];
-    if (game && !game.timerPaused) {
+    if (!game) return false;
+    if (!game.timerPaused) {
       game.timerElapsed = (game.timerElapsed || 0) + (Date.now() - (game.timerResumedAt || Date.now()));
       game.timerPaused = true;
       game.timerResumedAt = null;
     }
     this.state.scoringGames[courtId] = true;
+    return true;
+  },
+
+  endGame(courtId) {
+    if (!this._endGameCore(courtId)) return;
+    this.saveState();
+    this.render();
+  },
+
+  // "End All": moves every court that's running or has an unstarted match
+  // straight to score entry, same as tapping each one's own End button —
+  // works the same for Open Play, Round Robin, and Tournament since all
+  // three land their matches in activeGames identically.
+  endAllCourts() {
+    let changed = false;
+    Object.keys(this.state.activeGames).map(Number).forEach(courtId => {
+      if (!this.state.scoringGames[courtId] && this._endGameCore(courtId)) changed = true;
+    });
+    if (!changed) return;
     this.saveState();
     this.render();
   },
@@ -5387,9 +5442,12 @@ const App = {
 
     rounds = this._applyPlannedRounds(rounds);
 
+    // Generating the schedule doesn't start Round 1 itself — it lands in
+    // Upcoming Rounds like every other round, and only populates the courts
+    // once the organizer taps Start Round 1 (see rrAdvanceRound, which
+    // treats current round 0 as "nothing started yet").
     this.state._rrSchedule = rounds;
-    this.state._rrCurrentRound = 1;
-    this._rrStartRound(1);
+    this.state._rrCurrentRound = 0;
     this.saveState();
     this.render();
   },
@@ -5413,7 +5471,9 @@ const App = {
   },
 
   rrAdvanceRound() {
-    const current = this.state._rrCurrentRound || 1;
+    // 0 means "no round started yet" (fresh schedule) — || would coerce
+    // that to 1 and skip straight to starting Round 2, so check explicitly.
+    const current = this.state._rrCurrentRound != null ? this.state._rrCurrentRound : 0;
     const schedule = this.state._rrSchedule || [];
     if (current >= schedule.length) return;
     this.state._rrCurrentRound = current + 1;
@@ -6158,9 +6218,12 @@ ${bracketHTML}
   // ─── Proposed matches (Open Play manual review) ─────
   // Auto-assignment only proposes a match; nothing is locked in — and no
   // player leaves the queue for good — until the organizer confirms it here.
-  startProposedMatch(courtId) {
+  // Core of startProposedMatch, without the save+render — shared with
+  // startAllCourts, which batches many of these into one save+render
+  // instead of one each.
+  _confirmProposedMatchCore(courtId) {
     const game = this.state.proposedGames[courtId];
-    if (!game || game.side1.length !== 2 || game.side2.length !== 2) return;
+    if (!game || game.side1.length !== 2 || game.side2.length !== 2) return false;
     const now = Date.now();
     this.state.activeGames[courtId] = {
       side1: [...game.side1], side2: [...game.side2],
@@ -6176,7 +6239,37 @@ ${bracketHTML}
     };
     this._confirmPlayersIntoMatch([...game.side1, ...game.side2]);
     delete this.state.proposedGames[courtId];
+    return true;
+  },
+
+  startProposedMatch(courtId) {
+    if (!this._confirmProposedMatchCore(courtId)) return;
     this._proposedUndoStack = []; // confirming a match is final — nothing before it is undoable
+    this.saveState();
+    this.render();
+  },
+
+  // "Start All": confirms every fully-filled proposed match (Open Play's
+  // manual-review step) and starts the timer on every not-yet-started
+  // active game — Round Robin/Tournament rounds land directly in
+  // activeGames already paused at zero (see _rrStartRound/bracketGenerate),
+  // same state a just-confirmed Open Play match is in, so one Start All
+  // covers every session type.
+  startAllCourts() {
+    let changed = false;
+    Object.keys(this.state.proposedGames).map(Number).forEach(courtId => {
+      if (this._confirmProposedMatchCore(courtId)) changed = true;
+    });
+    Object.keys(this.state.activeGames).map(Number).forEach(courtId => {
+      const game = this.state.activeGames[courtId];
+      if (game.timerPaused && (game.timerElapsed || 0) === 0 && !game.timerResumedAt) {
+        game.timerPaused = false;
+        game.timerResumedAt = Date.now();
+        changed = true;
+      }
+    });
+    if (!changed) return;
+    this._proposedUndoStack = [];
     this.saveState();
     this.render();
   },
@@ -6961,7 +7054,7 @@ ${bracketHTML}
     let allIds;
     if (structured) {
       allIds = [...new Set([...proposedIds, ...activeIds])].sort((a, b) => a - b);
-      if (allIds.length === 0) { el.innerHTML = ''; return; }
+      if (allIds.length === 0) { el.innerHTML = ''; this._renderCourtsBulkControls(proposedIds, activeIds); return; }
     } else {
       const n = this.state.availableCourts || 1;
       const idSet = new Set(Array.from({ length: n }, (_, i) => i + 1));
@@ -6971,6 +7064,30 @@ ${bracketHTML}
     }
 
     el.innerHTML = allIds.map(courtId => this._renderCourtCard(courtId)).join('');
+    this._renderCourtsBulkControls(proposedIds, activeIds);
+  },
+
+  // Shows and enables the Start All / End All row above the courts grid —
+  // same underlying actions as each court's own Confirm/Start/End buttons
+  // (see startAllCourts/endAllCourts), just hidden entirely when there's
+  // nothing proposed or active to act on.
+  _renderCourtsBulkControls(proposedIds, activeIds) {
+    const wrap = document.getElementById('courtsBulkControls');
+    if (!wrap) return;
+    if (!proposedIds.length && !activeIds.length) { wrap.style.display = 'none'; return; }
+    wrap.style.display = 'flex';
+    const canStart = proposedIds.some(id => {
+      const g = this.state.proposedGames[id];
+      return g && g.side1.length === 2 && g.side2.length === 2;
+    }) || activeIds.some(id => {
+      const g = this.state.activeGames[id];
+      return g.timerPaused && (g.timerElapsed || 0) === 0 && !g.timerResumedAt;
+    });
+    const canEnd = activeIds.some(id => !this.state.scoringGames[id]);
+    const btnStart = document.getElementById('btnStartAllCourts');
+    const btnEnd = document.getElementById('btnEndAllCourts');
+    if (btnStart) btnStart.disabled = !canStart;
+    if (btnEnd) btnEnd.disabled = !canEnd;
   },
 
   _renderCourtCard(courtId) {
@@ -7933,7 +8050,9 @@ ${bracketHTML}
       if (timeOptions) timeOptions.style.display = 'none';
       const totalRounds = schedule.length;
       const hasActive = this.rrHasActiveGames();
-      if (currentRound > 0 && currentRound <= totalRounds) {
+      if (currentRound === 0) {
+        countEl.textContent = `Schedule ready — ${totalRounds} round${totalRounds === 1 ? '' : 's'}`;
+      } else if (currentRound > 0 && currentRound <= totalRounds) {
         countEl.textContent = `Round ${currentRound} of ${totalRounds}`;
       } else {
         countEl.textContent = `All ${totalRounds} rounds complete`;
@@ -7942,7 +8061,7 @@ ${bracketHTML}
       if (btnAssignAll) {
         const canAdvance = !hasActive && currentRound < totalRounds;
         btnAssignAll.disabled = !canAdvance;
-        btnAssignAll.textContent = currentRound >= totalRounds ? 'All Rounds Complete' : 'Start Next Round';
+        btnAssignAll.textContent = currentRound === 0 ? 'Start Round 1' : currentRound >= totalRounds ? 'All Rounds Complete' : 'Start Next Round';
         btnAssignAll.onclick = () => this.rrAdvanceRound();
       }
       if (courtSelect) courtSelect.parentElement.style.display = 'none';
@@ -7974,6 +8093,29 @@ ${bracketHTML}
     if (prev && players.some(p => String(p.id) === prev)) select.value = prev;
   },
 
+  // Shared row markup for one round's matchups — used both by the in-app
+  // Upcoming Rounds list (filtered to rounds still ahead) and by
+  // printSchedule's full, unfiltered "Save as PDF" popup, via real CSS
+  // classes (.schedule-*) rather than inline styles, so the print window's
+  // own <style> block (which can't see this page's CSS vars) can restyle
+  // them the same way printBracket's classes do.
+  _renderScheduleRoundHTML(round) {
+    const gamesHtml = round.games.map(g => {
+      const s1 = g.side1.map(id => { const p = this.getPlayer(id); return p ? this.esc(p.name) : '?'; }).join(' & ');
+      const s2 = g.side2.map(id => { const p = this.getPlayer(id); return p ? this.esc(p.name) : '?'; }).join(' & ');
+      return `<div class="schedule-game">
+        <span class="schedule-court">C${g.court}</span>
+        <span>${s1}</span>
+        <span class="schedule-vs">vs</span>
+        <span>${s2}</span>
+      </div>`;
+    }).join('');
+    return `<div class="schedule-round">
+      <div class="schedule-round-title">Round ${round.round}</div>
+      ${gamesHtml}
+    </div>`;
+  },
+
   _renderRRUpcoming() {
     const section = document.getElementById('rrUpcomingSection');
     const list = document.getElementById('rrUpcomingList');
@@ -7981,6 +8123,15 @@ ${bracketHTML}
     this._populatePlayerFilterSelect(document.getElementById('upcomingPlayerFilter'));
 
     const schedule = this.state._rrSchedule || [];
+    // Once a schedule exists, this section (and its Save as PDF button)
+    // stays up through the whole event — only the list beneath it empties
+    // out to "All rounds complete" once nothing's left ahead.
+    if (schedule.length === 0) {
+      section.style.display = 'none';
+      return;
+    }
+    section.style.display = '';
+
     const currentRound = this.state._rrCurrentRound || 0;
     const filterId = this._upcomingFilterPlayerId;
     const upcoming = schedule
@@ -7988,28 +8139,37 @@ ${bracketHTML}
       .map(r => filterId == null ? r : { ...r, games: r.games.filter(g => g.side1.includes(filterId) || g.side2.includes(filterId)) })
       .filter(r => r.games.length > 0);
 
-    if (upcoming.length === 0) {
-      section.style.display = 'none';
-      return;
-    }
+    list.innerHTML = upcoming.length
+      ? upcoming.map(round => this._renderScheduleRoundHTML(round)).join('')
+      : '<div class="history-empty">All rounds complete</div>';
+  },
 
-    section.style.display = '';
-    list.innerHTML = upcoming.map(round => {
-      const gamesHtml = round.games.map(g => {
-        const s1 = g.side1.map(id => { const p = this.getPlayer(id); return p ? this.esc(p.name) : '?'; }).join(' & ');
-        const s2 = g.side2.map(id => { const p = this.getPlayer(id); return p ? this.esc(p.name) : '?'; }).join(' & ');
-        return `<div style="display:flex;align-items:center;gap:6px;padding:4px 0;font-size:0.82rem;">
-          <span style="color:var(--text-muted);font-size:0.7rem;min-width:18px;">C${g.court}</span>
-          <span>${s1}</span>
-          <span style="color:var(--text-muted);font-size:0.7rem;font-weight:700;">vs</span>
-          <span>${s2}</span>
-        </div>`;
-      }).join('');
-      return `<div style="margin-bottom:12px;">
-        <div style="font-size:0.78rem;font-weight:700;color:var(--text-light);margin-bottom:4px;">Round ${round.round}</div>
-        ${gamesHtml}
-      </div>`;
-    }).join('');
+  // "Save as PDF": the complete round-by-round schedule (every round, not
+  // just the ones still ahead — see _renderRRUpcoming) in a new tab, styled
+  // for print and handed straight to the browser's print dialog, same
+  // pattern as printBracket below.
+  printSchedule() {
+    const schedule = this.state._rrSchedule || [];
+    const scheduleHTML = schedule.map(round => this._renderScheduleRoundHTML(round)).join('');
+    const sessionName = this.esc(this.state._sessionName || 'Round Robin');
+    const w = window.open('', '_blank');
+    if (!w) return;
+    w.document.write(`<!DOCTYPE html><html><head><meta charset="utf-8">
+<title>${sessionName} Schedule</title>
+<style>
+body{font-family:system-ui,sans-serif;padding:24px;background:#fff;color:#1a1a1a;}
+h1{font-size:1.1rem;font-weight:700;margin:0 0 16px;}
+.schedule-round{margin-bottom:14px;}
+.schedule-round-title{font-size:0.85rem;font-weight:700;color:#444;margin-bottom:6px;}
+.schedule-game{display:flex;align-items:center;gap:8px;padding:4px 0;font-size:0.85rem;border-bottom:1px solid #eee;}
+.schedule-court{color:#888;font-size:0.72rem;min-width:22px;font-weight:700;}
+.schedule-vs{color:#888;font-size:0.72rem;font-weight:700;}
+</style></head><body>
+<h1>${sessionName} — Schedule</h1>
+${scheduleHTML}
+<script>window.onload=function(){window.print();}<\/script>
+</body></html>`);
+    w.document.close();
   },
 
   _historyFilterMine: false,
