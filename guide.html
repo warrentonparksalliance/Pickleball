@@ -87,7 +87,7 @@ footer a:hover { text-decoration: underline; }
 <p>Tap <strong>Quick Play</strong>, choose a format — <strong>Open Play</strong>, <strong>Round Robin</strong>, or <strong>Tournament</strong> — then enter how many players are starting and each player's name (skill level is skipped for speed). Tap <strong>Start Playing</strong> and you're straight into that offline session — entirely offline and local to this device. Nobody else can join it, there's no Settings tab, and nothing is shared online.</p>
 
 <h3>Joining a Session (online)</h3>
-<p>After you sign in with Google, you'll land on the <strong>Join a Session</strong> screen. The <strong>Sessions</strong> card there is the first thing you see (above your account info) — it lists every private session you've previously joined or created, each row colored green (open) or orange (an admin has closed it) with the date and time you last joined it on the right.</p>
+<p>After you sign in with Google, you'll land on the <strong>Join a Session</strong> screen. The <strong>Sessions</strong> card there is the first thing you see (above your account info) — it lists every private session you've previously joined or created, each row colored green (open) or orange (an admin has closed it) with the date and time you last joined it on the right — a dash if you created it but haven't joined yet.</p>
 <p>Tapping a session in that list joins it immediately — no extra confirmation step. You're added right into <strong>Sitting Out</strong> rather than the active queue, so you don't disrupt matches already in progress; move yourself into <strong>Waiting</strong> whenever you're ready to play.</p>
 <p>The first time you join or create anything online — a private session, or someone's shared link — you'll be asked for just <strong>your name</strong> in a small popup (skipped entirely if you already have a saved name). There's no skill level to set here; everyone starts as <strong>Not Rated</strong> and can set a rating afterward from the Settings tab or by tapping their own NR/B/I/A chip in the queue.</p>
 <p>If someone sends you a link to their session, opening it lets you sign in with Google or <strong>continue as a guest</strong> to join that session directly — no account needed.</p>
@@ -97,6 +97,7 @@ footer a:hover { text-decoration: underline; }
 </div>
 
 <h2>The Queue</h2>
+<p>The Courts tab shows the session's name in a small card above the Queue, so you always know which session you're in.</p>
 <div class="card">
   <div class="card-title">Player Chips</div>
   <p><span class="badge badge-you">green border</span> — That's you in the list</p>
@@ -113,11 +114,15 @@ footer a:hover { text-decoration: underline; }
   <li><strong>Sitting Out</strong> — Drop a player here to bench them temporarily; they stay in the session but won't be assigned to courts. Anyone can sit out anyone. Drop them back on Waiting to rejoin the queue.</li>
   <li><strong>Leave Session</strong> — Drop a player here and confirm with <strong>Yes</strong> to remove them. You can remove yourself or players you added; admins can remove anyone.</li>
 </ul>
+<p>Tap <strong>Select All</strong> above the Queue or Waiting list (or tap several chips one at a time) to select multiple players, then drag or tap the selection onto a zone or an open court side to move them all together in one action — handy for benching or bringing back a whole group at once. A selection larger than 2 can't drop directly onto a court slot, and there's no bulk removal — each player's own chip still handles that individually.</p>
 
 <h2>Court Assignments</h2>
 
 <div class="tip">
   <strong>On tablet &amp; desktop:</strong> The queue stays pinned in its own column on the left so you can always see who's waiting. Court cards fill the space to the right — two columns on tablets, three across on wider desktop or landscape screens — and more columns appear automatically as you add courts.
+</div>
+<div class="tip">
+  <strong>Start All / End All:</strong> When there are matches ready to go, a bulk bar appears above the courts grid with <strong>Start All</strong> (starts the timer on every confirmed court at once) and <strong>End All</strong> (ends every running match at once) — the same actions as each court's own Confirm/Start/End buttons, just batched. Works the same way in Open Play, Round Robin, and Tournament.
 </div>
 
 <h3>Open Play (default)</h3>
@@ -184,6 +189,10 @@ footer a:hover { text-decoration: underline; }
 <p>In <strong>Round Robin</strong> and <strong>Tournament</strong> sessions, partners work a little differently: add a partner while the roster is still being built and you'll be teamed together for the <strong>whole</strong> round robin or tournament, not just one match. Anyone left without a partner is randomly paired with another unpartnered player once the roster is locked. The Partner(s) card disappears from Settings after locking, since teams are fixed at that point.</p>
 <p>Partner preferences aren't available in offline (Quick Play) sessions — there's no Settings tab in those.</p>
 
+<h3>Admin-Managed Partnerships (Mixed/Men's/Women's Doubles)</h3>
+<p>Separately from the self-service partner system above, admins can link two players into a typed partnership from the <strong>Partnerships</strong> card in Settings (Round Robin) — tagged <strong>Mixed Doubles</strong>, <strong>Men's Doubles</strong>, or <strong>Women's Doubles</strong>. A player can hold one of each kind at once (e.g. a Mixed partnership plus a Women's one), and Round Robin alternates between them evenly round to round, matching same-type teams against each other when possible. In Tournament, a player with two active partnerships plays with whichever one has been used less that League season.</p>
+<p>Tap <strong>View Partnerships</strong> at the bottom-right of the Queue card to see everyone's partnerships — both self-service and admin-managed — in a read-only list, in any session type.</p>
+
 <h2>Share Link</h2>
 <p>Every online session has a <strong>Share Link</strong> in the Settings tab. Copy it and send to friends to invite them to your session. When someone opens a share link:</p>
 <ul>
@@ -191,21 +200,22 @@ footer a:hover { text-decoration: underline; }
   <li>They can then sign in with Google or join as a guest, enter their name, and they're in.</li>
 </ul>
 <p>Share links aren't available for offline sessions — those never leave your device.</p>
+<p>Admins can also flip on <strong>View Only</strong> next to the Share Link. With it on, everyone except admins can just watch — they can't add or move players, score matches, or change settings — though they can still search and filter Match History. Useful for sharing a read-only view of a session on a lobby screen or with spectators.</p>
 
 <h2>Private Sessions</h2>
 <p>For games at home, tournaments, or groups that want their own space:</p>
 <ol class="steps">
   <li><strong>Sign in with Google</strong> on the landing page (required to create).</li>
   <li>On the <strong>Sessions</strong> card, tap <strong>+ Create New</strong> — it expands an inline form rather than opening a popup.</li>
-  <li>Enter a <strong>session name</strong>.</li>
+  <li>Enter a <strong>session name</strong> if you'd like one — it's optional. Leave it blank and the session is auto-named from its type and the current date/time (e.g. "Round Robin Sep 14 3:45 PM").</li>
   <li>Pick <strong>Open Play</strong>, <strong>Round Robin</strong>, or <strong>Tournament</strong> from the radio buttons (defaults to Open Play) — tap the <strong>?</strong> next to any option for what it means.</li>
   <li>Flip on <strong>Passcode required</strong> only if you want one; when it's on, enter a <strong>4-character passcode</strong> or tap Random to generate one. Leave it off and anyone with the link can join without one.</li>
-  <li>Tap <strong>Create &amp; Join</strong> — for Open Play you're placed straight into the new session; Round Robin and Tournament ask for the starting player count and names first, since the roster needs to exist before it can be locked.</li>
+  <li>Tap <strong>Create &amp; Join</strong> — you're placed straight into the new session no matter which format you picked. For Round Robin and Tournament, add players to the queue first, then lock the roster when you're ready to generate the schedule or bracket.</li>
   <li>Share the link with friends — if you set a passcode, they'll need it to join (the creator and super admins always skip it). The new session also appears in your own Sessions list from then on.</li>
 </ol>
 
 <div class="tip">
-  <strong>Passcode:</strong> If the session has one, admins can view it in the Settings tab (click "Show" to reveal it). Share it with players who need to join. Sessions created without a passcode won't show one here.
+  <strong>Passcode:</strong> Admins manage the passcode anytime from the Settings tab's <strong>Session Passcode</strong> card — flip <strong>Require passcode</strong> on or off independently of the stored code, tap "Show" to reveal the current code, or <strong>Edit passcode</strong> to set a new one. Changing the passcode asks whether already-joined players should be required to re-enter it to keep using the session, or left alone.
 </div>
 
 <h3>Round Robin Mode</h3>
@@ -213,23 +223,38 @@ footer a:hover { text-decoration: underline; }
 <ol class="steps">
   <li>Add all players to the session.</li>
   <li>Tap <strong>Lock Players to Generate Schedule</strong> in the assign section.</li>
-  <li>Set the <strong>number of courts</strong> and tap <strong>Generate Schedule</strong>.</li>
-  <li>Round 1 is assigned to courts. All upcoming rounds are shown below.</li>
+  <li>Set the <strong>number of courts</strong>. Optionally fill in <strong>Match Time Limit</strong>, <strong>Session Time Limit</strong>, and the <strong>Buffer Between Rounds</strong> (defaults to a few minutes, but you can change it) — with those filled in, it recommends how many rounds will fit your session, capped at a full rotation. Tap <strong>Or set rounds directly</strong> to flip that around: enter the number of rounds yourself and it estimates the session time instead, warning you if that would run past your session limit.</li>
+  <li>Tap <strong>Generate Schedule</strong>. Round 1 is assigned to courts, and every upcoming round is listed below with the match/session time limit and buffer it was planned around shown at the top — filter the list to one player with the dropdown next to it, or tap <strong>Save as PDF</strong> to export the full schedule.</li>
   <li>When all Round 1 games finish, tap <strong>Start Next Round</strong> to advance. Once every round has been played, the button reads <strong>All Rounds Complete</strong>.</li>
 </ol>
 <p>Admins can switch between Open Play, Round Robin, and Tournament in the Settings tab, and can unlock players to modify the roster. All players must be paired into doubles teams (with a partner or automatically); an odd number of unpaired players will prompt you to add one more or pair everyone up.</p>
+<div class="tip">
+  <strong>Too few courts:</strong> If there aren't enough courts for every team to play each round, a warning shows before you generate the schedule — some teams will end up sitting out rounds with no makeup game.
+</div>
+<div class="tip">
+  <strong>Fairer matchups:</strong> Round Robin already avoids repeat matchups where it can; when a League season is active (see below), it also draws on that season's match history to keep spreading out partners and opponents across sessions, not just within one.
+</div>
+
+<h3>League Seasons (Round Robin)</h3>
+<p>Turn on <strong>League</strong> in Settings &gt; Session Type (Round Robin only) and set a <strong>start date</strong>, <strong>end date</strong>, and <strong>frequency</strong> (Weekly, Bi-Weekly, or Monthly). While a League is active:</p>
+<ul>
+  <li>A <strong>Season Summary</strong> card appears above Match History showing standings — win/loss record, games played, average points, and win percentage — for everyone who's played since the season started, or <strong>Season Complete</strong> once the end date passes. It leads with the top 3 players; tap <strong>Show All Players</strong> for the full list.</li>
+  <li>The Match History search box is replaced with a player picker — choosing a player filters the match list to just them and shows their own season stats above it.</li>
+  <li>Team formation and round selection try to minimize repeated partners and opponents using that season's history, instead of pairing purely at random each session.</li>
+</ul>
 
 <h3>Tournament Mode</h3>
 <p>Tournament mode creates a <strong>single-elimination bracket</strong> of doubles teams for private (and offline) sessions — you'll need at least <strong>4 players (2 teams)</strong> to start:</p>
 <ol class="steps">
   <li>Add all players to the session.</li>
   <li>Tap <strong>Lock Players to Generate Bracket</strong> in the assign section.</li>
-  <li>Set the <strong>number of courts</strong> and tap <strong>Generate Bracket</strong>.</li>
-  <li>The bracket is displayed with all rounds. First-round matches are assigned to courts.</li>
+  <li>Set the <strong>number of courts</strong>. Round count is fixed by the bracket size, so instead of choosing rounds, you'll see that fixed count plus an estimated total duration; optionally fill in a <strong>Match Time Limit</strong>, <strong>Session Time Limit</strong>, and <strong>Buffer Between Rounds</strong> to get that estimate and a warning if the bracket won't fit your session.</li>
+  <li>Tap <strong>Generate Bracket</strong>. The bracket is displayed with all rounds, with the time limit/buffer it was planned around shown above it. First-round matches are assigned to courts.</li>
   <li>When a match ends, enter scores — <strong>ties are not allowed</strong> in tournament matches. The winning team automatically advances in the bracket. (Saving without a score just clears the court without recording a winner, so use it sparingly here.)</li>
   <li>When all matches in a round are complete, tap to start the next round (Semifinals, Final, etc.).</li>
   <li>If there are more matches than courts, remaining matches can be started as courts free up.</li>
 </ol>
+<p>Use the player filter next to the bracket to narrow it to one player's matches.</p>
 
 <div class="tip">
   <strong>Joining after the roster is locked:</strong> Anyone who joins a Round Robin or Tournament session after the schedule or bracket is generated is still added to the queue, but they're shown a heads-up that they won't be part of the current rounds — an admin needs to unlock the roster and regenerate it to include them.
@@ -241,11 +266,12 @@ footer a:hover { text-decoration: underline; }
 
 <h2>Match History</h2>
 <h3>Session History</h3>
-<p>The <strong>History</strong> tab shows all completed matches in the current session with teams, scores, and match duration. Use the search bar to filter by player name, or tap <strong>My Matches</strong> to see only games you played in. Session history persists until an admin clears it.</p>
+<p>The <strong>History</strong> tab shows every completed match in the session's current, still-open stretch of play in full, with teams, scores, and match duration. Once an admin closes the session, that stretch collapses into a <strong>session summary</strong> card (win/loss record, games played, and average points for everyone who played) instead of listing every match — pick a past session from the dropdown above the list to see its matches in full again. Use the search bar to filter by player name, or tap <strong>My Matches</strong> to see only games you played in. History persists until an admin resets the session (see Admin Actions).</p>
 <p>In Open Play, tap <strong>+ Log Past Match</strong> above the history table to record a match your group already played before opening the app: pick 4 players currently in the session (the first two picked become Team A, the next two Team B), optionally enter a score, and add it. It's added to history and counts toward the fairness algorithm's repeat-matchup avoidance, without being tied to a court or timer. Not available in Round Robin or Tournament, which build matches from a locked roster or bracket instead.</p>
+<p>Admins can tap a match to <strong>fix its score</strong> or <strong>delete it</strong> entirely, in case something was entered wrong.</p>
 
 <h3>Personal Match History</h3>
-<p>If you're signed in with Google, your matches are also saved to your <strong>personal match history</strong>. This history stays even if an admin clears the session history or deletes the session. Access it from the <strong>My Match History</strong> button in your profile card on the landing page. You can search by player name and swipe left on any match to delete it. Personal match history isn't available for offline or guest sessions.</p>
+<p>If you're signed in with Google, your matches are also saved to your <strong>personal match history</strong>. This history stays even if an admin resets or deletes the session. Access it from the <strong>My Match History</strong> button in your profile card on the landing page. You can search by player name and swipe left on any match to delete it. Personal match history isn't available for offline or guest sessions.</p>
 
 <h3>Match Time Limit</h3>
 <p>Matches automatically expire after <strong>100 minutes</strong>. Expired matches are saved to history with a score of "N/A" and players are returned to the queue.</p>
@@ -288,14 +314,15 @@ footer a:hover { text-decoration: underline; }
 <h3>Admin Actions</h3>
 <p>Admins can:</p>
 <ul>
-  <li><strong>Reset Everything</strong> — Clears all data. All users get kicked back to the join screen.</li>
-  <li><strong>Clear History</strong> — Wipes match history and sit-out counts, keeps players and courts.</li>
+  <li><strong>Reset Everything</strong> — Clears all data, including history. All users get kicked back to the join screen.</li>
   <li><strong>Delete Session</strong> — Permanently removes a session (with double confirmation).</li>
   <li><strong>Remove any player</strong> from the queue.</li>
+  <li><strong>Fix or delete a match</strong> in History if a score was entered wrong.</li>
   <li><strong>Change session type</strong> — Switch between Open Play, Round Robin, and Tournament (private sessions).</li>
   <li>View the <strong>Admin History</strong> log of all admin actions.</li>
-  <li>View and share the <strong>session passcode</strong> from Settings.</li>
+  <li>Manage the <strong>session passcode</strong> — require it or not, show it, or edit it — from Settings.</li>
 </ul>
+<p><strong>Close Session</strong> also resets a locked Round Robin or Tournament roster, so reopening starts fresh with a new roster to lock, rather than the same finished schedule or bracket.</p>
 
 <div class="tip">
   <strong>Super Admins</strong> join a session the same way everyone else does — straight in as a regular player, landing in Sitting Out. There's no separate "admin only" / observer-only option; they just have admin controls available once they're in.

@@ -163,19 +163,6 @@ body {
 }
 .btn-hiw:hover { color: var(--primary); border-color: var(--primary); background: var(--primary-light); }
 
-/* ── Back nav ───────────────────────────────── */
-.back-nav {
-  background: #152815;
-  padding: 5px 20px;
-}
-.back-link {
-  color: rgba(255,255,255,0.75);
-  text-decoration: none;
-  font-size: 0.78rem;
-  font-weight: 500;
-}
-.back-link:hover { color: white; }
-
 /* ── Header ─────────────────────────────────── */
 .header {
   background: var(--header-grad);
@@ -249,9 +236,6 @@ body {
   display: flex;
   background: var(--tab-bg);
   border-bottom: 1px solid var(--tab-bg-border);
-  position: sticky;
-  top: 94px;
-  z-index: 45;
 }
 .tab-btn {
   flex: 1;
@@ -1236,6 +1220,20 @@ body {
 }
 .btn-assign-all:hover:not(:disabled) { background: #047857; }
 .btn-assign-all:disabled { opacity: 0.45; cursor: not-allowed; }
+.btn-end-all-courts {
+  padding: 11px;
+  background: var(--danger-light);
+  color: var(--danger);
+  border: 1px solid var(--danger-border);
+  border-radius: var(--radius-sm);
+  font-size: 0.95rem;
+  font-weight: 700;
+  font-family: inherit;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+.btn-end-all-courts:hover:not(:disabled) { background: #fee2e2; }
+.btn-end-all-courts:disabled { opacity: 0.45; cursor: not-allowed; }
 
 /* ── Options bar ────────────────────────────── */
 .options-bar {
@@ -1855,6 +1853,9 @@ body {
   gap: 8px;
   margin-bottom: 12px;
   flex-wrap: wrap;
+  max-width: 540px;
+  margin-left: auto;
+  margin-right: auto;
 }
 .history-search {
   flex: 1;
@@ -1962,6 +1963,58 @@ body {
   text-align: right;
   min-width: 40px;
 }
+.match-score-edit {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
+  color: var(--text-muted);
+}
+.match-score-edit input[type="number"] {
+  width: 44px;
+  padding: 4px 6px;
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius-sm);
+  font-size: 0.85rem;
+  font-family: inherit;
+  background: var(--card);
+  color: var(--text);
+  text-align: center;
+}
+.match-score-edit input:focus {
+  outline: none;
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px var(--primary-light);
+}
+.match-edit-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 6px;
+  margin-top: 8px;
+}
+.match-duration-edit {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  color: var(--text);
+  font-weight: 600;
+}
+.match-duration-edit input[type="number"] {
+  width: 38px;
+  padding: 4px 2px;
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius-sm);
+  font-size: 0.85rem;
+  font-family: inherit;
+  background: var(--card);
+  color: var(--text);
+  text-align: center;
+}
+.match-duration-edit input:focus {
+  outline: none;
+  border-color: var(--primary);
+  box-shadow: 0 0 0 2px var(--primary-light);
+}
 .history-empty { padding: 8px 0; font-size: 0.82rem; color: var(--text-muted); font-style: italic; }
 .history-session-closed {
   display: flex;
@@ -1980,6 +2033,31 @@ body {
   height: 1px;
   background: var(--border-strong);
 }
+.history-session-summary {
+  background: var(--card);
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius);
+  padding: 10px 12px;
+  margin-bottom: 2px;
+}
+.history-session-summary-title {
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--text-muted);
+  margin-bottom: 6px;
+}
+.history-summary-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  font-size: 0.85rem;
+  padding: 3px 0;
+}
+.history-summary-row + .history-summary-row { border-top: 1px solid var(--border); }
+.history-summary-name { flex: 1; }
+.history-summary-record { font-weight: 700; color: var(--text-muted); flex-shrink: 0; }
 .btn-my-matches-active { background: var(--primary) !important; color: white !important; border-color: var(--primary) !important; }
 .swipe-wrap { position: relative; overflow: hidden; border-radius: var(--radius); }
 .swipe-wrap .match-card { position: relative; z-index: 1; transition: transform 0.2s ease; touch-action: pan-y; }
@@ -1994,19 +2072,21 @@ body {
   padding: 1px 5px;
   border-radius: var(--radius-full);
 }
-.btn-clear-history {
-  padding: 6px 14px;
-  background: transparent;
-  color: var(--text-muted);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-sm);
-  font-size: 0.78rem;
-  font-weight: 600;
-  font-family: inherit;
-  cursor: pointer;
+/* ── View Only (see App.canModify/toggleViewOnly) ──
+   Blocks interaction with anything that mutates shared state for a
+   non-admin viewer — Courts (queue, court assignment, RR/bracket
+   controls) and Settings (profile, partners, and anything already
+   admin-only under the hood). Match History's own tab is untouched, so
+   its search/player-filter/My Matches controls stay usable; editing a
+   match's score there is instead gated directly via canModify() (see
+   canEditScore in renderHistory) since Delete/Save live inline with it. */
+body.view-only-locked #tabCourts,
+body.view-only-locked #tabSettings {
+  pointer-events: none;
 }
-.btn-clear-history:hover { color: var(--danger); border-color: var(--danger-border); background: var(--danger-light); }
-
+body.view-only-locked #tabCourts #btnToggleQueue {
+  pointer-events: auto;
+}
 /* ── Footer ─────────────────────────────────── */
 .app-footer {
   text-align: center;
@@ -2027,6 +2107,14 @@ body {
   padding-top: 6px;
   border-top: 1px solid var(--border);
 }
+
+/* ── Round Robin Schedule (also reused, as plain-color classes, by the
+     printSchedule "Save as PDF" popup) ────── */
+.schedule-round { margin-bottom: 12px; }
+.schedule-round-title { font-size: 0.78rem; font-weight: 700; color: var(--text-light); margin-bottom: 4px; }
+.schedule-game { display: flex; align-items: center; gap: 6px; padding: 4px 0; font-size: 0.82rem; }
+.schedule-court { color: var(--text-muted); font-size: 0.7rem; min-width: 18px; font-weight: 700; }
+.schedule-vs { color: var(--text-muted); font-size: 0.7rem; font-weight: 700; }
 
 /* ── Tournament Bracket ────────────────────── */
 .bracket-container {
@@ -2070,6 +2158,9 @@ body {
 }
 .bracket-match.completed {
   opacity: 0.7;
+}
+.bracket-match-dim {
+  opacity: 0.35;
 }
 .bracket-slot {
   padding: 5px 8px;
@@ -2220,10 +2311,9 @@ body {
     gap: 14px;
     align-items: start;
   }
-  #playersSection {
+  #courtsLeftCol {
     grid-column: 1;
     grid-row: 1 / -1;
-    margin-bottom: 0 !important;
   }
   #assignHeader {
     grid-column: 2 / -1;
@@ -2280,15 +2370,15 @@ body {
   #manageAdminsSection { grid-column: 2; grid-row: 2; }
   #shareLinkSection { grid-column: 3; grid-row: 1; }
   #passcodeSection { grid-column: 3; grid-row: 2; }
-  #dangerZone { grid-column: 1 / -1; grid-row: 3; }
-  #adminLogSection { grid-column: 1 / -1; grid-row: 4; }
+  #partnershipsSection { grid-column: 1 / -1; grid-row: 3; }
+  #dangerZone { grid-column: 1 / -1; grid-row: 4; }
+  #adminLogSection { grid-column: 1 / -1; grid-row: 5; }
 }
 </style>
 </head>
 <body>
 
 <!-- ── Header ──────────────────────────────────── -->
-<nav class="back-nav"><a href="https://warrentonparksalliance.com" class="back-link">← Warrenton Parks Alliance</a></nav>
 <div class="sticky-top">
 <header class="header">
   <div class="header-brand">
@@ -2304,14 +2394,14 @@ body {
   </div>
 </header>
 
-</div>
-
 <!-- ── Tab Bar (shown when in session) ─────────── -->
 <nav class="tab-bar" id="tabBar" style="display:none;">
   <button class="tab-btn active" data-tab="courts" onclick="App.switchTab('courts')">Courts <span class="tab-badge" id="tabBadgeCourts">0</span></button>
   <button class="tab-btn" id="tabBtnSettings" data-tab="settings" onclick="App.switchTab('settings')">Settings</button>
   <button class="tab-btn" data-tab="history" onclick="App.switchTab('history')">History <span class="tab-badge" id="tabBadgeHistory">0</span></button>
 </nav>
+
+</div>
 
 <div class="page-wrap">
 
@@ -2377,8 +2467,8 @@ body {
         <div class="section-subtitle" style="margin-bottom:14px;">Create a session for your group and share the link or code with friends — they can join without signing in.</div>
         <button type="button" class="btn-outline" onclick="Onboard.toggleCreateSessionRow()" id="btn-create-private" style="width:100%;padding:12px 14px;font-size:1rem;font-weight:700;font-family:inherit;">+ Create New</button>
         <div id="createSessionRow" style="display:none;margin-top:10px;">
-          <p id="createSessionError" class="setup-error" style="display:none;">Enter a session name</p>
-          <input type="text" class="setup-input" id="privateSessionName" placeholder="Session name" maxlength="20" style="width:100%;">
+          <p id="createSessionError" class="setup-error" style="display:none;">Enter a 4-character passcode</p>
+          <input type="text" class="setup-input" id="privateSessionName" placeholder="Session name (optional)" maxlength="20" style="width:100%;">
           <div class="qp-type-group" id="sessionTypeGroup" role="radiogroup" aria-label="Session type" style="margin-bottom:8px;">
             <label class="qp-type-option">
               <input type="radio" name="sessionCreateType" value="open" checked onchange="Onboard.setSessionType(this.value)">
@@ -2400,7 +2490,7 @@ body {
             <span id="sessionTypeInfoText"></span>
             <button type="button" class="qp-info-close" onclick="Onboard._closeSessionTypeInfo()" aria-label="Close description">&times;</button>
           </div>
-          <label class="toggle-switch-label" style="margin:10px 0;">
+          <label class="toggle-switch-label" style="margin:16px 0 24px;">
             <span class="toggle-switch">
               <input type="checkbox" id="privatePasscodeToggle" onchange="Onboard.togglePasscodeField()">
               <span class="toggle-switch-track"></span>
@@ -2481,6 +2571,92 @@ body {
   <!-- ═══════════════ TAB: COURTS ═══════════════ -->
   <div id="tabCourts" class="tab-panel active" style="display:none;">
 
+    <!-- Left column: Session name + Queue, kept as one flow so Queue
+         always stacks directly under Session regardless of how tall the
+         Assign Courts column (right) grows — see #courtsLeftCol below. -->
+    <div id="courtsLeftCol">
+      <!-- Session name -->
+      <div id="sessionNameCard" class="queue-bar-wrap" style="margin-bottom:14px;">
+        <div class="queue-bar-label">Session</div>
+        <div class="section-title" id="sessionNameDisplay"></div>
+      </div>
+
+      <!-- Queue -->
+      <div id="playersSection" class="queue-bar-wrap" style="margin-bottom:14px;">
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:4px;">
+          <div class="section-title" id="queueTitle">Queue</div>
+          <button id="btnToggleQueue" class="btn-icon-eye" title="Hide queue" onclick="App.toggleQueueVisibility()">
+            <svg id="queueEyeIcon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8Z"/><circle cx="12" cy="12" r="3"/></svg>
+          </button>
+        </div>
+        <div id="queueBody">
+          <div style="display:flex;justify-content:flex-end;margin-bottom:4px;">
+            <button id="btnUndoMove" class="btn-outline" style="display:none;flex-shrink:0;padding:5px 10px;font-size:0.78rem;font-weight:600;" onclick="App.undoProposedMove()">&#8617; Undo</button>
+          </div>
+          <div class="section-subtitle" id="queueSubtitle" style="margin-bottom:10px;"></div>
+          <div class="assign-match-options" style="margin-bottom:10px;">
+            <label class="toggle-switch-label">
+              <span class="toggle-switch">
+                <input type="checkbox" id="optSkill" onchange="App.toggleSkillMatching()">
+                <span class="toggle-switch-track"></span>
+              </span>
+              Match by skill
+            </label>
+          </div>
+          <div id="queueAddPlayerRow" style="display:none;margin-bottom:10px;">
+            <p id="queueAddPlayerError" class="setup-error" style="display:none;">Enter a player name</p>
+            <div style="display:flex;gap:8px;">
+              <input type="text" class="setup-input" id="queueAddPlayerName" placeholder="Player name" style="flex:1;margin-bottom:0;" onkeydown="if(event.key==='Enter')App.submitQueueAddPlayer()">
+              <button type="button" class="btn-add-player" style="margin-top:0;flex-shrink:0;width:auto;padding:12px 16px;" onclick="App.submitQueueAddPlayer()">+ Add Player</button>
+            </div>
+          </div>
+          <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;">
+            <div class="queue-subsection-label">Waiting</div>
+            <button type="button" class="btn-outline" id="btnSelectAllQueue" style="display:none;flex-shrink:0;padding:5px 10px;font-size:0.78rem;font-weight:600;" onclick="App.toggleSelectAllInZone('queue')">Select All</button>
+          </div>
+          <div class="queue-list-box">
+            <div id="queueActiveList" class="queue-list dnd-target" data-loc-type="queue"></div>
+            <div id="queueDropQueue" class="queue-drop-strip dnd-target" data-loc-type="queue">Enter Queue</div>
+          </div>
+          <div id="queueWaitingWrap" style="display:none;">
+            <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-top:10px;">
+              <div class="queue-subsection-label">Sitting Out</div>
+              <button type="button" class="btn-outline" id="btnSelectAllWaiting" style="display:none;flex-shrink:0;padding:5px 10px;font-size:0.78rem;font-weight:600;" onclick="App.toggleSelectAllInZone('waiting')">Select All</button>
+            </div>
+            <div class="queue-list-box">
+              <div id="queueWaitingList" class="queue-list dnd-target" data-loc-type="waiting"></div>
+              <div id="queueDropWaiting" class="queue-drop-strip dnd-target" data-loc-type="waiting">Sit Out</div>
+            </div>
+          </div>
+          <div id="queueRemoveZoneTitle" class="queue-subsection-label" style="margin-top:10px;">Leave Session</div>
+          <div id="queueRemoveZone" class="queue-remove-zone dnd-target" data-loc-type="remove">
+            <span id="queueRemoveZoneLabel">Remove</span>
+          </div>
+          <div id="queueMoveHint" class="proposed-hint" style="text-align:left;display:flex;align-items:center;gap:6px;">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+            <span>Drag or double tap players to move</span>
+          </div>
+          <button id="rrUnlockBtn" class="btn-outline" onclick="App.isRoundRobin()?App.rrUnlockPlayers():App.bracketUnlockPlayers()" style="display:none;margin-top:8px;width:100%;color:var(--warning);border-color:var(--warning);font-size:0.82rem;">Unlock Players &amp; Reset</button>
+          <div style="display:flex;justify-content:flex-end;margin-top:8px;">
+            <button id="btnViewPartnerships" class="btn-outline" onclick="App.openViewPartnerships()" style="display:none;padding:6px 12px;font-size:0.78rem;font-weight:600;">View Partnerships</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- View Partnerships (read-only, everyone) -->
+    <div id="viewPartnershipsModal" class="hiw-overlay" style="display:none;" onclick="App.closeViewPartnerships()">
+      <div class="hiw-modal" style="max-width:380px;" onclick="event.stopPropagation()">
+        <div class="hiw-header">
+          <h2>Partnerships</h2>
+          <button class="hiw-close" onclick="App.closeViewPartnerships()" aria-label="Close">&times;</button>
+        </div>
+        <div class="hiw-body">
+          <div id="viewPartnershipsList"></div>
+        </div>
+      </div>
+    </div>
+
     <!-- Courts -->
     <div class="assign-header" id="assignHeader" style="margin-bottom:14px;">
       <div class="assign-header-top">
@@ -2497,62 +2673,40 @@ body {
         </div>
       </div>
       <div class="section-subtitle" id="assignCount"></div>
+      <div id="scheduleTimeOptions" style="display:none;margin-top:10px;padding-top:10px;border-top:1px solid var(--border);">
+        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:8px;">
+          <div style="flex:1;min-width:110px;">
+            <label style="font-size:0.72rem;font-weight:600;color:var(--text-muted);display:block;margin-bottom:4px;">Match Time Limit (min)</label>
+            <input type="number" class="setup-input" id="matchTimeMinutes" min="1" step="1" style="margin-bottom:0;" onchange="App.updateScheduleTimeOptions()">
+          </div>
+          <div style="flex:1;min-width:110px;">
+            <label style="font-size:0.72rem;font-weight:600;color:var(--text-muted);display:block;margin-bottom:4px;">Session Time Limit (hrs)</label>
+            <input type="number" class="setup-input" id="sessionTimeHours" min="0.25" step="0.25" style="margin-bottom:0;" onchange="App.updateScheduleTimeOptions()">
+          </div>
+          <div style="flex:1;min-width:110px;">
+            <label style="font-size:0.72rem;font-weight:600;color:var(--text-muted);display:block;margin-bottom:4px;">Buffer Between Rounds (min)</label>
+            <input type="number" class="setup-input" id="scheduleBufferMinutes" min="0" step="1" style="margin-bottom:0;" onchange="App.updateScheduleTimeOptions()">
+          </div>
+        </div>
+        <div id="scheduleRoundsOverrideWrap" style="display:none;margin-bottom:8px;">
+          <label style="font-size:0.72rem;font-weight:600;color:var(--text-muted);display:block;margin-bottom:4px;">Rounds</label>
+          <input type="number" class="setup-input" id="scheduleRoundsInput" min="1" step="1" style="margin-bottom:0;" onchange="App.updateScheduleTimeOptions()">
+        </div>
+        <div id="scheduleRoundsInfo" style="font-size:0.82rem;font-weight:600;color:var(--text);margin-bottom:4px;"></div>
+        <a href="#" id="scheduleRoundsToggleLink" onclick="App.toggleRoundsOverrideMode();return false;" style="font-size:0.75rem;font-weight:600;color:var(--primary);display:none;"></a>
+        <p id="scheduleTimeWarning" class="setup-error" style="display:none;margin-top:6px;"></p>
+      </div>
       <div class="assign-controls" id="assignControls" style="display:none;">
         <button id="btnAssignAll" class="btn-assign-all" onclick="App.assignAll()">Assign Courts</button>
       </div>
     </div>
 
-    <!-- Queue -->
-    <div id="playersSection" class="queue-bar-wrap" style="margin-bottom:14px;">
-      <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:4px;">
-        <div class="section-title" id="queueTitle">Queue</div>
-        <button id="btnToggleQueue" class="btn-icon-eye" title="Hide queue" onclick="App.toggleQueueVisibility()">
-          <svg id="queueEyeIcon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8Z"/><circle cx="12" cy="12" r="3"/></svg>
-        </button>
-      </div>
-      <div id="queueBody">
-        <div style="display:flex;justify-content:flex-end;margin-bottom:4px;">
-          <button id="btnUndoMove" class="btn-outline" style="display:none;flex-shrink:0;padding:5px 10px;font-size:0.78rem;font-weight:600;" onclick="App.undoProposedMove()">&#8617; Undo</button>
-        </div>
-        <div class="section-subtitle" id="queueSubtitle" style="margin-bottom:10px;"></div>
-        <div class="assign-match-options" style="margin-bottom:10px;">
-          <label class="toggle-switch-label">
-            <span class="toggle-switch">
-              <input type="checkbox" id="optSkill" onchange="App.toggleSkillMatching()">
-              <span class="toggle-switch-track"></span>
-            </span>
-            Match by skill
-          </label>
-        </div>
-        <div id="queueAddPlayerRow" style="display:none;margin-bottom:10px;">
-          <p id="queueAddPlayerError" class="setup-error" style="display:none;">Enter a player name</p>
-          <div style="display:flex;gap:8px;">
-            <input type="text" class="setup-input" id="queueAddPlayerName" placeholder="Player name" style="flex:1;margin-bottom:0;" onkeydown="if(event.key==='Enter')App.submitQueueAddPlayer()">
-            <button type="button" class="btn-add-player" style="margin-top:0;flex-shrink:0;width:auto;padding:12px 16px;" onclick="App.submitQueueAddPlayer()">+ Add Player</button>
-          </div>
-        </div>
-        <div class="queue-subsection-label">Waiting</div>
-        <div class="queue-list-box">
-          <div id="queueActiveList" class="queue-list dnd-target" data-loc-type="queue"></div>
-          <div id="queueDropQueue" class="queue-drop-strip dnd-target" data-loc-type="queue">Enter Queue</div>
-        </div>
-        <div id="queueWaitingWrap" style="display:none;">
-          <div class="queue-subsection-label" style="margin-top:10px;">Sitting Out</div>
-          <div class="queue-list-box">
-            <div id="queueWaitingList" class="queue-list dnd-target" data-loc-type="waiting"></div>
-            <div id="queueDropWaiting" class="queue-drop-strip dnd-target" data-loc-type="waiting">Sit Out</div>
-          </div>
-        </div>
-        <div id="queueRemoveZoneTitle" class="queue-subsection-label" style="margin-top:10px;">Leave Session</div>
-        <div id="queueRemoveZone" class="queue-remove-zone dnd-target" data-loc-type="remove">
-          <span id="queueRemoveZoneLabel">Remove</span>
-        </div>
-        <div id="queueMoveHint" class="proposed-hint" style="text-align:left;display:flex;align-items:center;gap:6px;">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
-          <span>Drag or double tap players to move</span>
-        </div>
-        <button id="rrUnlockBtn" class="btn-outline" onclick="App.isRoundRobin()?App.rrUnlockPlayers():App.bracketUnlockPlayers()" style="display:none;margin-top:8px;width:100%;color:var(--warning);border-color:var(--warning);font-size:0.82rem;">Unlock Players &amp; Reset</button>
-      </div>
+    <!-- Bulk Start/End — same actions as each court's own Confirm/Start/End
+         buttons, batched across every court on screen (see renderCourts /
+         _renderCourtsBulkControls). Works the same for every session type. -->
+    <div class="courts-bulk-controls" id="courtsBulkControls" style="display:none;gap:8px;margin-bottom:14px;">
+      <button type="button" id="btnStartAllCourts" class="btn-assign-all" style="flex:1;width:auto;" onclick="App.startAllCourts()">Start All</button>
+      <button type="button" id="btnEndAllCourts" class="btn-end-all-courts" style="flex:1;" onclick="App.endAllCourts()">End All</button>
     </div>
 
     <!-- Courts grid (active games) -->
@@ -2561,7 +2715,16 @@ body {
     <!-- Round Robin: upcoming rounds -->
     <div id="rrUpcomingSection" style="display:none;margin-top:14px;">
       <div class="queue-bar-wrap">
-        <div class="section-title" style="margin-bottom:8px;">Upcoming Rounds</div>
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:8px;flex-wrap:wrap;">
+          <div class="section-title">Upcoming Rounds</div>
+          <div style="display:flex;align-items:center;gap:8px;">
+            <select id="upcomingPlayerFilter" class="setup-input" style="width:auto;min-width:140px;margin-bottom:0;cursor:pointer;" onchange="App.filterUpcomingByPlayer(this.value)">
+              <option value="">All Players</option>
+            </select>
+            <button type="button" class="btn-outline btn-print-bracket" onclick="App.printSchedule()" style="padding:6px 12px;font-size:0.8rem;font-weight:600;">&#128438; Save as PDF</button>
+          </div>
+        </div>
+        <div id="rrScheduleTimeInfo" style="font-size:0.75rem;color:var(--text-muted);margin-bottom:8px;"></div>
         <div id="rrUpcomingList"></div>
       </div>
     </div>
@@ -2569,9 +2732,14 @@ body {
     <!-- Tournament: bracket view -->
     <div id="bracketSection" style="display:none;margin-top:14px;">
       <div class="queue-bar-wrap">
-        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:8px;flex-wrap:wrap;">
           <div class="section-title">Bracket</div>
-          <button type="button" class="btn-outline btn-print-bracket" onclick="App.printBracket()" style="padding:6px 12px;font-size:0.8rem;font-weight:600;">&#128438; Save as PDF</button>
+          <div style="display:flex;align-items:center;gap:8px;">
+            <select id="bracketPlayerFilter" class="setup-input" style="width:auto;min-width:140px;margin-bottom:0;cursor:pointer;" onchange="App.filterUpcomingByPlayer(this.value)">
+              <option value="">All Players</option>
+            </select>
+            <button type="button" class="btn-outline btn-print-bracket" onclick="App.printBracket()" style="padding:6px 12px;font-size:0.8rem;font-weight:600;">&#128438; Save as PDF</button>
+          </div>
         </div>
         <div id="bracketPrintArea">
           <div id="bracketView"></div>
@@ -2633,6 +2801,20 @@ body {
         </div>
       </div>
       <p id="shareLinkOfflineMsg" style="display:none;font-size:0.85rem;color:var(--text-muted);margin:0;">Share links are not available for offline sessions.</p>
+      <div id="viewOnlySection" class="admin-only" style="display:none;margin-top:12px;padding-top:12px;border-top:1px solid var(--border);position:relative;">
+        <label class="toggle-switch-label" style="margin:0;">
+          <span class="toggle-switch">
+            <input type="checkbox" id="viewOnlyToggle" onchange="App.toggleViewOnly()">
+            <span class="toggle-switch-track"></span>
+          </span>
+          View Only
+          <button type="button" class="qp-info-btn" aria-label="What does View Only do?" onclick="App._toggleViewOnlyInfo(event)">?</button>
+        </label>
+        <div id="viewOnlyInfoPopover" class="qp-info-popover" style="display:none;">
+          <span>Only admins can add/move players, score matches, or change settings. Everyone else can just watch — they can still search and filter Match History.</span>
+          <button type="button" class="qp-info-close" onclick="App._closeViewOnlyInfo()" aria-label="Close description">&times;</button>
+        </div>
+      </div>
     </div>
 
     <!-- Session Type (admin only, private sessions) -->
@@ -2643,15 +2825,57 @@ body {
         <option value="roundrobin">Round Robin</option>
         <option value="tournament">Tournament</option>
       </select>
+      <div id="leagueSection" style="display:none;margin-top:12px;padding-top:12px;border-top:1px solid var(--border);">
+        <label class="toggle-switch-label" style="margin:0 0 10px;">
+          <span class="toggle-switch">
+            <input type="checkbox" id="leagueToggle" onchange="App.toggleLeague()">
+            <span class="toggle-switch-track"></span>
+          </span>
+          League
+        </label>
+        <div id="leagueFields" style="display:none;">
+          <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:8px;">
+            <div style="flex:1;min-width:120px;">
+              <label style="font-size:0.72rem;font-weight:600;color:var(--text-muted);display:block;margin-bottom:4px;">Start Date</label>
+              <input type="date" class="setup-input" id="leagueStartDate" style="margin-bottom:0;" onchange="App.saveLeagueSettings()">
+            </div>
+            <div style="flex:1;min-width:120px;">
+              <label style="font-size:0.72rem;font-weight:600;color:var(--text-muted);display:block;margin-bottom:4px;">End Date</label>
+              <input type="date" class="setup-input" id="leagueEndDate" style="margin-bottom:0;" onchange="App.saveLeagueSettings()">
+            </div>
+          </div>
+          <label style="font-size:0.72rem;font-weight:600;color:var(--text-muted);display:block;margin-bottom:4px;">Frequency</label>
+          <select class="setup-input" id="leagueFrequency" style="margin-bottom:0;cursor:pointer;" onchange="App.saveLeagueSettings()">
+            <option value="weekly">Weekly</option>
+            <option value="biweekly">Bi-Weekly</option>
+            <option value="monthly">Monthly</option>
+          </select>
+          <p id="leagueError" class="setup-error" style="display:none;">End date must be on or after the start date</p>
+        </div>
+      </div>
     </div>
 
     <!-- Session passcode (admin only, private sessions) -->
     <div class="settings-card admin-only" id="passcodeSection" style="display:none;">
       <div class="settings-card-title">Session Passcode</div>
-      <div style="display:flex;align-items:center;gap:8px;">
+      <label class="toggle-switch-label" style="margin:0 0 10px;">
+        <span class="toggle-switch">
+          <input type="checkbox" id="passcodeRequiredToggle" onchange="App.togglePasscodeRequired()">
+          <span class="toggle-switch-track"></span>
+        </span>
+        Require passcode
+      </label>
+      <div id="passcodeValueRow" style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
         <span id="passcodeDisplay" style="font-size:0.95rem;font-weight:700;letter-spacing:0.15em;">****</span>
         <button type="button" class="btn-outline" onclick="App.togglePasscode()" id="btnTogglePasscode" style="padding:12px 16px;font-size:1rem;font-weight:700;">Show</button>
+        <button type="button" class="btn-outline" onclick="App.toggleEditPasscode()" id="btnEditPasscode" style="padding:12px 16px;font-size:1rem;font-weight:700;">Edit passcode</button>
       </div>
+      <div id="editPasscodeRow" style="display:none;gap:8px;align-items:center;margin-top:10px;">
+        <input type="text" class="setup-input" id="editPasscodeInput" placeholder="New passcode (4 chars)" maxlength="4" style="flex:1;margin-bottom:0;text-transform:uppercase;">
+        <button type="button" class="btn-outline" onclick="App.randomEditPasscode()" style="white-space:nowrap;padding:12px 14px;font-size:1rem;font-weight:700;">Random</button>
+        <button type="button" class="btn-confirm-join" onclick="App.saveEditedPasscode()" style="white-space:nowrap;padding:12px 16px;font-size:1rem;font-weight:700;">Save</button>
+      </div>
+      <p id="editPasscodeError" class="setup-error" style="display:none;">Enter a 4-character passcode</p>
     </div>
 
     <!-- Manage Admins (admin only) -->
@@ -2661,6 +2885,41 @@ body {
       <button class="btn-add-partner" id="btnAddAdmin" onclick="App.toggleAdminPicker()">+ Add Admin</button>
       <div id="adminPicker" style="display:none;margin-top:8px;border:1.5px solid var(--border);border-radius:var(--radius);padding:8px;background:var(--bg);">
         <div id="adminPickerList"></div>
+      </div>
+    </div>
+
+    <!-- Partnerships (admin only) — separate from the self-service "Your
+         Partner(s)" card above: an admin links any two players together,
+         tagged Mixed/Men's/Women's doubles. A player can hold one of each
+         type at once; Round Robin alternates them evenly round-to-round
+         when they have two (see rrGenerateSchedule). -->
+    <div class="settings-card admin-only" id="partnershipsSection" style="display:none;">
+      <div class="settings-card-title">Partnerships</div>
+      <p style="font-size:0.8rem;color:var(--text-muted);margin:0 0 10px;">Link two players as a Mixed, Men's, or Women's doubles team for Round Robin. A player can hold one of each — Mixed plus Men's or Women's — and rounds alternate evenly between them.</p>
+      <div id="partnershipsList"></div>
+      <button class="btn-add-partner" id="btnAddPartnership" onclick="App.toggleCreatePartnership()">+ Create Partnership</button>
+      <div id="partnershipCreatePanel" style="display:none;margin-top:10px;border:1.5px solid var(--border);border-radius:var(--radius);padding:10px;background:var(--bg);">
+        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:8px;">
+          <div style="flex:1;min-width:130px;">
+            <label style="font-size:0.72rem;font-weight:600;color:var(--text-muted);display:block;margin-bottom:4px;">Player 1</label>
+            <select class="setup-input" id="partnershipP1" style="margin-bottom:0;cursor:pointer;" onchange="App.renderPartnershipCreatePanel()"></select>
+          </div>
+          <div style="flex:1;min-width:130px;">
+            <label style="font-size:0.72rem;font-weight:600;color:var(--text-muted);display:block;margin-bottom:4px;">Player 2</label>
+            <select class="setup-input" id="partnershipP2" style="margin-bottom:0;cursor:pointer;"></select>
+          </div>
+        </div>
+        <label style="font-size:0.72rem;font-weight:600;color:var(--text-muted);display:block;margin-bottom:4px;">Type</label>
+        <select class="setup-input" id="partnershipType" style="margin-bottom:8px;cursor:pointer;">
+          <option value="mixed">Mixed Doubles</option>
+          <option value="mens">Men's Doubles</option>
+          <option value="womens">Women's Doubles</option>
+        </select>
+        <p id="partnershipCreateError" class="setup-error" style="display:none;"></p>
+        <div style="display:flex;gap:8px;">
+          <button type="button" class="btn-confirm-join" onclick="App.confirmCreatePartnership()" style="flex:1;">Create</button>
+          <button type="button" class="btn-edit-cancel" onclick="App.toggleCreatePartnership()">Cancel</button>
+        </div>
       </div>
     </div>
 
@@ -2686,7 +2945,6 @@ body {
         <div class="section-title">Match History</div>
         <div style="display:flex;gap:8px;">
           <button class="btn-outline" id="btnLogPastMatch" onclick="App.toggleLogPastMatch()" style="display:none;padding:6px 12px;font-size:0.78rem;font-weight:600;">+ Log Past Match</button>
-          <button class="btn-clear-history admin-only" id="btnClearHistory" onclick="App.clearHistory()" style="display:none;">Clear History</button>
         </div>
       </div>
       <div id="logPastMatchPanel" class="partner-picker" style="display:none;margin-bottom:14px;">
@@ -2711,23 +2969,42 @@ body {
           <button type="button" class="btn-confirm-join" id="btnSubmitLogPastMatch" onclick="App.submitLogPastMatch()" disabled style="flex:1;padding:10px;font-size:0.85rem;font-weight:700;">Add to History</button>
         </div>
       </div>
-      <div id="historyStats" class="history-stats-card" style="display:none;">
-        <div class="history-stat-tile">
-          <div class="history-stat-value history-stat-name" id="historyStatTeamName">&ndash;</div>
-          <div class="history-stat-sub" id="historyStatTeamWins"></div>
-          <div class="history-stat-label">Winningest Team</div>
-        </div>
-        <div class="history-stat-tile">
-          <div class="history-stat-value history-stat-name" id="historyStatPlayerName">&ndash;</div>
-          <div class="history-stat-sub" id="historyStatPlayerWins"></div>
-          <div class="history-stat-label">Winningest Player</div>
+      <!-- League (Round Robin) season standings — see App.renderSeasonSummary. -->
+      <div id="seasonSummarySection" style="display:none;margin-bottom:14px;max-width:540px;margin-left:auto;margin-right:auto;">
+        <div class="history-session-summary" style="margin-bottom:8px;">
+          <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;margin-bottom:6px;">
+            <div class="history-session-summary-title" id="seasonSummaryTitle" style="margin-bottom:0;">Season Summary</div>
+            <span id="seasonSummaryRange" style="font-size:0.72rem;color:var(--text-muted);"></span>
+          </div>
+          <div id="seasonSummaryRows"></div>
+          <button type="button" class="btn-outline" id="btnToggleSeasonStandings" onclick="App.toggleSeasonStandings()" style="display:none;width:100%;margin-top:8px;padding:8px;font-size:0.78rem;font-weight:600;">Show All Players</button>
         </div>
       </div>
-      <div class="history-filters" style="display:flex;gap:8px;align-items:center;">
-        <input type="text" id="historySearch" class="history-search" placeholder="Search players..." oninput="App.renderHistory()" style="flex:1;">
-        <button type="button" class="btn-outline" id="btnFilterMyMatches" onclick="App.toggleMyMatches()" style="white-space:nowrap;padding:12px 16px;font-size:1rem;font-weight:700;">My Matches</button>
+      <div id="historyDetailSection">
+        <!-- Picks one previously-closed session (by its close date) to view
+             in full, match-by-match — see App.filterHistoryBySession. Left
+             on the default option, the list below instead shows the still-open
+             session's matches plus every closed session collapsed to its
+             summary card (added in App._populateHistorySessionSelect). -->
+        <div style="max-width:540px;margin:0 auto 10px;">
+          <select id="historySessionSelect" class="setup-input" style="width:100%;margin-bottom:0;cursor:pointer;" onchange="App.filterHistoryBySession(this.value)">
+            <option value="">Current &amp; Recent Sessions</option>
+          </select>
+        </div>
+        <div class="history-filters" style="display:flex;gap:8px;align-items:center;">
+          <input type="text" id="historySearch" class="history-search" placeholder="Search players..." oninput="App.renderHistory()" style="flex:1;">
+          <!-- League standings already narrow the roster to who's actually
+               playing, so a full name picker (see App.filterHistoryByPlayer)
+               stands in for free-text search there — swapped in/out in
+               renderSeasonSummary alongside the rest of the League UI. -->
+          <select id="historyPlayerSelect" class="setup-input" style="display:none;flex:1;margin-bottom:0;cursor:pointer;" onchange="App.filterHistoryByPlayer(this.value)">
+            <option value="">All Players</option>
+          </select>
+          <button type="button" class="btn-outline" id="btnFilterMyMatches" onclick="App.toggleMyMatches()" style="white-space:nowrap;padding:12px 16px;font-size:1rem;font-weight:700;">My Matches</button>
+        </div>
+        <div id="historyPlayerStatCard" style="display:none;padding:10px 14px;margin:0 auto 10px;max-width:540px;background:var(--card);border:1px solid var(--border);border-radius:var(--radius);font-size:0.85rem;"></div>
+        <div class="history-table-wrap" id="historyRounds"></div>
       </div>
-      <div class="history-table-wrap" id="historyRounds"></div>
     </div>
   </div>
 
@@ -2759,8 +3036,9 @@ body {
         </div>
         <div class="hiw-section">
           <h3>🔒 Sessions</h3>
-          <p>Sign in with Google, then use the <strong>Sessions</strong> card to create a session for your group — pick a format, and turn on a passcode only if you want one. Share the link or code with friends; they can join without signing in.</p>
+          <p>Sign in with Google, then use the <strong>Sessions</strong> card to create a session for your group — pick a format, name it if you like (optional), and turn on a passcode only if you want one. Share the link or code with friends; they can join without signing in. Admins can toggle, view, or edit the passcode anytime from Settings, and choose whether a change forces already-joined players to re-enter it.</p>
           <p style="margin-top:6px;">Sessions you've joined or created show up in a list on that same card, colored green (open) or orange (closed) with when you last joined. Tapping one joins right away, straight into <strong>Sitting Out</strong>.</p>
+          <p style="margin-top:6px;">Admins can also flip on <strong>View Only</strong> (Settings &gt; Share Link) so everyone but admins can watch without being able to touch anything.</p>
         </div>
         <div class="hiw-section">
           <h3>🖥️ On Tablet &amp; Desktop</h3>
@@ -2770,6 +3048,7 @@ body {
           <h3>🎾 Confirming &amp; Ending a Match (Open Play)</h3>
           <p>An auto-filled or drag-filled court starts out <strong>Proposed</strong> — adjust who's on it by dragging or tapping players between the queue and the court, then tap <strong>Confirm</strong>. Nothing is final until then, and adjusting or cancelling a proposal never costs anyone their place in line — tap <strong>&#8617; Undo</strong> above the queue to step back through adjustments. Once confirmed, tap <strong>Start</strong> on the court card to start the match timer.</p>
           <p style="margin-top:6px;">When a match ends, choose <strong>Return All 4</strong> (send everyone back to the queue), <strong>Keep Winners</strong> (needs a score), or <strong>Keep Last-Joined</strong> (once a court has had a pair carried over before) to decide who stays on for the next match.</p>
+          <p style="margin-top:6px;"><strong>Start All</strong> and <strong>End All</strong> above the courts grid start or end every court's match at once. Select multiple players in the queue (<strong>Select All</strong> or tap several chips) to move them as a group too.</p>
         </div>
         <div class="hiw-section">
           <h3>⚙️ Updating Your Info</h3>
@@ -2779,10 +3058,16 @@ body {
           <h3>🤝 Adding Partners</h3>
           <p>Once you're in a session, open the <strong>Settings</strong> tab to link yourself with another player you'd like to play alongside. Partners are kept together on the same side of the court when courts are assigned.</p>
           <p style="margin-top:6px;">In Open Play, you can add or remove a partner at any time — the change takes effect the next time courts are assigned. In Round Robin and Tournament, partners must be set while the roster is still being built; once locked, teams are fixed for the rest of the session.</p>
+          <p style="margin-top:6px;">Admins can also link two players into a typed <strong>Mixed/Men's/Women's Doubles</strong> partnership from Settings &gt; Partnerships (Round Robin) — a player can hold one of each kind at once. Tap <strong>View Partnerships</strong> next to the Queue to see everyone's partnerships.</p>
+        </div>
+        <div class="hiw-section">
+          <h3>🗓️ Round Robin &amp; Tournament</h3>
+          <p>After locking the roster, set the number of courts and, optionally, a <strong>Match Time Limit</strong>, <strong>Session Time Limit</strong>, and <strong>Buffer Between Rounds</strong> — Round Robin recommends how many rounds will fit (or let you enter rounds directly), and Tournament shows an estimated total duration for its fixed bracket size, warning if either won't fit your session.</p>
+          <p style="margin-top:6px;">Turn on <strong>League</strong> (Settings &gt; Session Type, Round Robin only) to track standings across a whole season and have team/round selection minimize repeat partners and opponents across sessions, not just within one.</p>
         </div>
         <div class="hiw-section">
           <h3>📋 Match History</h3>
-          <p>The <strong>History</strong> tab shows all completed matches for the current session — courts, opponents, and scores. Signed-in players can also view their personal match history across all past sessions. In Open Play, tap <strong>+ Log Past Match</strong> there to add a match your group already played before opening the app.</p>
+          <p>The <strong>History</strong> tab shows every match in the session's current open stretch in full; once an admin closes the session, that stretch collapses into a summary card, with a dropdown to pull up any past session's full match list. Signed-in players can also view their personal match history across all past sessions. In Open Play, tap <strong>+ Log Past Match</strong> there to add a match your group already played before opening the app. Admins can fix a score or delete a match from here too.</p>
         </div>
         <div class="hiw-section">
           <h3>🚪 Leaving, Closing &amp; Logging Out</h3>
@@ -2818,6 +3103,7 @@ body {
         <div class="partner-picker" style="margin-top:0;">
           <div class="partner-picker-list" id="fillQueuePickerList"></div>
         </div>
+        <button type="button" class="btn-confirm-join" id="btnFillQueueConfirm" style="display:none;width:100%;padding:12px;font-size:1rem;font-weight:700;margin-top:10px;" onclick="App.confirmFillQueueSelection()" disabled>Move Player</button>
       </div>
     </div>
   </div>
@@ -2841,7 +3127,7 @@ body {
     </div>
   </div>
 
-  <!-- ── Quick Play: format selector, shown before the player count ── -->
+  <!-- ── Quick Play: format selector ── -->
   <div id="quickPlayTypeModal" class="hiw-overlay" style="display:none;" onclick="Onboard._quickPlayTypeCancel(event)">
     <div class="hiw-modal" style="max-width:380px;" onclick="event.stopPropagation()">
       <div class="hiw-header">
@@ -2872,41 +3158,6 @@ body {
           <button type="button" class="qp-info-close" onclick="Onboard._closeQpInfo()" aria-label="Close description">&times;</button>
         </div>
         <button type="button" class="btn-confirm-join" style="width:100%;padding:12px;font-size:1rem;font-weight:700;" onclick="Onboard._quickPlayContinueType()">Continue</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- ── New session: player count modal ────────── -->
-  <div id="bulkCountModal" class="hiw-overlay" style="display:none;" onclick="Onboard._bulkCancel(event)">
-    <div class="hiw-modal" style="max-width:380px;" onclick="event.stopPropagation()">
-      <div class="hiw-header">
-        <h2 id="bulkCountHeading">Get Started</h2>
-        <button class="hiw-close" onclick="Onboard._bulkCancel()" aria-label="Close">&times;</button>
-      </div>
-      <div class="hiw-body">
-        <p style="font-size:0.85rem;color:var(--text-light);line-height:1.5;margin:0;">How many players are starting?</p>
-        <input type="number" class="setup-input" id="bulkPlayerCount" min="1" max="24" step="1" value="4" style="width:100%;" onkeydown="if(event.key==='Enter')Onboard._bulkContinueToNames()">
-        <p style="font-size:0.78rem;color:var(--text-muted);margin:0;">You can add more players later.</p>
-        <p id="bulkCountError" class="setup-error">Enter a number of players (1 or more)</p>
-        <button type="button" class="btn-confirm-join" style="width:100%;padding:12px;font-size:1rem;font-weight:700;" onclick="Onboard._bulkContinueToNames()">Continue</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- ── New session: player names (+ skill) modal ── -->
-  <div id="bulkNamesModal" class="hiw-overlay" style="display:none;" onclick="Onboard._bulkCancel(event)">
-    <div class="hiw-modal" style="max-width:420px;" onclick="event.stopPropagation()">
-      <div class="hiw-header">
-        <h2>Player Names</h2>
-        <button class="hiw-close" onclick="Onboard._bulkCancel()" aria-label="Close">&times;</button>
-      </div>
-      <div class="hiw-body">
-        <div id="bulkNamesList" style="display:flex;flex-direction:column;gap:8px;"></div>
-        <p id="bulkNamesError" class="setup-error">Enter at least one player name</p>
-        <div style="display:flex;gap:8px;">
-          <button type="button" class="btn-outline" style="flex:1;padding:12px;font-size:1rem;font-weight:700;" onclick="Onboard._bulkBackToCount()">&larr; Back</button>
-          <button type="button" class="btn-confirm-join" id="bulkSubmitBtn" style="flex:2;padding:12px;font-size:1rem;font-weight:700;" onclick="Onboard._bulkSubmit()">Start Playing</button>
-        </div>
       </div>
     </div>
   </div>
@@ -2962,6 +3213,36 @@ body {
           <span id="leaveCloseInfoText"></span>
           <button type="button" class="qp-info-close" onclick="Session._closeLeaveCloseInfo()" aria-label="Close description">&times;</button>
         </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Admin: choose whether existing participants must re-enter a changed passcode ── -->
+  <div id="passcodeReentryModal" class="hiw-overlay" style="display:none;">
+    <div class="hiw-modal" style="max-width:420px;" onclick="event.stopPropagation()">
+      <div class="hiw-header">
+        <h2>Passcode Changed</h2>
+      </div>
+      <div class="hiw-body">
+        <p style="font-size:0.85rem;color:var(--text-light);line-height:1.5;margin:0 0 12px;">You've changed the passcode for this session. Should existing participants be required to re-enter the new code to stay in the session?</p>
+        <button type="button" class="btn-confirm-join" style="width:100%;padding:12px;font-size:1rem;font-weight:700;" onclick="App._confirmPasscodeReentry(true)">Yes, require re-entry</button>
+        <button type="button" class="btn-outline" style="width:100%;padding:12px;font-size:1rem;font-weight:700;margin-top:8px;" onclick="App._confirmPasscodeReentry(false)">No, keep them in</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Existing participant: passcode changed since they last verified ── -->
+  <div id="passcodeGateModal" class="hiw-overlay" style="display:none;">
+    <div class="hiw-modal" style="max-width:380px;" onclick="event.stopPropagation()">
+      <div class="hiw-header">
+        <h2>Enter Passcode</h2>
+      </div>
+      <div class="hiw-body">
+        <p style="font-size:0.85rem;color:var(--text-light);line-height:1.5;margin:0 0 12px;">The passcode for this session has changed. Enter the new passcode to keep using this session.</p>
+        <input type="text" class="setup-input" id="passcodeGateInput" placeholder="4-character passcode" maxlength="4" style="text-transform:uppercase;text-align:center;" onkeydown="if(event.key==='Enter')Session._submitPasscodeGate()">
+        <p id="passcodeGateError" class="setup-error" style="display:none;">Incorrect passcode</p>
+        <button type="button" class="btn-confirm-join" style="width:100%;padding:12px;font-size:1rem;font-weight:700;margin-top:4px;" onclick="Session._submitPasscodeGate()">Continue</button>
+        <button type="button" class="btn-outline" style="width:100%;padding:12px;font-size:1rem;font-weight:700;margin-top:8px;" onclick="Session.leaveOrClose()">Leave Session</button>
       </div>
     </div>
   </div>
@@ -3249,6 +3530,8 @@ const App = {
     if (s.availableCourts == null) s.availableCourts = 1;
     if (!Array.isArray(s.adminLog)) s.adminLog = [];
     if (!Array.isArray(s._admins)) s._admins = s._admins ? Object.values(s._admins) : [];
+    if (s._passcodeRequired === undefined) s._passcodeRequired = !!s._passcode;
+    if (s._passcodeVersion == null) s._passcodeVersion = 0;
     if (!Array.isArray(s._rrSchedule)) s._rrSchedule = s._rrSchedule ? Object.values(s._rrSchedule) : [];
     // Fix Firebase array conversion on schedule game arrays
     for (const round of s._rrSchedule) {
@@ -3272,6 +3555,7 @@ const App = {
       if (!p.lastActiveAt) p.lastActiveAt = p.joinedAt;
       delete p.score;
       if (p.skillLevel === undefined) p.skillLevel = null;
+      if (p.passcodeVersion === undefined) p.passcodeVersion = s._passcodeVersion;
     }
   },
 
@@ -3348,6 +3632,7 @@ const App = {
   // bottom of the queue — everyone joins Not Rated and sets their rating
   // afterward via the NR/B/I/A chip.
   submitQueueAddPlayer() {
+    if (!this.canModify()) return;
     const nameEl = document.getElementById('queueAddPlayerName');
     const name = nameEl?.value.trim();
     if (!name) {
@@ -3686,6 +3971,131 @@ const App = {
     this.render();
   },
 
+  // ─── Admin Partnerships (Mixed/Men's/Women's doubles) ──
+  // Separate from the self-service "Your Partner(s)" system above: an
+  // admin links any two players together, tagged by type. Unlike a
+  // self-service partner (only one ever "current"), a player can hold one
+  // typed partnership per type at once — so at most Mixed + one of
+  // Men's/Women's. Round Robin alternates a player evenly between two
+  // typed partnerships round-by-round instead of picking just one for the
+  // whole session (see rrGenerateSchedule/_activePartnershipForRound).
+  PARTNERSHIP_TYPES: { mixed: 'Mixed Doubles', mens: "Men's Doubles", womens: "Women's Doubles" },
+
+  _typedTeams() {
+    return this.state.teams.filter(t => t.type);
+  },
+
+  _typedPartnershipsForPlayer(playerId) {
+    return this._typedTeams().filter(t => t.p1 === playerId || t.p2 === playerId).sort((a, b) => a.id - b.id);
+  },
+
+  toggleCreatePartnership() {
+    if (!Admin.isAdmin()) return;
+    const panel = document.getElementById('partnershipCreatePanel');
+    if (!panel) return;
+    const show = panel.style.display === 'none';
+    panel.style.display = show ? 'block' : 'none';
+    const err = document.getElementById('partnershipCreateError');
+    if (err) err.style.display = 'none';
+    if (show) this.renderPartnershipCreatePanel();
+  },
+
+  renderPartnershipCreatePanel() {
+    const p1Sel = document.getElementById('partnershipP1');
+    const p2Sel = document.getElementById('partnershipP2');
+    if (!p1Sel || !p2Sel) return;
+    const players = [...this.state.players].filter(p => p.active).sort((a, b) => a.name.localeCompare(b.name));
+    const prevP1 = p1Sel.value;
+    p1Sel.innerHTML = players.map(p => `<option value="${p.id}">${this.esc(p.name)}</option>`).join('');
+    if (prevP1 && players.some(p => String(p.id) === prevP1)) p1Sel.value = prevP1;
+    const p1Id = parseInt(p1Sel.value, 10);
+    const prevP2 = p2Sel.value;
+    p2Sel.innerHTML = players.filter(p => p.id !== p1Id).map(p => `<option value="${p.id}">${this.esc(p.name)}</option>`).join('');
+    if (prevP2 && players.some(p => String(p.id) === prevP2 && p.id !== p1Id)) p2Sel.value = prevP2;
+  },
+
+  confirmCreatePartnership() {
+    if (!Admin.isAdmin()) return;
+    const p1 = parseInt(document.getElementById('partnershipP1')?.value, 10);
+    const p2 = parseInt(document.getElementById('partnershipP2')?.value, 10);
+    const type = document.getElementById('partnershipType')?.value;
+    const errEl = document.getElementById('partnershipCreateError');
+    const showError = msg => { if (errEl) { errEl.textContent = msg; errEl.style.display = 'block'; } };
+    if (!p1 || !p2 || p1 === p2 || !this.PARTNERSHIP_TYPES[type]) {
+      showError('Pick two different players.');
+      return;
+    }
+    const conflict = this._typedTeams().find(t => t.type === type && (t.p1 === p1 || t.p2 === p1 || t.p1 === p2 || t.p2 === p2));
+    if (conflict) {
+      const conflictedId = (conflict.p1 === p1 || conflict.p2 === p1) ? p1 : p2;
+      const name = this.getPlayer(conflictedId)?.name || '?';
+      showError(`${name} already has a ${this.PARTNERSHIP_TYPES[type]} partnership — remove it first.`);
+      return;
+    }
+    if (errEl) errEl.style.display = 'none';
+    const p1Name = this.getPlayer(p1)?.name || '?', p2Name = this.getPlayer(p2)?.name || '?';
+    this.state.teams.push({ id: this.state.nextId++, p1, p2, type, current: true });
+    this._logAdmin(`Create ${this.PARTNERSHIP_TYPES[type]} Partnership: ${p1Name} & ${p2Name}`);
+    const panel = document.getElementById('partnershipCreatePanel');
+    if (panel) panel.style.display = 'none';
+    this.saveState();
+    this.render();
+  },
+
+  removePartnership(teamId) {
+    if (!Admin.isAdmin()) return;
+    const t = this.state.teams.find(x => x.id === teamId);
+    if (t) {
+      const label = this.PARTNERSHIP_TYPES[t.type] || 'Partnership';
+      this._logAdmin(`Remove ${label}: ${this.getPlayer(t.p1)?.name || '?'} & ${this.getPlayer(t.p2)?.name || '?'}`);
+    }
+    this.state.teams = this.state.teams.filter(x => x.id !== teamId);
+    this.saveState();
+    this.render();
+  },
+
+  renderPartnershipsList() {
+    const el = document.getElementById('partnershipsList');
+    if (!el) return;
+    const typed = this._typedTeams();
+    if (!typed.length) {
+      el.innerHTML = '<div style="color:var(--text-muted);font-size:0.82rem;margin-bottom:8px;">No partnerships yet</div>';
+      return;
+    }
+    el.innerHTML = typed.map(t => `<div style="display:flex;align-items:center;justify-content:space-between;gap:8px;padding:6px 0;border-bottom:1px solid var(--border);">
+        <span style="font-size:0.85rem;"><strong>${this.esc(this.getPlayer(t.p1)?.name || '?')}</strong> &amp; <strong>${this.esc(this.getPlayer(t.p2)?.name || '?')}</strong> <span style="color:var(--text-muted);">&middot; ${this.PARTNERSHIP_TYPES[t.type] || t.type}</span></span>
+        <button class="partner-chip-remove" onclick="App.removePartnership(${t.id})" title="Remove partnership">&times;</button>
+      </div>`).join('');
+  },
+
+  // "View Partnerships" — read-only, everyone, bottom-right of the Queue
+  // card. Shows self-service partners too (untyped), not just admin ones,
+  // since either kind means players are "accounted for" as locked pairs.
+  openViewPartnerships() {
+    this.renderViewPartnershipsList();
+    const modal = document.getElementById('viewPartnershipsModal');
+    if (modal) modal.style.display = 'flex';
+  },
+
+  closeViewPartnerships() {
+    const modal = document.getElementById('viewPartnershipsModal');
+    if (modal) modal.style.display = 'none';
+  },
+
+  renderViewPartnershipsList() {
+    const el = document.getElementById('viewPartnershipsList');
+    if (!el) return;
+    const teams = this.state.teams.filter(t => !t.type || t.current);
+    if (!teams.length) {
+      el.innerHTML = '<div style="color:var(--text-muted);font-size:0.85rem;">No partnerships set up</div>';
+      return;
+    }
+    el.innerHTML = teams.map(t => `<div style="display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid var(--border);">
+        <span style="font-size:0.9rem;"><strong>${this.esc(this.getPlayer(t.p1)?.name || '?')}</strong> &amp; <strong>${this.esc(this.getPlayer(t.p2)?.name || '?')}</strong></span>
+        ${t.type ? `<span style="font-size:0.72rem;font-weight:700;color:var(--primary);background:var(--primary-light);padding:2px 8px;border-radius:99px;">${this.PARTNERSHIP_TYPES[t.type] || t.type}</span>` : ''}
+      </div>`).join('');
+  },
+
   // ─── Courts ────────────────────────────────
   cancelGame(courtId) {
     if (!confirm(`Cancel Court ${courtId}? Players will be sent back to the queue.`)) return;
@@ -3706,14 +4116,36 @@ const App = {
     this.render();
   },
 
-  endGame(courtId) {
+  // Core of endGame, without the save+render — shared with endAllCourts,
+  // which batches many of these into one save+render instead of one each.
+  _endGameCore(courtId) {
     const game = this.state.activeGames[courtId];
-    if (game && !game.timerPaused) {
+    if (!game) return false;
+    if (!game.timerPaused) {
       game.timerElapsed = (game.timerElapsed || 0) + (Date.now() - (game.timerResumedAt || Date.now()));
       game.timerPaused = true;
       game.timerResumedAt = null;
     }
     this.state.scoringGames[courtId] = true;
+    return true;
+  },
+
+  endGame(courtId) {
+    if (!this._endGameCore(courtId)) return;
+    this.saveState();
+    this.render();
+  },
+
+  // "End All": moves every court that's running or has an unstarted match
+  // straight to score entry, same as tapping each one's own End button —
+  // works the same for Open Play, Round Robin, and Tournament since all
+  // three land their matches in activeGames identically.
+  endAllCourts() {
+    let changed = false;
+    Object.keys(this.state.activeGames).map(Number).forEach(courtId => {
+      if (!this.state.scoringGames[courtId] && this._endGameCore(courtId)) changed = true;
+    });
+    if (!changed) return;
     this.saveState();
     this.render();
   },
@@ -3722,6 +4154,7 @@ const App = {
   // option the organizer picked (Open Play only; RR/Tournament always pass
   // 'all', which behaves exactly like today's plain Save).
   submitScore(courtId, mode = 'all') {
+    if (!this.canModify()) return;
     const s1Input = document.getElementById(`score-s1-${courtId}`);
     const s2Input = document.getElementById(`score-s2-${courtId}`);
     const raw1 = s1Input.value.trim();
@@ -4075,6 +4508,7 @@ const App = {
   MAX_MATCH_MS: 100 * 60 * 1000,        // 100 minutes — normal match duration cap (requires the timer to have been started)
   COURT_STUCK_MS: 6 * 60 * 60 * 1000,   // 6 hours — force-end a match that's been sitting on a court, win or lose, and send its players back to the queue
   SESSION_MAX_MS: 12 * 60 * 60 * 1000,  // 12 hours — remove a player (queued or on a court) from the session entirely
+  ROUND_BUFFER_MIN: 3,                  // minutes assumed between rounds (players finding their next court) when planning Round Robin/Tournament rounds against a time limit
 
   _lastExpireCheck: 0,
 
@@ -4331,21 +4765,290 @@ const App = {
   // ─── Round Robin ────────────────────────────
   isRoundRobin() { return this.state._sessionType === 'roundrobin'; },
 
+  // A typed partnership (see PARTNERSHIP_TYPES) is "always active" — fixed
+  // for the whole session like a normal locked team — unless either player
+  // holds a second typed partnership, in which case both of that player's
+  // partnerships instead alternate by round (see _activePartnershipForRound).
+  _isPartnershipAlwaysActive(t) {
+    return this._typedPartnershipsForPlayer(t.p1).length <= 1 && this._typedPartnershipsForPlayer(t.p2).length <= 1;
+  },
+
+  // Every player involved in a NOT-always-active typed partnership — these
+  // are excluded from _buildTeamUnits' fixed solo/explicit-team pool
+  // entirely, since rrGenerateSchedule assigns their team fresh each round.
+  _roundVaryingPlayerIds() {
+    const ids = new Set();
+    this._typedTeams().forEach(t => {
+      if (!this._isPartnershipAlwaysActive(t)) { ids.add(t.p1); ids.add(t.p2); }
+    });
+    return ids;
+  },
+
   // Builds fixed doubles teams for Round Robin / Tournament: existing
   // partner pairs stay together, everyone else is randomly paired up.
   // Returns null if an odd player is left without a partner.
-  _buildTeamUnits() {
-    const playerIds = this.state.players.map(p => p.id);
+  // Only players who aren't sitting out are eligible for pairing — an
+  // odd one out (or a late joiner not yet ready) can be benched in
+  // Sitting Out instead of forcing the whole roster to pair up evenly.
+  // Round-varying players (see above) are excluded — they're layered in
+  // separately, round by round.
+  // excludeIds defaults to every round-varying player (the normal Round
+  // Robin case, where they're layered in separately per round) — Tournament
+  // instead excludes only the players its dual-partnership resolution
+  // actually used, so whichever player "lost" that pick falls back to
+  // being treated as a normal solo here rather than dropped entirely.
+  _buildTeamUnits(excludeIds) {
+    const roundVarying = excludeIds || this._roundVaryingPlayerIds();
+    const playerIds = this.state.players.filter(p => p.active && !roundVarying.has(p.id)).map(p => p.id);
     const idSet = new Set(playerIds);
     const explicitTeams = this.state.teams.filter(t => t.current && idSet.has(t.p1) && idSet.has(t.p2));
     const pairedIds = new Set(explicitTeams.flatMap(t => [t.p1, t.p2]));
     const solos = this.shuffle(playerIds.filter(id => !pairedIds.has(id)));
     if (solos.length % 2 !== 0) return null;
-    const units = explicitTeams.map(t => ({ p1: t.p1, p2: t.p2 }));
+    const units = explicitTeams.map(t => ({ p1: t.p1, p2: t.p2, type: t.type || null }));
     for (let i = 0; i + 1 < solos.length; i += 2) {
-      units.push({ p1: solos[i], p2: solos[i + 1] });
+      units.push({ p1: solos[i], p2: solos[i + 1], type: null });
     }
     return units;
+  },
+
+  // How many teams _buildTeamUnits would produce, without actually running
+  // its random pairing — used to preview a full round-robin rotation length
+  // (or a bracket's fixed round count) before the roster is locked. Adds a
+  // rough estimate for round-varying players, who _buildTeamUnits excludes.
+  _teamUnitCount() {
+    const roundVarying = this._roundVaryingPlayerIds();
+    const playerIds = this.state.players.filter(p => p.active && !roundVarying.has(p.id)).map(p => p.id);
+    const idSet = new Set(playerIds);
+    const explicitTeams = this.state.teams.filter(t => t.current && idSet.has(t.p1) && idSet.has(t.p2));
+    const pairedIds = new Set(explicitTeams.flatMap(t => [t.p1, t.p2]));
+    const soloCount = playerIds.length - pairedIds.size;
+    if (soloCount % 2 !== 0) return null;
+    return explicitTeams.length + soloCount / 2 + Math.round(roundVarying.size / 2);
+  },
+
+  _pairKey(a, b) { return a < b ? `${a}|${b}` : `${b}|${a}`; },
+
+  // Per-player-pair partner/opponent counts from this League season's match
+  // history (same date-range scoping as _buildSeasonSummary), used to steer
+  // team formation and round order away from repeat matchups. Null when no
+  // League season is active — repeat-minimization only applies then, since
+  // that's the only place a "season" date range is defined.
+  _seasonPairCounts() {
+    const league = this.state._league;
+    if (!league || !league.enabled) return null;
+    const startMs = league.startDate ? new Date(league.startDate + 'T00:00:00').getTime() : null;
+    const endMs = league.endDate ? new Date(league.endDate + 'T23:59:59').getTime() : null;
+    const partners = new Map();
+    const opponents = new Map();
+    const bump = (map, a, b) => map.set(this._pairKey(a, b), (map.get(this._pairKey(a, b)) || 0) + 1);
+    (this.state.roundHistory || []).forEach(m => {
+      if (m.sessionClosed || m.sessionSummary) return;
+      const ts = m.startTime || m.at;
+      if (ts == null) return;
+      if (startMs != null && ts < startMs) return;
+      if (endMs != null && ts > endMs) return;
+      const s1 = m.side1 || [], s2 = m.side2 || [];
+      if (s1.length === 2) bump(partners, s1[0], s1[1]);
+      if (s2.length === 2) bump(partners, s2[0], s2[1]);
+      s1.forEach(a => s2.forEach(b => bump(opponents, a, b)));
+    });
+    return { partners, opponents };
+  },
+
+  // Same team-formation as _buildTeamUnits, but when a League season is
+  // active, tries several random pairings and keeps whichever repeats the
+  // fewest partner pairs from this season's history so far.
+  _buildTeamUnitsForSeason(excludeIds) {
+    const pairCounts = this._seasonPairCounts();
+    if (!pairCounts) return this._buildTeamUnits(excludeIds);
+    const TRIALS = 150;
+    let best = null, bestScore = Infinity;
+    for (let i = 0; i < TRIALS; i++) {
+      const units = this._buildTeamUnits(excludeIds);
+      if (!units) return null;
+      const score = units.reduce((sum, u) => sum + (pairCounts.partners.get(this._pairKey(u.p1, u.p2)) || 0), 0);
+      if (score < bestScore) { bestScore = score; best = units; }
+      if (bestScore === 0) break;
+    }
+    return best;
+  },
+
+  // Which of a round-varying player's typed partnerships is "their turn"
+  // for a given round — alternates evenly across a player's list; a player
+  // with only one (non-always-active) partnership always gets that one.
+  _activePartnershipForRound(playerId, roundIndex) {
+    const list = this._typedPartnershipsForPlayer(playerId).filter(t => !this._isPartnershipAlwaysActive(t));
+    if (!list.length) return null;
+    return list[roundIndex % list.length];
+  },
+
+  // This round's teams for round-varying players: a typed partnership
+  // actually plays this round only if BOTH sides' alternation agrees it's
+  // their turn — if their partner's *other* partnership wanted them
+  // instead, both fall back to being "free agents" for just this round
+  // (paired together, or left with a bye if there's an odd one out — see
+  // _pairFreeAgents). Rare in practice; only comes up when two players'
+  // alternation schedules conflict.
+  _roundVaryingUnitsForRound(roundIndex, activeIds) {
+    const seen = new Set();
+    const units = [];
+    const freeAgents = [];
+    this._roundVaryingPlayerIds().forEach(id => {
+      if (seen.has(id) || !activeIds.has(id)) return;
+      const active = this._activePartnershipForRound(id, roundIndex);
+      const bothAgree = active
+        && this._activePartnershipForRound(active.p1, roundIndex)?.id === active.id
+        && this._activePartnershipForRound(active.p2, roundIndex)?.id === active.id
+        && activeIds.has(active.p1) && activeIds.has(active.p2);
+      if (bothAgree) {
+        seen.add(active.p1); seen.add(active.p2);
+        units.push({ p1: active.p1, p2: active.p2, type: active.type });
+      } else {
+        seen.add(id);
+        freeAgents.push(id);
+      }
+    });
+    return { units, freeAgents };
+  },
+
+  // Best-effort pairing for players who fell back to free-agent status for
+  // one round (see above) — just randomly paired for that round alone; an
+  // odd one out sits that single round out rather than forcing a match.
+  _pairFreeAgents(freeAgentIds) {
+    const shuffled = this.shuffle([...freeAgentIds]);
+    const units = [];
+    for (let i = 0; i + 1 < shuffled.length; i += 2) {
+      units.push({ p1: shuffled[i], p2: shuffled[i + 1], type: null });
+    }
+    return units;
+  },
+
+  // Pairs a list of team-units into matchups, running several random trials
+  // and keeping whichever repeats the fewest opponents — weighted heavily
+  // against repeating someone already played THIS session (sessionPlayed),
+  // and lightly against this League season's history (pairCounts, if any).
+  // Matching same-type units (Mixed vs Mixed, Men's vs Men's, etc.) is only
+  // a light tiebreaker on top of that, not a precondition — so e.g. two
+  // Mixed pairs that are the only Mixed teams don't get forced to replay
+  // each other every round just to keep the type match; they'll be matched
+  // against different opponents (of any type) once repeats outweigh the
+  // same-type preference. An odd unit out is returned unmatched.
+  _pairUnitsMinimizingRepeats(list, sessionPlayed, pairCounts) {
+    if (list.length < 2) return { pairs: [], unmatched: list };
+    const TRIALS = 60;
+    let best = null, bestScore = Infinity, bestUnmatched = null;
+    for (let i = 0; i < TRIALS; i++) {
+      const shuffled = this.shuffle([...list]);
+      const pairs = [];
+      for (let j = 0; j + 1 < shuffled.length; j += 2) pairs.push([shuffled[j], shuffled[j + 1]]);
+      const unmatched = shuffled.length % 2 === 1 ? [shuffled[shuffled.length - 1]] : [];
+      const score = pairs.reduce((sum, [a, b]) => {
+        let s = 0;
+        [a.p1, a.p2].forEach(x => [b.p1, b.p2].forEach(y => {
+          const k = this._pairKey(x, y);
+          s += (sessionPlayed.get(k) || 0) * 1000 + (pairCounts ? (pairCounts.opponents.get(k) || 0) : 0);
+        }));
+        if (!(a.type && b.type && a.type === b.type)) s += 0.1;
+        return sum + s;
+      }, 0);
+      if (score < bestScore) { bestScore = score; best = pairs; bestUnmatched = unmatched; }
+      if (bestScore === 0) break;
+    }
+    return { pairs: best || [], unmatched: bestUnmatched || [] };
+  },
+
+  // Builds one round's games from that round's full unit list. All units
+  // (regardless of partnership type) are minimized together in one pass —
+  // see _pairUnitsMinimizingRepeats for why type matching is only a
+  // tiebreaker rather than a hard grouping.
+  _buildRoundGames(units, sessionPlayed, pairCounts, numCourts) {
+    const { pairs: matchups } = this._pairUnitsMinimizingRepeats(units, sessionPlayed, pairCounts);
+
+    return matchups.slice(0, numCourts).map((m, i) => ({
+      side1: [m[0].p1, m[0].p2], side2: [m[1].p1, m[1].p2], court: i + 1,
+    }));
+  },
+
+  // Tournament brackets don't have repeating rounds to alternate a dual
+  // partnership across, so each round-varying player's two partnerships
+  // are resolved to just one for the whole bracket — whichever has been
+  // used less this League season, so it balances out over time instead
+  // (same idea as _buildTeamUnitsForSeason, just decided once up front).
+  _resolveDualPartnershipsOnce() {
+    const pairCounts = this._seasonPairCounts();
+    const resolved = [];
+    const handled = new Set();
+    this._roundVaryingPlayerIds().forEach(id => {
+      if (handled.has(id)) return;
+      const list = this._typedPartnershipsForPlayer(id).filter(t => !this._isPartnershipAlwaysActive(t) && !handled.has(t.p1) && !handled.has(t.p2));
+      if (!list.length) return;
+      let chosen = list[0];
+      if (pairCounts && list.length > 1) {
+        chosen = [...list].sort((a, b) =>
+          (pairCounts.partners.get(this._pairKey(a.p1, a.p2)) || 0) - (pairCounts.partners.get(this._pairKey(b.p1, b.p2)) || 0)
+        )[0];
+      }
+      resolved.push({ p1: chosen.p1, p2: chosen.p2, type: chosen.type });
+      handled.add(chosen.p1); handled.add(chosen.p2);
+    });
+    return resolved;
+  },
+
+  _buildTeamUnitsForTournament() {
+    const resolved = this._resolveDualPartnershipsOnce();
+    const resolvedIds = new Set(resolved.flatMap(u => [u.p1, u.p2]));
+    // Only the players _resolveDualPartnershipsOnce actually paired up are
+    // excluded from the normal explicit-team/solo pool — whichever player
+    // "lost" a dual-partnership pick (their partner chose someone else for
+    // the whole bracket) falls back to being randomly paired as a solo,
+    // same as anyone without a partner at all, instead of being dropped.
+    const base = this._buildTeamUnitsForSeason(resolvedIds);
+    if (!base) return null;
+    return [...base, ...resolved];
+  },
+
+  // Reads the Match/Session Time Limit fields and returns how many rounds
+  // to actually schedule, capped to maxRounds (a full rotation) — or null
+  // if the admin hasn't filled in enough of them to make a recommendation,
+  // in which case callers keep their existing (uncapped) behavior.
+  _plannedRoundCount(maxRounds) {
+    const s = this.state._scheduleTime || {};
+    let rounds;
+    if (s.mode === 'rounds' && s.roundsOverride) {
+      rounds = s.roundsOverride;
+    } else if (s.matchMinutes && s.sessionHours) {
+      // Rounds fit end-to-end with a buffer between them, not back-to-back
+      // with none: N*matchMinutes + (N-1)*buffer <= sessionMinutes.
+      const buffer = s.bufferMinutes != null ? s.bufferMinutes : this.ROUND_BUFFER_MIN;
+      rounds = Math.floor((s.sessionHours * 60 + buffer) / (s.matchMinutes + buffer));
+    } else {
+      return null;
+    }
+    return Math.max(1, Math.min(rounds, maxRounds));
+  },
+
+  // Caps a full round-robin rotation down to the planned round count, if
+  // one was given — keeping whichever rounds have the fewest repeat
+  // opponents from this League season's history (falling back to the
+  // earliest rounds when there's no season history to score against).
+  _applyPlannedRounds(rounds) {
+    const planned = this._plannedRoundCount(rounds.length);
+    if (planned == null || planned >= rounds.length) return rounds;
+    const pairCounts = this._seasonPairCounts();
+    let kept;
+    if (pairCounts) {
+      const scored = rounds.map(round => ({
+        round,
+        score: round.games.reduce((sum, g) => sum + g.side1.reduce((s, a) =>
+          s + g.side2.reduce((s2, b) => s2 + (pairCounts.opponents.get(this._pairKey(a, b)) || 0), 0), 0), 0),
+      }));
+      scored.sort((a, b) => a.score - b.score);
+      kept = scored.slice(0, planned).map(x => x.round).sort((a, b) => a.round - b.round);
+    } else {
+      kept = rounds.slice(0, planned);
+    }
+    return kept.map((r, i) => ({ ...r, round: i + 1 }));
   },
 
   _passcodeVisible: false,
@@ -4354,8 +5057,93 @@ const App = {
     this._passcodeVisible = !this._passcodeVisible;
     const display = document.getElementById('passcodeDisplay');
     const btn = document.getElementById('btnTogglePasscode');
-    if (display) display.textContent = this._passcodeVisible ? (this.state._passcode || '—') : '****';
+    if (display) display.textContent = this._passcodeVisible ? (this.state._passcode || '—') : (this.state._passcode ? '****' : '—');
     if (btn) btn.textContent = this._passcodeVisible ? 'Hide' : 'Show';
+  },
+
+  // ─── Passcode requirement toggle + edit (admin, private sessions) ──
+  togglePasscodeRequired() {
+    const toggle = document.getElementById('passcodeRequiredToggle');
+    const on = !!toggle?.checked;
+    if (on && !this.state._passcode) {
+      // Nothing to require yet — make them set one first before this persists.
+      // saveEditedPasscode turns _passcodeRequired on once they do.
+      this._passcodeEditIntent = 'enable';
+      this.toggleEditPasscode(true);
+      return;
+    }
+    this.state._passcodeRequired = on;
+    this.saveState();
+    this.render();
+  },
+
+  toggleEditPasscode(force) {
+    const row = document.getElementById('editPasscodeRow');
+    if (!row) return;
+    const show = force === true ? true : force === false ? false : row.style.display === 'none';
+    if (show && this._passcodeEditIntent !== 'enable') this._passcodeEditIntent = 'edit';
+    row.style.display = show ? 'flex' : 'none';
+    const err = document.getElementById('editPasscodeError');
+    if (err) err.style.display = 'none';
+    const input = document.getElementById('editPasscodeInput');
+    if (input) input.value = '';
+    if (show) {
+      input?.focus();
+    } else {
+      // Closed without saving — resync the toggle to what's actually persisted
+      const toggle = document.getElementById('passcodeRequiredToggle');
+      if (toggle) toggle.checked = !!this.state._passcodeRequired;
+      this._passcodeEditIntent = null;
+    }
+  },
+
+  randomEditPasscode() {
+    const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+    let code = '';
+    for (let i = 0; i < 4; i++) code += chars[Math.floor(Math.random() * chars.length)];
+    document.getElementById('editPasscodeInput').value = code;
+  },
+
+  saveEditedPasscode() {
+    if (!Admin.isAdmin()) return;
+    const input = document.getElementById('editPasscodeInput');
+    const err = document.getElementById('editPasscodeError');
+    const code = (input?.value || '').trim().toUpperCase();
+    if (code.length !== 4) {
+      if (err) { err.textContent = 'Enter a 4-character passcode'; err.style.display = 'block'; }
+      return;
+    }
+    if (err) err.style.display = 'none';
+    const changed = code !== this.state._passcode;
+    this._pendingPasscodeValue = code;
+    // Admins bypass the passcode entirely, so only non-admin participants
+    // already in the roster are affected by a re-entry requirement
+    const admins = this.state._admins || [];
+    const hasNonAdminParticipants = this.state.players.some(p => !(p.firebaseUid && admins.includes(p.firebaseUid)));
+    if (changed && hasNonAdminParticipants) {
+      // Existing participants — let the admin decide whether they must re-enter
+      document.getElementById('passcodeReentryModal').style.display = 'flex';
+      document.body.style.overflow = 'hidden';
+      return;
+    }
+    this._applyPasscodeChange(false);
+  },
+
+  _confirmPasscodeReentry(requireReentry) {
+    document.getElementById('passcodeReentryModal').style.display = 'none';
+    document.body.style.overflow = '';
+    this._applyPasscodeChange(requireReentry);
+  },
+
+  _applyPasscodeChange(requireReentry) {
+    this.state._passcode = this._pendingPasscodeValue;
+    this._pendingPasscodeValue = null;
+    if (this._passcodeEditIntent === 'enable') this.state._passcodeRequired = true;
+    if (requireReentry) this.state._passcodeVersion = (this.state._passcodeVersion || 0) + 1;
+    this.saveState();
+    this.toggleEditPasscode(false);
+    this._passcodeVisible = false;
+    this.render();
   },
 
   updateShareLink() {
@@ -4387,6 +5175,39 @@ const App = {
     });
   },
 
+  // ─── View Only (admin, private sessions) ───
+  // Locks everyone but an admin out of changing anything shared — adding,
+  // moving, or removing players, scoring, court assignment, settings, the
+  // roster lock/schedule flow, and so on (see the "view-only-locked" class
+  // toggled in render(), plus the editMatchScore/deleteMatchScore and
+  // toggleLeague/saveLeagueSettings/setSessionType guards that check
+  // canModify() directly since they sit outside that locked area).
+  // Filtering/searching Match History stays local-only and unaffected.
+  canModify() {
+    return !this.state._viewOnly || Admin.isAdmin();
+  },
+
+  toggleViewOnly() {
+    if (!Admin.isAdmin()) return;
+    const on = !!document.getElementById('viewOnlyToggle')?.checked;
+    this.state._viewOnly = on;
+    this._logAdmin(on ? 'Enable View Only' : 'Disable View Only');
+    this.saveState();
+    this.render();
+  },
+
+  _toggleViewOnlyInfo(event) {
+    event.preventDefault();
+    event.stopPropagation();
+    const popover = document.getElementById('viewOnlyInfoPopover');
+    if (popover) popover.style.display = popover.style.display === 'none' ? 'flex' : 'none';
+  },
+
+  _closeViewOnlyInfo() {
+    const popover = document.getElementById('viewOnlyInfoPopover');
+    if (popover) popover.style.display = 'none';
+  },
+
   setSessionType(type) {
     if (!Admin.isAdmin()) return;
     if (type === this.state._sessionType) return;
@@ -4415,8 +5236,161 @@ const App = {
     this.render();
   },
 
+  // ─── League (Round Robin only) ──────────────
+  // A recurring season spanning many closed days, standing apart from a
+  // single Round Robin's own roster/schedule (which still resets per
+  // closeSession — see there). Just a date range + cadence used to scope
+  // the season-wide standings in renderSeasonSummary; the day-to-day
+  // roster/lock flow is unaffected by whether this is on.
+  toggleLeague() {
+    if (!Admin.isAdmin()) return;
+    const on = !!document.getElementById('leagueToggle')?.checked;
+    this.state._league = { startDate: null, endDate: null, frequency: 'weekly', ...(this.state._league || {}), enabled: on };
+    this._logAdmin(on ? 'Enable League' : 'Disable League');
+    this.saveState();
+    this.render();
+  },
+
+  saveLeagueSettings() {
+    if (!Admin.isAdmin()) return;
+    const startDate = document.getElementById('leagueStartDate')?.value || null;
+    const endDate = document.getElementById('leagueEndDate')?.value || null;
+    const frequency = document.getElementById('leagueFrequency')?.value || 'weekly';
+    const errEl = document.getElementById('leagueError');
+    if (startDate && endDate && endDate < startDate) {
+      if (errEl) errEl.style.display = 'block';
+      return;
+    }
+    if (errEl) errEl.style.display = 'none';
+    this.state._league = { ...(this.state._league || {}), enabled: true, startDate, endDate, frequency };
+    this._logAdmin('Update League Settings');
+    this.saveState();
+    this.render();
+  },
+
+  // ─── Match/Session Time Limit → recommended rounds ──
+  // Shown for Round Robin and Tournament alike, once the roster is locked
+  // but before the schedule/bracket is generated. Round Robin uses these to
+  // cap how many of a full rotation's rounds get scheduled (see
+  // _plannedRoundCount); Tournament's round count is fixed by bracket size,
+  // so there it's just an estimate + a "won't fit" warning.
+  toggleRoundsOverrideMode() {
+    if (!this.canModify()) return;
+    const s = this.state._scheduleTime || {};
+    this.state._scheduleTime = { ...s, mode: s.mode === 'rounds' ? 'time' : 'rounds' };
+    this.saveState();
+    this.render();
+  },
+
+  updateScheduleTimeOptions() {
+    if (!this.canModify()) return;
+    const matchMinutes = parseFloat(document.getElementById('matchTimeMinutes')?.value) || null;
+    const sessionHours = parseFloat(document.getElementById('sessionTimeHours')?.value) || null;
+    const roundsOverride = parseInt(document.getElementById('scheduleRoundsInput')?.value, 10) || null;
+    // 0 is a valid buffer (back-to-back rounds), so don't let "|| null" treat it as unset.
+    const bufferRaw = document.getElementById('scheduleBufferMinutes')?.value;
+    const bufferMinutes = bufferRaw === '' || bufferRaw == null ? null : Math.max(0, parseFloat(bufferRaw) || 0);
+    const mode = (this.state._scheduleTime && this.state._scheduleTime.mode) || 'time';
+    this.state._scheduleTime = { matchMinutes, sessionHours, roundsOverride, bufferMinutes, mode };
+    this.saveState();
+    this.render();
+  },
+
+  // Shared by _renderQueueRR/_renderQueueTournament's "locked, not yet
+  // generated" branch. maxRounds is a full RR rotation's length, or a
+  // tournament bracket's fixed round count; fixedRounds distinguishes which.
+  // teamCount (RR only) drives the too-few-courts warning below.
+  _renderScheduleTimeOptions(maxRounds, fixedRounds, teamCount) {
+    const wrap = document.getElementById('scheduleTimeOptions');
+    if (!wrap) return;
+    wrap.style.display = '';
+    const st = this.state._scheduleTime || {};
+    const matchEl = document.getElementById('matchTimeMinutes');
+    const sessionEl = document.getElementById('sessionTimeHours');
+    const bufferEl = document.getElementById('scheduleBufferMinutes');
+    if (matchEl && document.activeElement !== matchEl) matchEl.value = st.matchMinutes || '';
+    if (sessionEl && document.activeElement !== sessionEl) sessionEl.value = st.sessionHours || '';
+    const buffer = st.bufferMinutes != null ? st.bufferMinutes : this.ROUND_BUFFER_MIN;
+    if (bufferEl && document.activeElement !== bufferEl) bufferEl.value = st.bufferMinutes != null ? st.bufferMinutes : this.ROUND_BUFFER_MIN;
+    const overrideWrap = document.getElementById('scheduleRoundsOverrideWrap');
+    const toggleLink = document.getElementById('scheduleRoundsToggleLink');
+    const infoEl = document.getElementById('scheduleRoundsInfo');
+    const warnEl = document.getElementById('scheduleTimeWarning');
+    // Rounds run back-to-back with a buffer between them (not zero gap), so
+    // N rounds cost N*matchMinutes + (N-1)*buffer, not N*matchMinutes.
+    const estFor = rounds => (rounds && st.matchMinutes) ? rounds * st.matchMinutes + Math.max(0, rounds - 1) * buffer : null;
+    const warnings = [];
+
+    if (fixedRounds) {
+      const estMinutes = estFor(maxRounds);
+      if (overrideWrap) overrideWrap.style.display = 'none';
+      if (toggleLink) toggleLink.style.display = 'none';
+      if (infoEl) {
+        infoEl.textContent = maxRounds
+          ? `${maxRounds} round${maxRounds === 1 ? '' : 's'} (fixed by bracket size)${estMinutes ? ` · est. ${estMinutes} min` : ''}`
+          : '';
+      }
+      if (estMinutes != null && st.sessionHours && estMinutes > st.sessionHours * 60) {
+        warnings.push(`Estimated ${estMinutes} min exceeds your ${st.sessionHours} hr session limit.`);
+      }
+      this._applyScheduleWarnings(warnEl, warnings);
+      return;
+    }
+
+    if (toggleLink) {
+      toggleLink.style.display = '';
+      toggleLink.textContent = st.mode === 'rounds' ? 'Or set a time limit instead' : 'Or set rounds directly';
+    }
+    if (overrideWrap) overrideWrap.style.display = st.mode === 'rounds' ? '' : 'none';
+    const roundsInput = document.getElementById('scheduleRoundsInput');
+    if (roundsInput && document.activeElement !== roundsInput) roundsInput.value = st.roundsOverride || '';
+
+    // Round Robin drops any of a round's matchups beyond the number of
+    // available courts instead of rescheduling them (unlike Tournament,
+    // which just queues them as waiting matches) — so with too few courts,
+    // some teams sit out every round with no makeup game.
+    const numCourts = this.state.availableCourts || 1;
+    const neededCourts = teamCount ? Math.ceil(teamCount / 2) : null;
+    if (neededCourts && numCourts < neededCourts) {
+      warnings.push(`Only ${numCourts} court${numCourts === 1 ? '' : 's'} available, but ${neededCourts} would let every team play each round — some teams will sit out rounds with no makeup.`);
+    }
+
+    if (infoEl) {
+      if (st.mode === 'rounds') {
+        if (st.roundsOverride && st.matchMinutes) {
+          const est = estFor(st.roundsOverride);
+          infoEl.textContent = `Estimated session time: ~${est} min (with ${buffer} min between rounds)`;
+          if (st.sessionHours && est > st.sessionHours * 60) {
+            warnings.push(`Estimated ${est} min exceeds your ${st.sessionHours} hr session limit.`);
+          }
+        } else {
+          infoEl.textContent = 'Enter a match time limit and number of rounds to get an estimated session time.';
+        }
+      } else if (st.matchMinutes && st.sessionHours) {
+        const recommended = Math.max(1, Math.floor((st.sessionHours * 60 + buffer) / (st.matchMinutes + buffer)));
+        infoEl.textContent = (maxRounds && recommended > maxRounds)
+          ? `Recommended: ${maxRounds} rounds (full rotation reached — only ${maxRounds} unique rounds possible)`
+          : `Recommended: ${recommended} round${recommended === 1 ? '' : 's'} (with ${buffer} min between rounds)`;
+      } else {
+        infoEl.textContent = maxRounds ? `Full rotation: ${maxRounds} round${maxRounds === 1 ? '' : 's'}` : '';
+      }
+    }
+
+    this._applyScheduleWarnings(warnEl, warnings);
+  },
+
+  _applyScheduleWarnings(warnEl, warnings) {
+    if (!warnEl) return;
+    if (warnings.length) {
+      warnEl.innerHTML = warnings.map(w => this.esc(w)).join('<br>');
+      warnEl.style.display = 'block';
+    } else {
+      warnEl.style.display = 'none';
+    }
+  },
+
   rrLockPlayers() {
-    if (this.state.players.length < 4) {
+    if (this.state.players.filter(p => p.active).length < 4) {
       alert('Need at least 4 players for round robin.');
       return;
     }
@@ -4436,52 +5410,54 @@ const App = {
   },
 
   rrGenerateSchedule() {
-    const n = this.state.players.length;
+    const n = this.state.players.filter(p => p.active).length;
     if (n < 4) return;
-    const units = this._buildTeamUnits();
-    if (!units) {
+    const fixedUnits = this._buildTeamUnitsForSeason();
+    if (!fixedUnits) {
       alert('Add one more player, or pair everyone up with a partner, so no one is left without a doubles partner.');
       return;
     }
-    if (units.length < 2) return;
+
+    const roundVarying = this._roundVaryingPlayerIds();
+    const unitEstimate = fixedUnits.length + Math.round(roundVarying.size / 2);
+    if (unitEstimate < 2) return;
+    const numRounds = unitEstimate % 2 === 1 ? unitEstimate : unitEstimate - 1;
 
     const numCourts = this.state.availableCourts || 1;
-
-    // Circle method for round robin, run over fixed teams instead of
-    // individual players so partners always stay on the same side.
-    const list = units.map((_, i) => i);
-    if (list.length % 2 === 1) list.push(null); // bye
-    const total = list.length;
-    const numRounds = total - 1;
-    const rounds = [];
+    const pairCounts = this._seasonPairCounts();
+    const activeIds = new Set(this.state.players.filter(p => p.active).map(p => p.id));
+    // Repeats already played THIS session, tracked as rounds are built one
+    // at a time — with fixed teams this used to be guaranteed zero by the
+    // circle method; now that round-varying partnerships mean the set of
+    // teams can change round to round, it's a heuristic instead (weighted
+    // far above season history so it always wins the tie-break).
+    const sessionPlayed = new Map();
+    let rounds = [];
 
     for (let r = 0; r < numRounds; r++) {
-      // Build rotation: fix first, rotate rest
-      const rotated = [list[0]];
-      for (let i = 1; i < total; i++) {
-        rotated.push(list[1 + (i - 1 + r) % (total - 1)]);
-      }
+      const { units: varyingUnits, freeAgents } = this._roundVaryingUnitsForRound(r, activeIds);
+      const freeAgentUnits = this._pairFreeAgents(freeAgents);
+      const allUnits = [...fixedUnits, ...varyingUnits, ...freeAgentUnits];
 
-      // Create team matchups: (0, n-1), (1, n-2), etc.
-      const matchups = [];
-      for (let i = 0; i < total / 2; i++) {
-        const a = rotated[i];
-        const b = rotated[total - 1 - i];
-        if (a != null && b != null) matchups.push([a, b]);
-      }
-
-      const games = [];
-      for (const [a, b] of matchups) {
-        if (games.length >= numCourts) break;
-        games.push({ side1: [units[a].p1, units[a].p2], side2: [units[b].p1, units[b].p2], court: games.length + 1 });
-      }
-
+      const games = this._buildRoundGames(allUnits, sessionPlayed, pairCounts, numCourts);
       if (games.length > 0) rounds.push({ round: r + 1, games });
+
+      games.forEach(g => {
+        g.side1.forEach(a => g.side2.forEach(b => {
+          const k = this._pairKey(a, b);
+          sessionPlayed.set(k, (sessionPlayed.get(k) || 0) + 1);
+        }));
+      });
     }
 
+    rounds = this._applyPlannedRounds(rounds);
+
+    // Generating the schedule doesn't start Round 1 itself — it lands in
+    // Upcoming Rounds like every other round, and only populates the courts
+    // once the organizer taps Start Round 1 (see rrAdvanceRound, which
+    // treats current round 0 as "nothing started yet").
     this.state._rrSchedule = rounds;
-    this.state._rrCurrentRound = 1;
-    this._rrStartRound(1);
+    this.state._rrCurrentRound = 0;
     this.saveState();
     this.render();
   },
@@ -4505,7 +5481,9 @@ const App = {
   },
 
   rrAdvanceRound() {
-    const current = this.state._rrCurrentRound || 1;
+    // 0 means "no round started yet" (fresh schedule) — || would coerce
+    // that to 1 and skip straight to starting Round 2, so check explicitly.
+    const current = this.state._rrCurrentRound != null ? this.state._rrCurrentRound : 0;
     const schedule = this.state._rrSchedule || [];
     if (current >= schedule.length) return;
     this.state._rrCurrentRound = current + 1;
@@ -4530,7 +5508,7 @@ const App = {
   },
 
   bracketLockPlayers() {
-    if (this.state.players.length < 4) {
+    if (this.state.players.filter(p => p.active).length < 4) {
       alert('Need at least 4 players (2 teams) for a tournament.');
       return;
     }
@@ -4550,7 +5528,7 @@ const App = {
   },
 
   bracketGenerate() {
-    const units = this._buildTeamUnits();
+    const units = this._buildTeamUnitsForTournament();
     if (!units) {
       alert('Add one more player, or pair everyone up with a partner, so no one is left without a doubles partner.');
       return;
@@ -4852,10 +5830,11 @@ const App = {
     const rrSection = document.getElementById('rrUpcomingSection');
     if (rrSection) rrSection.style.display = 'none';
 
-    const n = this.state.players.length;
+    const n = this.state.players.filter(p => p.active).length;
     const locked = this.state._bracketLocked;
     const bracket = this.state._bracket || [];
     const currentRound = this.state._bracketCurrentRound || 0;
+    const timeOptions = document.getElementById('scheduleTimeOptions');
 
     if (!locked) {
       countEl.innerHTML = n < 4
@@ -4863,6 +5842,7 @@ const App = {
         : `${n} player${n !== 1 ? 's' : ''} &middot; <a href="#" onclick="App.bracketLockPlayers();return false;" style="color:var(--primary);font-weight:600;">Lock Players to Generate Bracket</a>`;
       if (controls) controls.style.display = 'none';
       if (courtSelect) courtSelect.parentElement.style.display = 'none';
+      if (timeOptions) timeOptions.style.display = 'none';
     } else if (bracket.length === 0) {
       countEl.textContent = `${n} players locked`;
       if (Session.id && controls) {
@@ -4877,7 +5857,15 @@ const App = {
           btnAssignAll.onclick = () => this.bracketGenerate();
         }
       }
+      const teamCount = this._teamUnitCount();
+      let bracketSize = null;
+      if (teamCount) {
+        bracketSize = 2;
+        while (bracketSize < teamCount) bracketSize *= 2;
+      }
+      this._renderScheduleTimeOptions(bracketSize ? Math.log2(bracketSize) : null, true);
     } else {
+      if (timeOptions) timeOptions.style.display = 'none';
       const totalRounds = bracket.length;
       const hasActive = this.rrHasActiveGames();
       const roundComplete = this.bracketIsRoundComplete();
@@ -4925,6 +5913,7 @@ const App = {
     const section = document.getElementById('bracketSection');
     const view = document.getElementById('bracketView');
     if (!section || !view) return;
+    this._populatePlayerFilterSelect(document.getElementById('bracketPlayerFilter'));
 
     const rounds = this.state._bracket || [];
     if (rounds.length === 0) {
@@ -4935,6 +5924,10 @@ const App = {
     section.style.display = '';
     const totalRounds = rounds.length;
     const currentRound = this.state._bracketCurrentRound || 0;
+    // The bracket's tree/connector layout is fixed by round size, so
+    // filtering by player dims non-matching matches instead of removing
+    // them (unlike Upcoming Rounds' simple list, which can just hide them).
+    const filterId = this._upcomingFilterPlayerId;
 
     let html = '<div class="bracket-container">';
 
@@ -4949,7 +5942,8 @@ const App = {
         const isActive = !match.bye && !match.winner && match.side1 && match.side2;
         const isOnCourt = match.court && this.state.activeGames[match.court];
         const isDone = !!match.winner && !match.bye;
-        const matchClass = isOnCourt ? 'bracket-match active' : isDone ? 'bracket-match completed' : 'bracket-match';
+        const involvesFiltered = filterId == null || (match.side1 && match.side1.includes(filterId)) || (match.side2 && match.side2.includes(filterId));
+        const matchClass = (isOnCourt ? 'bracket-match active' : isDone ? 'bracket-match completed' : 'bracket-match') + (involvesFiltered ? '' : ' bracket-match-dim');
 
         html += `<div class="${matchClass}">`;
 
@@ -5052,8 +6046,14 @@ ${bracketHTML}
   _rankedQueueUnits(allQueue) {
     // Only a player's *current* partner (see renderPartners/addTeamWithSelf)
     // is used for pairing — Other Partners are just reserves, not counted.
+    // Round-varying admin partnerships (a player with two typed
+    // partnerships, see _roundVaryingPlayerIds) are excluded here — Open
+    // Play has no "rounds" to alternate them across, so those players are
+    // just treated as solos for court assignment.
+    const roundVarying = this._roundVaryingPlayerIds();
     const activePairs = this.state.teams.filter(t =>
-      t.current && allQueue.some(p => p.id === t.p1) && allQueue.some(p => p.id === t.p2)
+      t.current && !roundVarying.has(t.p1) && !roundVarying.has(t.p2) &&
+      allQueue.some(p => p.id === t.p1) && allQueue.some(p => p.id === t.p2)
     );
     const pairedIds = new Set(activePairs.flatMap(t => [t.p1, t.p2]));
     const soloPlayers = allQueue.filter(p => !pairedIds.has(p.id));
@@ -5228,9 +6228,12 @@ ${bracketHTML}
   // ─── Proposed matches (Open Play manual review) ─────
   // Auto-assignment only proposes a match; nothing is locked in — and no
   // player leaves the queue for good — until the organizer confirms it here.
-  startProposedMatch(courtId) {
+  // Core of startProposedMatch, without the save+render — shared with
+  // startAllCourts, which batches many of these into one save+render
+  // instead of one each.
+  _confirmProposedMatchCore(courtId) {
     const game = this.state.proposedGames[courtId];
-    if (!game || game.side1.length !== 2 || game.side2.length !== 2) return;
+    if (!game || game.side1.length !== 2 || game.side2.length !== 2) return false;
     const now = Date.now();
     this.state.activeGames[courtId] = {
       side1: [...game.side1], side2: [...game.side2],
@@ -5246,7 +6249,37 @@ ${bracketHTML}
     };
     this._confirmPlayersIntoMatch([...game.side1, ...game.side2]);
     delete this.state.proposedGames[courtId];
+    return true;
+  },
+
+  startProposedMatch(courtId) {
+    if (!this._confirmProposedMatchCore(courtId)) return;
     this._proposedUndoStack = []; // confirming a match is final — nothing before it is undoable
+    this.saveState();
+    this.render();
+  },
+
+  // "Start All": confirms every fully-filled proposed match (Open Play's
+  // manual-review step) and starts the timer on every not-yet-started
+  // active game — Round Robin/Tournament rounds land directly in
+  // activeGames already paused at zero (see _rrStartRound/bracketGenerate),
+  // same state a just-confirmed Open Play match is in, so one Start All
+  // covers every session type.
+  startAllCourts() {
+    let changed = false;
+    Object.keys(this.state.proposedGames).map(Number).forEach(courtId => {
+      if (this._confirmProposedMatchCore(courtId)) changed = true;
+    });
+    Object.keys(this.state.activeGames).map(Number).forEach(courtId => {
+      const game = this.state.activeGames[courtId];
+      if (game.timerPaused && (game.timerElapsed || 0) === 0 && !game.timerResumedAt) {
+        game.timerPaused = false;
+        game.timerResumedAt = Date.now();
+        changed = true;
+      }
+    });
+    if (!changed) return;
+    this._proposedUndoStack = [];
     this.saveState();
     this.render();
   },
@@ -5376,18 +6409,6 @@ ${bracketHTML}
     document.body.style.overflow = '';
   },
 
-  clearHistory() {
-    if (!Admin.isAdmin()) return;
-    if (!confirm('Clear all match history and fairness rotation counts for all users?')) return;
-    this._logAdmin('Clear History');
-    this.state.opponentHistory = {};
-    this.state.roundsWaited = {};
-    this.state.roundHistory = [];
-    this.state.round = 0;
-    this.saveState();
-    this.render();
-  },
-
   // ─── Close / Open Session (admin-only pause) ───
   // Closing pulls every player off any current or proposed match and into
   // Sitting Out, and freezes the queue — nobody can move into Waiting or
@@ -5405,12 +6426,122 @@ ${bracketHTML}
     this.state.opponentHistory = {};
     this.state.roundsWaited = {};
     this.state.round = 0;
+    // Round Robin/Tournament locks in a roster for one day's play — closing
+    // resets that lock too, so reopening starts a fresh roster instead of
+    // landing back on a finished schedule/bracket with no way to build a new one.
+    if (this.isRoundRobin()) {
+      this.state._rrLocked = false;
+      this.state._rrSchedule = [];
+      this.state._rrCurrentRound = 0;
+    }
+    if (this.isTournament()) {
+      this.state._bracketLocked = false;
+      this.state._bracket = [];
+      this.state._bracketCurrentRound = 0;
+    }
+    const summary = this._buildSessionSummary();
+    if (summary) this.state.roundHistory.push(summary);
     this.state.roundHistory.push({ sessionClosed: true, side1: [], side2: [], at: Date.now() });
     this.state._closed = true;
     this._proposedUndoStack = [];
     this._tapSelection = null;
+    this._editingMatchIdx = null;
     this.saveState();
     this.render();
+    // Jump straight to History so whoever closed it sees the session
+    // summary just added, instead of an empty, frozen Courts tab.
+    this.switchTab('history');
+  },
+
+  // "N win(s) · N loss(es) · N played · N avg pts" — shared text for a
+  // player's record wherever _tallyPlayerStats output gets rendered
+  // (session summary, season summary, the League player stat card).
+  // includeWinPct adds "· NN% wins" — only asked for on the single-player
+  // League stat card, not the standings/summary lists, so it's opt-in.
+  _formatPlayerRecord(p, includeWinPct) {
+    const winLabel = `${p.wins} win${p.wins === 1 ? '' : 's'}`;
+    const lossLabel = `${p.losses} loss${p.losses === 1 ? '' : 'es'}`;
+    const played = p.played ? ` · ${p.played} played` : '';
+    const decided = p.wins + p.losses;
+    const winPct = includeWinPct && decided ? ` · ${Math.round((p.wins / decided) * 100)}% wins` : '';
+    const avg = p.avgPoints != null ? ` · ${p.avgPoints} avg pts` : '';
+    return `${winLabel} · ${lossLabel}${played}${winPct}${avg}`;
+  },
+
+  // Per-player wins/losses/played/avg-points across a set of match entries
+  // (never sessionClosed/sessionSummary markers) — shared by a single
+  // close's own summary (_buildSessionSummary) and a whole League season's
+  // (_buildSeasonSummary), which just pass in a differently-scoped list.
+  _tallyPlayerStats(matches) {
+    if (!matches.length) return null;
+    const nameMap = this._historyNameMap(matches);
+    const nameFor = id => this.getPlayer(id)?.name || nameMap.get(id) || '?';
+    const stats = new Map();
+    const ensure = id => {
+      if (!stats.has(id)) stats.set(id, { id, name: nameFor(id), wins: 0, losses: 0, played: 0, _points: 0, _scoredMatches: 0 });
+      return stats.get(id);
+    };
+    matches.forEach(m => {
+      const decided = !m.expired && (m.winner === 1 || m.winner === 2);
+      const hasScores = m.score1 != null && m.score2 != null;
+      (m.side1 || []).forEach(id => {
+        const s = ensure(id);
+        s.played++;
+        if (decided) { if (m.winner === 1) s.wins++; else s.losses++; }
+        if (hasScores) { s._points += m.score1; s._scoredMatches++; }
+      });
+      (m.side2 || []).forEach(id => {
+        const s = ensure(id);
+        s.played++;
+        if (decided) { if (m.winner === 2) s.wins++; else s.losses++; }
+        if (hasScores) { s._points += m.score2; s._scoredMatches++; }
+      });
+    });
+    if (!stats.size) return null;
+    return [...stats.values()].map(s => {
+      const avgPoints = s._scoredMatches ? Math.round((s._points / s._scoredMatches) * 10) / 10 : null;
+      return { id: s.id, name: s.name, wins: s.wins, losses: s.losses, played: s.played, avgPoints };
+    }).sort((a, b) => b.wins - a.wins || (b.avgPoints ?? -Infinity) - (a.avgPoints ?? -Infinity) || b.played - a.played || a.name.localeCompare(b.name));
+  },
+
+  // Player names + win/loss/played record for the games since the last
+  // close (or session start), snapshotted onto a "session summary" entry in
+  // Match History — the round-by-round stats it's built from
+  // (opponentHistory, round) get wiped by closeSession, so this is the
+  // lasting record of who played and how they did.
+  _buildSessionSummary() {
+    const history = this.state.roundHistory || [];
+    let startIdx = 0;
+    for (let i = history.length - 1; i >= 0; i--) {
+      if (history[i].sessionClosed) { startIdx = i + 1; break; }
+    }
+    const matches = history.slice(startIdx).filter(m => !m.sessionClosed && !m.sessionSummary);
+    if (!matches.length) return null;
+    const players = this._tallyPlayerStats(matches);
+    if (!players) return null;
+    return { sessionSummary: true, side1: [], side2: [], at: Date.now(), players };
+  },
+
+  // League season standings: every match whose timestamp falls within the
+  // configured start/end dates, regardless of how many closes it spans —
+  // see renderSeasonSummary for how this gets shown (and collapsed once
+  // the season's over) in the History tab.
+  _buildSeasonSummary() {
+    const league = this.state._league;
+    if (!league || !league.enabled) return null;
+    const startMs = league.startDate ? new Date(league.startDate + 'T00:00:00').getTime() : null;
+    const endMs = league.endDate ? new Date(league.endDate + 'T23:59:59').getTime() : null;
+    const matches = (this.state.roundHistory || []).filter(m => {
+      if (m.sessionClosed || m.sessionSummary) return false;
+      const ts = m.startTime || m.at;
+      if (ts == null) return false;
+      if (startMs != null && ts < startMs) return false;
+      if (endMs != null && ts > endMs) return false;
+      return true;
+    });
+    const players = this._tallyPlayerStats(matches) || [];
+    const ended = endMs != null && Date.now() > endMs;
+    return { league, players, ended };
   },
 
   openSession() {
@@ -5431,6 +6562,8 @@ ${bracketHTML}
     const prevOffline = this.state._offline;
     const prevQuickPlay = this.state._quickPlay;
     const prevSessionType = this.state._sessionType;
+    const prevLeague = this.state._league;
+    const prevViewOnly = this.state._viewOnly;
     const fresh = this._freshState();
     fresh._resetAt = Date.now();
     fresh.adminLog = prevLog;
@@ -5439,6 +6572,8 @@ ${bracketHTML}
     if (prevOffline) fresh._offline = prevOffline;
     if (prevQuickPlay) fresh._quickPlay = prevQuickPlay;
     if (prevSessionType) fresh._sessionType = prevSessionType;
+    if (prevLeague) fresh._league = prevLeague;
+    if (prevViewOnly) fresh._viewOnly = prevViewOnly;
     localStorage.removeItem('courtManager');
     this._myGuests = new Set();
     this._saveMyGuests();
@@ -5469,6 +6604,11 @@ ${bracketHTML}
   render() {
     // Re-evaluate admin visibility (session admin depends on state._admins)
     if (typeof Admin !== 'undefined') Admin._updateUI();
+
+    const sessionNameEl = document.getElementById('sessionNameDisplay');
+    if (sessionNameEl) {
+      sessionNameEl.textContent = this.state._sessionName || (this.state._offline ? 'Quick Play' : 'Session');
+    }
 
     const closedBanner = document.getElementById('sessionClosedBanner');
     if (closedBanner) {
@@ -5502,8 +6642,8 @@ ${bracketHTML}
     // Logging a past match only makes sense for Open Play's live queue —
     // Round Robin/Tournament build matches from a locked roster/bracket instead.
     const btnLogMatch = document.getElementById('btnLogPastMatch');
-    if (btnLogMatch) btnLogMatch.style.display = structured ? 'none' : '';
-    if (structured) this._closeLogPastMatch();
+    if (btnLogMatch) btnLogMatch.style.display = (structured || !this.canModify()) ? 'none' : '';
+    if (structured || !this.canModify()) this._closeLogPastMatch();
 
     // Offline sessions have no persistent identity/preferences to manage
     const isOffline = !!this.state._offline;
@@ -5519,6 +6659,9 @@ ${bracketHTML}
       this.renderPartnerPicker();
     }
     this.renderAdmins();
+    this.renderPartnershipsList();
+    const viewPartnershipsBtn = document.getElementById('btnViewPartnerships');
+    if (viewPartnershipsBtn) viewPartnershipsBtn.style.display = this.state.teams.length ? '' : 'none';
     // Refresh admin-only visibility (session admin depends on _admins in state)
     const isAdmin = Admin.isAdmin();
     document.querySelectorAll('.admin-only').forEach(el => {
@@ -5549,6 +6692,24 @@ ${bracketHTML}
       if (selType) selType.value = rr ? 'roundrobin' : tourn ? 'tournament' : 'open';
     }
 
+    // League (Round Robin only): recurring season with a shared standings
+    // summary across every closed day — see renderSeasonSummary.
+    const leagueSection = document.getElementById('leagueSection');
+    if (leagueSection) {
+      leagueSection.style.display = rr ? '' : 'none';
+      const league = this.state._league || {};
+      const leagueToggle = document.getElementById('leagueToggle');
+      if (leagueToggle) leagueToggle.checked = !!league.enabled;
+      const leagueFields = document.getElementById('leagueFields');
+      if (leagueFields) leagueFields.style.display = league.enabled ? '' : 'none';
+      const startEl = document.getElementById('leagueStartDate');
+      if (startEl) startEl.value = league.startDate || '';
+      const endEl = document.getElementById('leagueEndDate');
+      if (endEl) endEl.value = league.endDate || '';
+      const freqEl = document.getElementById('leagueFrequency');
+      if (freqEl) freqEl.value = league.frequency || 'weekly';
+    }
+
     // Show passcode section for private sessions (admin only)
     const passcodeSection = document.getElementById('passcodeSection');
     if (passcodeSection) {
@@ -5556,12 +6717,30 @@ ${bracketHTML}
       passcodeSection.style.display = (isPvt && Admin.isAdmin()) ? '' : 'none';
       // Reset visibility when switching sessions
       if (!isPvt) { this._passcodeVisible = false; }
+      const reqToggle = document.getElementById('passcodeRequiredToggle');
+      if (reqToggle) reqToggle.checked = !!this.state._passcodeRequired;
+      const display = document.getElementById('passcodeDisplay');
+      if (display) display.textContent = this._passcodeVisible ? (this.state._passcode || '—') : (this.state._passcode ? '****' : '—');
+      const editBtn = document.getElementById('btnEditPasscode');
+      if (editBtn) editBtn.textContent = this.state._passcode ? 'Edit passcode' : 'Set passcode';
     }
 
     // Show delete session button for private sessions
     const deleteBtn = document.getElementById('btnDeleteSession');
     const isPvt = Session.id && Session.id.startsWith('pvt-');
     if (deleteBtn) deleteBtn.style.display = (isPvt || Admin.isSuperAdmin()) ? '' : 'none';
+
+    // View Only toggle (admin, private sessions) — see canModify/toggleViewOnly.
+    const viewOnlySection = document.getElementById('viewOnlySection');
+    if (viewOnlySection) {
+      viewOnlySection.style.display = (isPvt && Admin.isAdmin()) ? '' : 'none';
+      const voToggle = document.getElementById('viewOnlyToggle');
+      if (voToggle) voToggle.checked = !!this.state._viewOnly;
+    }
+    // Locks every mutating control in Courts/Settings for a non-admin
+    // viewer (see the .view-only-locked rules) — Match History's own
+    // search/filter controls live outside that lock and stay usable.
+    document.body.classList.toggle('view-only-locked', !!this.state._viewOnly && !Admin.isAdmin());
   },
 
   _updateTabBadges() {
@@ -5590,10 +6769,12 @@ ${bracketHTML}
     const moveHint = document.getElementById('queueMoveHint');
     const rr = this.isRoundRobin();
     const tourn = this.isTournament();
-    const structured = rr || tourn;
     const isLocked = (rr && this.state._rrLocked) || (tourn && this.state._bracketLocked);
 
-    if (waitingWrap) waitingWrap.style.display = structured ? 'none' : '';
+    // Sitting Out stays visible for Round Robin/Tournament too — someone
+    // who joins mid-session (or an odd player out before locking) needs a
+    // place to land other than straight into the locked roster/pairing math.
+    if (waitingWrap) waitingWrap.style.display = '';
     if (removeZoneTitle) removeZoneTitle.style.display = isLocked ? 'none' : '';
     if (moveHint) moveHint.style.display = isLocked ? 'none' : '';
 
@@ -5645,7 +6826,7 @@ ${bracketHTML}
       const skillBtn = this.state.options.useSkill
         ? `<button class="queue-row-skill-btn${p.skillLevel ? ' set' : ''}" onclick="App.toggleSkillPicker(${p.id})" title="Set skill level">${this.skillAbbrev(p)}</button>`
         : '';
-      const selected = this._tapSelection && this._tapSelection.playerIds.length === 1 && this._tapSelection.playerIds[0] === p.id ? ' dnd-selected' : '';
+      const selected = this._tapSelection && this._tapSelection.playerIds.includes(p.id) ? ' dnd-selected' : '';
       // Border color marks whose chip this is (green = you, orange = your
       // partner, purple = another signed-in user) instead of a text badge —
       // see .chip-self/.chip-partner/.chip-live.
@@ -5691,7 +6872,7 @@ ${bracketHTML}
     // itself a drag/tap target that moves both players together (see
     // _onDndPointerDown/_movePlayers) instead of one at a time.
     const renderPairRow = (team, p1, p2) => {
-      const ampSelected = this._tapSelection && this._tapSelection.teamId === team.id ? ' dnd-selected' : '';
+      const ampSelected = this._tapSelection && this._tapSelection.playerIds.includes(p1.id) && this._tapSelection.playerIds.includes(p2.id) ? ' dnd-selected' : '';
       return `<div class="queue-row queue-row-pair">${chipSpan(p1)}<span class="queue-pair-amp${ampSelected}" data-team-id="${team.id}" data-p1="${p1.id}" data-p2="${p2.id}" title="Drag or tap to move both">&amp;</span>${chipSpan(p2)}</div>${skillPickerFor(p1)}${skillPickerFor(p2)}`;
     };
 
@@ -5730,6 +6911,36 @@ ${bracketHTML}
     if (waitingEl) waitingEl.innerHTML = waitingPlayers.length
       ? buildListHtml(waitingPlayers)
       : '';
+
+    const sel = this._tapSelection;
+    const isAllSelected = (zoneType, players) => !!sel && this._locEq(sel.from, { type: zoneType }) &&
+      sel.playerIds.length === players.length && players.every(p => sel.playerIds.includes(p.id));
+    const btnSelectAllQueue = document.getElementById('btnSelectAllQueue');
+    if (btnSelectAllQueue) {
+      btnSelectAllQueue.style.display = activePlayers.length ? '' : 'none';
+      btnSelectAllQueue.textContent = isAllSelected('queue', activePlayers) ? 'Clear Selection' : 'Select All';
+    }
+    const btnSelectAllWaiting = document.getElementById('btnSelectAllWaiting');
+    if (btnSelectAllWaiting) {
+      btnSelectAllWaiting.style.display = waitingPlayers.length ? '' : 'none';
+      btnSelectAllWaiting.textContent = isAllSelected('waiting', waitingPlayers) ? 'Clear Selection' : 'Select All';
+    }
+  },
+
+  // Selects (or, if the whole zone is already selected, clears) every
+  // player currently in Waiting ('queue') or Sitting Out ('waiting') —
+  // same multi-select this feeds into via tapping/dragging individual
+  // chips (see _onDndPointerUp), just a faster way to grab everyone at once.
+  toggleSelectAllInZone(zoneType) {
+    const wantActive = zoneType === 'queue';
+    const onCourts = this.getPlayersOnCourts();
+    const ids = this.state.players.filter(p => !onCourts.has(p.id) && !!p.active === wantActive).map(p => p.id);
+    if (!ids.length) return;
+    const sel = this._tapSelection;
+    const alreadyAllSelected = !!sel && this._locEq(sel.from, { type: zoneType }) &&
+      sel.playerIds.length === ids.length && ids.every(id => sel.playerIds.includes(id));
+    this._tapSelection = alreadyAllSelected ? null : { playerIds: ids, from: { type: zoneType } };
+    this.render();
   },
 
   togglePartnerPicker() {
@@ -5853,7 +7064,7 @@ ${bracketHTML}
     let allIds;
     if (structured) {
       allIds = [...new Set([...proposedIds, ...activeIds])].sort((a, b) => a - b);
-      if (allIds.length === 0) { el.innerHTML = ''; return; }
+      if (allIds.length === 0) { el.innerHTML = ''; this._renderCourtsBulkControls(proposedIds, activeIds); return; }
     } else {
       const n = this.state.availableCourts || 1;
       const idSet = new Set(Array.from({ length: n }, (_, i) => i + 1));
@@ -5863,6 +7074,30 @@ ${bracketHTML}
     }
 
     el.innerHTML = allIds.map(courtId => this._renderCourtCard(courtId)).join('');
+    this._renderCourtsBulkControls(proposedIds, activeIds);
+  },
+
+  // Shows and enables the Start All / End All row above the courts grid —
+  // same underlying actions as each court's own Confirm/Start/End buttons
+  // (see startAllCourts/endAllCourts), just hidden entirely when there's
+  // nothing proposed or active to act on.
+  _renderCourtsBulkControls(proposedIds, activeIds) {
+    const wrap = document.getElementById('courtsBulkControls');
+    if (!wrap) return;
+    if (!proposedIds.length && !activeIds.length) { wrap.style.display = 'none'; return; }
+    wrap.style.display = 'flex';
+    const canStart = proposedIds.some(id => {
+      const g = this.state.proposedGames[id];
+      return g && g.side1.length === 2 && g.side2.length === 2;
+    }) || activeIds.some(id => {
+      const g = this.state.activeGames[id];
+      return g.timerPaused && (g.timerElapsed || 0) === 0 && !g.timerResumedAt;
+    });
+    const canEnd = activeIds.some(id => !this.state.scoringGames[id]);
+    const btnStart = document.getElementById('btnStartAllCourts');
+    const btnEnd = document.getElementById('btnEndAllCourts');
+    if (btnStart) btnStart.disabled = !canStart;
+    if (btnEnd) btnEnd.disabled = !canEnd;
   },
 
   _renderCourtCard(courtId) {
@@ -6056,7 +7291,7 @@ ${bracketHTML}
     const isPartner = selfId && selfId !== playerId && this.state.teams.some(t =>
       t.current && ((t.p1 === selfId && t.p2 === playerId) || (t.p2 === selfId && t.p1 === playerId))
     );
-    const selected = this._tapSelection && this._tapSelection.playerIds.length === 1 && this._tapSelection.playerIds[0] === playerId ? ' dnd-selected' : '';
+    const selected = this._tapSelection && this._tapSelection.playerIds.includes(playerId) ? ' dnd-selected' : '';
     // Skill level is a queue-only detail — once someone's on a court, which
     // team they're on already reflects any skill-based matching.
     // Border color marks whose chip this is (green = you, orange = your
@@ -6084,6 +7319,7 @@ ${bracketHTML}
 
   _movePlayer(playerId, from, to, opts = {}) {
     if (this._locEq(from, to)) return;
+    if (!this.canModify()) return;
 
     // A closed session (see closeSession/openSession) is fully paused —
     // nobody moves into Waiting or onto a court until an admin reopens it.
@@ -6151,17 +7387,20 @@ ${bracketHTML}
     }
   },
 
-  // Moves a locked-partner pair together in one action — used when dragging
-  // or tapping the "&" between two partnered chips in Waiting/Sitting Out
-  // (see renderPlayers) instead of moving each player one at a time. Only
-  // lands when the destination has room for both without bumping anyone
-  // already there — a pair is never split across two different targets or
-  // swapped in over an existing occupant.
+  // Moves a locked-partner pair — or a larger multi-selection built up via
+  // Select All/tapping several chips in Waiting/Sitting Out (see
+  // renderPlayers/_onDndPointerUp) — together in one action, instead of
+  // moving each player one at a time. Only lands on a court slot when the
+  // destination has room for exactly this many without bumping anyone
+  // already there — a side never holds more than 2, so a bigger
+  // multi-selection just isn't a valid drop there.
   _movePlayers(playerIds, from, to) {
     if (this._locEq(from, to)) return;
-    if (to.type === 'remove') return; // no bulk-remove via the pair — each player's own chip still can
+    if (!this.canModify()) return;
+    if (to.type === 'remove') return; // no bulk-remove via a multi-select — each player's own chip still can
     if (this.state._closed && (to.type === 'queue' || to.type === 'slot')) return;
     if (to.type === 'slot') {
+      if (playerIds.length > 2) return;
       const game = this.state.proposedGames[to.court];
       const destArr = game && game['side' + to.side];
       const occupiedByOthers = destArr ? destArr.filter(id => !playerIds.includes(id)).length : 0;
@@ -6247,7 +7486,7 @@ ${bracketHTML}
     if (!zoneTapTo) return;
     this._dragState = {
       playerIds: this._tapSelection.playerIds,
-      teamId: this._tapSelection.teamId || null,
+      teamId: null,
       from: this._tapSelection.from,
       startX: e.clientX, startY: e.clientY,
       moved: false,
@@ -6309,26 +7548,44 @@ ${bracketHTML}
       return;
     }
     if (!d.moved) {
-      // Plain tap on a chip or "&": first tap selects it, a second tap on
-      // a different chip/"&" moves the selected unit to that tap's
-      // location, and tapping the same chip/"&" again just deselects it.
+      // Plain tap on a chip or "&": first tap selects it. A second tap on
+      // a chip/"&" in that SAME zone toggles it into/out of the selection
+      // (building up a multi-select), while tapping one in a DIFFERENT
+      // zone (or a court slot) moves the whole selection there instead.
       if (!this._tapSelection) {
-        this._tapSelection = { playerIds: d.playerIds, from: d.from, teamId: d.teamId };
+        this._tapSelection = { playerIds: [...d.playerIds], from: d.from };
         this.render();
         return;
       }
-      const { playerIds, from } = this._tapSelection;
+      const sel = this._tapSelection;
+      if (this._locEq(sel.from, d.from)) {
+        const allIn = d.playerIds.every(id => sel.playerIds.includes(id));
+        if (allIn) {
+          sel.playerIds = sel.playerIds.filter(id => !d.playerIds.includes(id));
+        } else {
+          d.playerIds.forEach(id => { if (!sel.playerIds.includes(id)) sel.playerIds.push(id); });
+        }
+        if (sel.playerIds.length === 0) this._tapSelection = null;
+        this.render();
+        return;
+      }
+      const { playerIds, from } = sel;
       this._tapSelection = null;
-      const sameUnit = playerIds.length === d.playerIds.length && playerIds.every(id => d.playerIds.includes(id));
-      if (sameUnit) { this.render(); return; }
       this._moveUnit(playerIds, from, d.from);
       return;
     }
     if (!d.hoverEl) return;
     const to = this._locFromEl(d.hoverEl);
     if (to) {
+      // Dragging a chip that's part of an active multi-selection (same
+      // zone) carries the whole selection along, not just the one chip
+      // under the pointer — same result as tapping each one, then tapping
+      // the destination.
+      const sel = this._tapSelection;
+      const useSelection = sel && this._locEq(sel.from, d.from) && d.playerIds.every(id => sel.playerIds.includes(id));
+      const playerIds = useSelection ? sel.playerIds : d.playerIds;
       this._tapSelection = null;
-      this._moveUnit(d.playerIds, d.from, to);
+      this._moveUnit(playerIds, d.from, to);
     }
   },
 
@@ -6487,6 +7744,7 @@ ${bracketHTML}
     // Leave Session stay open the whole time.
     if (zoneType === 'queue' && this.state._closed) return;
     this._fillQueueTarget = zoneType;
+    this._fillQueueSelection = [];
     const titleEl = document.getElementById('fillQueueModalTitle');
     if (titleEl) titleEl.textContent = zoneType === 'queue' ? 'Add from Sitting Out'
       : zoneType === 'waiting' ? 'Add from Waiting'
@@ -6501,10 +7759,18 @@ ${bracketHTML}
     document.getElementById('fillQueueModal').style.display = 'none';
     document.body.style.overflow = '';
     this._fillQueueTarget = null;
+    this._fillQueueSelection = [];
   },
+
+  // playerIds picked so far in the Waiting/Sitting Out fill picker — kept
+  // separate from _tapSelection (the queue's own multi-select) since this
+  // list only ever holds candidates from the *other* zone, picked here to
+  // be moved as a batch via confirmFillQueueSelection.
+  _fillQueueSelection: [],
 
   renderFillQueuePicker() {
     const el = document.getElementById('fillQueuePickerList');
+    const confirmBtn = document.getElementById('btnFillQueueConfirm');
     if (!el) return;
     const target = this._fillQueueTarget;
     const onCourt = this.getPlayersOnCourts();
@@ -6512,6 +7778,9 @@ ${bracketHTML}
     if (target === 'remove') {
       // Both Waiting and Sitting Out are fair game to remove — only permission
       // (see canRemovePlayer) narrows the list, not which of the two they're in.
+      // Removal always goes through its own one-at-a-time Yes/No confirm
+      // (see confirmRemove), so this list stays single-click, no multi-select.
+      if (confirmBtn) confirmBtn.style.display = 'none';
       const available = this.state.players.filter(p => !onCourt.has(p.id) && this.canRemovePlayer(p.id));
       el.innerHTML = available.length
         ? available.map(p => {
@@ -6525,11 +7794,42 @@ ${bracketHTML}
     // and vice versa — never from the list already being double-tapped.
     const wantActive = target === 'waiting';
     const available = this.state.players.filter(p => !onCourt.has(p.id) && !!p.active === wantActive);
-    el.innerHTML = available.length
-      ? available.map(p => `<div class="partner-picker-item" onclick="App.fillQueueWithPlayer(${p.id})">${this.esc(p.name)}</div>`).join('')
-      : empty;
+    if (!available.length) {
+      el.innerHTML = empty;
+      if (confirmBtn) confirmBtn.style.display = 'none';
+      return;
+    }
+    el.innerHTML = available.map(p => {
+      const selected = this._fillQueueSelection.includes(p.id) ? ' partner-picker-item-selected' : '';
+      return `<div class="partner-picker-item${selected}" onclick="App.toggleFillQueuePlayer(${p.id})">${this.esc(p.name)}</div>`;
+    }).join('');
+    if (confirmBtn) {
+      const n = this._fillQueueSelection.length;
+      confirmBtn.style.display = '';
+      confirmBtn.disabled = n === 0;
+      confirmBtn.textContent = n > 1 ? `Move ${n} Players` : 'Move Player';
+    }
   },
 
+  toggleFillQueuePlayer(playerId) {
+    const sel = this._fillQueueSelection;
+    const idx = sel.indexOf(playerId);
+    if (idx !== -1) sel.splice(idx, 1); else sel.push(playerId);
+    this.renderFillQueuePicker();
+  },
+
+  confirmFillQueueSelection() {
+    const target = this._fillQueueTarget;
+    const playerIds = this._fillQueueSelection;
+    if (!target || target === 'remove' || !playerIds.length) return;
+    const from = { type: target === 'waiting' ? 'queue' : 'waiting' };
+    this.closeFillQueuePicker();
+    this._moveUnit(playerIds, from, { type: target });
+  },
+
+  // Single-click, immediate — used only by the "remove" picker, where each
+  // row already opens its own Yes/No confirm (see confirmRemove) rather
+  // than needing the select-then-confirm flow above.
   fillQueueWithPlayer(playerId) {
     const target = this._fillQueueTarget;
     this.closeFillQueuePicker();
@@ -6574,6 +7874,8 @@ ${bracketHTML}
     if (rrSection) rrSection.style.display = 'none';
     const bracketSec = document.getElementById('bracketSection');
     if (bracketSec) bracketSec.style.display = 'none';
+    const timeOptions = document.getElementById('scheduleTimeOptions');
+    if (timeOptions) timeOptions.style.display = 'none';
 
     // Assignment now happens per-court (Auto-fill/drag on each court card),
     // so this section is just the title and court-count picker — no bulk
@@ -6605,6 +7907,7 @@ ${bracketHTML}
   _logMatchSelection: [],
 
   toggleLogPastMatch() {
+    if (!this.canModify()) return;
     const panel = document.getElementById('logPastMatchPanel');
     if (!panel) return;
     const showing = panel.style.display !== 'none';
@@ -6661,6 +7964,7 @@ ${bracketHTML}
   },
 
   submitLogPastMatch() {
+    if (!this.canModify()) return;
     const sel = this._logMatchSelection;
     const errEl = document.getElementById('logPastMatchError');
     if (sel.length !== 4) return;
@@ -6673,7 +7977,7 @@ ${bracketHTML}
       score1 = parseInt(rawA);
       score2 = parseInt(rawB);
       if (isNaN(score1) || isNaN(score2)) {
-        if (errEl) { errEl.textContent = 'Enter a score for both teams, or leave both blank.'; errEl.style.display = ''; }
+        if (errEl) { errEl.textContent = 'Enter a score for both teams, or leave both blank.'; errEl.style.display = 'block'; }
         return;
       }
     }
@@ -6722,10 +8026,11 @@ ${bracketHTML}
     const bracketSec = document.getElementById('bracketSection');
     if (bracketSec) bracketSec.style.display = 'none';
 
-    const n = this.state.players.length;
+    const n = this.state.players.filter(p => p.active).length;
     const locked = this.state._rrLocked;
     const schedule = this.state._rrSchedule || [];
     const currentRound = this.state._rrCurrentRound || 0;
+    const timeOptions = document.getElementById('scheduleTimeOptions');
 
     if (!locked) {
       countEl.innerHTML = n < 4
@@ -6733,6 +8038,7 @@ ${bracketHTML}
         : `${n} player${n !== 1 ? 's' : ''} · <a href="#" onclick="App.rrLockPlayers();return false;" style="color:var(--primary);font-weight:600;">Lock Players to Generate Schedule</a>`;
       if (controls) controls.style.display = 'none';
       if (courtSelect) courtSelect.parentElement.style.display = 'none';
+      if (timeOptions) timeOptions.style.display = 'none';
     } else if (schedule.length === 0) {
       countEl.textContent = `${n} players locked`;
       if (Session.id && controls) {
@@ -6747,10 +8053,16 @@ ${bracketHTML}
           btnAssignAll.onclick = () => this.rrGenerateSchedule();
         }
       }
+      const teamCount = this._teamUnitCount();
+      const maxRounds = teamCount ? (teamCount % 2 === 1 ? teamCount : teamCount - 1) : null;
+      this._renderScheduleTimeOptions(maxRounds, false, teamCount);
     } else {
+      if (timeOptions) timeOptions.style.display = 'none';
       const totalRounds = schedule.length;
       const hasActive = this.rrHasActiveGames();
-      if (currentRound > 0 && currentRound <= totalRounds) {
+      if (currentRound === 0) {
+        countEl.textContent = `Schedule ready — ${totalRounds} round${totalRounds === 1 ? '' : 's'}`;
+      } else if (currentRound > 0 && currentRound <= totalRounds) {
         countEl.textContent = `Round ${currentRound} of ${totalRounds}`;
       } else {
         countEl.textContent = `All ${totalRounds} rounds complete`;
@@ -6759,7 +8071,7 @@ ${bracketHTML}
       if (btnAssignAll) {
         const canAdvance = !hasActive && currentRound < totalRounds;
         btnAssignAll.disabled = !canAdvance;
-        btnAssignAll.textContent = currentRound >= totalRounds ? 'All Rounds Complete' : 'Start Next Round';
+        btnAssignAll.textContent = currentRound === 0 ? 'Start Round 1' : currentRound >= totalRounds ? 'All Rounds Complete' : 'Start Next Round';
         btnAssignAll.onclick = () => this.rrAdvanceRound();
       }
       if (courtSelect) courtSelect.parentElement.style.display = 'none';
@@ -6769,40 +8081,197 @@ ${bracketHTML}
     this._renderRRUpcoming();
   },
 
+  // Shared by Round Robin's Upcoming Rounds and Tournament's Bracket —
+  // null means "All Players". Round Robin hides non-matching games/rounds
+  // entirely; the bracket instead dims non-matching matches (see
+  // _renderBracket), since removing entries would break its fixed
+  // tree/connector layout.
+  _upcomingFilterPlayerId: null,
+
+  filterUpcomingByPlayer(value) {
+    this._upcomingFilterPlayerId = value === '' ? null : Number(value);
+    this._renderRRUpcoming();
+    this._renderBracket();
+  },
+
+  _populatePlayerFilterSelect(select) {
+    if (!select) return;
+    const prev = select.value;
+    const players = [...this.state.players].filter(p => p.active).sort((a, b) => a.name.localeCompare(b.name));
+    select.innerHTML = '<option value="">All Players</option>' +
+      players.map(p => `<option value="${p.id}">${this.esc(p.name)}</option>`).join('');
+    if (prev && players.some(p => String(p.id) === prev)) select.value = prev;
+  },
+
+  // Shared row markup for one round's matchups — used both by the in-app
+  // Upcoming Rounds list (filtered to rounds still ahead) and by
+  // printSchedule's full, unfiltered "Save as PDF" popup, via real CSS
+  // classes (.schedule-*) rather than inline styles, so the print window's
+  // own <style> block (which can't see this page's CSS vars) can restyle
+  // them the same way printBracket's classes do.
+  _renderScheduleRoundHTML(round) {
+    const gamesHtml = round.games.map(g => {
+      const s1 = g.side1.map(id => { const p = this.getPlayer(id); return p ? this.esc(p.name) : '?'; }).join(' & ');
+      const s2 = g.side2.map(id => { const p = this.getPlayer(id); return p ? this.esc(p.name) : '?'; }).join(' & ');
+      return `<div class="schedule-game">
+        <span class="schedule-court">C${g.court}</span>
+        <span>${s1}</span>
+        <span class="schedule-vs">vs</span>
+        <span>${s2}</span>
+      </div>`;
+    }).join('');
+    return `<div class="schedule-round">
+      <div class="schedule-round-title">Round ${round.round}</div>
+      ${gamesHtml}
+    </div>`;
+  },
+
+  // "Match Time Limit: 15 min · Session Time Limit: 2 hrs · Buffer: 3 min
+  // between rounds" — shown atop Upcoming Rounds and in the printed PDF so
+  // anyone viewing the session (not just whoever set the schedule up) can
+  // see the pace it was planned around. Buffer always shows an effective
+  // value (falling back to ROUND_BUFFER_MIN) since it's used in planning
+  // either way; match/session limits show "Not set" when left blank.
+  _scheduleTimeSummaryLine() {
+    const st = this.state._scheduleTime || {};
+    const buffer = st.bufferMinutes != null ? st.bufferMinutes : this.ROUND_BUFFER_MIN;
+    const matchText = st.matchMinutes ? `${st.matchMinutes} min` : 'Not set';
+    const sessionText = st.sessionHours ? `${st.sessionHours} hr${st.sessionHours === 1 ? '' : 's'}` : 'Not set';
+    return `Match Time Limit: ${matchText} · Session Time Limit: ${sessionText} · Buffer: ${buffer} min between rounds`;
+  },
+
   _renderRRUpcoming() {
     const section = document.getElementById('rrUpcomingSection');
     const list = document.getElementById('rrUpcomingList');
     if (!section || !list) return;
+    this._populatePlayerFilterSelect(document.getElementById('upcomingPlayerFilter'));
 
     const schedule = this.state._rrSchedule || [];
-    const currentRound = this.state._rrCurrentRound || 0;
-    const upcoming = schedule.filter(r => r.round > currentRound);
-
-    if (upcoming.length === 0) {
+    // Once a schedule exists, this section (and its Save as PDF button)
+    // stays up through the whole event — only the list beneath it empties
+    // out to "All rounds complete" once nothing's left ahead.
+    if (schedule.length === 0) {
       section.style.display = 'none';
       return;
     }
-
     section.style.display = '';
-    list.innerHTML = upcoming.map(round => {
-      const gamesHtml = round.games.map(g => {
-        const s1 = g.side1.map(id => { const p = this.getPlayer(id); return p ? this.esc(p.name) : '?'; }).join(' & ');
-        const s2 = g.side2.map(id => { const p = this.getPlayer(id); return p ? this.esc(p.name) : '?'; }).join(' & ');
-        return `<div style="display:flex;align-items:center;gap:6px;padding:4px 0;font-size:0.82rem;">
-          <span style="color:var(--text-muted);font-size:0.7rem;min-width:18px;">C${g.court}</span>
-          <span>${s1}</span>
-          <span style="color:var(--text-muted);font-size:0.7rem;font-weight:700;">vs</span>
-          <span>${s2}</span>
-        </div>`;
-      }).join('');
-      return `<div style="margin-bottom:12px;">
-        <div style="font-size:0.78rem;font-weight:700;color:var(--text-light);margin-bottom:4px;">Round ${round.round}</div>
-        ${gamesHtml}
-      </div>`;
-    }).join('');
+
+    const timeInfoEl = document.getElementById('rrScheduleTimeInfo');
+    if (timeInfoEl) timeInfoEl.textContent = this._scheduleTimeSummaryLine();
+
+    const currentRound = this.state._rrCurrentRound || 0;
+    const filterId = this._upcomingFilterPlayerId;
+    const upcoming = schedule
+      .filter(r => r.round > currentRound)
+      .map(r => filterId == null ? r : { ...r, games: r.games.filter(g => g.side1.includes(filterId) || g.side2.includes(filterId)) })
+      .filter(r => r.games.length > 0);
+
+    list.innerHTML = upcoming.length
+      ? upcoming.map(round => this._renderScheduleRoundHTML(round)).join('')
+      : '<div class="history-empty">All rounds complete</div>';
+  },
+
+  // "Save as PDF": the complete round-by-round schedule (every round, not
+  // just the ones still ahead — see _renderRRUpcoming) in a new tab, styled
+  // for print and handed straight to the browser's print dialog, same
+  // pattern as printBracket below.
+  printSchedule() {
+    const schedule = this.state._rrSchedule || [];
+    const scheduleHTML = schedule.map(round => this._renderScheduleRoundHTML(round)).join('');
+    const sessionName = this.esc(this.state._sessionName || 'Round Robin');
+    const timeInfo = this.esc(this._scheduleTimeSummaryLine());
+    const w = window.open('', '_blank');
+    if (!w) return;
+    w.document.write(`<!DOCTYPE html><html><head><meta charset="utf-8">
+<title>${sessionName} Schedule</title>
+<style>
+body{font-family:system-ui,sans-serif;padding:24px;background:#fff;color:#1a1a1a;}
+h1{font-size:1.1rem;font-weight:700;margin:0 0 8px;}
+.schedule-time-info{font-size:0.8rem;color:#666;margin-bottom:16px;}
+.schedule-round{margin-bottom:14px;}
+.schedule-round-title{font-size:0.85rem;font-weight:700;color:#444;margin-bottom:6px;}
+.schedule-game{display:flex;align-items:center;gap:8px;padding:4px 0;font-size:0.85rem;border-bottom:1px solid #eee;}
+.schedule-court{color:#888;font-size:0.72rem;min-width:22px;font-weight:700;}
+.schedule-vs{color:#888;font-size:0.72rem;font-weight:700;}
+</style></head><body>
+<h1>${sessionName} — Schedule</h1>
+<div class="schedule-time-info">${timeInfo}</div>
+${scheduleHTML}
+<script>window.onload=function(){window.print();}<\/script>
+</body></html>`);
+    w.document.close();
   },
 
   _historyFilterMine: false,
+  // Season standings start collapsed to the top 3 — see renderSeasonSummary.
+  _seasonStandingsExpanded: false,
+  // Selected from the League player picker (see renderSeasonSummary) —
+  // null means "All Players". Stands in for the free-text search filter
+  // it replaces while a League is active.
+  _historyFilterPlayerId: null,
+  // Closed session picked from the historySessionSelect dropdown (by its
+  // sessionClosed "at" timestamp) — null means the default view (current
+  // session's live matches + every closed session collapsed to its summary
+  // card). Set, it instead shows just that one session's matches in full.
+  _historySelectedSessionAt: null,
+
+  // Splits roundHistory (chronological) into each closed session — the
+  // matches between two sessionClosed markers, plus the summary pushed
+  // right before that marker — and the still-open trailing session, which
+  // has no summary/closed marker yet. Used by renderHistory's default view
+  // and by the historySessionSelect dropdown (App._populateHistorySessionSelect).
+  _historySessions() {
+    const raw = this.state.roundHistory || [];
+    const closed = [];
+    let bucket = [];
+    let summary = null;
+    raw.forEach(entry => {
+      if (entry.sessionSummary) { summary = entry; return; }
+      if (entry.sessionClosed) { closed.push({ closedAt: entry.at, summary, matches: bucket }); bucket = []; summary = null; return; }
+      bucket.push(entry);
+    });
+    return { closed, current: bucket };
+  },
+
+  filterHistoryBySession(value) {
+    this._historySelectedSessionAt = value === '' ? null : Number(value);
+    this.renderHistory();
+  },
+
+  // Fills the "view a previous session" dropdown, newest first, preserving
+  // the current selection (falling back to the default view if that
+  // session no longer exists, e.g. its only match got deleted).
+  _populateHistorySessionSelect(closedSessions) {
+    const el = document.getElementById('historySessionSelect');
+    if (!el) return;
+    const current = this._historySelectedSessionAt;
+    const options = [...closedSessions].reverse().map(s => {
+      const d = new Date(s.closedAt);
+      const label = `${d.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}, ${d.toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' })}`;
+      return `<option value="${s.closedAt}"${current === s.closedAt ? ' selected' : ''}>${this.esc(label)}</option>`;
+    }).join('');
+    el.innerHTML = '<option value="">Current &amp; Recent Sessions</option>' + options;
+    if (current != null && !closedSessions.some(s => s.closedAt === current)) {
+      this._historySelectedSessionAt = null;
+      el.value = '';
+    }
+  },
+
+  filterHistoryByPlayer(value) {
+    this._historyFilterPlayerId = value === '' ? null : Number(value);
+    this.renderHistory();
+  },
+
+  // Indices (in roundHistory) of per-close session summaries currently
+  // showing all players instead of just the top 3 — see the sessionSummary
+  // branch in renderHistory and toggleSessionSummaryExpanded.
+  _expandedSessionSummaries: new Set(),
+
+  toggleSessionSummaryExpanded(idx) {
+    if (this._expandedSessionSummaries.has(idx)) this._expandedSessionSummaries.delete(idx);
+    else this._expandedSessionSummaries.add(idx);
+    this.renderHistory();
+  },
 
   toggleMyMatches() {
     this._historyFilterMine = !this._historyFilterMine;
@@ -6826,125 +8295,295 @@ ${bracketHTML}
     return map;
   },
 
-  // Overall session stats: most-winning team pairing and most-winning individual player
-  renderHistoryStats(history) {
-    const stats = document.getElementById('historyStats');
-    if (!stats) return;
-    const nameMap = this._historyNameMap(history);
-    const nameFor = id => this.getPlayer(id)?.name || nameMap.get(id) || '?';
-
-    const teamWins = new Map(); // sorted-ids key -> { ids, wins }
-    const playerWins = new Map(); // id -> wins
-
-    history.forEach(m => {
-      if (m.expired || (m.winner !== 1 && m.winner !== 2)) return;
-      const winIds = m.winner === 1 ? m.side1 : m.side2;
-      if (!winIds || !winIds.length) return;
-      const key = [...winIds].sort((a, b) => a - b).join(',');
-      const entry = teamWins.get(key) || { ids: winIds, wins: 0 };
-      entry.wins++;
-      teamWins.set(key, entry);
-      winIds.forEach(id => playerWins.set(id, (playerWins.get(id) || 0) + 1));
-    });
-
-    let maxTeamWins = 0;
-    teamWins.forEach(entry => { if (entry.wins > maxTeamWins) maxTeamWins = entry.wins; });
-    const bestTeams = maxTeamWins > 0 ? [...teamWins.values()].filter(e => e.wins === maxTeamWins) : [];
-
-    let maxPlayerWins = 0;
-    playerWins.forEach(wins => { if (wins > maxPlayerWins) maxPlayerWins = wins; });
-    const bestPlayerIds = maxPlayerWins > 0 ? [...playerWins.entries()].filter(([, wins]) => wins === maxPlayerWins).map(([id]) => id) : [];
-
-    if (!bestTeams.length && !bestPlayerIds.length) {
-      stats.style.display = 'none';
+  // Shows League season-wide standings above the regular Match History list.
+  renderSeasonSummary() {
+    const section = document.getElementById('seasonSummarySection');
+    const searchEl = document.getElementById('historySearch');
+    const playerSelectEl = document.getElementById('historyPlayerSelect');
+    if (!section) return;
+    const summary = this.isRoundRobin() ? this._buildSeasonSummary() : null;
+    if (!summary) {
+      section.style.display = 'none';
+      // No league — back to the plain search box, same as before it existed.
+      if (searchEl) searchEl.style.display = '';
+      if (playerSelectEl) playerSelectEl.style.display = 'none';
+      this._historyFilterPlayerId = null;
       return;
     }
-    stats.style.display = '';
+    section.style.display = '';
+    // League: a full player picker replaces free-text search — every name
+    // in the season is already known, so picking beats typing, and
+    // selecting one filters both the match list below and shows their
+    // own season stats (see filterHistoryByPlayer/renderHistory).
+    if (searchEl) searchEl.style.display = 'none';
+    if (playerSelectEl) {
+      playerSelectEl.style.display = '';
+      const current = this._historyFilterPlayerId;
+      playerSelectEl.innerHTML = '<option value="">All Players</option>' +
+        summary.players.map(p => `<option value="${p.id}"${current === p.id ? ' selected' : ''}>${this.esc(p.name)}</option>`).join('');
+      if (current != null && !summary.players.some(p => p.id === current)) {
+        this._historyFilterPlayerId = null;
+        playerSelectEl.value = '';
+      }
+    }
+    const titleEl = document.getElementById('seasonSummaryTitle');
+    if (titleEl) titleEl.textContent = summary.ended ? 'Season Complete' : 'Season Summary (to date)';
+    const rangeEl = document.getElementById('seasonSummaryRange');
+    if (rangeEl) {
+      const fmt = d => d ? new Date(d + 'T00:00:00').toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' }) : '?';
+      const freqLabel = { weekly: 'Weekly', biweekly: 'Bi-Weekly', monthly: 'Monthly' }[summary.league.frequency] || '';
+      rangeEl.textContent = `${fmt(summary.league.startDate)} – ${fmt(summary.league.endDate)}${freqLabel ? ' · ' + freqLabel : ''}`;
+    }
+    const rowsEl = document.getElementById('seasonSummaryRows');
+    const standingsToggleBtn = document.getElementById('btnToggleSeasonStandings');
+    if (rowsEl) {
+      const players = summary.players;
+      // Top 3 by default — full standings are one tap away, so a season
+      // with a long roster still leads with who's actually in contention.
+      const showAllStandings = this._seasonStandingsExpanded || players.length <= 3;
+      const visible = showAllStandings ? players : players.slice(0, 3);
+      rowsEl.innerHTML = players.length
+        ? visible.map(p =>
+            `<div class="history-summary-row"><span class="history-summary-name">${this.esc(p.name)}</span><span class="history-summary-record">${this._formatPlayerRecord(p, true)}</span></div>`
+          ).join('')
+        : '<div class="history-empty">No matches yet this season</div>';
+      if (standingsToggleBtn) {
+        standingsToggleBtn.style.display = players.length > 3 ? '' : 'none';
+        standingsToggleBtn.textContent = showAllStandings ? 'Show Top 3' : `Show All ${players.length} Players`;
+      }
+    }
+    return summary;
+  },
 
-    const teamNames = bestTeams.map(e => e.ids.map(id => nameFor(id)).join(' & '));
-    const playerNames = bestPlayerIds.map(id => nameFor(id));
-    document.getElementById('historyStatTeamName').textContent = teamNames.length ? teamNames.join(', ') : '–';
-    document.getElementById('historyStatTeamWins').textContent = teamNames.length
-      ? `${maxTeamWins} win${maxTeamWins === 1 ? '' : 's'}${teamNames.length > 1 ? ' (tie)' : ''}` : '';
-    document.getElementById('historyStatPlayerName').textContent = playerNames.length ? playerNames.join(', ') : '–';
-    document.getElementById('historyStatPlayerWins').textContent = playerNames.length
-      ? `${maxPlayerWins} win${maxPlayerWins === 1 ? '' : 's'}${playerNames.length > 1 ? ' (tie)' : ''}` : '';
+  toggleSeasonStandings() {
+    this._seasonStandingsExpanded = !this._seasonStandingsExpanded;
+    this.renderSeasonSummary();
+  },
+
+  // Renders one raw match entry as a match-card, including its inline
+  // score-edit form when applicable. nameFor resolves display names
+  // (falling back to the name snapshotted at match time for players who've
+  // since left) — computed once by the caller rather than per-card.
+  _renderMatchCard(m, nameFor) {
+    const s1 = m.side1.map(id => { const p = this.getPlayer(id); return this.esc(nameFor(id)) + (p && p.skillLevel ? ` <span style="font-weight:400;opacity:0.7;">(${this.skillAbbrev(p)})</span>` : ''); });
+    const s2 = m.side2.map(id => { const p = this.getPlayer(id); return this.esc(nameFor(id)) + (p && p.skillLevel ? ` <span style="font-weight:400;opacity:0.7;">(${this.skillAbbrev(p)})</span>` : ''); });
+    const hasScores = m.score1 != null && m.score2 != null;
+    const s1Class = hasScores ? (m.winner === 1 ? 'winner' : m.winner === 2 ? 'loser' : '') : '';
+    const s2Class = hasScores ? (m.winner === 2 ? 'winner' : m.winner === 1 ? 'loser' : '') : '';
+    const scoreText = hasScores ? `${m.score1}–${m.score2}` : (m.expired ? 'N/A' : '–');
+    let dateTime = '';
+    if (m.startTime) {
+      const d = new Date(m.startTime);
+      const date = d.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+      const time = d.toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' });
+      dateTime = `${date}, ${time}`;
+    }
+    const headerLeft = m.manual ? 'Logged as already played' : (dateTime || '');
+    // A score (and duration) can only be corrected while the session is
+    // open — once closed, this record (and the summary built from it) is
+    // final. Under View Only, only an admin can, same as everywhere else.
+    const idx = this.state.roundHistory.indexOf(m);
+    const canEditScore = !this.state._closed && this.canModify();
+    const isEditing = canEditScore && this._editingMatchIdx === idx;
+    const editBtn = canEditScore && !isEditing
+      ? `<button class="queue-row-btn queue-row-action" onclick="App.editMatchScore(${idx})" title="Edit score">&#x270E;</button>`
+      : '';
+    const durMin = m.duration ? Math.floor(m.duration / 60000) : '';
+    const durSec = m.duration ? Math.floor((m.duration % 60000) / 1000) : '';
+    const durationArea = isEditing
+      ? `<span class="match-duration-edit"><input type="number" min="0" id="matchEditDurMin-${idx}" value="${durMin}" placeholder="0"><span>:</span><input type="number" min="0" max="59" id="matchEditDurSec-${idx}" value="${durSec}" placeholder="00"></span>`
+      : `<span>${m.duration ? this.formatTimer(m.duration) : '–'}</span>`;
+    const scoreArea = isEditing
+      ? `<div class="match-score-edit">
+          <input type="number" min="0" id="matchEditScore1-${idx}" value="${m.score1 != null ? m.score1 : ''}" placeholder="0">
+          <span>&ndash;</span>
+          <input type="number" min="0" id="matchEditScore2-${idx}" value="${m.score2 != null ? m.score2 : ''}" placeholder="0">
+        </div>`
+      : `<div class="match-card-score">${scoreText}</div>`;
+    const editActions = isEditing
+      ? `<p id="matchEditError-${idx}" class="setup-error" style="display:none;margin-top:6px;"></p>
+         <div class="match-edit-actions">
+           <button class="btn-edit-cancel" style="color:var(--danger);border-color:#fca5a5;margin-right:auto;" onclick="App.deleteMatchScore(${idx})">Delete</button>
+           <button class="btn-edit-cancel" onclick="App.cancelEditMatchScore()">Cancel</button>
+           <button class="btn-edit-save" onclick="App.saveEditMatchScore(${idx})">Save</button>
+         </div>`
+      : '';
+    return `<div class="match-card">
+      <div class="match-card-header">
+        <span>${headerLeft}</span>
+        <span style="display:flex;align-items:center;gap:6px;">${durationArea}${editBtn}</span>
+      </div>
+      <div class="match-card-body">
+        <div class="match-card-team ${s1Class}">${s1.join(' & ')}</div>
+        <span class="match-card-vs">vs</span>
+        <div class="match-card-team ${s2Class}" style="text-align:right;">${s2.join(' & ')}</div>
+        ${scoreArea}
+      </div>
+      ${editActions}
+    </div>`;
+  },
+
+  // Renders a closed session's summary card — top 3 players by default,
+  // same as the League season summary (see toggleSessionSummaryExpanded) —
+  // with its close date in the title since, by default, this card is all
+  // that represents that session in the list (see renderHistory).
+  _renderSessionSummaryCard(m) {
+    const idx = this.state.roundHistory.indexOf(m);
+    const players = m.players || [];
+    const expanded = this._expandedSessionSummaries.has(idx) || players.length <= 3;
+    const visible = expanded ? players : players.slice(0, 3);
+    const rows = visible.map(p =>
+      `<div class="history-summary-row"><span class="history-summary-name">${this.esc(p.name)}</span><span class="history-summary-record">${this._formatPlayerRecord(p, true)}</span></div>`
+    ).join('');
+    const toggleBtn = players.length > 3
+      ? `<button type="button" class="btn-outline" style="width:100%;margin-top:8px;padding:6px;font-size:0.74rem;font-weight:600;" onclick="App.toggleSessionSummaryExpanded(${idx})">${expanded ? 'Show Top 3' : `Show All ${players.length} Players`}</button>`
+      : '';
+    const d = new Date(m.at);
+    const when = `${d.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}, ${d.toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' })}`;
+    return `<div class="history-session-summary">
+      <div class="history-session-summary-title">Session Summary &mdash; ${when}</div>
+      ${rows}
+      ${toggleBtn}
+    </div>`;
   },
 
   renderHistory() {
     const el = document.getElementById('historyRounds');
-    let history = [...(this.state.roundHistory || [])];
+    const seasonSummary = this.renderSeasonSummary();
+    const { closed, current } = this._historySessions();
+    this._populateHistorySessionSelect(closed);
 
-    this.renderHistoryStats(history);
+    // League player picker (see filterHistoryByPlayer): show the selected
+    // player's own season stats next to the match list it also filters.
+    const statCard = document.getElementById('historyPlayerStatCard');
+    if (statCard) {
+      const p = this._historyFilterPlayerId != null ? seasonSummary?.players.find(pl => pl.id === this._historyFilterPlayerId) : null;
+      if (p) {
+        statCard.style.display = '';
+        statCard.innerHTML = `<strong>${this.esc(p.name)}</strong> this season &middot; ${this._formatPlayerRecord(p, true)}`;
+      } else {
+        statCard.style.display = 'none';
+      }
+    }
 
-    if (history.length === 0) {
+    if (!closed.length && !current.length) {
       el.innerHTML = '<div class="history-empty">No completed games yet</div>';
       return;
     }
 
-    // Newest first
-    history.reverse();
-
-    // Filter by "My Matches"
-    if (this._historyFilterMine && Onboard.selfId) {
-      history = history.filter(m => [...m.side1, ...m.side2].includes(Onboard.selfId));
-    }
-
-    // Filter by player name search — fall back to the snapshotted name for
-    // players who've since been removed from the session.
     const nameMap = this._historyNameMap(this.state.roundHistory || []);
     const nameFor = id => this.getPlayer(id)?.name || nameMap.get(id) || '?';
     const search = (document.getElementById('historySearch')?.value || '').toLowerCase().trim();
-    if (search) {
-      history = history.filter(m => {
-        const allIds = [...m.side1, ...m.side2];
-        return allIds.some(id => nameFor(id).toLowerCase().includes(search));
-      });
-    }
+    const matchPassesFilters = m => {
+      const allIds = [...m.side1, ...m.side2];
+      if (this._historyFilterMine && Onboard.selfId && !allIds.includes(Onboard.selfId)) return false;
+      if (this._historyFilterPlayerId != null && !allIds.includes(this._historyFilterPlayerId)) return false;
+      if (search && !allIds.some(id => nameFor(id).toLowerCase().includes(search))) return false;
+      return true;
+    };
 
-    if (history.length === 0) {
-      el.innerHTML = '<div class="history-empty">No matches found</div>';
+    // A specific closed session picked from historySessionSelect — show
+    // every one of its matches in full instead of the default view below.
+    if (this._historySelectedSessionAt != null) {
+      const session = closed.find(s => s.closedAt === this._historySelectedSessionAt);
+      const matches = session ? [...session.matches].reverse().filter(matchPassesFilters) : [];
+      el.innerHTML = matches.length
+        ? matches.map(m => this._renderMatchCard(m, nameFor)).join('')
+        : '<div class="history-empty">No matches found</div>';
       return;
     }
 
-    el.innerHTML = history.map(m => {
-      if (m.sessionClosed) {
-        let when = '';
-        if (m.at) {
-          const d = new Date(m.at);
-          when = `${d.toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}, ${d.toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' })}`;
-        }
-        return `<div class="history-session-closed">Session closed${when ? ' &mdash; ' + when : ''}</div>`;
+    // Default view: the still-open session's matches in full, then every
+    // closed session collapsed to just its summary card (newest first) —
+    // see historySessionSelect for viewing a closed session's full detail.
+    const rows = [...current].reverse().filter(matchPassesFilters).map(m => this._renderMatchCard(m, nameFor));
+    [...closed].reverse().forEach(session => {
+      if (!session.summary) return; // nothing played that close — nothing to show
+      const players = session.summary.players || [];
+      if (this._historyFilterMine && Onboard.selfId && !players.some(p => p.id === Onboard.selfId)) return;
+      if (this._historyFilterPlayerId != null && !players.some(p => p.id === this._historyFilterPlayerId)) return;
+      if (search && !players.some(p => p.name.toLowerCase().includes(search))) return;
+      rows.push(this._renderSessionSummaryCard(session.summary));
+    });
+    el.innerHTML = rows.length ? rows.join('') : '<div class="history-empty">No matches found</div>';
+  },
+
+  // Index (in this.state.roundHistory) of the match card currently showing
+  // its score-edit form — only one at a time, and only while the session
+  // is open (see canEditScore in renderHistory).
+  _editingMatchIdx: null,
+
+  editMatchScore(idx) {
+    if (this.state._closed || !this.canModify()) return;
+    this._editingMatchIdx = idx;
+    this.renderHistory();
+  },
+
+  cancelEditMatchScore() {
+    this._editingMatchIdx = null;
+    this.renderHistory();
+  },
+
+  saveEditMatchScore(idx) {
+    if (this.state._closed || !this.canModify()) return;
+    const m = this.state.roundHistory[idx];
+    if (!m) return;
+    const s1Input = document.getElementById(`matchEditScore1-${idx}`);
+    const s2Input = document.getElementById(`matchEditScore2-${idx}`);
+    const errEl = document.getElementById(`matchEditError-${idx}`);
+    const raw1 = (s1Input?.value || '').trim();
+    const raw2 = (s2Input?.value || '').trim();
+    let score1 = null, score2 = null;
+    if (raw1 !== '' || raw2 !== '') {
+      score1 = parseInt(raw1, 10);
+      score2 = parseInt(raw2, 10);
+      if (isNaN(score1) || isNaN(score2)) {
+        if (errEl) { errEl.textContent = 'Enter a score for both sides, or leave both blank.'; errEl.style.display = 'block'; }
+        return;
       }
-      const s1 = m.side1.map(id => { const p = this.getPlayer(id); return this.esc(nameFor(id)) + (p && p.skillLevel ? ` <span style="font-weight:400;opacity:0.7;">(${this.skillAbbrev(p)})</span>` : ''); });
-      const s2 = m.side2.map(id => { const p = this.getPlayer(id); return this.esc(nameFor(id)) + (p && p.skillLevel ? ` <span style="font-weight:400;opacity:0.7;">(${this.skillAbbrev(p)})</span>` : ''); });
-      const hasScores = m.score1 != null && m.score2 != null;
-      const s1Class = hasScores ? (m.winner === 1 ? 'winner' : m.winner === 2 ? 'loser' : '') : '';
-      const s2Class = hasScores ? (m.winner === 2 ? 'winner' : m.winner === 1 ? 'loser' : '') : '';
-      const scoreText = hasScores ? `${m.score1}\u2013${m.score2}` : (m.expired ? 'N/A' : '\u2013');
-      const dur = m.duration ? this.formatTimer(m.duration) : '';
-      let dateTime = '';
-      if (m.startTime) {
-        const d = new Date(m.startTime);
-        const date = d.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
-        const time = d.toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' });
-        dateTime = `${date}, ${time}`;
+      if (this.isTournament() && score1 === score2) {
+        if (errEl) { errEl.textContent = 'Tournament matches cannot end in a tie.'; errEl.style.display = 'block'; }
+        return;
       }
-      const headerLeft = m.manual ? 'Logged as already played' : (dateTime || '');
-      const headerRight = dur ? `${dur}` : '';
-      return `<div class="match-card">
-        <div class="match-card-header">
-          <span>${headerLeft}</span>
-          <span>${headerRight}</span>
-        </div>
-        <div class="match-card-body">
-          <div class="match-card-team ${s1Class}">${s1.join(' & ')}</div>
-          <span class="match-card-vs">vs</span>
-          <div class="match-card-team ${s2Class}" style="text-align:right;">${s2.join(' & ')}</div>
-          <div class="match-card-score">${scoreText}</div>
-        </div>
-      </div>`;
-    }).join('');
+    }
+    const durMinInput = document.getElementById(`matchEditDurMin-${idx}`);
+    const durSecInput = document.getElementById(`matchEditDurSec-${idx}`);
+    const rawMin = (durMinInput?.value || '').trim();
+    const rawSec = (durSecInput?.value || '').trim();
+    let duration = null;
+    if (rawMin !== '' || rawSec !== '') {
+      const mins = rawMin === '' ? 0 : parseInt(rawMin, 10);
+      const secs = rawSec === '' ? 0 : parseInt(rawSec, 10);
+      if (isNaN(mins) || isNaN(secs)) {
+        if (errEl) { errEl.textContent = 'Enter a valid match duration.'; errEl.style.display = 'block'; }
+        return;
+      }
+      duration = (mins * 60 + secs) * 1000;
+    }
+    m.score1 = score1;
+    m.score2 = score2;
+    m.winner = (score1 != null && score2 != null) ? (score1 > score2 ? 1 : score2 > score1 ? 2 : 0) : null;
+    m.duration = duration;
+    // A corrected score means this match is no longer an unresolved
+    // "expired" one — see _tallyPlayerStats/_buildSessionSummary, which
+    // otherwise skip expired entries when tallying wins even with a winner set.
+    if (score1 != null && score2 != null) m.expired = false;
+    this._editingMatchIdx = null;
+    this.saveState();
+    this.render();
+  },
+
+  // Only reachable from the score-edit form, so it's already gated behind
+  // canEditScore (session open) the same as saveEditMatchScore.
+  deleteMatchScore(idx) {
+    if (this.state._closed || !this.canModify()) return;
+    const m = this.state.roundHistory[idx];
+    if (!m) return;
+    if (!confirm('Delete this match from history? This cannot be undone.')) return;
+    this.state.roundHistory.splice(idx, 1);
+    this._editingMatchIdx = null;
+    this.saveState();
+    this.render();
   },
 
   renderAdminLog() {
@@ -7241,6 +8880,8 @@ const Session = {
       if (Admin._user?.uid) already.firebaseUid = Admin._user.uid;
       already.joinedAt = Date.now();
       already.lastActiveAt = already.joinedAt;
+      already.passcodeVersion = Onboard._pendingPasscodeVersion != null ? Onboard._pendingPasscodeVersion : App.state._passcodeVersion;
+      Onboard._pendingPasscodeVersion = null;
       try { localStorage.setItem('courtManager', JSON.stringify(App.state)); } catch(e) {}
       this._patch({ players: App.state.players });
       App.render();
@@ -7257,7 +8898,9 @@ const Session = {
         isLive: true,
         joinedAt: now,
         lastActiveAt: now,
+        passcodeVersion: Onboard._pendingPasscodeVersion != null ? Onboard._pendingPasscodeVersion : App.state._passcodeVersion,
       };
+      Onboard._pendingPasscodeVersion = null;
       if (Admin._user?.uid) newPlayer.firebaseUid = Admin._user.uid;
       App.state.players.push(newPlayer);
       try { localStorage.setItem('courtManager', JSON.stringify(App.state)); } catch(e) {}
@@ -7397,6 +9040,7 @@ const Session = {
         App.render();
         this._receiving = false;
         addSelfOnce();
+        this._checkPasscodeGate();
       } catch(err) { /* ignore */ }
     });
 
@@ -7422,8 +9066,60 @@ const Session = {
         App._normState();
         App.render();
         this._receiving = false;
+        this._checkPasscodeGate();
       } catch(err) { /* ignore */ }
     });
+  },
+
+  // A live tab stays connected through a passcode change (only new
+  // join/reconnect flows re-check it there — see Onboard._needsPasscodeEntry),
+  // so re-check here too on every state sync and block interaction with a
+  // re-entry prompt if this participant hasn't verified the current version.
+  _checkPasscodeGate() {
+    if (!this.id || this.id === 'offline') return;
+    if (Admin.isAdmin() || Admin.isSuperAdmin()) return;
+    if (!App.state._passcodeRequired || !App.state._passcode) { this._closePasscodeGate(); return; }
+    const version = App.state._passcodeVersion || 0;
+    const self = App.state.players.find(p => p.id === Onboard.selfId);
+    if (!self) return;
+    if ((self.passcodeVersion || 0) >= version) { this._closePasscodeGate(); return; }
+    this._openPasscodeGate();
+  },
+
+  _openPasscodeGate() {
+    const modal = document.getElementById('passcodeGateModal');
+    if (!modal || modal.style.display === 'flex') return;
+    modal.style.display = 'flex';
+    document.body.style.overflow = 'hidden';
+    const err = document.getElementById('passcodeGateError');
+    if (err) err.style.display = 'none';
+    const input = document.getElementById('passcodeGateInput');
+    if (input) { input.value = ''; input.focus(); }
+  },
+
+  _closePasscodeGate() {
+    const modal = document.getElementById('passcodeGateModal');
+    if (modal && modal.style.display !== 'none') {
+      modal.style.display = 'none';
+      document.body.style.overflow = '';
+    }
+  },
+
+  _submitPasscodeGate() {
+    const input = document.getElementById('passcodeGateInput');
+    const err = document.getElementById('passcodeGateError');
+    const entered = (input?.value || '').trim().toUpperCase();
+    if (entered !== App.state._passcode) {
+      if (err) err.style.display = 'block';
+      if (input) { input.value = ''; input.focus(); }
+      return;
+    }
+    const self = App.state.players.find(p => p.id === Onboard.selfId);
+    if (self) {
+      self.passcodeVersion = App.state._passcodeVersion || 0;
+      this._patch({ players: App.state.players });
+    }
+    this._closePasscodeGate();
   },
 
   _setURL(id) {
@@ -7494,6 +9190,24 @@ const Onboard = {
     }
   },
 
+  // A returning participant who already verified the passcode currently in
+  // effect (matched by name, same heuristic Session._addSelf uses) shouldn't
+  // be asked again unless an admin has since changed the code and chosen to
+  // require re-entry — see App._confirmPasscodeReentry.
+  _playerRecordFor(data, user) {
+    if (!user || !Array.isArray(data?.players)) return null;
+    return data.players.find(p => p.name.toLowerCase() === user.name.toLowerCase()) || null;
+  },
+
+  _needsPasscodeEntry(data, user, isAdminOfSession) {
+    if (!data || !data._passcodeRequired || !data._passcode) return false;
+    if (Admin.isSuperAdmin() || isAdminOfSession) return false;
+    const version = data._passcodeVersion || 0;
+    const rec = this._playerRecordFor(data, user);
+    if (rec && (rec.passcodeVersion || 0) >= version) return false;
+    return true;
+  },
+
   async _handleShareLink(s, user) {
     const pvt = this._getSavedPrivateSessions().find(p => p.id === s);
     let label = pvt ? pvt.name : s.replace(/^pvt-/, '');
@@ -7504,18 +9218,19 @@ const Onboard = {
     // Use stored session name if available
     if (data && data._sessionName) label = data._sessionName;
     const isAdminOfSession = Admin._user && data && Array.isArray(data._admins) && data._admins.includes(Admin._user.uid);
-    const needsPasscode = data && data._passcode && !Admin.isSuperAdmin() && !isAdminOfSession;
-    if (needsPasscode) {
+    if (this._needsPasscodeEntry(data, user, isAdminOfSession)) {
       // Show inline passcode prompt
-      this._showSharePasscode(s, label, data._passcode, user);
+      this._showSharePasscode(s, label, data._passcode, user, data._passcodeVersion || 0);
       return;
     }
 
-    // Passcode not needed — proceed
+    // Passcode not needed — mark them caught up so they aren't asked again
+    // until the next actual change
+    this._pendingPasscodeVersion = data ? (data._passcodeVersion || 0) : 0;
     this._shareJoinOrPrompt(s, label, user);
   },
 
-  _showSharePasscode(sessionId, label, correctPasscode, user) {
+  _showSharePasscode(sessionId, label, correctPasscode, user, passcodeVersion) {
     const setup = document.getElementById('sessionSetupSection');
     const card = setup?.querySelector('.setup-card');
     if (!card) return;
@@ -7546,7 +9261,7 @@ const Onboard = {
     `;
     document.getElementById('sharePasscodeInput')?.focus();
 
-    this._sharePending = { sessionId, label, correctPasscode, user };
+    this._sharePending = { sessionId, label, correctPasscode, user, passcodeVersion };
   },
 
   _verifySharePasscode() {
@@ -7559,7 +9274,8 @@ const Onboard = {
       return;
     }
     if (err) err.style.display = 'none';
-    const { sessionId, label, user } = this._sharePending;
+    const { sessionId, label, user, passcodeVersion } = this._sharePending;
+    this._pendingPasscodeVersion = passcodeVersion || 0;
     this._sharePending = null;
     const passcodeDiv = document.getElementById('sharePasscodePrompt');
     if (passcodeDiv) passcodeDiv.style.display = 'none';
@@ -7864,20 +9580,30 @@ const Onboard = {
     const codeEl = document.getElementById('privatePasscode');
     const toggleEl = document.getElementById('privatePasscodeToggle');
     const errEl = document.getElementById('createSessionError');
-    const sessionName = (nameEl?.value || '').trim();
+    let sessionName = (nameEl?.value || '').trim();
     const passcodeRequired = !!toggleEl?.checked;
     const passcode = passcodeRequired ? (codeEl?.value || '').trim().toUpperCase() : '';
-    if (!sessionName || (passcodeRequired && passcode.length !== 4)) {
+    if (passcodeRequired && passcode.length !== 4) {
       if (errEl) {
-        errEl.textContent = passcodeRequired
-          ? 'Enter a session name and a 4-character passcode'
-          : 'Enter a session name';
+        errEl.textContent = 'Enter a 4-character passcode';
         errEl.style.display = 'block';
       }
       return;
     }
     if (errEl) errEl.style.display = 'none';
-    const id = 'pvt-' + sessionName.toLowerCase().replace(/[^a-z0-9]/g, '');
+    // Name is optional — an untitled session gets the same auto-label
+    // pattern as a saved Quick Play session, but with the type in place of
+    // "Quick Play" (e.g. "Round Robin Sep 14 3:45 PM"), and the id gets a
+    // random suffix since that label isn't guaranteed unique.
+    let id;
+    if (sessionName) {
+      id = 'pvt-' + sessionName.toLowerCase().replace(/[^a-z0-9]/g, '');
+    } else {
+      const typeLabel = this._newSessionType === 'roundrobin' ? 'Round Robin' : this._newSessionType === 'tournament' ? 'Tournament' : 'Open Play';
+      const now = new Date();
+      sessionName = `${typeLabel} ${now.toLocaleDateString(undefined, { month: 'short', day: 'numeric' })} ${now.toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' })}`;
+      id = 'pvt-' + sessionName.toLowerCase().replace(/[^a-z0-9]/g, '') + '-' + Math.random().toString(36).slice(2, 6);
+    }
     this._savePrivateSession(id, sessionName);
     document.getElementById('createSessionRow').style.display = 'none';
     this._promptSelfProfile(() => {
@@ -7886,17 +9612,7 @@ const Onboard = {
       this._pendingPasscode = passcode;
       this._pendingIsCreate = true;
       this._pendingSessionType = this._newSessionType;
-      // Open Play can add players inline from the queue card once the
-      // session starts; Round Robin/Tournament still need the roster
-      // collected up front so the schedule/bracket can be locked in.
-      if (this._newSessionType === 'open') {
-        this.confirmJoin();
-        return;
-      }
-      this._openBulkSetup({
-        quickPlay: false,
-        onComplete: (players) => { this._pendingBulkPlayers = players; this.confirmJoin(); },
-      });
+      this.confirmJoin();
     });
   },
 
@@ -7915,9 +9631,6 @@ const Onboard = {
     }
     if (!user) return;
 
-    const bulkPlayers = this._pendingBulkPlayers;
-    this._pendingBulkPlayers = null;
-
     if (this._pendingIsCreate) {
       // Creating new — set passcode, name, and creator as session admin
       this._savePrivateSession(key, label);
@@ -7930,20 +9643,16 @@ const Onboard = {
       // Joining existing — verify passcode
       const data = await Session._get(key);
       const isAdminOfSession = Admin._user && data && Array.isArray(data._admins) && data._admins.includes(Admin._user.uid);
-      if (data && data._passcode && !Admin.isSuperAdmin() && !isAdminOfSession) {
+      if (this._needsPasscodeEntry(data, user, isAdminOfSession)) {
         const entered = prompt('Enter the 4-character passcode for "' + label + '":');
         if (!entered || entered.trim().toUpperCase() !== data._passcode) {
           alert('Incorrect passcode.');
           return;
         }
       }
+      this._pendingPasscodeVersion = data ? (data._passcodeVersion || 0) : 0;
       this._savePrivateSession(key, label);
       await Session._connect(key, label, false, user);
-    }
-    if (bulkPlayers?.length) {
-      this._pushBulkPlayers(bulkPlayers);
-      App.saveState();
-      App.render();
     }
     this._pendingPasscode = null;
     this._pendingIsCreate = false;
@@ -7954,6 +9663,7 @@ const Onboard = {
     this._pendingKey = null;
     this._pendingLabel = null;
     this._pendingPasscode = null;
+    this._pendingPasscodeVersion = null;
     this._pendingIsCreate = false;
   },
 
@@ -8042,136 +9752,20 @@ const Onboard = {
     const sessionType = document.querySelector('input[name="quickPlayType"]:checked')?.value || 'open';
     document.getElementById('quickPlayTypeModal').style.display = 'none';
     document.body.style.overflow = '';
-    // Open Play can add players inline from the queue card once the
-    // session starts, so skip straight in instead of asking up front —
-    // Round Robin/Tournament still need the full roster before locking it.
-    if (sessionType === 'open') {
-      this._startOfflineSession(sessionType, { quickPlay: true, players: [] });
-      return;
-    }
-    this._openBulkSetup({
-      quickPlay: true,
-      onComplete: (players) => this._startOfflineSession(sessionType, { quickPlay: true, players }),
-    });
+    this._startOfflineSession(sessionType);
   },
 
-  _startOfflineSession(sessionType, opts = {}) {
+  _startOfflineSession(sessionType) {
     App.state = App._freshState();
     App.state._sessionType = sessionType;
     App.state._offline = true;
-    if (opts.quickPlay) App.state._quickPlay = true;
+    App.state._quickPlay = true;
     App._normState();
-    this._pushBulkPlayers(opts.players);
     Session.id = 'offline';
     Session.label = 'Offline';
     App.render();
     this._hide();
     Session._updateUI();
-  },
-
-  // ─── Bulk player setup (count → names/skill), used before a new session
-  // first opens: Quick Play and creating a private session both
-  // funnel through this. ────────────────────────
-  _bulkCtx: null,
-
-  _openBulkSetup(ctx) {
-    this._bulkCtx = ctx;
-    const countEl = document.getElementById('bulkPlayerCount');
-    if (countEl) countEl.value = 4;
-    const errEl = document.getElementById('bulkCountError');
-    if (errEl) errEl.style.display = 'none';
-    const submitBtn = document.getElementById('bulkSubmitBtn');
-    if (submitBtn) submitBtn.textContent = ctx.quickPlay ? 'Start Playing' : 'Add Players';
-    document.getElementById('bulkCountModal').style.display = 'flex';
-    document.body.style.overflow = 'hidden';
-    countEl?.focus();
-  },
-
-  _bulkCancel(event) {
-    if (event && event.target !== event.currentTarget) return;
-    document.getElementById('bulkCountModal').style.display = 'none';
-    document.getElementById('bulkNamesModal').style.display = 'none';
-    document.body.style.overflow = '';
-    this._bulkCtx = null;
-  },
-
-  _bulkContinueToNames() {
-    const countEl = document.getElementById('bulkPlayerCount');
-    const errEl = document.getElementById('bulkCountError');
-    const count = parseInt(countEl?.value, 10);
-    if (!count || count < 1) {
-      if (errEl) errEl.style.display = 'block';
-      return;
-    }
-    if (errEl) errEl.style.display = 'none';
-    // Everyone is added as Not Rated and sets a skill level afterward via
-    // the NR/B/I/A chip, so this roster form only asks for names.
-    const list = document.getElementById('bulkNamesList');
-    if (list) {
-      list.innerHTML = '';
-      for (let i = 1; i <= count; i++) {
-        const wrapper = document.createElement('div');
-        const row = document.createElement('div');
-        row.style.cssText = 'display:flex;gap:8px;';
-        const nameInput = document.createElement('input');
-        nameInput.type = 'text';
-        nameInput.className = 'setup-input';
-        nameInput.placeholder = `Player ${i} name`;
-        nameInput.style.cssText = 'flex:1;margin-bottom:0;';
-        nameInput.dataset.bulkName = i;
-        row.appendChild(nameInput);
-        wrapper.appendChild(row);
-        if (i === count) nameInput.onkeydown = (e) => { if (e.key === 'Enter') this._bulkSubmit(); };
-        list.appendChild(wrapper);
-      }
-      list.querySelector('input')?.focus();
-    }
-    document.getElementById('bulkCountModal').style.display = 'none';
-    document.getElementById('bulkNamesModal').style.display = 'flex';
-  },
-
-  _bulkBackToCount() {
-    document.getElementById('bulkNamesModal').style.display = 'none';
-    document.getElementById('bulkCountModal').style.display = 'flex';
-    document.getElementById('bulkPlayerCount')?.focus();
-  },
-
-  _bulkSubmit() {
-    const rows = [...document.querySelectorAll('#bulkNamesList > div')];
-    const players = [];
-    rows.forEach(row => {
-      const nameEl = row.querySelector('[data-bulk-name]');
-      const name = nameEl?.value.trim();
-      if (!name) return;
-      players.push({ name, skillLevel: null });
-    });
-    const errEl = document.getElementById('bulkNamesError');
-    if (!players.length) {
-      if (errEl) errEl.style.display = 'block';
-      return;
-    }
-    if (errEl) errEl.style.display = 'none';
-    document.getElementById('bulkNamesModal').style.display = 'none';
-    document.body.style.overflow = '';
-    const ctx = this._bulkCtx;
-    this._bulkCtx = null;
-    ctx?.onComplete?.(players);
-  },
-
-  _pushBulkPlayers(players) {
-    (players || []).forEach(({ name, skillLevel }) => {
-      const now = Date.now();
-      App.state.players.push({
-        id: App.state.nextId++,
-        name,
-        skillLevel: skillLevel || null,
-        active: true,
-        isLive: false,
-        addedBy: this.selfId,
-        joinedAt: now,
-        lastActiveAt: now,
-      });
-    });
   },
 
   _hide() {
@@ -8700,7 +10294,7 @@ const MyHistory = {
       const s1Class = hasScores ? (m.winner === 1 ? 'winner' : m.winner === 2 ? 'loser' : '') : '';
       const s2Class = hasScores ? (m.winner === 2 ? 'winner' : m.winner === 1 ? 'loser' : '') : '';
       const scoreText = hasScores ? `${m.score1}\u2013${m.score2}` : (m.expired ? 'N/A' : '\u2013');
-      const dur = m.duration ? App.formatTimer(m.duration) : '';
+      const dur = m.duration ? App.formatTimer(m.duration) : '–';
       let dateTime = '';
       if (m.startTime) {
         const d = new Date(m.startTime);
