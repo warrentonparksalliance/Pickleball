@@ -2723,6 +2723,7 @@ body.view-only-locked #tabCourts #btnToggleQueue {
             <button type="button" class="btn-outline btn-print-bracket" onclick="App.printSchedule()" style="padding:6px 12px;font-size:0.8rem;font-weight:600;">&#128438; Save as PDF</button>
           </div>
         </div>
+        <div id="rrScheduleTimeInfo" style="font-size:0.75rem;color:var(--text-muted);margin-bottom:8px;"></div>
         <div id="rrUpcomingList"></div>
       </div>
     </div>
@@ -8116,6 +8117,20 @@ ${bracketHTML}
     </div>`;
   },
 
+  // "Match Time Limit: 15 min · Session Time Limit: 2 hrs · Buffer: 3 min
+  // between rounds" — shown atop Upcoming Rounds and in the printed PDF so
+  // anyone viewing the session (not just whoever set the schedule up) can
+  // see the pace it was planned around. Buffer always shows an effective
+  // value (falling back to ROUND_BUFFER_MIN) since it's used in planning
+  // either way; match/session limits show "Not set" when left blank.
+  _scheduleTimeSummaryLine() {
+    const st = this.state._scheduleTime || {};
+    const buffer = st.bufferMinutes != null ? st.bufferMinutes : this.ROUND_BUFFER_MIN;
+    const matchText = st.matchMinutes ? `${st.matchMinutes} min` : 'Not set';
+    const sessionText = st.sessionHours ? `${st.sessionHours} hr${st.sessionHours === 1 ? '' : 's'}` : 'Not set';
+    return `Match Time Limit: ${matchText} · Session Time Limit: ${sessionText} · Buffer: ${buffer} min between rounds`;
+  },
+
   _renderRRUpcoming() {
     const section = document.getElementById('rrUpcomingSection');
     const list = document.getElementById('rrUpcomingList');
@@ -8131,6 +8146,9 @@ ${bracketHTML}
       return;
     }
     section.style.display = '';
+
+    const timeInfoEl = document.getElementById('rrScheduleTimeInfo');
+    if (timeInfoEl) timeInfoEl.textContent = this._scheduleTimeSummaryLine();
 
     const currentRound = this.state._rrCurrentRound || 0;
     const filterId = this._upcomingFilterPlayerId;
@@ -8152,13 +8170,15 @@ ${bracketHTML}
     const schedule = this.state._rrSchedule || [];
     const scheduleHTML = schedule.map(round => this._renderScheduleRoundHTML(round)).join('');
     const sessionName = this.esc(this.state._sessionName || 'Round Robin');
+    const timeInfo = this.esc(this._scheduleTimeSummaryLine());
     const w = window.open('', '_blank');
     if (!w) return;
     w.document.write(`<!DOCTYPE html><html><head><meta charset="utf-8">
 <title>${sessionName} Schedule</title>
 <style>
 body{font-family:system-ui,sans-serif;padding:24px;background:#fff;color:#1a1a1a;}
-h1{font-size:1.1rem;font-weight:700;margin:0 0 16px;}
+h1{font-size:1.1rem;font-weight:700;margin:0 0 8px;}
+.schedule-time-info{font-size:0.8rem;color:#666;margin-bottom:16px;}
 .schedule-round{margin-bottom:14px;}
 .schedule-round-title{font-size:0.85rem;font-weight:700;color:#444;margin-bottom:6px;}
 .schedule-game{display:flex;align-items:center;gap:8px;padding:4px 0;font-size:0.85rem;border-bottom:1px solid #eee;}
@@ -8166,6 +8186,7 @@ h1{font-size:1.1rem;font-weight:700;margin:0 0 16px;}
 .schedule-vs{color:#888;font-size:0.72rem;font-weight:700;}
 </style></head><body>
 <h1>${sessionName} — Schedule</h1>
+<div class="schedule-time-info">${timeInfo}</div>
 ${scheduleHTML}
 <script>window.onload=function(){window.print();}<\/script>
 </body></html>`);
