@@ -6484,17 +6484,17 @@ ${bracketHTML}
     this.switchTab('history');
   },
 
-  // "N win(s) · N loss(es) · N played · N avg pts" — shared text for a
-  // player's record wherever _tallyPlayerStats output gets rendered
-  // (session summary, season summary, the League player stat card).
-  // includeWinPct adds "· NN% wins" — only asked for on the single-player
+  // "N W · N L · N played · N avg pts" — shared text for a player's record
+  // wherever _tallyPlayerStats output gets rendered (session summary,
+  // season summary, the League player stat card).
+  // includeWinPct adds "· NN%" — only asked for on the single-player
   // League stat card, not the standings/summary lists, so it's opt-in.
   _formatPlayerRecord(p, includeWinPct) {
-    const winLabel = `${p.wins} win${p.wins === 1 ? '' : 's'}`;
-    const lossLabel = `${p.losses} loss${p.losses === 1 ? '' : 'es'}`;
+    const winLabel = `${p.wins} W`;
+    const lossLabel = `${p.losses} L`;
     const played = p.played ? ` · ${p.played} played` : '';
     const decided = p.wins + p.losses;
-    const winPct = includeWinPct && decided ? ` · ${Math.round((p.wins / decided) * 100)}% wins` : '';
+    const winPct = includeWinPct && decided ? ` · ${Math.round((p.wins / decided) * 100)}%` : '';
     const avg = p.avgPoints != null ? ` · ${p.avgPoints} avg pts` : '';
     return `${winLabel} · ${lossLabel}${played}${winPct}${avg}`;
   },
