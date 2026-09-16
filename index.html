@@ -4977,6 +4977,51 @@ const App = {
     }));
   },
 
+  // Deterministic round-robin (circle method) over a FIXED list of team
+  // units for the whole schedule — every team faces every other team at
+  // most once, guaranteed by the math rather than left to per-round random
+  // luck (see _pairUnitsMinimizingRepeats, which is the fallback used only
+  // when round-varying typed partnerships mean the unit list itself changes
+  // round to round and a single fixed rotation can't be precomputed).
+  // Every unit ordering below is equally repeat-free this session, so a few
+  // are tried and scored only against this League season's history (if any)
+  // and same-type preference, same tiebreakers _pairUnitsMinimizingRepeats
+  // uses.
+  _circleMethodSchedule(units, pairCounts) {
+    if (units.length < 2) return [];
+    const scorePair = (a, b) => {
+      let s = 0;
+      if (pairCounts) [a.p1, a.p2].forEach(x => [b.p1, b.p2].forEach(y => { s += pairCounts.opponents.get(this._pairKey(x, y)) || 0; }));
+      if (!(a.type && b.type && a.type === b.type)) s += 0.1;
+      return s;
+    };
+    const buildFrom = orderedUnits => {
+      const ring = orderedUnits.length % 2 === 1 ? [...orderedUnits, null] : [...orderedUnits];
+      const m = ring.length;
+      let seats = ring;
+      const rounds = [];
+      for (let r = 0; r < m - 1; r++) {
+        const pairs = [];
+        for (let i = 0; i < m / 2; i++) {
+          const a = seats[i], b = seats[m - 1 - i];
+          if (a && b) pairs.push([a, b]);
+        }
+        rounds.push(pairs);
+        seats = [seats[0], seats[m - 1], ...seats.slice(1, m - 1)];
+      }
+      return rounds;
+    };
+    const TRIALS = pairCounts ? 40 : 1;
+    let best = null, bestScore = Infinity;
+    for (let t = 0; t < TRIALS; t++) {
+      const rounds = buildFrom(this.shuffle(units));
+      const score = rounds.reduce((sum, pairs) => sum + pairs.reduce((s, [a, b]) => s + scorePair(a, b), 0), 0);
+      if (score < bestScore) { bestScore = score; best = rounds; }
+      if (bestScore === 0) break;
+    }
+    return best;
+  },
+
   // Tournament brackets don't have repeating rounds to alternate a dual
   // partnership across, so each round-varying player's two partnerships
   // are resolved to just one for the whole bracket — whichever has been
@@ -5448,33 +5493,47 @@ const App = {
     const roundVarying = this._roundVaryingPlayerIds();
     const unitEstimate = fixedUnits.length + Math.round(roundVarying.size / 2);
     if (unitEstimate < 2) return;
-    const numRounds = unitEstimate % 2 === 1 ? unitEstimate : unitEstimate - 1;
 
     const numCourts = this.state.availableCourts || 1;
     const pairCounts = this._seasonPairCounts();
-    const activeIds = new Set(this.state.players.filter(p => p.active).map(p => p.id));
-    // Repeats already played THIS session, tracked as rounds are built one
-    // at a time — with fixed teams this used to be guaranteed zero by the
-    // circle method; now that round-varying partnerships mean the set of
-    // teams can change round to round, it's a heuristic instead (weighted
-    // far above season history so it always wins the tie-break).
-    const sessionPlayed = new Map();
-    let rounds = [];
+    let rounds;
 
-    for (let r = 0; r < numRounds; r++) {
-      const { units: varyingUnits, freeAgents } = this._roundVaryingUnitsForRound(r, activeIds);
-      const freeAgentUnits = this._pairFreeAgents(freeAgents);
-      const allUnits = [...fixedUnits, ...varyingUnits, ...freeAgentUnits];
+    if (roundVarying.size === 0) {
+      // The common case: every team is fixed for the whole schedule, so a
+      // proper round-robin (circle method) guarantees no team repeats an
+      // opponent, instead of leaving that to per-round random luck.
+      rounds = this._circleMethodSchedule(fixedUnits, pairCounts)
+        .map((pairs, i) => ({
+          round: i + 1,
+          games: pairs.slice(0, numCourts).map((m, j) => ({ side1: [m[0].p1, m[0].p2], side2: [m[1].p1, m[1].p2], court: j + 1 })),
+        }))
+        .filter(r => r.games.length > 0);
+    } else {
+      const numRounds = unitEstimate % 2 === 1 ? unitEstimate : unitEstimate - 1;
+      const activeIds = new Set(this.state.players.filter(p => p.active).map(p => p.id));
+      // Repeats already played THIS session, tracked as rounds are built one
+      // at a time — round-varying partnerships mean the set of teams can
+      // change round to round, so a fixed circle-method rotation can't be
+      // precomputed; this heuristic is weighted far above season history so
+      // it always wins the tie-break.
+      const sessionPlayed = new Map();
+      rounds = [];
 
-      const games = this._buildRoundGames(allUnits, sessionPlayed, pairCounts, numCourts);
-      if (games.length > 0) rounds.push({ round: r + 1, games });
+      for (let r = 0; r < numRounds; r++) {
+        const { units: varyingUnits, freeAgents } = this._roundVaryingUnitsForRound(r, activeIds);
+        const freeAgentUnits = this._pairFreeAgents(freeAgents);
+        const allUnits = [...fixedUnits, ...varyingUnits, ...freeAgentUnits];
 
-      games.forEach(g => {
-        g.side1.forEach(a => g.side2.forEach(b => {
-          const k = this._pairKey(a, b);
-          sessionPlayed.set(k, (sessionPlayed.get(k) || 0) + 1);
-        }));
-      });
+        const games = this._buildRoundGames(allUnits, sessionPlayed, pairCounts, numCourts);
+        if (games.length > 0) rounds.push({ round: r + 1, games });
+
+        games.forEach(g => {
+          g.side1.forEach(a => g.side2.forEach(b => {
+            const k = this._pairKey(a, b);
+            sessionPlayed.set(k, (sessionPlayed.get(k) || 0) + 1);
+          }));
+        });
+      }
     }
 
     rounds = this._applyPlannedRounds(rounds);
