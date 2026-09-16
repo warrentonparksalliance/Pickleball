@@ -2438,6 +2438,22 @@ body.view-only-locked #tabCourts #btnToggleQueue {
           <svg width="16" height="16" viewBox="0 0 48 48" style="flex-shrink:0;"><path fill="#4285F4" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#34A853" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59a14.5 14.5 0 0 1 0-9.18l-7.98-6.19a24.0 24.0 0 0 0 0 21.56l7.98-6.19z"/><path fill="#EA4335" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg>
           Sign in with Google
         </button>
+        <button type="button" id="btnEntryEmailToggle" onclick="EmailAuth.toggle()" style="width:100%;background:none;border:none;padding:6px;font-size:0.82rem;font-weight:600;color:var(--primary);cursor:pointer;text-decoration:underline;margin-bottom:10px;">
+          Or sign in with email
+        </button>
+        <div id="entryEmailBlock" style="display:none;margin-bottom:10px;">
+          <input type="email" class="setup-input" id="entryEmailInput" placeholder="Email address" autocomplete="email" style="margin-bottom:8px;">
+          <input type="password" class="setup-input" id="entryPasswordInput" placeholder="Password" autocomplete="current-password" style="margin-bottom:8px;" onkeydown="if(event.key==='Enter')EmailAuth.signIn()">
+          <p id="entryEmailError" class="setup-error"></p>
+          <div style="display:flex;gap:8px;margin-bottom:8px;">
+            <button type="button" class="btn-confirm-join" id="btnEmailSignIn" onclick="EmailAuth.signIn()" style="flex:1;padding:10px;font-size:0.9rem;font-weight:700;">Sign In</button>
+            <button type="button" class="btn-outline" id="btnEmailSignUp" onclick="EmailAuth.signUp()" style="flex:1;padding:10px;font-size:0.9rem;font-weight:700;">Create Account</button>
+          </div>
+          <div style="display:flex;justify-content:space-between;">
+            <button type="button" onclick="EmailAuth.forgotPassword()" style="background:none;border:none;padding:0;font-size:0.78rem;color:var(--text-muted);text-decoration:underline;cursor:pointer;">Forgot password?</button>
+            <button type="button" onclick="EmailAuth.toggle()" style="background:none;border:none;padding:0;font-size:0.78rem;color:var(--text-muted);text-decoration:underline;cursor:pointer;">Use Google instead</button>
+          </div>
+        </div>
         <!-- Guest join is only offered when arriving via a shared session link -->
         <div id="guestContinueBlock" style="display:none;">
           <button class="btn-outline" onclick="Onboard._completeShareJoin()" style="width:100%;padding:12px;font-size:1rem;font-weight:700;">Continue as Guest</button>
@@ -3022,7 +3038,7 @@ body.view-only-locked #tabCourts #btnToggleQueue {
       </div>
       <div class="hiw-body">
         <div class="hiw-section" style="background:var(--primary-light);border:1.5px solid var(--primary-muted);border-radius:var(--radius-sm);padding:12px;">
-          <h3 style="color:var(--primary);">&#10003; Sign in with Google for full access</h3>
+          <h3 style="color:var(--primary);">&#10003; Sign in for full access</h3>
           <p>Signing in unlocks everything Court Manager has to offer:</p>
           <ul style="margin-top:6px;padding-left:18px;display:flex;flex-direction:column;gap:4px;font-size:0.85rem;color:var(--text-light);line-height:1.5;">
             <li><strong>Personal match history</strong> — view your record across all past sessions</li>
@@ -3041,7 +3057,7 @@ body.view-only-locked #tabCourts #btnToggleQueue {
         </div>
         <div class="hiw-section">
           <h3>🔒 Sessions</h3>
-          <p>Sign in with Google, then use the <strong>Sessions</strong> card to create a session for your group — pick a format, name it if you like (optional), and turn on a passcode only if you want one. Share the link or code with friends; they can join without signing in. Admins can toggle, view, or edit the passcode anytime from Settings, and choose whether a change forces already-joined players to re-enter it.</p>
+          <p>Sign in with Google or email, then use the <strong>Sessions</strong> card to create a session for your group — pick a format, name it if you like (optional), and turn on a passcode only if you want one. Share the link or code with friends; they can join without signing in. Admins can toggle, view, or edit the passcode anytime from Settings, and choose whether a change forces already-joined players to re-enter it.</p>
           <p style="margin-top:6px;">Sessions you've joined or created show up in a list on that same card, colored green (open) or orange (closed) with when you last joined. Tapping one joins right away, straight into <strong>Sitting Out</strong>.</p>
           <p style="margin-top:6px;">Admins can also flip on <strong>View Only</strong> (Settings &gt; Share Link) so everyone but admins can watch without being able to touch anything.</p>
         </div>
@@ -9444,7 +9460,7 @@ const Onboard = {
       const heading = document.getElementById('entryHeading');
       if (heading) heading.textContent = `Join "${label}"`;
       const subtitle = document.getElementById('entrySubtitle');
-      if (subtitle) subtitle.textContent = 'Sign in with Google to track your match history and save your preferences, or continue as a guest with just your name and an optional skill level.';
+      if (subtitle) subtitle.textContent = 'Sign in with Google or email to track your match history and save your preferences, or continue as a guest with just your name and an optional skill level.';
       const quickPlayBlock = document.getElementById('entryQuickPlayBlock');
       if (quickPlayBlock) quickPlayBlock.style.display = 'none';
       // Guest join is only offered for a specific shared link, not on the general landing page
@@ -9691,7 +9707,7 @@ const Onboard = {
   // of opening a modal.
   toggleCreateSessionRow() {
     if (!Admin.isSignedIn()) {
-      alert('Sign in with Google to create private sessions and to save your preferences. Use the back arrow and choose "Sign in with Google".');
+      alert('Sign in to create private sessions and to save your preferences. Use the back arrow and choose "Sign in with Google" or "Or sign in with email".');
       return;
     }
     const row = document.getElementById('createSessionRow');
@@ -9948,7 +9964,8 @@ const Admin = {
     script.type = 'module';
     script.textContent = `
       import { initializeApp } from 'https://www.gstatic.com/firebasejs/11.6.0/firebase-app.js';
-      import { getAuth, signInWithPopup, GoogleAuthProvider, onAuthStateChanged, signOut }
+      import { getAuth, signInWithPopup, GoogleAuthProvider, onAuthStateChanged, signOut,
+               signInWithEmailAndPassword, createUserWithEmailAndPassword, sendPasswordResetEmail }
         from 'https://www.gstatic.com/firebasejs/11.6.0/firebase-auth.js';
       const app = initializeApp({
         apiKey: 'AIzaSyD085Fx0s2xzejjvekc1MGhePm_-zM9nCw',
@@ -9956,7 +9973,8 @@ const Admin = {
         projectId: 'pickleball-50914',
       });
       const auth = getAuth(app);
-      Admin._fb = { auth, GoogleAuthProvider, signInWithPopup, signOut };
+      Admin._fb = { auth, GoogleAuthProvider, signInWithPopup, signOut,
+                    signInWithEmailAndPassword, createUserWithEmailAndPassword, sendPasswordResetEmail };
       onAuthStateChanged(auth, async (user) => {
         Admin._user = user;
         if (user) {
@@ -10287,6 +10305,77 @@ const Admin = {
     if (allSessionsSection) allSessionsSection.style.display = show ? '' : 'none';
     const allUsersSection = document.getElementById('allUsersSection');
     if (allUsersSection) allUsersSection.style.display = show ? '' : 'none';
+  },
+};
+
+// ─── Email/password sign-in (alternative to Google on the entry screen) ────
+const EmailAuth = {
+  toggle() {
+    const block = document.getElementById('entryEmailBlock');
+    if (!block) return;
+    const showing = block.style.display !== 'none';
+    block.style.display = showing ? 'none' : '';
+    this._setError('');
+    if (!showing) document.getElementById('entryEmailInput')?.focus();
+  },
+
+  _setError(msg) {
+    const err = document.getElementById('entryEmailError');
+    if (!err) return;
+    err.textContent = msg || '';
+    err.style.display = msg ? 'block' : 'none';
+  },
+
+  _creds() {
+    const email = (document.getElementById('entryEmailInput')?.value || '').trim();
+    const password = document.getElementById('entryPasswordInput')?.value || '';
+    return { email, password };
+  },
+
+  _friendlyError(e) {
+    switch (e?.code) {
+      case 'auth/invalid-email': return 'Enter a valid email address.';
+      case 'auth/missing-password':
+      case 'auth/weak-password': return 'Password must be at least 6 characters.';
+      case 'auth/email-already-in-use': return 'An account already exists for that email — try signing in instead.';
+      case 'auth/invalid-credential':
+      case 'auth/wrong-password':
+      case 'auth/user-not-found': return 'Incorrect email or password.';
+      case 'auth/too-many-requests': return 'Too many attempts — try again later.';
+      default: return 'Something went wrong. Please try again.';
+    }
+  },
+
+  async signIn() {
+    if (!Admin._fb) return;
+    const { email, password } = this._creds();
+    if (!email || !password) { this._setError('Enter your email and password.'); return; }
+    this._setError('');
+    try {
+      await Admin._fb.signInWithEmailAndPassword(Admin._fb.auth, email, password);
+    } catch(e) { this._setError(this._friendlyError(e)); }
+  },
+
+  async signUp() {
+    if (!Admin._fb) return;
+    const { email, password } = this._creds();
+    if (!email || !password) { this._setError('Enter an email and password.'); return; }
+    if (password.length < 6) { this._setError('Password must be at least 6 characters.'); return; }
+    this._setError('');
+    try {
+      await Admin._fb.createUserWithEmailAndPassword(Admin._fb.auth, email, password);
+    } catch(e) { this._setError(this._friendlyError(e)); }
+  },
+
+  async forgotPassword() {
+    if (!Admin._fb) return;
+    const { email } = this._creds();
+    if (!email) { this._setError('Enter your email above, then tap Forgot password.'); return; }
+    this._setError('');
+    try {
+      await Admin._fb.sendPasswordResetEmail(Admin._fb.auth, email);
+      alert('Password reset email sent — check your inbox.');
+    } catch(e) { this._setError(this._friendlyError(e)); }
   },
 };
 
