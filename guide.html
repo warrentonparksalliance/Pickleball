@@ -138,7 +138,7 @@ footer a:hover { text-decoration: underline; }
 </div>
 
 <div class="tip">
-  <strong>Fair rotation:</strong> Who gets auto-filled next isn't random — players who've been waiting the longest without playing are prioritized first, so no one gets stuck sitting out round after round. Someone who just arrived goes in at the next open spot, ahead of the players coming off that court, but behind anyone who was already waiting when they got there.
+  <strong>Fair rotation:</strong> Who gets auto-filled next isn't random — players who've sat through the most court fills go first, then whoever has been waiting longest since their last match ended (or since they arrived), so no one gets stuck sitting out round after round. Someone who just arrived goes in at the next open spot, ahead of the players coming off that court, but behind anyone who was already waiting when they got there. A partner pair is never passed over for a single player further back in line just because only one seat was left — the pair goes on, and the player just ahead of them takes the next court.
 </div>
 <div class="tip">
   <strong>Match timer:</strong> Once started, a court shows a live elapsed timer with a <strong>Pause/Resume</strong> toggle. The final duration is saved with the match in History.
@@ -226,15 +226,15 @@ footer a:hover { text-decoration: underline; }
   <li>Add all players to the session.</li>
   <li>Tap <strong>Lock Players to Generate Schedule</strong> in the assign section.</li>
   <li>Set the <strong>number of courts</strong>. Optionally fill in <strong>Match Time Limit</strong>, <strong>Session Time Limit</strong>, and the <strong>Buffer Between Rounds</strong> (defaults to a few minutes, but you can change it) — with those filled in, it recommends how many rounds will fit your session, capped at a full rotation. Tap <strong>Or set rounds directly</strong> to flip that around: enter the number of rounds yourself and it estimates the session time instead, warning you if that would run past your session limit.</li>
-  <li>Tap <strong>Generate Schedule</strong>. Round 1 is assigned to courts, and every upcoming round is listed below with the match/session time limit and buffer it was planned around shown at the top — filter the list to one player with the dropdown next to it, or tap <strong>Save as PDF</strong> to export the full schedule.</li>
-  <li>When all Round 1 games finish, tap <strong>Start Next Round</strong> to advance. Once every round has been played, the button reads <strong>All Rounds Complete</strong>.</li>
+  <li>Tap <strong>Generate Schedule</strong>. Every round, including Round 1, is listed under Upcoming Rounds with the match/session time limit and buffer it was planned around shown at the top — filter the list to one player with the dropdown next to it, or tap <strong>Save as PDF</strong> to export the full schedule.</li>
+  <li>Tap <strong>Start Round 1</strong> to put the first round's matches on the courts. When every game in the round has been scored, tap <strong>Start Next Round</strong> to advance (the button stays disabled while games are still in progress). Once every round has been played, the button reads <strong>All Rounds Complete</strong>.</li>
 </ol>
-<p>Admins can switch between Open Play, Round Robin, and Tournament in the Settings tab, and can unlock players to modify the roster. All players must be paired into doubles teams (with a partner or automatically); an odd number of unpaired players will prompt you to add one more or pair everyone up.</p>
+<p>Admins can switch between Open Play, Round Robin, and Tournament in the Settings tab, and can unlock players to modify the roster. All players are paired into doubles teams (with their partner, or randomly with another unpartnered player). Teams stay the same for the whole schedule. If that leaves one player without a partner, that player sits out the schedule — move someone to Sitting Out or add a player before locking if you'd rather choose who.</p>
 <div class="tip">
   <strong>Too few courts:</strong> If there aren't enough courts for every team to play each round, a warning shows before you generate the schedule — some teams will end up sitting out rounds with no makeup game.
 </div>
 <div class="tip">
-  <strong>Fairer matchups:</strong> Round Robin already avoids repeat matchups where it can; when a League season is active (see below), it also draws on that season's match history to keep spreading out partners and opponents across sessions, not just within one.
+  <strong>Fairer matchups:</strong> Round Robin never schedules the same two teams against each other twice in one schedule, and with an odd number of teams each team gets exactly one bye. (With admin Mixed/Men's/Women's partnerships that alternate by round, the teams change from round to round, so repeats are kept to a minimum instead.) When a League season is active (see below), it also draws on that season's match history to keep spreading out partners and opponents across sessions, not just within one.
 </div>
 
 <h3>League Seasons (Round Robin)</h3>
@@ -251,8 +251,8 @@ footer a:hover { text-decoration: underline; }
   <li>Add all players to the session.</li>
   <li>Tap <strong>Lock Players to Generate Bracket</strong> in the assign section.</li>
   <li>Set the <strong>number of courts</strong>. Round count is fixed by the bracket size, so instead of choosing rounds, you'll see that fixed count plus an estimated total duration; optionally fill in a <strong>Match Time Limit</strong>, <strong>Session Time Limit</strong>, and <strong>Buffer Between Rounds</strong> to get that estimate and a warning if the bracket won't fit your session.</li>
-  <li>Tap <strong>Generate Bracket</strong>. The bracket is displayed with all rounds, with the time limit/buffer it was planned around shown above it. First-round matches are assigned to courts.</li>
-  <li>When a match ends, enter scores — <strong>ties are not allowed</strong> in tournament matches. The winning team automatically advances in the bracket. (Saving without a score just clears the court without recording a winner, so use it sparingly here.)</li>
+  <li>Tap <strong>Generate Bracket</strong>. Teams are seeded by combined skill level, and if the team count isn't a power of 2, the top seeds get first-round byes. The bracket is displayed with all rounds, with the time limit/buffer it was planned around shown above it. First-round matches are assigned to courts.</li>
+  <li>When a match ends, enter a score for both teams — <strong>ties and blank scores are not allowed</strong> in tournament matches. The winning team automatically advances in the bracket.</li>
   <li>When all matches in a round are complete, tap to start the next round (Semifinals, Final, etc.).</li>
   <li>If there are more matches than courts, remaining matches can be started as courts free up.</li>
 </ol>
