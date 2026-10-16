@@ -4189,9 +4189,16 @@ const App = {
     let winner = null;
     if (game) {
       this.recordOpponents(game.side1, game.side2);
+      const endedAt = Date.now();
       for (const id of [...game.side1, ...game.side2]) {
         const p = this.getPlayer(id);
-        if (p) p.roundsPlayed = (p.roundsPlayed || 0) + 1;
+        if (p) {
+          p.roundsPlayed = (p.roundsPlayed || 0) + 1;
+          // Last played = when this match ended, not when it started — so
+          // anyone already waiting when it ends (including someone who just
+          // arrived mid-match) ranks ahead of these four coming off court.
+          p.lastActiveAt = endedAt;
+        }
       }
       winner = hasScores ? (score1 > score2 ? 1 : score2 > score1 ? 2 : 0) : null;
       const duration = this.getTimerElapsed(game) || null;
@@ -4614,7 +4621,7 @@ const App = {
     this.recordOpponents(game.side1, game.side2);
     for (const id of [...game.side1, ...game.side2]) {
       const p = this.getPlayer(id);
-      if (p) p.roundsPlayed = (p.roundsPlayed || 0) + 1;
+      if (p) { p.roundsPlayed = (p.roundsPlayed || 0) + 1; p.lastActiveAt = Date.now(); } // same end-of-match rule as submitScore
     }
     const duration = this.getTimerElapsed(game) || null;
     const histEntry = {
@@ -6123,7 +6130,10 @@ ${bracketHTML}
   // ─── Priority queue (fairness) ──────────────
   // Ranks active, unassigned players — and locked-partner pairs, as one
   // combined unit — by roundsWaited desc, then lastActiveAt asc (oldest
-  // first) as a tiebreak. Units are shuffled once beforehand so a remaining
+  // first) as a tiebreak. lastActiveAt is when a player's last match ended,
+  // or when they joined if they haven't played yet: a late joiner goes in at
+  // the next opening ahead of players just coming off court, but gets no
+  // credit for fills before they arrived, so they don't get extra games. Units are shuffled once beforehand so a remaining
   // tie resolves randomly rather than always favoring the same player.
   _rankedQueueUnits(allQueue) {
     // Only a player's *current* partner (see renderPartners/addTeamWithSelf)
@@ -6208,6 +6218,8 @@ ${bracketHTML}
   // Resets roundsWaited and bumps lastActiveAt for players actually
   // confirmed into a match (Start Match) — not at proposal time, so
   // adjusting or cancelling a proposal never costs anyone their place in line.
+  // submitScore bumps lastActiveAt again when the match ends, which is the
+  // value the queue actually ranks by once they're back in it.
   _confirmPlayersIntoMatch(ids) {
     const now = Date.now();
     for (const id of ids) {

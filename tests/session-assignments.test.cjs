@@ -64,6 +64,13 @@ function openPlayDropIn(cfg) {
   const presence = {}; // name -> [{from,to}]
   const satStreak = {}, maxSatStreak = {};
   initial.forEach(n => { presence[n] = [{ from: 0, to: null }]; });
+  // Independent statement of the rule, kept by the test itself rather than
+  // read from the app: a player has been waiting since their last match
+  // ENDED, or since they arrived if they haven't played yet. Whoever has sat
+  // through more fills goes first; on a tie, whoever has been waiting longer.
+  const waitingSince = {};
+  initial.forEach(n => { waitingSince[n] = Date.now(); });
+  const passedOverBy = []; // someone waiting was skipped for a player who started waiting later
 
   const fill = c => {
     const onCourt = App.getPlayersOnCourts();
@@ -78,8 +85,11 @@ function openPlayDropIn(cfg) {
     const pickedSet = new Set(picked);
     const better = (q, p) => q.rw > p.rw || (q.rw === p.rw && q.la < p.la);
     const pk = eligible.filter(e => pickedSet.has(e.id));
+    const since = e => waitingSince[T.name(e.id)];
+    const ruleBetter = (q, p) => q.rw > p.rw || (q.rw === p.rw && since(q) < since(p));
     eligible.filter(e => !pickedSet.has(e.id)).forEach(q => pk.forEach(p => {
       if (better(q, p)) violations.push({ at: T.clock(), court: c, skipped: T.name(q.id), skippedWaited: q.rw, picked: T.name(p.id), pickedWaited: p.rw });
+      if (ruleBetter(q, p)) passedOverBy.push({ at: T.clock(), court: c, skipped: T.name(q.id), picked: T.name(p.id) });
     }));
     picked.forEach(id => { if (sitting.has(id)) sittingAssigned.push(T.name(id)); if (onCourt.has(id)) doubleBooked.push(T.name(id)); });
     eligible.forEach(e => {
@@ -104,13 +114,16 @@ function openPlayDropIn(cfg) {
     }
     const ends = Object.entries(courtEnds);
     const nextEnd = ends.length ? Math.min(...ends.map(([, m]) => m)) : Infinity;
-    const nextEv = ev.length ? ev[0].min : Infinity;
+    // Arrivals/returns land 30 s before the minute they're listed at, so one
+    // never ties to the millisecond with a court finishing that same minute.
+    const evAt = e => e.min - 0.5;
+    const nextEv = ev.length ? evAt(ev[0]) : Infinity;
     if (nextEnd === Infinity && nextEv === Infinity) break;
     if (Math.min(nextEnd, nextEv) > endMin && ends.length === 0) break;
     if (nextEv <= nextEnd) {
       const e = ev.shift();
-      T.advanceTo(e.min);
-      if (e.type === 'join') { T.add(e.name); (presence[e.name] = presence[e.name] || []).push({ from: e.min, to: null }); }
+      T.advanceTo(evAt(e));
+      if (e.type === 'join') { T.add(e.name); waitingSince[e.name] = Date.now(); (presence[e.name] = presence[e.name] || []).push({ from: e.min, to: null }); }
       if (e.type === 'sitOut') { T.sitOut(e.name); presence[e.name].slice(-1)[0].to = e.min; }
       if (e.type === 'rejoin') { T.rejoin(e.name); presence[e.name].push({ from: e.min, to: null }); }
       timeline.push({ at: T.clock(), kind: e.type, text: `${e.name} ${e.type === 'join' ? 'joins the session' : e.type === 'sitOut' ? 'sits out' : 'returns to the queue'}` });
@@ -119,6 +132,8 @@ function openPlayDropIn(cfg) {
     const c = Number(ends.find(([, m]) => m === nextEnd)[0]);
     T.advanceTo(nextEnd);
     const [s1, s2] = T.randomScore();
+    const g = App.state.activeGames[c];
+    [...g.side1, ...g.side2].forEach(id => { waitingSince[T.name(id)] = Date.now(); });
     T.finish(c, s1, s2, 'all');
     delete courtEnds[c];
     timeline.push({ at: T.clock(), kind: 'end', text: `Court ${c} finished ${s1}–${s2}, all 4 back to the queue` });
@@ -144,7 +159,7 @@ function openPlayDropIn(cfg) {
     return { name: e.name, joined: T.clock(e.min), firstGame: first ? first.at : null, minutesWaited: first ? first.min - e.min : null, courtFillsBeforeFirstGame: fillsBetween };
   });
   Object.values(stats).forEach(s => { s.gamesPerHour = s.presentMin ? +(s.games / (s.presentMin / 60)).toFixed(2) : 0; s.maxSamePartner = Math.max(0, ...Object.values(s.partners)); });
-  return { fills, violations, doubleBooked, sittingAssigned, stats, lateJoiners, timeline, matches: App.state.roundHistory.length, endedAt: T.clock() };
+  return { fills, violations, passedOverBy, doubleBooked, sittingAssigned, stats, lateJoiners, timeline, matches: App.state.roundHistory.length, endedAt: T.clock() };
 }
 
 // Keep Winners / Keep Last-Joined: the kept pair stays on court and the
@@ -488,11 +503,29 @@ async function shoot(file, setup) {
   // Same timeline 30 more times with random match lengths/scores, to show
   // the priority rule holds every time, not just once.
   const repeats = [];
+  const avg = a => a.reduce((x, y) => x + y, 0) / a.length;
+  const FULL = ['Avery', 'Blake', 'Devon', 'Finley', 'Gray', 'Harper']; // there 9:00 to the end, never sat out
+  const LATE = ['Indy', 'Jordan', 'Kai', 'Logan', 'Morgan']; // Noel arrives too late for a fair per-hour number
   for (let i = 0; i < 30; i++) repeats.push(await run('dropIn', openPlayDropIn, dropIn));
   results.openDropInRepeat = {
     runs: repeats.length,
     totalFills: repeats.reduce((s, r) => s + r.fills.length, 0),
     priorityViolations: repeats.reduce((s, r) => s + r.violations.length, 0),
+    passedOverBy: repeats.reduce((s, r) => s + r.passedOverBy.length, 0),
+    passedOverExamples: repeats.flatMap(r => r.passedOverBy).slice(0, 5),
+    lateJoinersPassedOver: repeats.reduce((s, r) => s + r.lateJoiners.filter(l => l.courtFillsBeforeFirstGame > 0).length, 0),
+    // A late joiner may only wait behind people who were already waiting
+    // when they arrived — never behind someone who came off a court after
+    // they got there.
+    lateJoinersSkippedForNewer: repeats.reduce((s, r) => {
+      const late = new Set(r.lateJoiners.map(l => l.name));
+      return s + r.passedOverBy.filter(v => late.has(v.skipped)).length;
+    }, 0),
+    lateJoinerCount: repeats.reduce((s, r) => s + r.lateJoiners.length, 0),
+    // Games per hour present: players there all session vs. late joiners.
+    // Close numbers mean late joiners neither miss out nor get extra games.
+    gamesPerHourFullSession: +(avg(repeats.flatMap(r => FULL.map(n => r.stats[n].gamesPerHour)))).toFixed(2),
+    gamesPerHourLateJoiners: +(avg(repeats.flatMap(r => LATE.map(n => r.stats[n].gamesPerHour)))).toFixed(2),
     doubleBooked: repeats.reduce((s, r) => s + r.doubleBooked.length, 0),
     sittingAssigned: repeats.reduce((s, r) => s + r.sittingAssigned.length, 0),
     maxFillsSatInARow: Math.max(...repeats.flatMap(r => Object.values(r.stats).map(s => s.maxFillsSatInARow))),
@@ -580,6 +613,9 @@ async function shoot(file, setup) {
   const d = results.openDropIn;
   ck('Open Play: every Auto-fill picked the longest-waiting players', d.violations.length === 0, `${d.fills.length} fills, ${d.violations.length} violations`);
   ck('Open Play: 30 randomized repeats, zero priority violations', results.openDropInRepeat.priorityViolations === 0, `${results.openDropInRepeat.totalFills} fills`);
+  ck('Open Play: nobody waiting is passed over by someone who started waiting later (incl. players coming off court)', d.passedOverBy.length === 0 && results.openDropInRepeat.passedOverBy === 0, `${results.openDropInRepeat.passedOverBy} across ${results.openDropInRepeat.totalFills} fills`);
+  ck('Open Play: a late joiner only ever waits behind people who were already waiting when they arrived', results.openDropInRepeat.lateJoinersSkippedForNewer === 0, `${results.openDropInRepeat.lateJoinersSkippedForNewer} times skipped for a newer player; ${results.openDropInRepeat.lateJoinersPassedOver} of ${results.openDropInRepeat.lateJoinerCount} arrivals waited at least one fill`);
+  ck('Open Play: late joiners get no extra games (games/hr within 0.25 of full-session players)', results.openDropInRepeat.gamesPerHourLateJoiners - results.openDropInRepeat.gamesPerHourFullSession <= 0.25, `late ${results.openDropInRepeat.gamesPerHourLateJoiners}/hr vs full-session ${results.openDropInRepeat.gamesPerHourFullSession}/hr`);
   ck('Open Play: nobody double-booked or pulled from Sitting Out', results.openDropInRepeat.doubleBooked + results.openDropInRepeat.sittingAssigned + d.doubleBooked.length + d.sittingAssigned.length === 0);
   ck('Open Play: Keep Winners / Keep Last-Joined behave correctly', results.openRotation.problems.length === 0, results.openRotation.problems.join('; '));
   ck('Open Play: locked partners never split', results.openPartners.problems.length === 0, results.openPartners.problems.join('; '));
