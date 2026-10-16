@@ -3049,7 +3049,7 @@ body.view-only-locked #tabCourts #btnToggleQueue {
         <div class="hiw-section">
           <h3>🤝 Adding Partners</h3>
           <p>Once you're in a session, open the <strong>Settings</strong> tab to link yourself with another player you'd like to play alongside. You can have one partner at a time; picking someone new replaces your current partner. Partners are kept together on the same side of the court when courts are assigned.</p>
-          <p style="margin-top:6px;">In Open Play, you can add or remove a partner at any time — the change takes effect the next time courts are assigned. If your partner is still on a court, you'll wait for them so you go on together. A pair takes its place in line from whichever partner arrived or last played most recently, so linking up never moves anyone ahead of people who were already waiting. In Round Robin and Tournament, partners must be set while the roster is still being built; once locked, teams are fixed for the rest of the session.</p>
+          <p style="margin-top:6px;">In Open Play, you can add or remove a partner at any time — the change takes effect the next time courts are assigned. If your partner is still on a court, you'll wait for them so you go on together. A pair's place in line is the average of the two partners' places. In Round Robin and Tournament, partners must be set while the roster is still being built; once locked, teams are fixed for the rest of the session.</p>
           <p style="margin-top:6px;">Admins can also link two players into a typed <strong>Mixed/Men's/Women's Doubles</strong> partnership from Settings &gt; Partnerships (Round Robin) — a player can hold one of each kind at once. Tap <strong>View Partnerships</strong> next to the Queue to see everyone's partnerships.</p>
         </div>
         <div class="hiw-section">
@@ -6077,17 +6077,14 @@ ${bracketHTML}
   // Units are shuffled once beforehand so a remaining tie resolves randomly
   // rather than always favoring the same player.
   //
-  // A pair ranks as whichever of its two players is further back in line
-  // (fewer fills waited, then most recently available) — so linking up with
-  // someone who's been waiting longer never moves a newcomer up the queue.
-  // A player whose partner is still on a court (or just came off it) is held
+  // A pair ranks by the average of its two players (fills waited, and
+  // when each became available). A player whose partner is still on a court (or just came off it) is held
   // out entirely until they can go on together; if their partner is in
   // Sitting Out instead, they're queued on their own.
   _rankedQueueUnits(allQueue) {
     const queueIds = new Set(allQueue.map(p => p.id));
     const rw = id => this.state.roundsWaited[id] || 0;
     const la = id => this.getPlayer(id)?.lastActiveAt || 0;
-    const furtherBack = (a, b) => (rw(a) !== rw(b) ? (rw(a) < rw(b) ? a : b) : (la(a) >= la(b) ? a : b));
 
     const activePairs = [];
     const heldIds = new Set();
@@ -6102,10 +6099,11 @@ ${bracketHTML}
     const pairedIds = new Set(activePairs.flatMap(t => [t.p1, t.p2]));
     const soloPlayers = allQueue.filter(p => !pairedIds.has(p.id) && !heldIds.has(p.id));
 
-    const pairUnits = activePairs.map(t => {
-      const back = furtherBack(t.p1, t.p2);
-      return { type: 'pair', ids: [t.p1, t.p2], team: t, roundsWaited: rw(back), lastActiveAt: la(back) };
-    });
+    const pairUnits = activePairs.map(t => ({
+      type: 'pair', ids: [t.p1, t.p2], team: t,
+      roundsWaited: (rw(t.p1) + rw(t.p2)) / 2,
+      lastActiveAt: (la(t.p1) + la(t.p2)) / 2,
+    }));
     const soloUnits = soloPlayers.map(p => ({
       type: 'solo', ids: [p.id],
       roundsWaited: rw(p.id),

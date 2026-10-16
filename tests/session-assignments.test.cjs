@@ -295,9 +295,10 @@ function partnerLateLink() {
   const [a2, b2] = T.randomScore(); T.finish(aveCourt, a2, b2, 'all');
   const indyAlone = { rw: App.state.roundsWaited[T.id('Indy')] || 0, la: App.getPlayer(T.id('Indy')).lastActiveAt };
   const pair = unitFor('Avery');
-  steps.push(`9:20 Avery's court finishes. Indy alone: waited ${indyAlone.rw} fill, available since 9:08. The pair ranks as "${fmt(pair)}", the later of the two (Avery, just off court).`);
+  const aveAlone = { rw: App.state.roundsWaited[T.id('Avery')] || 0, la: App.getPlayer(T.id('Avery')).lastActiveAt };
+  steps.push(`9:20 Avery's court finishes. Avery: waited ${aveAlone.rw} fills, available since 9:20. Indy: waited ${indyAlone.rw} fill, available since 9:08. The pair ranks as the average: "${fmt(pair)}".`);
   if (!pair || pair.type !== 'pair') problems.push('Avery & Indy are not one unit');
-  else if (pair.roundsWaited !== 0 || pair.lastActiveAt !== App.getPlayer(T.id('Avery')).lastActiveAt) problems.push('Pair did not rank as the later partner');
+  else if (pair.roundsWaited !== (aveAlone.rw + indyAlone.rw) / 2 || pair.lastActiveAt !== (aveAlone.la + indyAlone.la) / 2) problems.push('Pair did not rank as the average of the two partners');
   const queueOrder = App._rankedQueueUnits(App.state.players.filter(p => p.active && !App.getPlayersOnCourts().has(p.id))).map(fmt);
   steps.push(`Line at 9:20: ${queueOrder.join(' · ')}`);
   // Play on until the pair gets a court; they must go on together.
@@ -324,10 +325,9 @@ function partnerLateLink() {
   return { steps, problems };
 }
 
-// "Use Player 2's recency": Avery has been waiting a while; newcomer Indy
-// links with them. The pair should rank as Indy (the newcomer), so it
-// does not jump the people who were already waiting.
-function partnerRanksAsLater() {
+// A player who has been waiting a while links with a newcomer: the pair
+// ranks as the average of the two partners' places in line.
+function partnerRanksAsAverage() {
   const problems = [];
   T.start('open', 1);
   NAMES.slice(0, 9).forEach(n => T.add(n));
@@ -341,9 +341,10 @@ function partnerRanksAsLater() {
   const queue = App.state.players.filter(p => p.active && !App.getPlayersOnCourts().has(p.id));
   const units = App._rankedQueueUnits(queue);
   const pair = units.find(u => u.ids.includes(T.id('Jordan')));
-  const vet = { rw: App.state.roundsWaited[T.id(veteran)] || 0 };
+  const vet = { rw: App.state.roundsWaited[T.id(veteran)] || 0, la: App.getPlayer(T.id(veteran)).lastActiveAt };
+  const jor = { rw: App.state.roundsWaited[T.id('Jordan')] || 0, la: App.getPlayer(T.id('Jordan')).lastActiveAt };
   if (!pair || pair.type !== 'pair') problems.push('Not paired');
-  else if (pair.roundsWaited !== 0 || pair.lastActiveAt !== App.getPlayer(T.id('Jordan')).lastActiveAt) problems.push('Pair did not take Jordan\'s place in line');
+  else if (pair.roundsWaited !== (vet.rw + jor.rw) / 2 || pair.lastActiveAt !== (vet.la + jor.la) / 2) problems.push('Pair did not rank as the average of the two partners');
   const ahead = units.slice(0, units.indexOf(pair)).map(u => `${T.names(u.ids).join(' & ')} (waited ${u.roundsWaited})`);
   return { veteran, veteranWaited: vet.rw, pairWaited: pair && pair.roundsWaited, aheadOfPair: ahead, problems };
 }
@@ -393,7 +394,7 @@ function onePartnerAtATime() {
 // Randomized: drop-in session where two pairs form mid-session (one while a
 // partner is on court). Checks every Auto-fill against the rule, worked out
 // independently: partners go together or not at all, never while one is on
-// court, and a pair ranks as its later partner.
+// court, and a pair ranks as the average of its two partners.
 function partnerDropIn() {
   T.start('open', 2);
   NAMES.slice(0, 8).forEach(n => T.add(n));
@@ -409,7 +410,7 @@ function partnerDropIn() {
   const courtEnds = {};
   let fills = 0;
   const rank = id => [App.state.roundsWaited[id] || 0, since[id]];
-  const worse = (a, b) => (a[0] !== b[0] ? (a[0] < b[0] ? a : b) : (a[1] >= b[1] ? a : b));
+  const avg = (a, b) => [(a[0] + b[0]) / 2, (a[1] + b[1]) / 2];
   const better = (a, b) => a[0] > b[0] || (a[0] === b[0] && a[1] < b[1]);
   const partnerOf = id => { const t = App.state.teams.find(x => x.current && (x.p1 === id || x.p2 === id)); return t ? (t.p1 === id ? t.p2 : t.p1) : null; };
   const fill = c => {
@@ -422,7 +423,7 @@ function partnerDropIn() {
       if (seen.has(id)) return;
       const pt = partnerOf(id);
       const ptP = pt != null ? App.getPlayer(pt) : null;
-      if (pt != null && qs.has(pt)) { seen.add(id); seen.add(pt); units.push({ ids: [id, pt], r: worse(rank(id), rank(pt)) }); }
+      if (pt != null && qs.has(pt)) { seen.add(id); seen.add(pt); units.push({ ids: [id, pt], r: avg(rank(id), rank(pt)) }); }
       else if (pt != null && ptP && ptP.active) { seen.add(id); /* held */ }
       else { seen.add(id); units.push({ ids: [id], r: rank(id) }); }
     });
@@ -781,7 +782,7 @@ async function shoot(file, setup) {
   results.openRotation = await run('Open Play — rotation choices', openPlayRotation);
   results.openPartners = await run('Open Play — locked partners', openPlayPartners);
   results.partnerLateLink = await run('Partners — Player 2 links while Player 1 is on court', partnerLateLink);
-  results.partnerRanksAsLater = await run('Partners — pair takes the newer partner\'s place in line', partnerRanksAsLater);
+  results.partnerRanksAsAverage = await run('Partners — pair ranks as the average of the two', partnerRanksAsAverage);
   results.onePartner = await run('Partners — one at a time', onePartnerAtATime);
   {
     const runs = [];
@@ -854,7 +855,7 @@ async function shoot(file, setup) {
   ck('Open Play: Keep Winners / Keep Last-Joined behave correctly', results.openRotation.problems.length === 0, results.openRotation.problems.join('; '));
   ck('Open Play: locked partners never split', results.openPartners.problems.length === 0, results.openPartners.problems.join('; '));
   ck('Partners: Player 2 linking mid-match waits for Player 1, then they go on together', results.partnerLateLink.problems.length === 0, results.partnerLateLink.problems.join('; '));
-  ck('Partners: a pair takes the newer partner\'s place in line', results.partnerRanksAsLater.problems.length === 0, results.partnerRanksAsLater.problems.join('; '));
+  ck('Partners: a pair ranks as the average of the two partners', results.partnerRanksAsAverage.problems.length === 0, results.partnerRanksAsAverage.problems.join('; '));
   ck('Partners: one partner at a time (change, picker, old sessions, Sitting Out)', results.onePartner.problems.length === 0, results.onePartner.problems.join('; '));
   ck('Partners: 30 randomized sessions, every fill follows the pair rules', results.partnerDropIn.problems.length === 0, `${results.partnerDropIn.fills} fills; ${results.partnerDropIn.problems.slice(0, 3).join('; ')}`);
   for (const k of ['rrFull8', 'rrOdd10', 'rrOddPlayer9', 'rrPartners12', 'rrTimeCap', 'rrFewCourts']) {
