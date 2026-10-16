@@ -37,7 +37,7 @@ async function freshPage() {
   });
   await page.goto('file://' + (process.env.INDEX_HTML ? path.resolve(process.env.INDEX_HTML) : path.join(ROOT, 'index.html')));
   await page.addScriptTag({ path: path.join(__dirname, 'sim-helpers.js') });
-  await page.addScriptTag({ content: `window.NAMES = ${JSON.stringify(NAMES)};\nwindow.analyzeRR = ${analyzeRR.toString()};` });
+  await page.addScriptTag({ content: `window.NAMES = ${JSON.stringify(NAMES)};\nwindow.analyzeRR = ${analyzeRR.toString()};\nwindow.linkAs = ${linkAs.toString()};` });
   return { page, ctx, errors };
 }
 
@@ -245,6 +245,232 @@ function openPlayPartners() {
   const games = {};
   App.state.roundHistory.forEach(m => [...m.side1, ...m.side2].forEach(id => { const n = T.name(id); games[n] = (games[n] || 0) + 1; }));
   return { matches: App.state.roundHistory.length, pairGames, games, problems };
+}
+
+
+// ─── Partners in a signed-in session ─────────────────────────────
+// Partners are linked the way a signed-in player does it from Settings >
+// Your Partner (App.addTeamWithSelf, acting as that player). The
+// assignment code is the same one a live session runs.
+function linkAs(selfName, partnerName) {
+  Onboard.selfId = T.id(selfName);
+  App.addTeamWithSelf(T.id(partnerName));
+}
+
+// The exact case: Player 1 is already playing; Player 2 arrives and links
+// up with them mid-match.
+function partnerLateLink() {
+  const problems = [];
+  const steps = [];
+  const unitFor = name => App._rankedQueueUnits(App.state.players.filter(p => p.active && !App.getPlayersOnCourts().has(p.id)))
+    .find(u => u.ids.includes(T.id(name)));
+  const fmt = u => u ? `${u.type === 'pair' ? T.names(u.ids).join(' & ') : T.name(u.ids[0])}: waited ${u.roundsWaited} fills, available since ${T.clock(Math.round((u.lastActiveAt - window.__simBase) / 60000))}` : '(not in line)';
+  T.start('open', 2);
+  NAMES.slice(0, 8).forEach(n => T.add(n));
+  App.autoFillCourt(1); App.startProposedMatch(1);
+  App.autoFillCourt(2); App.startProposedMatch(2);
+  const aveCourt = App.getPlayerCourt(T.id('Avery'));
+  const otherCourt = aveCourt === 1 ? 2 : 1;
+  steps.push(`9:00 Both courts start. Avery is on Court ${aveCourt}.`);
+  T.advanceTo(8); T.add('Indy'); T.add('Jordan');
+  linkAs('Indy', 'Avery');
+  App.render();
+  const held = App._heldForPartner ? App._heldForPartner(T.id('Indy')) : null;
+  const heldText = [...document.querySelectorAll('#queueActiveList .queue-row')].map(r => r.textContent.replace(/\s+/g, ' ').trim()).find(t => t.includes('Indy')) || '';
+  steps.push(`9:08 Indy and Jordan arrive. Indy links Avery as partner while Avery is on Court ${aveCourt}. Queue shows: "${heldText}".`);
+  if (!held || held.name !== 'Avery') problems.push('Indy not held for Avery');
+  if (!/waiting for Avery/.test(heldText)) problems.push('Queue does not show "waiting for Avery"');
+
+  T.advanceTo(14);
+  const [a1, b1] = T.randomScore(); T.finish(otherCourt, a1, b1, 'all');
+  App.autoFillCourt(otherCourt);
+  const g1 = App.state.proposedGames[otherCourt];
+  const ids1 = [...g1.side1, ...g1.side2];
+  steps.push(`9:14 Court ${otherCourt} finishes and is auto-filled: ${T.names(g1.side1).join(' & ')} vs ${T.names(g1.side2).join(' & ')}. Jordan (new) goes in; Indy waits for Avery.`);
+  if (ids1.includes(T.id('Indy'))) problems.push('Indy was assigned without Avery');
+  if (!ids1.includes(T.id('Jordan'))) problems.push('Jordan (newcomer) did not get the open spot');
+  App.startProposedMatch(otherCourt);
+
+  T.advanceTo(20);
+  const [a2, b2] = T.randomScore(); T.finish(aveCourt, a2, b2, 'all');
+  const indyAlone = { rw: App.state.roundsWaited[T.id('Indy')] || 0, la: App.getPlayer(T.id('Indy')).lastActiveAt };
+  const pair = unitFor('Avery');
+  steps.push(`9:20 Avery's court finishes. Indy alone: waited ${indyAlone.rw} fill, available since 9:08. The pair ranks as "${fmt(pair)}", the later of the two (Avery, just off court).`);
+  if (!pair || pair.type !== 'pair') problems.push('Avery & Indy are not one unit');
+  else if (pair.roundsWaited !== 0 || pair.lastActiveAt !== App.getPlayer(T.id('Avery')).lastActiveAt) problems.push('Pair did not rank as the later partner');
+  const queueOrder = App._rankedQueueUnits(App.state.players.filter(p => p.active && !App.getPlayersOnCourts().has(p.id))).map(fmt);
+  steps.push(`Line at 9:20: ${queueOrder.join(' · ')}`);
+  // Play on until the pair gets a court; they must go on together.
+  let guard = 0, together = null;
+  let min = 20;
+  while (guard++ < 10 && together == null) {
+    App.autoFillCourt(aveCourt);
+    const g = App.state.proposedGames[aveCourt];
+    if (g) {
+      const all = [...g.side1, ...g.side2];
+      const hasA = all.includes(T.id('Avery')), hasI = all.includes(T.id('Indy'));
+      if (hasA !== hasI) problems.push('Avery and Indy split up');
+      if (hasA && hasI) {
+        const same = (g.side1.includes(T.id('Avery')) && g.side1.includes(T.id('Indy'))) || (g.side2.includes(T.id('Avery')) && g.side2.includes(T.id('Indy')));
+        together = same; steps.push(`${T.clock()} Court ${aveCourt}: ${T.names(g.side1).join(' & ')} vs ${T.names(g.side2).join(' & ')}. Avery & Indy on ${same ? 'the same side' : 'OPPOSITE sides'}.`);
+        if (!same) problems.push('Avery and Indy on opposite sides');
+      } else steps.push(`${T.clock()} Court ${aveCourt}: ${T.names(g.side1).join(' & ')} vs ${T.names(g.side2).join(' & ')} (pair still behind people waiting longer).`);
+      App.startProposedMatch(aveCourt);
+    }
+    min += 13; T.advanceTo(min);
+    for (const c of [aveCourt, otherCourt]) if (App.state.activeGames[c] && together == null) { const [x, y] = T.randomScore(); T.finish(c, x, y, 'all'); if (c === otherCourt) { App.autoFillCourt(c); const og = App.state.proposedGames[c]; if (og) { const all = [...og.side1, ...og.side2]; if (all.includes(T.id('Avery')) !== all.includes(T.id('Indy'))) problems.push('Avery and Indy split up'); if (all.includes(T.id('Avery')) && all.includes(T.id('Indy'))) { together = true; steps.push(`${T.clock()} Court ${c}: ${T.names(og.side1).join(' & ')} vs ${T.names(og.side2).join(' & ')}. Avery & Indy together.`); } App.startProposedMatch(c); } } }
+  }
+  if (!together) problems.push('Pair never got a court together');
+  return { steps, problems };
+}
+
+// "Use Player 2's recency": Avery has been waiting a while; newcomer Indy
+// links with them. The pair should rank as Indy (the newcomer), so it
+// does not jump the people who were already waiting.
+function partnerRanksAsLater() {
+  const problems = [];
+  T.start('open', 1);
+  NAMES.slice(0, 9).forEach(n => T.add(n));
+  // Two fills: 8 of 9 players have sat through fills unevenly.
+  App.autoFillCourt(1); App.startProposedMatch(1);
+  T.advanceTo(12); { const [a, b] = T.randomScore(); T.finish(1, a, b, 'all'); }
+  const queuedBefore = App.state.players.filter(p => !App.getPlayersOnCourts().has(p.id)).map(p => ({ name: p.name, waited: App.state.roundsWaited[p.id] || 0 }));
+  const veteran = [...queuedBefore].sort((a, b) => b.waited - a.waited)[0].name;
+  T.advanceTo(13); T.add('Jordan');
+  linkAs('Jordan', veteran);
+  const queue = App.state.players.filter(p => p.active && !App.getPlayersOnCourts().has(p.id));
+  const units = App._rankedQueueUnits(queue);
+  const pair = units.find(u => u.ids.includes(T.id('Jordan')));
+  const vet = { rw: App.state.roundsWaited[T.id(veteran)] || 0 };
+  if (!pair || pair.type !== 'pair') problems.push('Not paired');
+  else if (pair.roundsWaited !== 0 || pair.lastActiveAt !== App.getPlayer(T.id('Jordan')).lastActiveAt) problems.push('Pair did not take Jordan\'s place in line');
+  const ahead = units.slice(0, units.indexOf(pair)).map(u => `${T.names(u.ids).join(' & ')} (waited ${u.roundsWaited})`);
+  return { veteran, veteranWaited: vet.rw, pairWaited: pair && pair.roundsWaited, aheadOfPair: ahead, problems };
+}
+
+// One partner at a time, from the Settings card itself.
+function onePartnerAtATime() {
+  const problems = [];
+  T.start('open', 1);
+  NAMES.slice(0, 6).forEach(n => T.add(n));
+  linkAs('Avery', 'Blake');
+  linkAs('Avery', 'Casey'); // Change Partner → Casey replaces Blake
+  const avTeams = App.state.teams.filter(t => !t.type && (t.p1 === T.id('Avery') || t.p2 === T.id('Avery')));
+  if (avTeams.length !== 1 || ![avTeams[0].p1, avTeams[0].p2].includes(T.id('Casey'))) problems.push('Avery does not have exactly one partner (Casey)');
+  App.renderPartners();
+  const card = document.getElementById('partnerDisplay').textContent.replace(/\s+/g, ' ').trim();
+  const btn = document.getElementById('btnAddPartner').textContent.trim();
+  if (!/Casey/.test(card) || /Blake/.test(card)) problems.push('Partner card wrong: ' + card);
+  if (btn !== 'Change Partner') problems.push('Button reads ' + btn);
+  // Someone else can't take Casey while she's partnered.
+  Onboard.selfId = T.id('Devon');
+  App.renderPartnerPicker();
+  const pickable = [...document.querySelectorAll('#partnerPickerList .partner-picker-item')].map(e => e.textContent.trim());
+  if (pickable.includes('Casey') || pickable.includes('Avery')) problems.push('Picker offers already-partnered players');
+  App.addTeamWithSelf(T.id('Casey'));
+  if (App.state.teams.some(t => !t.type && [t.p1, t.p2].includes(T.id('Devon')))) problems.push('Devon was able to take Casey');
+  // Old sessions with several partners saved collapse to one each on load.
+  App.state.teams = [
+    { id: 901, p1: T.id('Emery'), p2: T.id('Finley'), doNotSplit: true, current: false },
+    { id: 902, p1: T.id('Emery'), p2: T.id('Blake'), doNotSplit: true, current: true },
+    { id: 903, p1: T.id('Finley'), p2: T.id('Devon'), doNotSplit: true, current: true },
+  ];
+  App._normState();
+  const after = App.state.teams.map(t => T.names([t.p1, t.p2]).join(' & '));
+  const counts = {};
+  App.state.teams.forEach(t => [t.p1, t.p2].forEach(id => { counts[id] = (counts[id] || 0) + 1; }));
+  if (Object.values(counts).some(c => c > 1)) problems.push('Migration left someone with two partners');
+  // Partner in Sitting Out → you're queued on your own.
+  App.state.teams = [];
+  linkAs('Avery', 'Blake');
+  T.sitOut('Blake');
+  const units = App._rankedQueueUnits(App.state.players.filter(p => p.active));
+  const av = units.find(u => u.ids.includes(T.id('Avery')));
+  if (!av || av.type !== 'solo') problems.push('Avery not queued solo while Blake sits out');
+  return { card, button: btn, pickerForDevon: pickable, migratedTeams: after, problems };
+}
+
+// Randomized: drop-in session where two pairs form mid-session (one while a
+// partner is on court). Checks every Auto-fill against the rule, worked out
+// independently: partners go together or not at all, never while one is on
+// court, and a pair ranks as its later partner.
+function partnerDropIn() {
+  T.start('open', 2);
+  NAMES.slice(0, 8).forEach(n => T.add(n));
+  const since = {};
+  NAMES.slice(0, 8).forEach(n => { since[T.id(n)] = Date.now(); });
+  const events = [
+    { min: 7.5, f: () => { T.add('Indy'); since[T.id('Indy')] = Date.now(); linkAs('Indy', 'Avery'); } },
+    { min: 15.5, f: () => { T.add('Jordan'); since[T.id('Jordan')] = Date.now(); } },
+    { min: 21.5, f: () => { T.add('Kai'); since[T.id('Kai')] = Date.now(); linkAs('Kai', 'Blake'); } },
+    { min: 33.5, f: () => { T.add('Logan'); since[T.id('Logan')] = Date.now(); } },
+  ];
+  const problems = [];
+  const courtEnds = {};
+  let fills = 0;
+  const rank = id => [App.state.roundsWaited[id] || 0, since[id]];
+  const worse = (a, b) => (a[0] !== b[0] ? (a[0] < b[0] ? a : b) : (a[1] >= b[1] ? a : b));
+  const better = (a, b) => a[0] > b[0] || (a[0] === b[0] && a[1] < b[1]);
+  const partnerOf = id => { const t = App.state.teams.find(x => x.current && (x.p1 === id || x.p2 === id)); return t ? (t.p1 === id ? t.p2 : t.p1) : null; };
+  const fill = c => {
+    const onCourt = App.getPlayersOnCourts();
+    const queue = App.state.players.filter(p => p.active && !onCourt.has(p.id)).map(p => p.id);
+    const qs = new Set(queue);
+    // Units by the rule.
+    const units = [], seen = new Set();
+    queue.forEach(id => {
+      if (seen.has(id)) return;
+      const pt = partnerOf(id);
+      const ptP = pt != null ? App.getPlayer(pt) : null;
+      if (pt != null && qs.has(pt)) { seen.add(id); seen.add(pt); units.push({ ids: [id, pt], r: worse(rank(id), rank(pt)) }); }
+      else if (pt != null && ptP && ptP.active) { seen.add(id); /* held */ }
+      else { seen.add(id); units.push({ ids: [id], r: rank(id) }); }
+    });
+    App.autoFillCourt(c);
+    const g = App.state.proposedGames[c];
+    if (!g) return;
+    fills++;
+    const picked = new Set([...g.side1, ...g.side2]);
+    picked.forEach(id => {
+      const pt = partnerOf(id);
+      if (pt != null && App.getPlayer(pt)?.active && !picked.has(pt)) problems.push(`${T.clock()}: ${T.name(id)} assigned without partner ${T.name(pt)}`);
+    });
+    [g.side1, g.side2].forEach(side => side.forEach(id => { const pt = partnerOf(id); if (pt != null && picked.has(pt) && !side.includes(pt)) problems.push(`${T.clock()}: ${T.name(id)}/${T.name(pt)} on opposite sides`); }));
+    // The rule: whoever is furthest back among the 4 picked should be as
+    // close to the front as any valid pick (exactly 4 seats, pairs kept
+    // whole) allows — nobody from further back gets in when a pick that
+    // stops sooner exists. Checked by brute force over every valid pick.
+    const pickedUnits = units.filter(u => u.ids.every(id => picked.has(id)));
+    const worstOf = combo => combo.reduce((w, u) => (w == null || better(w, u.r) ? u.r : w), null);
+    const appWorst = worstOf(pickedUnits);
+    let bestWorst = null;
+    const search = (i, seats, combo) => {
+      if (seats === 0) { const w = worstOf(combo); if (bestWorst == null || better(w, bestWorst)) bestWorst = w; return; }
+      for (let j = i; j < units.length; j++) if (units[j].ids.length <= seats) search(j + 1, seats - units[j].ids.length, [...combo, units[j]]);
+    };
+    search(0, 4, []);
+    if (bestWorst && better(bestWorst, appWorst)) problems.push(`${T.clock()}: picked ${pickedUnits.map(u => T.names(u.ids).join(' & ')).join(', ')} reaches further back in line than needed`);
+    App.startProposedMatch(c);
+    courtEnds[c] = T.minute() + 11 + Math.floor(Math.random() * 7);
+  };
+  let guard = 0;
+  while (guard++ < 200 && T.minute() < 120) {
+    for (let c = 1; c <= 2; c++) if (!App.state.activeGames[c] && !App.state.proposedGames[c]) fill(c);
+    const ends = Object.entries(courtEnds);
+    const nextEnd = ends.length ? Math.min(...ends.map(([, m]) => m)) : Infinity;
+    const nextEv = events.length ? events[0].min : Infinity;
+    if (nextEnd === Infinity && nextEv === Infinity) break;
+    if (nextEv < nextEnd) { const e = events.shift(); T.advanceTo(e.min); e.f(); continue; }
+    const c = Number(ends.find(([, m]) => m === nextEnd)[0]);
+    T.advanceTo(nextEnd);
+    const g = App.state.activeGames[c];
+    [...g.side1, ...g.side2].forEach(id => { since[id] = Date.now(); });
+    const [a, b] = T.randomScore(); T.finish(c, a, b, 'all');
+    delete courtEnds[c];
+  }
+  const games = {};
+  App.state.roundHistory.forEach(m => [...m.side1, ...m.side2].forEach(id => { const n = T.name(id); games[n] = (games[n] || 0) + 1; }));
+  return { fills, problems, games };
 }
 
 // ═══════════════════════════════════════════════════════════════════
@@ -554,6 +780,14 @@ async function shoot(file, setup) {
   }
   results.openRotation = await run('Open Play — rotation choices', openPlayRotation);
   results.openPartners = await run('Open Play — locked partners', openPlayPartners);
+  results.partnerLateLink = await run('Partners — Player 2 links while Player 1 is on court', partnerLateLink);
+  results.partnerRanksAsLater = await run('Partners — pair takes the newer partner\'s place in line', partnerRanksAsLater);
+  results.onePartner = await run('Partners — one at a time', onePartnerAtATime);
+  {
+    const runs = [];
+    for (let i = 0; i < 30; i++) runs.push(await run('partnerDropIn', partnerDropIn));
+    results.partnerDropIn = { runs: runs.length, fills: runs.reduce((s, r) => s + r.fills, 0), problems: runs.flatMap(r => r.problems), pageErrors: runs.flatMap(r => r.pageErrors), sampleGames: runs[0].games };
+  }
 
   // ── Round Robin ──
   results.rrFull8 = await run('Round Robin — 8 players, 2 courts (full rounds)', roundRobinRun, { players: NAMES.slice(0, 8), courts: 2, play: true });
@@ -619,6 +853,10 @@ async function shoot(file, setup) {
   ck('Open Play: nobody double-booked or pulled from Sitting Out', results.openDropInRepeat.doubleBooked + results.openDropInRepeat.sittingAssigned + d.doubleBooked.length + d.sittingAssigned.length === 0);
   ck('Open Play: Keep Winners / Keep Last-Joined behave correctly', results.openRotation.problems.length === 0, results.openRotation.problems.join('; '));
   ck('Open Play: locked partners never split', results.openPartners.problems.length === 0, results.openPartners.problems.join('; '));
+  ck('Partners: Player 2 linking mid-match waits for Player 1, then they go on together', results.partnerLateLink.problems.length === 0, results.partnerLateLink.problems.join('; '));
+  ck('Partners: a pair takes the newer partner\'s place in line', results.partnerRanksAsLater.problems.length === 0, results.partnerRanksAsLater.problems.join('; '));
+  ck('Partners: one partner at a time (change, picker, old sessions, Sitting Out)', results.onePartner.problems.length === 0, results.onePartner.problems.join('; '));
+  ck('Partners: 30 randomized sessions, every fill follows the pair rules', results.partnerDropIn.problems.length === 0, `${results.partnerDropIn.fills} fills; ${results.partnerDropIn.problems.slice(0, 3).join('; ')}`);
   for (const k of ['rrFull8', 'rrOdd10', 'rrOddPlayer9', 'rrPartners12', 'rrTimeCap', 'rrFewCourts']) {
     const r = results[k];
     ck(`${r.name}: no repeat opponents, fixed partners, nobody double-booked`, !r.analysis.repeats.length && !r.analysis.partnerChanges.length && !r.analysis.doubleInRound.length && !r.problems.length, r.problems.join('; '));
