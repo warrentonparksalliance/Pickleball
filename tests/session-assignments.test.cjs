@@ -276,7 +276,7 @@ function partnerLateLink() {
   linkAs('Indy', 'Avery');
   App.render();
   const held = App._heldForPartner ? App._heldForPartner(T.id('Indy')) : null;
-  const heldText = [...document.querySelectorAll('#queueActiveList .queue-row')].map(r => r.textContent.replace(/\s+/g, ' ').trim()).find(t => t.includes('Indy')) || '';
+  const heldText = [...document.querySelectorAll('#queueActiveList .queue-row')].map(r => r.innerText.replace(/\s+/g, ' ').trim()).find(t => t.includes('Indy')) || '';
   steps.push(`9:08 Indy and Jordan arrive. Indy links Avery as partner while Avery is on Court ${aveCourt}. Queue shows: "${heldText}".`);
   if (!held || held.name !== 'Avery') problems.push('Indy not held for Avery');
   if (!/waiting for Avery/.test(heldText)) problems.push('Queue does not show "waiting for Avery"');
