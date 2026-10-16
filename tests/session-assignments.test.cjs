@@ -1,7 +1,4 @@
 // End-to-end assignment tests for all three session types (Open Play, Round
-//
-// To show the Round Robin regression check has teeth, point it at the
-// pre-fix page: INDEX_HTML=<old index.html> ONLY_RR_STRESS=1 node ...
 // Robin, Tournament). Loads the real index.html in headless Chromium, starts
 // an offline Quick Play session (no Firebase), and drives it through the same
 // App methods the buttons call. Prints a pass/fail summary and writes the
@@ -10,6 +7,9 @@
 //   NODE_PATH=$(npm root -g) node tests/session-assignments.test.cjs [outDir]
 //
 // Exit code is non-zero if any hard check fails.
+//
+// To show the Round Robin regression check has teeth, point it at the
+// pre-fix page: INDEX_HTML=<old index.html> ONLY_RR_STRESS=1 node ...
 const { chromium } = require('playwright');
 const fs = require('fs');
 const path = require('path');
