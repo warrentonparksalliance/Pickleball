@@ -1,0 +1,37 @@
+{
+  "rules": {
+    ".read": false,
+    ".write": false,
+
+    "superAdmins": {
+      ".read": "auth != null && auth.token.email != null && auth.token.email_verified == true && root.child('superAdmins').child(auth.token.email.toLowerCase().replace('.', ',')).exists()",
+      "$emailKey": {
+        ".read": "auth != null && auth.token.email != null && auth.token.email_verified == true && auth.token.email.toLowerCase().replace('.', ',') == $emailKey",
+        ".write": "auth != null && auth.token.email != null && auth.token.email_verified == true && (root.child('superAdmins').child(auth.token.email.toLowerCase().replace('.', ',')).exists() || ($emailKey == 'brooke@warrentonparksalliance,com' && auth.token.email.toLowerCase() == 'brooke@warrentonparksalliance.com')) && !(!newData.exists() && $emailKey == 'brooke@warrentonparksalliance,com')"
+      }
+    },
+
+    "users": {
+      ".read": "auth != null && auth.token.email != null && auth.token.email_verified == true && root.child('superAdmins').child(auth.token.email.toLowerCase().replace('.', ',')).exists()",
+      "$uid": {
+        ".read": "auth != null && auth.uid == $uid",
+        ".write": "auth != null && auth.uid == $uid"
+      }
+    },
+
+    "userHistory": {
+      "$uid": {
+        ".read": "auth != null && auth.uid == $uid",
+        ".write": "auth != null && auth.uid == $uid"
+      }
+    },
+
+    "sessions": {
+      ".read": true,
+      "$sessionId": {
+        ".write": true,
+        ".validate": "$sessionId.length <= 128 && (newData.hasChildren() || !newData.exists())"
+      }
+    }
+  }
+}
