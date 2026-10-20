@@ -6670,7 +6670,7 @@ ${bracketHTML}
     if (!confirm('Permanently delete this private session? This cannot be undone.')) return;
     if (!confirm('Are you sure? All data will be lost and all users will be disconnected.')) return;
     try {
-      await fetch(`${Session.DB}/sessions/${Session.id}.json`, { method: 'DELETE' });
+      await fetch(await Admin._authedUrl(`${Session.DB}/sessions/${Session.id}.json`), { method: 'DELETE' });
     } catch(e) { /* silent */ }
     // Remove from saved private sessions
     const saved = Onboard._getSavedPrivateSessions().filter(s => s.id !== Session.id);
@@ -8765,6 +8765,7 @@ const Session = {
   label: null,
   _receiving: false,
   _sse: null,
+  _listenSeq: 0,
   _pushTimer: null,
 
   // Header X button. An offline Quick Play session (which has no one else
@@ -9080,7 +9081,7 @@ const Session = {
 
   async _get(id) {
     try {
-      const url = id ? `${this.DB}/sessions/${id}.json` : this._url();
+      const url = await Admin._authedUrl(id ? `${this.DB}/sessions/${id}.json` : this._url());
       const ctrl = new AbortController();
       const t = setTimeout(() => ctrl.abort(), 3000);
       const res = await fetch(url, { signal: ctrl.signal });
@@ -9093,9 +9094,10 @@ const Session = {
   async _put(state) {
     if (!this.id) return;
     try {
+      const url = await Admin._authedUrl(this._url());
       const ctrl = new AbortController();
       const t = setTimeout(() => ctrl.abort(), 8000);
-      await fetch(this._url(), {
+      await fetch(url, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ ...state, _updatedAt: Date.now() }),
@@ -9108,9 +9110,10 @@ const Session = {
   async _patch(data) {
     if (!this.id) return;
     try {
+      const url = await Admin._authedUrl(this._url());
       const ctrl = new AbortController();
       const t = setTimeout(() => ctrl.abort(), 8000);
-      await fetch(this._url(), {
+      await fetch(url, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ ...data, _updatedAt: Date.now() }),
@@ -9121,9 +9124,9 @@ const Session = {
   },
 
   _listen(pendingUser, isNew) {
-    if (this._sse) this._sse.close();
-    const src = new EventSource(this._url());
-    this._sse = src;
+    if (this._sse) { this._sse.close(); this._sse = null; }
+    const id = this.id;
+    const seq = this._listenSeq = (this._listenSeq || 0) + 1;
     let selfAdded = false;
     const addSelfOnce = () => {
       if (!selfAdded && pendingUser) {
@@ -9132,7 +9135,7 @@ const Session = {
       }
     };
     let _lastResetAt = App.state._resetAt || 0;
-    src.addEventListener('put', (e) => {
+    const onPut = (e) => {
       try {
         const msg = JSON.parse(e.data);
         if (!msg || !msg.data) {
@@ -9188,9 +9191,9 @@ const Session = {
         addSelfOnce();
         this._checkPasscodeGate();
       } catch(err) { /* ignore */ }
-    });
+    };
 
-    src.addEventListener('patch', (e) => {
+    const onPatch = (e) => {
       try {
         const msg = JSON.parse(e.data);
         if (!msg || !msg.data || msg.path !== '/') return;
@@ -9214,7 +9217,31 @@ const Session = {
         this._receiving = false;
         this._checkPasscodeGate();
       } catch(err) { /* ignore */ }
-    });
+    };
+
+    // The stream authenticates with a Firebase ID token, which expires
+    // hourly. When the server revokes it (or drops the stream), reopen with
+    // a fresh token — the initial 'put' resyncs the full state.
+    let retryDelay = 1000;
+    const open = async () => {
+      const url = await Admin._authedUrl(this._url());
+      if (this.id !== id || this._listenSeq !== seq) return;
+      const src = new EventSource(url);
+      this._sse = src;
+      src.addEventListener('put', (e) => { retryDelay = 1000; onPut(e); });
+      src.addEventListener('patch', onPatch);
+      const reopen = () => {
+        if (this._sse !== src) return;
+        src.close();
+        this._sse = null;
+        setTimeout(open, retryDelay);
+        retryDelay = Math.min(retryDelay * 2, 30000);
+      };
+      src.addEventListener('auth_revoked', reopen);
+      src.addEventListener('cancel', reopen);
+      src.onerror = () => { if (src.readyState === EventSource.CLOSED) reopen(); };
+    };
+    open();
   },
 
   // A live tab stays connected through a passcode change (only new
@@ -9621,7 +9648,7 @@ const Onboard = {
 
   async _fetchAllPrivateSessions() {
     try {
-      const res = await fetch(`${Session.DB}/sessions.json`);
+      const res = await fetch(await Admin._authedUrl(`${Session.DB}/sessions.json`));
       const all = await res.json();
       if (!all) return [];
       const savedMap = {};
@@ -9928,17 +9955,39 @@ const Onboard = {
 
 // ─── Admin Auth (Firebase Google Sign-In) ───────────────────────────────────
 const Admin = {
-  _user: null,
+  _user: null,       // Google-signed-in user only (null for guests)
+  _authUser: null,   // any Firebase user, including a guest's anonymous one
+  _authReady: null,
+  _authReadyResolve: null,
   _fb: null,
   _superAdmins: {},
   _isSuperAdmin: false,
   DB: 'https://pickleball-50914-default-rtdb.firebaseio.com',
 
-  // Appends the signed-in user's Firebase ID token so RTDB rules can check auth.uid / auth.token.email
+  // Resolves once Firebase Auth has a user (Google or anonymous), or after a
+  // timeout so the app still loads if Auth itself fails to.
+  _whenAuthReady() {
+    if (!this._authReady) {
+      this._authReady = new Promise(resolve => {
+        this._authReadyResolve = resolve;
+        setTimeout(resolve, 8000);
+      });
+    }
+    return this._authReady;
+  },
+
+  _markAuthReady() {
+    this._whenAuthReady();
+    this._authReadyResolve();
+  },
+
+  // Appends the current Firebase ID token (Google or anonymous) so RTDB rules can check auth.uid / auth.token.email
   async _authedUrl(url) {
-    if (!this._user) return url;
+    await this._whenAuthReady();
+    const user = this._authUser;
+    if (!user) return url;
     try {
-      const token = await this._user.getIdToken();
+      const token = await user.getIdToken();
       return url + (url.includes('?') ? '&' : '?') + 'auth=' + token;
     } catch (e) { return url; }
   },
@@ -9948,7 +9997,7 @@ const Admin = {
     script.type = 'module';
     script.textContent = `
       import { initializeApp } from 'https://www.gstatic.com/firebasejs/11.6.0/firebase-app.js';
-      import { getAuth, signInWithPopup, GoogleAuthProvider, onAuthStateChanged, signOut }
+      import { getAuth, signInWithPopup, signInAnonymously, GoogleAuthProvider, onAuthStateChanged, signOut }
         from 'https://www.gstatic.com/firebasejs/11.6.0/firebase-auth.js';
       const app = initializeApp({
         apiKey: 'AIzaSyD085Fx0s2xzejjvekc1MGhePm_-zM9nCw',
@@ -9958,8 +10007,21 @@ const Admin = {
       const auth = getAuth(app);
       Admin._fb = { auth, GoogleAuthProvider, signInWithPopup, signOut };
       onAuthStateChanged(auth, async (user) => {
-        Admin._user = user;
-        if (user) {
+        Admin._authUser = user;
+        Admin._user = user && !user.isAnonymous ? user : null;
+        if (!user) {
+          // Guests get an anonymous Firebase identity so RTDB rules can require auth on sessions
+          Admin._isSuperAdmin = false;
+          Admin._updateUI();
+          signInAnonymously(auth).catch((e) => {
+            console.error('Anonymous sign-in failed:', e);
+            Admin._markAuthReady();
+          });
+          return;
+        }
+        Admin._markAuthReady();
+        if (Admin._user) {
+          await Admin._seedSuperAdmin();
           await Admin._checkSuperAdmin();
           Admin._recordLogin(user);
         } else {
@@ -9969,11 +10031,11 @@ const Admin = {
       });
     `;
     document.head.appendChild(script);
-    // Seed brooke@warrentonparksalliance.com as super admin
-    this._seedSuperAdmin();
   },
 
+  // Seed brooke@warrentonparksalliance.com as super admin (rules only allow her own account to)
   async _seedSuperAdmin() {
+    if ((this._user?.email || '').toLowerCase() !== 'brooke@warrentonparksalliance.com') return;
     const key = this._emailKey('brooke@warrentonparksalliance.com');
     try {
       const res = await fetch(await this._authedUrl(`${this.DB}/superAdmins/${key}.json`));
@@ -10093,7 +10155,7 @@ const Admin = {
     if (!panel) return;
     panel.innerHTML = '<div style="color:var(--text-muted);font-size:0.82rem;padding:8px 0;">Loading&hellip;</div>';
     try {
-      const res = await fetch(`${this.DB}/sessions.json`);
+      const res = await fetch(await this._authedUrl(`${this.DB}/sessions.json`));
       const all = await res.json();
       if (!all) { panel.innerHTML = '<div style="color:var(--text-muted);font-size:0.82rem;font-style:italic;padding:8px 0;">No sessions found.</div>'; return; }
       const fmt = ts => ts ? new Date(ts).toLocaleString() : '—';
@@ -10165,7 +10227,7 @@ const Admin = {
     try {
       const [usersRes, sessionsRes] = await Promise.all([
         fetch(await this._authedUrl(`${this.DB}/users.json`)),
-        fetch(`${this.DB}/sessions.json`),
+        fetch(await this._authedUrl(`${this.DB}/sessions.json`)),
       ]);
       const usersData = (usersRes.ok ? await usersRes.json() : null) || {};
       const sessionsData = (sessionsRes.ok ? await sessionsRes.json() : null) || {};

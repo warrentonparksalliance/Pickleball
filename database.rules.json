@@ -27,9 +27,10 @@
     },
 
     "sessions": {
-      ".read": true,
+      ".read": "auth != null && auth.token.email != null && auth.token.email_verified == true && root.child('superAdmins').child(auth.token.email.toLowerCase().replace('.', ',')).exists()",
       "$sessionId": {
-        ".write": true,
+        ".read": "auth != null",
+        ".write": "auth != null",
         ".validate": "$sessionId.length <= 128 && (newData.hasChildren() || !newData.exists())"
       }
     }
