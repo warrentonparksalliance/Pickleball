@@ -29,7 +29,6 @@
   --success-light: #ecfdf5;
   --presence-live: #8b5cf6;
   --partner: #f97316;
-  --partner-other: #eab308;
   --warning: #f59e0b;
   --warning-light: #fffbeb;
   --bg: #f2f6f3;
@@ -767,22 +766,11 @@ body {
 .skill-field-btn .skill-field-label { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .skill-field-caret { font-size: 0.65em; color: var(--text-muted); flex-shrink: 0; }
 .skill-field-menu { margin-bottom: 8px; }
-/* Your Partner(s) card: same bubble as the queue/court chips (orange
-   border — see .chip-partner), just not draggable. Once there's more than
-   one partner, they split into Current Partner / Other Partners, same
-   shape as the queue's Waiting/Sitting Out split. */
+/* Your Partner card: same bubble as the queue/court chips (orange
+   border — see .chip-partner), just not draggable. */
 #partnerDisplay { margin-bottom: 8px; }
 #partnerDisplay .dnd-chip { cursor: default; }
 .partner-section-box { display: flex; flex-flow: row wrap; gap: 6px 8px; margin-bottom: 8px; }
-.partner-swap-prompt {
-  background: var(--hover-bg);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-sm);
-  padding: 8px 10px;
-  margin-bottom: 8px;
-  font-size: 0.85rem;
-}
-.partner-swap-prompt-text { margin-bottom: 6px; font-weight: 600; color: var(--text); }
 .partner-chip-remove {
   background: none;
   border: none;
@@ -1559,9 +1547,8 @@ body {
 .dnd-chip.chip-self { border-color: var(--success); }
 .dnd-chip.chip-live { border-color: var(--presence-live); }
 .dnd-chip.chip-partner { border-color: var(--partner); }
-/* Other Partners (Settings > Your Partner(s), not currently used for
-   match-making) get a yellow border instead of the current partner's orange. */
-.dnd-chip.chip-partner-other { border-color: var(--partner-other); }
+/* "waiting for X" next to a queued player held for a partner still on court */
+.queue-row-held { font-size: 0.75rem; color: var(--text-muted); font-style: italic; align-self: center; }
 .dnd-chip.dnd-selected {
   border-color: var(--primary);
   background: var(--primary-light);
@@ -2351,9 +2338,9 @@ body.view-only-locked #tabCourts #btnToggleQueue {
 }
 
 /* ── Settings tab layout (tablet / desktop) ────── */
-/* Profile, Partner(s), and Share Link are always the top row. Admin-only
+/* Profile, Partner, and Share Link are always the top row. Admin-only
    cards stack a second row beneath their related card (Session Type under
-   Profile, Session Admins under Partner(s), Passcode under Share Link).
+   Profile, Session Admins under Partner, Passcode under Share Link).
    Danger Zone and Admin History sit outside the 3-column grid, full width
    at the bottom of the page. */
 @media (min-width: 769px) {
@@ -2783,7 +2770,7 @@ body.view-only-locked #tabCourts #btnToggleQueue {
 
     <!-- Partners -->
     <div class="settings-card" id="partnerSection">
-      <div class="settings-card-title">Your Partner(s)</div>
+      <div class="settings-card-title">Your Partner</div>
       <div id="partnerOnlineBlock">
         <div id="partnerDisplay"></div>
         <button class="btn-add-partner" id="btnAddPartner" onclick="App.togglePartnerPicker()">+ Add Partner</button>
@@ -2893,7 +2880,7 @@ body.view-only-locked #tabCourts #btnToggleQueue {
     </div>
 
     <!-- Partnerships (admin only) — separate from the self-service "Your
-         Partner(s)" card above: an admin links any two players together,
+         Partner" card above: an admin links any two players together,
          tagged Mixed/Men's/Women's doubles. A player can hold one of each
          type at once; Round Robin alternates them evenly round-to-round
          when they have two (see rrGenerateSchedule). -->
@@ -3051,7 +3038,8 @@ body.view-only-locked #tabCourts #btnToggleQueue {
         </div>
         <div class="hiw-section">
           <h3>🎾 Confirming &amp; Ending a Match (Open Play)</h3>
-          <p>An auto-filled or drag-filled court starts out <strong>Proposed</strong> — adjust who's on it by dragging or tapping players between the queue and the court, then tap <strong>Confirm</strong>. Nothing is final until then, and adjusting or cancelling a proposal never costs anyone their place in line — tap <strong>&#8617; Undo</strong> above the queue to step back through adjustments. Once confirmed, tap <strong>Start</strong> on the court card to start the match timer.</p>
+          <p><strong>Auto-fill</strong> picks whoever has waited through the most court fills, then whoever has been waiting longest since their last match ended. Someone who just arrived goes in at the next open spot, ahead of the players coming off that court, but behind anyone who was already waiting when they got there.</p>
+          <p style="margin-top:6px;">An auto-filled or drag-filled court starts out <strong>Proposed</strong> — adjust who's on it by dragging or tapping players between the queue and the court, then tap <strong>Confirm</strong>. Nothing is final until then, and adjusting or cancelling a proposal never costs anyone their place in line — tap <strong>&#8617; Undo</strong> above the queue to step back through adjustments. Once confirmed, tap <strong>Start</strong> on the court card to start the match timer.</p>
           <p style="margin-top:6px;">When a match ends, choose <strong>Return All 4</strong> (send everyone back to the queue), <strong>Keep Winners</strong> (needs a score), or <strong>Keep Last-Joined</strong> (once a court has had a pair carried over before) to decide who stays on for the next match.</p>
           <p style="margin-top:6px;"><strong>Start All</strong> and <strong>End All</strong> above the courts grid start or end every court's match at once. Select multiple players in the queue (<strong>Select All</strong> or tap several chips) to move them as a group too.</p>
         </div>
@@ -3061,13 +3049,14 @@ body.view-only-locked #tabCourts #btnToggleQueue {
         </div>
         <div class="hiw-section">
           <h3>🤝 Adding Partners</h3>
-          <p>Once you're in a session, open the <strong>Settings</strong> tab to link yourself with another player you'd like to play alongside. Partners are kept together on the same side of the court when courts are assigned.</p>
-          <p style="margin-top:6px;">In Open Play, you can add or remove a partner at any time — the change takes effect the next time courts are assigned. In Round Robin and Tournament, partners must be set while the roster is still being built; once locked, teams are fixed for the rest of the session.</p>
+          <p>Once you're in a session, open the <strong>Settings</strong> tab to link yourself with another player you'd like to play alongside. You can have one partner at a time; picking someone new replaces your current partner. Partners are kept together on the same side of the court when courts are assigned.</p>
+          <p style="margin-top:6px;">In Open Play, you can add or remove a partner at any time — the change takes effect the next time courts are assigned. If your partner is still on a court, you'll wait for them so you go on together. A pair's place in line is the average of the two partners' places. In Round Robin and Tournament, partners must be set while the roster is still being built; once locked, teams are fixed for the rest of the session.</p>
           <p style="margin-top:6px;">Admins can also link two players into a typed <strong>Mixed/Men's/Women's Doubles</strong> partnership from Settings &gt; Partnerships (Round Robin) — a player can hold one of each kind at once. Tap <strong>View Partnerships</strong> next to the Queue to see everyone's partnerships.</p>
         </div>
         <div class="hiw-section">
           <h3>🗓️ Round Robin &amp; Tournament</h3>
           <p>After locking the roster, set the number of courts. Round Robin shows the full rotation's round count by default; tap <strong>+ Add a time limit</strong> to set a <strong>Match Time Limit</strong>, <strong>Session Time Limit</strong>, and <strong>Buffer Between Rounds</strong> instead (prefilled at 12 min / 2 hrs / 3 min) — Round Robin then recommends how many rounds will fit (or let you enter rounds directly), and Tournament shows an estimated total duration for its fixed bracket size, warning if either won't fit your session.</p>
+          <p style="margin-top:6px;">Round Robin teams stay the same for the whole schedule and never face the same team twice; with an odd number of teams, each gets one bye. If one player is left without a partner, they sit out the schedule. Generating the schedule doesn't start it — tap <strong>Start Round 1</strong> when you're ready. Tournament seeds teams by skill, gives the top seeds any byes, and needs a score with a winner for every match.</p>
           <p style="margin-top:6px;">Turn on <strong>League</strong> (Settings &gt; Session Type, Round Robin only) to track standings across a whole season and have team/round selection minimize repeat partners and opponents across sessions, not just within one.</p>
         </div>
         <div class="hiw-section">
@@ -3501,7 +3490,7 @@ const App = {
     // Backfill "current" on teams from before the Current/Other Partner
     // split existed — first team touching each player wins, so anyone with
     // more than one team ends up with exactly one current (see
-    // addTeamWithSelf/swapCurrentPartner for how new teams get this).
+    // addTeamWithSelf for how new teams get this).
     if (s.teams.some(t => t.current === undefined)) {
       const claimed = new Set();
       for (const t of s.teams) {
@@ -3511,6 +3500,20 @@ const App = {
         claimed.add(t.p1);
         claimed.add(t.p2);
       }
+    }
+    // One self-service partner per player: sessions from before that rule
+    // could hold several (one "current" plus reserves). Keep each player's
+    // current one (else their earliest) and drop the rest.
+    {
+      const taken = new Set();
+      const selfTeams = s.teams.filter(t => !t.type).sort((a, b) => (b.current ? 1 : 0) - (a.current ? 1 : 0) || a.id - b.id);
+      const keep = new Set();
+      for (const t of selfTeams) {
+        if (taken.has(t.p1) || taken.has(t.p2)) continue;
+        keep.add(t); taken.add(t.p1); taken.add(t.p2);
+        t.current = true;
+      }
+      if (keep.size !== selfTeams.length) s.teams = s.teams.filter(t => t.type || keep.has(t));
     }
     if (!Array.isArray(s.roundHistory)) s.roundHistory = [];
     s.activeGames  = this._toObject(s.activeGames);
@@ -3885,19 +3888,22 @@ const App = {
 
 
   // ─── Teams ─────────────────────────────────
-  // A player can have more than one partner saved, but only one is ever
-  // "current" — the one actually used for match-making (see
-  // _rankedQueueUnits/_buildTeamUnits) and shown with the orange chip
-  // border on the Courts tab. The rest sit in "Other Partners" as reserves.
+  // Self-service partners: each player has at most one at a time (an
+  // untyped team), used for match-making (see _rankedQueueUnits/
+  // _buildTeamUnits) and shown with the orange chip border on the Courts
+  // tab. Picking someone new replaces your current partner. Admin typed
+  // partnerships (below) are separate and keep their own rules.
+  _selfServiceTeamFor(playerId) {
+    return this.state.teams.find(t => !t.type && (t.p1 === playerId || t.p2 === playerId)) || null;
+  },
+
   addTeamWithSelf(playerId) {
     const selfId = Onboard.selfId;
     if (!selfId || selfId === playerId) return;
-    const existing = this.state.teams.find(t =>
-      (t.p1 === selfId && t.p2 === playerId) || (t.p2 === selfId && t.p1 === playerId)
-    );
-    if (existing) return; // use remove button instead
-    const hasCurrent = this.state.teams.some(t => (t.p1 === selfId || t.p2 === selfId) && t.current);
-    this.state.teams.push({ id: this.state.nextId++, p1: selfId, p2: playerId, doNotSplit: true, current: !hasCurrent });
+    const theirs = this._selfServiceTeamFor(playerId);
+    if (theirs) return; // already partnered (with you or someone else) — picker hides them
+    this.state.teams = this.state.teams.filter(t => t.type || (t.p1 !== selfId && t.p2 !== selfId));
+    this.state.teams.push({ id: this.state.nextId++, p1: selfId, p2: playerId, doNotSplit: true, current: true });
     this._teamsLocalChange = Date.now();
     const picker = document.getElementById('partnerPicker');
     if (picker) picker.style.display = 'none';
@@ -3912,72 +3918,8 @@ const App = {
     this.render();
   },
 
-  _currentPartnerTeam(selfTeams) {
-    return selfTeams.find(t => t.current) || selfTeams[0] || null;
-  },
-
-  _partnerSwapPending: null,
-
-  // "Tap to change" strip below Current Partner (styled like the Courts
-  // tab's drag-or-tap targets) — tapping it opens a plain picker of the
-  // other partners; picking one swaps them in as current immediately and
-  // the old current partner drops back into Other Partners.
-  _partnerSwapPickerOpen: false,
-
-  togglePartnerSwapPicker() {
-    this._partnerSwapPickerOpen = !this._partnerSwapPickerOpen;
-    this.render();
-  },
-
-  swapCurrentPartner(teamId) {
-    const selfId = Onboard.selfId;
-    this.state.teams.forEach(t => {
-      if (t.p1 === selfId || t.p2 === selfId) t.current = (t.id === teamId);
-    });
-    this._partnerSwapPickerOpen = false;
-    this._teamsLocalChange = Date.now();
-    this.saveState();
-    this.render();
-  },
-
-  // The × on a partner chip. Removing an Other Partner is immediate — but
-  // there's always exactly one current partner whenever any partner exists,
-  // so removing the current one while others remain requires picking who
-  // takes over first (see confirmRemoveCurrentPartner), rather than ever
-  // leaving Current Partner empty with reserves still sitting there.
-  requestRemovePartner(teamId) {
-    const selfId = Onboard.selfId;
-    const selfTeams = this.state.teams.filter(t => t.p1 === selfId || t.p2 === selfId);
-    const currentTeam = this._currentPartnerTeam(selfTeams);
-    const others = selfTeams.filter(t => t.id !== teamId);
-    if (!currentTeam || currentTeam.id !== teamId || others.length === 0) {
-      this._partnerSwapPending = null;
-      this.removeTeam(teamId);
-      return;
-    }
-    this._partnerSwapPending = { type: 'removeCurrent', teamId };
-    this.render();
-  },
-
-  confirmRemoveCurrentPartner(newCurrentTeamId) {
-    const pending = this._partnerSwapPending;
-    if (!pending || pending.type !== 'removeCurrent') return;
-    this.state.teams = this.state.teams.filter(t => t.id !== pending.teamId);
-    const promoted = this.state.teams.find(t => t.id === newCurrentTeamId);
-    if (promoted) promoted.current = true;
-    this._partnerSwapPending = null;
-    this._teamsLocalChange = Date.now();
-    this.saveState();
-    this.render();
-  },
-
-  cancelRemoveCurrentPartner() {
-    this._partnerSwapPending = null;
-    this.render();
-  },
-
   // ─── Admin Partnerships (Mixed/Men's/Women's doubles) ──
-  // Separate from the self-service "Your Partner(s)" system above: an
+  // Separate from the self-service "Your Partner" system above: an
   // admin links any two players together, tagged by type. Unlike a
   // self-service partner (only one ever "current"), a player can hold one
   // typed partnership per type at once — so at most Mixed + one of
@@ -4189,9 +4131,16 @@ const App = {
     let winner = null;
     if (game) {
       this.recordOpponents(game.side1, game.side2);
+      const endedAt = Date.now();
       for (const id of [...game.side1, ...game.side2]) {
         const p = this.getPlayer(id);
-        if (p) p.roundsPlayed = (p.roundsPlayed || 0) + 1;
+        if (p) {
+          p.roundsPlayed = (p.roundsPlayed || 0) + 1;
+          // Last played = when this match ended, not when it started — so
+          // anyone already waiting when it ends (including someone who just
+          // arrived mid-match) ranks ahead of these four coming off court.
+          p.lastActiveAt = endedAt;
+        }
       }
       winner = hasScores ? (score1 > score2 ? 1 : score2 > score1 ? 2 : 0) : null;
       const duration = this.getTimerElapsed(game) || null;
@@ -4614,7 +4563,7 @@ const App = {
     this.recordOpponents(game.side1, game.side2);
     for (const id of [...game.side1, ...game.side2]) {
       const p = this.getPlayer(id);
-      if (p) p.roundsPlayed = (p.roundsPlayed || 0) + 1;
+      if (p) { p.roundsPlayed = (p.roundsPlayed || 0) + 1; p.lastActiveAt = Date.now(); } // same end-of-match rule as submitScore
     }
     const duration = this.getTimerElapsed(game) || null;
     const histEntry = {
@@ -6123,25 +6072,34 @@ ${bracketHTML}
   // ─── Priority queue (fairness) ──────────────
   // Ranks active, unassigned players — and locked-partner pairs, as one
   // combined unit — by roundsWaited desc, then lastActiveAt asc (oldest
-  // first) as a tiebreak. Units are shuffled once beforehand so a remaining
-  // tie resolves randomly rather than always favoring the same player.
+  // first) as a tiebreak. lastActiveAt is when a player's last match ended,
+  // or when they joined if they haven't played yet: a late joiner goes in at
+  // the next opening ahead of players just coming off court, but gets no
+  // credit for fills before they arrived, so they don't get extra games.
+  // Units are shuffled once beforehand so a remaining tie resolves randomly
+  // rather than always favoring the same player.
+  //
+  // A pair ranks by the average of its two players (fills waited, and
+  // when each became available). A player whose partner is still on a court (or just came off it) is held
+  // out entirely until they can go on together; if their partner is in
+  // Sitting Out instead, they're queued on their own.
   _rankedQueueUnits(allQueue) {
-    // Only a player's *current* partner (see renderPartners/addTeamWithSelf)
-    // is used for pairing — Other Partners are just reserves, not counted.
-    // Round-varying admin partnerships (a player with two typed
-    // partnerships, see _roundVaryingPlayerIds) are excluded here — Open
-    // Play has no "rounds" to alternate them across, so those players are
-    // just treated as solos for court assignment.
-    const roundVarying = this._roundVaryingPlayerIds();
-    const activePairs = this.state.teams.filter(t =>
-      t.current && !roundVarying.has(t.p1) && !roundVarying.has(t.p2) &&
-      allQueue.some(p => p.id === t.p1) && allQueue.some(p => p.id === t.p2)
-    );
-    const pairedIds = new Set(activePairs.flatMap(t => [t.p1, t.p2]));
-    const soloPlayers = allQueue.filter(p => !pairedIds.has(p.id));
-
+    const queueIds = new Set(allQueue.map(p => p.id));
     const rw = id => this.state.roundsWaited[id] || 0;
     const la = id => this.getPlayer(id)?.lastActiveAt || 0;
+
+    const activePairs = [];
+    const heldIds = new Set();
+    this._openPlayPairs().forEach(t => {
+      const in1 = queueIds.has(t.p1), in2 = queueIds.has(t.p2);
+      if (in1 && in2) activePairs.push(t);
+      else if (in1 || in2) {
+        const partner = this.getPlayer(in1 ? t.p2 : t.p1);
+        if (partner && partner.active) heldIds.add(in1 ? t.p1 : t.p2);
+      }
+    });
+    const pairedIds = new Set(activePairs.flatMap(t => [t.p1, t.p2]));
+    const soloPlayers = allQueue.filter(p => !pairedIds.has(p.id) && !heldIds.has(p.id));
 
     const pairUnits = activePairs.map(t => ({
       type: 'pair', ids: [t.p1, t.p2], team: t,
@@ -6163,22 +6121,54 @@ ${bracketHTML}
     return units;
   },
 
-  // Greedy-fills up to n seats from a ranked unit list. A unit that wouldn't
-  // fit (e.g. a locked pair when only 1 seat remains) is skipped rather than
-  // split up — it simply waits for the next fill.
+  // Partnerships Open Play keeps together. Round-varying admin partnerships
+  // (a player with two typed partnerships, see _roundVaryingPlayerIds) are
+  // left out — Open Play has no "rounds" to alternate them across, so those
+  // players are just treated as solos for court assignment.
+  _openPlayPairs() {
+    const roundVarying = this._roundVaryingPlayerIds();
+    return this.state.teams.filter(t => t.current && !roundVarying.has(t.p1) && !roundVarying.has(t.p2));
+  },
+
+  // The partner a queued Open Play player is being held for (still on a
+  // court, or in a proposed match), or null — shown as "waiting for X".
+  _heldForPartner(playerId) {
+    const p = this.getPlayer(playerId);
+    if (!p || !p.active || this.isRoundRobin() || this.isTournament()) return null;
+    const onCourt = this.getPlayersOnCourts();
+    if (onCourt.has(playerId)) return null;
+    const t = this._openPlayPairs().find(x => x.p1 === playerId || x.p2 === playerId);
+    if (!t) return null;
+    const partner = this.getPlayer(t.p1 === playerId ? t.p2 : t.p1);
+    return partner && partner.active && onCourt.has(partner.id) ? partner : null;
+  },
+
+  // Fills exactly n seats from a ranked unit list without splitting a
+  // locked pair, reaching as little far down the line as possible: the
+  // furthest-back unit included is as close to the front as it can be,
+  // with earlier units preferred after that. So when the last open seat
+  // can't fit a pair, the pair still goes on (with someone just ahead of it
+  // waiting one court instead), rather than skipping the pair for a solo
+  // from further back. With only solos this is simply the top n.
   _fillUnitsToCount(units, n) {
-    const picked = [];
-    const usedIds = new Set();
-    let total = 0;
-    for (const u of units) {
-      if (total >= n) break;
-      if (u.ids.some(id => usedIds.has(id))) continue;
-      if (total + u.ids.length > n) continue;
-      picked.push(u);
-      total += u.ids.length;
-      u.ids.forEach(id => usedIds.add(id));
+    // Earliest-first subset of units[from..end) filling exactly `seats`.
+    const best = (from, end, seats) => {
+      if (seats === 0) return [];
+      for (let i = from; i < end; i++) {
+        const size = units[i].ids.length;
+        if (size > seats) continue;
+        const rest = best(i + 1, end, seats - size);
+        if (rest) return [units[i], ...rest];
+      }
+      return null;
+    };
+    for (let k = 0; k < units.length; k++) {
+      const size = units[k].ids.length;
+      if (size > n) continue;
+      const rest = best(0, k, n - size);
+      if (rest) return [...rest, units[k]];
     }
-    return total === n ? picked : null;
+    return null;
   },
 
   // Shared selection core for both a fresh court (n=4) and refilling seats
@@ -6208,6 +6198,8 @@ ${bracketHTML}
   // Resets roundsWaited and bumps lastActiveAt for players actually
   // confirmed into a match (Start Match) — not at proposal time, so
   // adjusting or cancelling a proposal never costs anyone their place in line.
+  // submitScore bumps lastActiveAt again when the match ends, which is the
+  // value the queue actually ranks by once they're back in it.
   _confirmPlayersIntoMatch(ids) {
     const now = Date.now();
     for (const id of ids) {
@@ -6897,8 +6889,6 @@ ${bracketHTML}
     const chipSpan = (p) => {
       const isYou = Onboard.selfId === p.id;
       const selfId = Onboard.selfId;
-      // Only the *current* partner gets the orange border — an Other
-      // Partner isn't actually being used for match-making right now.
       const isPartner = selfId && selfId !== p.id && this.state.teams.some(t =>
         t.current && ((t.p1 === selfId && t.p2 === p.id) || (t.p2 === selfId && t.p1 === p.id))
       );
@@ -6945,7 +6935,12 @@ ${bracketHTML}
           <button class="btn-edit-cancel" onclick="App.cancelGuestEdit()">Cancel</button>
         </div>`;
       }
-      return `<div class="queue-row">${chipSpan(p)}</div>${skillPickerFor(p)}`;
+      // Open Play holds a player back while their partner is still on a
+      // court, so they go on together — say so, or Auto-fill skipping them
+      // would look like a mistake.
+      const heldFor = this._heldForPartner(p.id);
+      const heldNote = heldFor ? `<span class="queue-row-held">waiting for ${this.esc(heldFor.name)}</span>` : '';
+      return `<div class="queue-row">${chipSpan(p)}${heldNote}</div>${skillPickerFor(p)}`;
     };
 
     // Two current partners both sitting in the same list (both waiting, or
@@ -7041,9 +7036,9 @@ ${bracketHTML}
       el.innerHTML = '<div style="padding:10px;color:var(--text-light);font-size:0.82rem;">Join a session first</div>';
       return;
     }
-    const selfTeams = this.state.teams.filter(t => t.p1 === selfId || t.p2 === selfId);
-    const pairedIds = new Set(selfTeams.map(t => t.p1 === selfId ? t.p2 : t.p1));
-    const available = this.state.players.filter(p => p.id !== selfId && !pairedIds.has(p.id));
+    // Anyone who already has a partner (you included) is left out — each
+    // player has one partner at a time.
+    const available = this.state.players.filter(p => p.id !== selfId && !this._selfServiceTeamFor(p.id));
     if (available.length === 0) {
       el.innerHTML = '<div style="padding:10px;color:var(--text-light);font-size:0.82rem;">No available players to add</div>';
       return;
@@ -7061,73 +7056,21 @@ ${bracketHTML}
     if (!selfId) {
       display.innerHTML = '';
       if (btn) btn.style.display = 'none';
-      this._partnerSwapPending = null;
-      this._partnerSwapPickerOpen = false;
       return;
     }
     if (btn) btn.style.display = '';
-    const selfTeams = this.state.teams.filter(t => t.p1 === selfId || t.p2 === selfId);
-    if (btn) btn.textContent = selfTeams.length > 0 ? '+ Add Another Partner' : '+ Add Partner';
-    if (selfTeams.length === 0) {
-      this._partnerSwapPending = null;
-      this._partnerSwapPickerOpen = false;
-      display.innerHTML = '<div style="color:var(--text-muted);font-size:0.82rem;margin-bottom:8px;">No partners selected</div>';
+    const team = this._selfServiceTeamFor(selfId);
+    // One partner at a time — picking someone else replaces them.
+    if (btn) btn.textContent = team ? 'Change Partner' : '+ Add Partner';
+    if (!team) {
+      display.innerHTML = '<div style="color:var(--text-muted);font-size:0.82rem;margin-bottom:8px;">No partner selected</div>';
       return;
     }
-
-    const nameFor = t => this.esc(this.getPlayer(t.p1 === selfId ? t.p2 : t.p1)?.name || '?');
-    // Current Partner gets the same orange border as on the Courts tab;
-    // Other Partners get a yellow border instead, so the two are never
-    // mistaken for each other at a glance. Neither chip is tappable itself —
-    // swapping who's current happens through the picker below instead.
-    const chip = (t, opts = {}) => `<span class="dnd-chip ${opts.other ? 'chip-partner-other' : 'chip-partner'}" data-team-id="${t.id}">
-        <span class="queue-row-name-text">${nameFor(t)}</span>
-        <button class="partner-chip-remove" onclick="App.requestRemovePartner(${t.id})" title="Remove partner">&times;</button>
-      </span>`;
-
-    // Just one partner: no Current/Other split needed — same as the queue
-    // only splitting into Waiting/Sitting Out once there's someone to split.
-    if (selfTeams.length === 1) {
-      this._partnerSwapPending = null;
-      this._partnerSwapPickerOpen = false;
-      display.innerHTML = `<div class="partner-section-box">${chip(selfTeams[0])}</div>`;
-      return;
-    }
-
-    const currentTeam = this._currentPartnerTeam(selfTeams);
-    const otherTeams = selfTeams.filter(t => t.id !== currentTeam.id);
-    const pending = this._partnerSwapPending;
-
-    let html = `<div class="queue-subsection-label">Current Partner</div>
-      <div class="partner-section-box">${chip(currentTeam)}</div>`;
-
-    // Dedicated strip to swap who's current, styled like the Courts tab's
-    // drag-or-tap targets — tapping it opens a plain list of the other
-    // partners, and picking one makes them current right away (the old
-    // current partner drops back into Other Partners automatically).
-    html += `<div class="queue-drop-strip" style="cursor:pointer;" onclick="App.togglePartnerSwapPicker()">Tap to change</div>`;
-    if (this._partnerSwapPickerOpen) {
-      html += `<div class="partner-picker" style="margin-top:8px;">
-        <div class="partner-picker-list">${otherTeams.map(t =>
-          `<div class="partner-picker-item" onclick="App.swapCurrentPartner(${t.id})">${nameFor(t)}</div>`
-        ).join('')}</div>
-      </div>`;
-    }
-
-    if (pending && pending.type === 'removeCurrent' && pending.teamId === currentTeam.id) {
-      html += `<div class="partner-swap-prompt">
-        <div class="partner-swap-prompt-text">${nameFor(currentTeam)} is your current partner &mdash; choose who takes over:</div>
-        <div class="partner-picker-list">${otherTeams.map(t =>
-          `<div class="partner-picker-item" onclick="App.confirmRemoveCurrentPartner(${t.id})">${nameFor(t)}</div>`
-        ).join('')}</div>
-        <button type="button" class="btn-edit-cancel" onclick="App.cancelRemoveCurrentPartner()" style="margin-top:6px;">Cancel</button>
-      </div>`;
-    }
-
-    html += `<div class="queue-subsection-label" style="margin-top:10px;">Other Partners</div>
-      <div class="partner-section-box">${otherTeams.map(t => chip(t, { other: true })).join('')}</div>`;
-
-    display.innerHTML = html;
+    const name = this.esc(this.getPlayer(team.p1 === selfId ? team.p2 : team.p1)?.name || '?');
+    display.innerHTML = `<div class="partner-section-box"><span class="dnd-chip chip-partner" data-team-id="${team.id}">
+        <span class="queue-row-name-text">${name}</span>
+        <button class="partner-chip-remove" onclick="App.removeTeam(${team.id})" title="Remove partner">&times;</button>
+      </span></div>`;
   },
 
   // Open Play always shows one card per court id from 1 to "Courts available
@@ -7194,9 +7137,10 @@ ${bracketHTML}
       <div class="dnd-slot-empty">${label}</div>
       <div class="dnd-slot-empty">${label}</div>
     </div>`;
-    const onCourt = this.getPlayersOnCourts();
-    const eligible = this.state.players.filter(p => p.active && !onCourt.has(p.id)).length;
-    const canAutoFill = eligible >= 4;
+    // Same selection Auto-fill itself runs, so the button is only enabled
+    // when it would actually fill the court (e.g. not when the only free
+    // players are waiting for partners still on another court).
+    const canAutoFill = !!this._pickPriorityPlayers(4, [...this.getPlayersOnCourts()]);
     return `<div class="court-card empty">
       <div class="court-header">
         <span>Court ${courtId}</span>
@@ -7330,9 +7274,7 @@ ${bracketHTML}
     const game = this.state.proposedGames[courtId];
     const canConfirm = game.side1.length === 2 && game.side2.length === 2;
     const needed = 4 - game.side1.length - game.side2.length;
-    const onCourt = this.getPlayersOnCourts();
-    const eligible = this.state.players.filter(p => p.active && !onCourt.has(p.id)).length;
-    const canAutoFill = needed > 0 && eligible >= needed;
+    const canAutoFill = needed > 0 && !!this._pickPriorityPlayers(needed, [...this.getPlayersOnCourts()]);
     const sideBox = (side, sideNum) => {
       const chips = side.map(id => this._renderChip(id)).join('');
       const placeholderLabel = 'Add';
