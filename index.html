@@ -225,6 +225,17 @@ body {
 }
 .btn-header.leave:hover { background: rgba(240,169,156,0.15); }
 
+/* ── UAT banner (hidden on the live site) ───── */
+.env-banner {
+  background: var(--warning);
+  color: #fff;
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-align: center;
+  padding: 4px 16px;
+}
+.env-banner[hidden] { display: none; }
+
 /* ── Tab Bar ────────────────────────────────── */
 .sticky-top {
   position: sticky;
@@ -2367,6 +2378,7 @@ body.view-only-locked #tabCourts #btnToggleQueue {
 
 <!-- ── Header ──────────────────────────────────── -->
 <div class="sticky-top">
+<div class="env-banner" id="envBanner" hidden>UAT test site · separate data</div>
 <header class="header">
   <div class="header-brand">
     <h1>Court Manager</h1>
@@ -8700,9 +8712,32 @@ ${scheduleHTML}
   },
 };
 
+// ─── Environment (production vs UAT) ────────────────────────────────────────
+// Only the live site uses the production Firebase project. UAT, Netlify
+// previews and local copies use a separate UAT project so testing never
+// touches real sessions, users or match history.
+const Env = (() => {
+  const PROD_HOSTS = ['pickleball.warrentonparksalliance.com'];
+  const isProd = PROD_HOSTS.includes(location.hostname);
+  const firebase = isProd ? {
+    apiKey: 'AIzaSyD085Fx0s2xzejjvekc1MGhePm_-zM9nCw',
+    authDomain: 'pickleball-50914.firebaseapp.com',
+    projectId: 'pickleball-50914',
+    databaseURL: 'https://pickleball-50914-default-rtdb.firebaseio.com',
+  } : {
+    // TODO: fill in from the UAT Firebase project (Project settings → Your apps)
+    apiKey: 'REPLACE_WITH_UAT_API_KEY',
+    authDomain: 'REPLACE_WITH_UAT_PROJECT_ID.firebaseapp.com',
+    projectId: 'REPLACE_WITH_UAT_PROJECT_ID',
+    databaseURL: 'https://REPLACE_WITH_UAT_PROJECT_ID-default-rtdb.firebaseio.com',
+  };
+  if (!isProd) document.getElementById('envBanner').hidden = false;
+  return { isProd, firebase };
+})();
+
 // ─── Firebase Session Sync ──────────────────────────────────────────────────
 const Session = {
-  DB: 'https://pickleball-50914-default-rtdb.firebaseio.com',
+  DB: Env.firebase.databaseURL,
   id: null,
   label: null,
   _receiving: false,
@@ -9904,7 +9939,7 @@ const Admin = {
   _fb: null,
   _superAdmins: {},
   _isSuperAdmin: false,
-  DB: 'https://pickleball-50914-default-rtdb.firebaseio.com',
+  DB: Env.firebase.databaseURL,
 
   // Resolves once Firebase Auth has a user (Google or anonymous), or after a
   // timeout so the app still loads if Auth itself fails to.
@@ -9941,11 +9976,8 @@ const Admin = {
       import { initializeApp } from 'https://www.gstatic.com/firebasejs/11.6.0/firebase-app.js';
       import { getAuth, signInWithPopup, signInAnonymously, GoogleAuthProvider, onAuthStateChanged, signOut }
         from 'https://www.gstatic.com/firebasejs/11.6.0/firebase-auth.js';
-      const app = initializeApp({
-        apiKey: 'AIzaSyD085Fx0s2xzejjvekc1MGhePm_-zM9nCw',
-        authDomain: 'pickleball-50914.firebaseapp.com',
-        projectId: 'pickleball-50914',
-      });
+      const { apiKey, authDomain, projectId } = ${JSON.stringify(Env.firebase)};
+      const app = initializeApp({ apiKey, authDomain, projectId });
       const auth = getAuth(app);
       Admin._fb = { auth, GoogleAuthProvider, signInWithPopup, signOut };
       onAuthStateChanged(auth, async (user) => {
@@ -10296,7 +10328,7 @@ const Admin = {
 
 // ─── My Match History (personal, persisted per Google user) ──────────────────
 const MyHistory = {
-  DB: 'https://pickleball-50914-default-rtdb.firebaseio.com',
+  DB: Env.firebase.databaseURL,
 
   // Save a completed match to the signed-in user's personal history
   async saveMatch(match) {
