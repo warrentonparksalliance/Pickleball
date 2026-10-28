@@ -6,6 +6,9 @@
 
 [context.deploy-preview]
   publish = "."
+  # Netlify still builds PR previews for [skip ci] commits, so skip them here.
+  # Exit 0 = skip the build. Push a commit without the tag to get a preview.
+  ignore = "git log -1 --pretty=%B | grep -qiE '\\[(skip ci|ci skip|skip netlify|netlify skip)\\]'"
 
 [context.branch-deploy]
   publish = "."
